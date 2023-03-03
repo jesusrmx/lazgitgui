@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, ExtCtrls,
-  SynEdit;
+  SynEdit, FileUtil, unitconfig;
 
 type
 
@@ -36,6 +36,7 @@ type
     txtDiff: TSynEdit;
     procedure FormShow(Sender: TObject);
   private
+    fConfig: TConfig;
     fTargetDir: String;
     procedure OpenDirectory(aDir: string);
   public
