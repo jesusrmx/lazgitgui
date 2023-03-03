@@ -75,6 +75,8 @@ begin
     fGitCommand := FindDefaultExecutablePath('git' + EXE_EXTENSION);
   end;
 
+  //WriteLn('git=', fGitCommand);
+
 end;
 
 procedure TfrmMain.OpenDirectory(aDir: string);
@@ -87,17 +89,14 @@ var
   process: TProcessUTF8;
   Params: TStringlist;
 begin
-  //Git(fGitCommand, status -b -long --porcelain=2',
-
   Params := TStringList.Create;
-  Params.Add('--C ');
-  Params.Add('"'+aDir+'"');
   Params.Add('status');
   Params.Add('-b');
   Params.Add('--long');
   Params.Add('--porcelain=2');
   Process := TProcessUTF8.Create(nil);
   try
+    Process.CurrentDirectory := aDir;
     Process.Executable := fGitCommand;
     Process.Parameters.Assign(Params);
     Process.Execute;
