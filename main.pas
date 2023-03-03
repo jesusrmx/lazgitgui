@@ -34,8 +34,10 @@ type
     Splitter1: TSplitter;
     Splitter2: TSplitter;
     txtDiff: TSynEdit;
+    procedure FormShow(Sender: TObject);
   private
-
+    fTargetDir: String;
+    procedure OpenDirectory(aDir: string);
   public
 
   end;
@@ -46,6 +48,28 @@ var
 implementation
 
 {$R *.lfm}
+
+{ TfrmMain }
+
+procedure TfrmMain.FormShow(Sender: TObject);
+var
+  aDir: string;
+begin
+  if ParamCount>0 then begin
+    aDir := ParamStr(ParamCount);
+    if not DirectoryExists(aDir) then begin
+       ShowMessage('Directory '+aDir+' does not exists');
+       exit;
+    end;
+    OpenDirectory(aDir);
+  end;
+end;
+
+procedure TfrmMain.OpenDirectory(aDir: string);
+begin
+  fTargetDir := aDir;
+  ShowMessage('Updating repository data for: '+aDir);
+end;
 
 end.
 

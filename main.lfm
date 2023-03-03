@@ -6,6 +6,7 @@ object frmMain: TfrmMain
   Caption = 'frmMain'
   ClientHeight = 686
   ClientWidth = 924
+  OnShow = FormShow
   LCLVersion = '2.3.0.0'
   object panLeft: TPanel
     Left = 0
@@ -118,7 +119,7 @@ object frmMain: TfrmMain
           Left = 0
           Height = 20
           Top = 3
-          Width = 132
+          Width = 126
           Caption = 'btnRescan'
           TabOrder = 0
         end
@@ -126,7 +127,7 @@ object frmMain: TfrmMain
           Left = 0
           Height = 20
           Top = 26
-          Width = 132
+          Width = 126
           Caption = 'btnStageChanged'
           TabOrder = 1
         end
@@ -134,7 +135,7 @@ object frmMain: TfrmMain
           Left = 0
           Height = 20
           Top = 49
-          Width = 132
+          Width = 126
           Caption = 'btnSignOff'
           TabOrder = 2
         end
@@ -142,7 +143,7 @@ object frmMain: TfrmMain
           Left = 0
           Height = 20
           Top = 72
-          Width = 132
+          Width = 126
           Caption = 'btnCommit'
           TabOrder = 3
         end
@@ -150,7 +151,7 @@ object frmMain: TfrmMain
           Left = 0
           Height = 20
           Top = 95
-          Width = 132
+          Width = 126
           Caption = 'btnPush'
           TabOrder = 4
         end
