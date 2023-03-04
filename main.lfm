@@ -1,7 +1,7 @@
 object frmMain: TfrmMain
-  Left = 226
+  Left = 178
   Height = 686
-  Top = 91
+  Top = 114
   Width = 924
   Caption = 'frmMain'
   ClientHeight = 686
@@ -28,8 +28,9 @@ object frmMain: TfrmMain
       Align = alTop
       ItemHeight = 0
       TabOrder = 0
+      TopIndex = -1
     end
-    object Splitter1: TSplitter
+    object splitterStaged: TSplitter
       Cursor = crVSplit
       Left = 1
       Height = 5
@@ -82,27 +83,28 @@ object frmMain: TfrmMain
         Align = alClient
         ItemHeight = 0
         TabOrder = 1
+        TopIndex = -1
       end
     end
   end
   object panContent: TPanel
-    Left = 256
+    Left = 261
     Height = 660
     Top = 26
-    Width = 668
+    Width = 663
     Align = alClient
     ClientHeight = 660
-    ClientWidth = 668
+    ClientWidth = 663
     TabOrder = 1
     object panCommit: TPanel
       Left = 1
       Height = 208
       Top = 451
-      Width = 666
+      Width = 661
       Align = alBottom
       Caption = 'panCommit'
       ClientHeight = 208
-      ClientWidth = 666
+      ClientWidth = 661
       TabOrder = 0
       object panCommitButtons: TPanel
         Left = 1
@@ -119,41 +121,41 @@ object frmMain: TfrmMain
         TabOrder = 0
         object btnRescan: TButton
           Left = 0
-          Height = 25
+          Height = 27
           Top = 3
-          Width = 121
+          Width = 110
           Caption = 'btnRescan'
           TabOrder = 0
         end
         object btnStageChanged: TButton
           Left = 0
-          Height = 25
-          Top = 31
-          Width = 121
+          Height = 27
+          Top = 33
+          Width = 110
           Caption = 'btnStageChanged'
           TabOrder = 1
         end
         object btnSignOff: TButton
           Left = 0
-          Height = 25
-          Top = 59
-          Width = 121
+          Height = 27
+          Top = 63
+          Width = 110
           Caption = 'btnSignOff'
           TabOrder = 2
         end
         object btnCommit: TButton
           Left = 0
-          Height = 25
-          Top = 87
-          Width = 121
+          Height = 27
+          Top = 93
+          Width = 110
           Caption = 'btnCommit'
           TabOrder = 3
         end
         object btnPush: TButton
           Left = 0
-          Height = 25
-          Top = 115
-          Width = 121
+          Height = 27
+          Top = 123
+          Width = 110
           Caption = 'btnPush'
           TabOrder = 4
         end
@@ -162,7 +164,7 @@ object frmMain: TfrmMain
         Left = 136
         Height = 186
         Top = 21
-        Width = 529
+        Width = 524
         Align = alClient
         Lines.Strings = (
           'txtComment'
@@ -173,17 +175,17 @@ object frmMain: TfrmMain
         Left = 1
         Height = 20
         Top = 1
-        Width = 664
+        Width = 659
         Align = alTop
         TabOrder = 2
       end
     end
-    object Splitter2: TSplitter
+    object splitterCommit: TSplitter
       Cursor = crVSplit
       Left = 1
       Height = 5
       Top = 446
-      Width = 666
+      Width = 661
       Align = alBottom
       ResizeAnchor = akBottom
     end
@@ -191,7 +193,7 @@ object frmMain: TfrmMain
       Left = 1
       Height = 425
       Top = 21
-      Width = 666
+      Width = 661
       Align = alClient
       Font.Height = 10
       Font.Name = 'Andale Mono'
@@ -200,7 +202,7 @@ object frmMain: TfrmMain
       ParentColor = False
       ParentFont = False
       TabOrder = 2
-      Gutter.Width = 48
+      Gutter.Width = 53
       Gutter.MouseActions = <>
       RightGutter.Width = 0
       RightGutter.MouseActions = <>
@@ -656,7 +658,7 @@ object frmMain: TfrmMain
           MouseActions = <>
         end
         object SynGutterLineNumber1: TSynGutterLineNumber
-          Width = 11
+          Width = 13
           MouseActions = <>
           MarkupInfo.Background = clBtnFace
           MarkupInfo.Foreground = clNone
@@ -678,7 +680,6 @@ object frmMain: TfrmMain
           MarkupInfo.Foreground = clGray
         end
         object SynGutterCodeFolding1: TSynGutterCodeFolding
-          Width = 7
           MouseActions = <>
           MarkupInfo.Background = clNone
           MarkupInfo.Foreground = clGray
@@ -691,7 +692,7 @@ object frmMain: TfrmMain
       Left = 1
       Height = 20
       Top = 1
-      Width = 666
+      Width = 661
       Align = alTop
       Alignment = taLeftJustify
       Caption = 'Modified, Not Staged.'
@@ -710,5 +711,11 @@ object frmMain: TfrmMain
     Alignment = taLeftJustify
     Caption = 'Current Branch:'
     TabOrder = 2
+  end
+  object splitterMain: TSplitter
+    Left = 256
+    Height = 660
+    Top = 26
+    Width = 5
   end
 end

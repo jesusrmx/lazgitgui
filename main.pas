@@ -26,13 +26,14 @@ type
     panUnstaged: TPanel;
     panStagedContainer: TPanel;
     panStaged: TPanel;
+    splitterMain: TSplitter;
     txtComment: TMemo;
     panLeft: TPanel;
     panContent: TPanel;
     panCommit: TPanel;
     panCommitButtons: TPanel;
-    Splitter1: TSplitter;
-    Splitter2: TSplitter;
+    splitterStaged: TSplitter;
+    splitterCommit: TSplitter;
     txtDiff: TSynEdit;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
