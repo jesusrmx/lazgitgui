@@ -146,7 +146,15 @@ begin
     if s='' then
       continue;
     case s[1] of
-      '1':
+      '1': // changed tracked entries
+        begin
+
+        end;
+      '2': // renamed or copied entries
+        begin
+
+        end;
+      'u': // unmerged entries
         begin
 
         end;
