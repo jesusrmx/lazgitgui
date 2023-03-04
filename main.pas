@@ -5,8 +5,8 @@ unit main;
 interface
 
 uses
-  Classes, SysUtils, UTF8Process, Forms, Controls, Graphics, Dialogs, StdCtrls,
-  ExtCtrls, SynEdit, FileUtil, unitconfig;
+  Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls,
+  ExtCtrls, SynEdit, FileUtil, unitconfig, unitprocess;
 
 type
 
@@ -37,10 +37,18 @@ type
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
   private
+    fBranch: String;
     fConfig: TConfig;
     fGitCommand: string;
+    fDir: string;
+    fUpstream: String;
+    fUntrackedMode: string;
+    fIgnoredMode: string;
     procedure OpenDirectory(aDir: string);
-    procedure GitStatus(aDir: string);
+    procedure GitStatus;
+    procedure GitStatusBranch(aList: TStrings);
+    procedure GitStatusFiles(aList: TStrings);
+    procedure UpdateBranch;
   public
 
   end;
@@ -69,6 +77,8 @@ end;
 
 procedure TfrmMain.FormCreate(Sender: TObject);
 begin
+  fUntrackedMode := 'normal';
+  fIgnoredMode := 'no';
 
   fGitCommand := fConfig.ReadString('git');
   if (fGitCommand='') or (not FileExists(fGitCommand)) then begin
@@ -81,30 +91,61 @@ end;
 
 procedure TfrmMain.OpenDirectory(aDir: string);
 begin
-  GitStatus(aDir);
+  fDir := aDir;
+  GitStatus;
 end;
 
-procedure TfrmMain.GitStatus(aDir: string);
+procedure TfrmMain.GitStatus;
 var
-  process: TProcessUTF8;
-  Params: TStringlist;
+  aList: TStringlist;
+  aCommand: string;
 begin
-  Params := TStringList.Create;
-  Params.Add('status');
-  Params.Add('-b');
-  Params.Add('--long');
-  Params.Add('--porcelain=2');
-  Process := TProcessUTF8.Create(nil);
+  aList := TStringList.Create;
   try
-    Process.CurrentDirectory := aDir;
-    Process.Executable := fGitCommand;
-    Process.Parameters.Assign(Params);
-    Process.Execute;
+    aCommand := format('%s status -b --long --porcelain=2 --ignored=%s --untracked-mode=%s',
+      [fGitCommand, fIgnoredMode, fUntrackedMode]);
+    RunProcess(aCommand, fDir, aList);
+    GitStatusBranch(aList);
+    GitStatusFiles(aList);
   finally
-    Process.Free;
-    Params.Free;
+    aList.Free;
   end;
+end;
 
+procedure TfrmMain.GitStatusBranch(aList: TStrings);
+begin
+  fBranch := '';
+  fUpstream := '';
+  if (aList<>nil) and (aList.Count>2) then begin
+    fBranch := copy(aList[1], 15, 255);
+    fUpstream := copy(aList[2], 19, 255);
+  end;
+  UpdateBranch;
+end;
+
+procedure TfrmMain.GitStatusFiles(aList: TStrings);
+var
+  i: Integer;
+  s: string;
+begin
+  //WriteLn('Getting status files from: ');
+  //WriteLn(aList.Text);
+  for i:=4 to aList.Count-1 do begin
+    s := aList[i];
+    if s='' then
+      continue;
+    case s[1] of
+      '1':
+        begin
+
+        end;
+    end;
+  end;
+end;
+
+procedure TfrmMain.UpdateBranch;
+begin
+  panBranch.Caption := 'Branch: ' + fBranch + ' Upstream: ' + fUpstream;
 end;
 
 end.
