@@ -40,6 +40,7 @@ type
     splitterStaged: TSplitter;
     splitterCommit: TSplitter;
     txtDiff: TSynEdit;
+    procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -61,6 +62,8 @@ type
     procedure UpdateBranch;
     procedure Clear;
     function  TryGitIn(aPath: string): boolean;
+    procedure RestoreGui;
+    procedure SaveGui;
   public
 
   end;
@@ -119,6 +122,13 @@ begin
 
   //WriteLn('git=', fGitCommand);
   fEntries := TFpList.Create;
+
+  RestoreGui;
+end;
+
+procedure TfrmMain.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
+begin
+  SaveGui;
 end;
 
 procedure TfrmMain.FormDestroy(Sender: TObject);
@@ -307,6 +317,43 @@ begin
       fConfig.WriteString('git', fGitCommand);
     end;
   end;
+end;
+
+procedure TfrmMain.RestoreGui;
+begin
+  fConfig.OpenConfig;
+  Left :=   fConfig.ReadInteger('mainform.Left',    Left,   SECTION_GEOMETRY);
+  Top :=    fConfig.ReadInteger('mainform.Top',     Top,    SECTION_GEOMETRY);
+  Width :=  fConfig.ReadInteger('mainform.Width',   Width,  SECTION_GEOMETRY);
+  Height := fConfig.ReadInteger('mainform.Height',  Height, SECTION_GEOMETRY);
+  if fConfig.ReadBoolean('mainform.maximized', false, SECTION_GEOMETRY) then
+    WindowState := wsMaximized;
+  lstUnstaged.Height := fConfig.ReadInteger('lstUnstaged.Height', lstUnstaged.Height, SECTION_GEOMETRY);
+  panLeft.Width := fConfig.ReadInteger('panleft.width', panLeft.Width, SECTION_GEOMETRY);
+  pancommit.Height := fConfig.ReadInteger('pancommit.height', pancommit.Height, SECTION_GEOMETRY);
+
+  fConfig.CloseConfig;
+end;
+
+procedure TfrmMain.SaveGui;
+var
+  isMaximized: Boolean;
+begin
+  fConfig.OpenConfig;
+
+  isMaximized := WindowState=wsMaximized;
+  fConfig.WriteBoolean('mainform.maximized', isMaximized, SECTION_GEOMETRY);
+  if not isMaximized then begin
+    fConfig.WriteInteger('mainform.Left', Left, SECTION_GEOMETRY);
+    fConfig.WriteInteger('mainform.Top', Top, SECTION_GEOMETRY);
+    fConfig.WriteInteger('mainform.Width', Width, SECTION_GEOMETRY);
+    fConfig.WriteInteger('mainform.Height', Height, SECTION_GEOMETRY);
+  end;
+  fConfig.WriteInteger('lstUnstaged.Height', lstUnstaged.Height, SECTION_GEOMETRY);
+  fConfig.WriteInteger('panleft.width', panLeft.Width, SECTION_GEOMETRY);
+  fConfig.WriteInteger('pancommit.height', pancommit.Height, SECTION_GEOMETRY);
+
+  fConfig.CloseConfig;
 end;
 
 end.
