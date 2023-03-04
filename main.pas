@@ -280,9 +280,8 @@ begin
   if behind then s += format('%d commits behind', [-fCommitsBehind]);
   if ahead or behind then s += ' of';
 
-  lblAheadBehind.Visible := s<>'';
-  if s<>'' then
-    lblAheadBehind.Caption := s;
+  if s='' then s:=' ';
+  lblAheadBehind.Caption := s;
 
   label2.Visible := not ahead and not behind;
   lblRemote.Caption := fUpstream;

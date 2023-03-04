@@ -6,6 +6,7 @@ object frmMain: TfrmMain
   Caption = 'frmMain'
   ClientHeight = 686
   ClientWidth = 924
+  Font.Style = [fsBold]
   OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
   OnDestroy = FormDestroy
@@ -723,6 +724,7 @@ object frmMain: TfrmMain
       Width = 43
       BorderSpacing.Left = 10
       Caption = 'Branch:'
+      ParentFont = False
     end
     object lblBranch: TLabel
       AnchorSideLeft.Control = Label1
@@ -745,7 +747,7 @@ object frmMain: TfrmMain
       Left = 115
       Height = 17
       Top = 5
-      Width = 215
+      Width = 231
       BorderSpacing.Left = 20
       BorderSpacing.Right = 20
       Caption = '0 commits ahead, 0 commits behind of'
@@ -754,17 +756,18 @@ object frmMain: TfrmMain
       AnchorSideLeft.Control = lblAheadBehind
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = Label1
-      Left = 350
+      Left = 366
       Height = 17
       Top = 5
       Width = 46
       Caption = 'Remote:'
+      ParentFont = False
     end
     object lblRemote: TLabel
       AnchorSideLeft.Control = Label2
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = Label1
-      Left = 406
+      Left = 422
       Height = 17
       Top = 5
       Width = 79
