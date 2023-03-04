@@ -24,6 +24,7 @@ type
     etNotUpdatedA,
     etNotUpdatedM,
     etNotUpdatedD,
+
     etUpdatedInIndex,
     etUpdatedInIndexM,
     etUpdatedInIndexT,
@@ -90,7 +91,8 @@ type
   PFileEntry = ^TFileEntry;
   TFileEntry = record
     EntryKind: TEntryKind;
-    EntryType: TEntryType;
+    EntryTypeStaged: TEntryType;
+    EntryTypeUnStaged: TEntryType;
     SubModule: TSubmoduleType;
     m1, m2, m3, mW: Integer;    // m1=mH and m2=mI for ekOrdinaryChanged and ekRenamedCopied
     h1, h2, h3: string[41];     // h1=hH and h2=hI for ekOrdinaryChanged and ekRenamedCopied
@@ -136,73 +138,73 @@ U           U    unmerged, both modified
 !           !    ignored
 -------------------------------------------------
 }
-function XYToEntryType(x, y: char): TEntryType;
+function XYToEntryType(x, y: char; staged:boolean): TEntryType;
 begin
   result := etUnknown;
-  case x of
-    '.':
-      case y of
-        'A': result := etNotUpdatedA;
-        'M': result := etNotUpdatedM;
-        'D': result := etNotUpdatedD;
-        'R': result := etRenamedInWorkTree;
-        'C': result := etCopiedInWorkTree;
-      end;
-    'M':
-      case y of
-        '.': result := etUpdatedInIndex;
-        'M': result := etUpdatedInIndexM;
-        'T': result := etUpdatedInIndexT;
-        'D': result := etUpdatedInIndexD;
-      end;
-    'T':
-      case y of
-        '.': result := etTypeChangedInIndex;
-        'M': result := etTypeChangedInIndexM;
-        'T': result := etTypeChangedInIndexT;
-        'D': result := etTypeChangedInIndexD;
-      end;
-    'A':
-      case y of
-        '.': result := etAddedToIndex;
-        'M': result := etAddedToIndexM;
-        'T': result := etAddedToIndexT;
-        'D': result := etAddedToIndexD;
-        'U': result := etUnmergedAddedByUs;
-        'A': result := etUnmergedBothAdded;
-      end;
-    'D':
-      case y of
-        '.': result := etDeletedFromIndex;
-        'D': result := etUnmergedBothDeleted;
-        'U': result := etUnmergedDeletedByUs;
+  if staged then begin
+    case x of
+      '.':
+        case y of
+          'A': result := etNotUpdatedA;
+          'M': result := etNotUpdatedM;
+          'D': result := etNotUpdatedD;
+          'R': result := etRenamedInWorkTree;
+          'C': result := etCopiedInWorkTree;
+        end;
+      'M':
+        case y of
+          '.': result := etUpdatedInIndex;
+          'M': result := etUpdatedInIndexM;
+          'T': result := etUpdatedInIndexT;
+          'D': result := etUpdatedInIndexD;
+        end;
+      'T':
+        case y of
+          '.': result := etTypeChangedInIndex;
+          'M': result := etTypeChangedInIndexM;
+          'T': result := etTypeChangedInIndexT;
+          'D': result := etTypeChangedInIndexD;
+        end;
+      'A':
+        case y of
+          '.': result := etAddedToIndex;
+          'M': result := etAddedToIndexM;
+          'T': result := etAddedToIndexT;
+          'D': result := etAddedToIndexD;
+          'U': result := etUnmergedAddedByUs;
+          'A': result := etUnmergedBothAdded;
+        end;
+      'D':
+        case y of
+          '.': result := etDeletedFromIndex;
+          'D': result := etUnmergedBothDeleted;
+          'U': result := etUnmergedDeletedByUs;
 
-      end;
-    'R':
-      case y of
-        '.': result := etRenamedInIndex;
-        'M': result := etRenamedInIndexM;
-        'T': result := etRenamedInIndexT;
-        'D': result := etRenamedInIndexD;
-      end;
-    'C':
-      case y of
-        '.': result := etCopiedInIndex;
-        'M': result := etCopiedInIndexM;
-        'T': result := etCopiedInIndexT;
-        'D': result := etCopiedInIndexD;
-      end;
-    'U':
-      case y of
-        'D': result := etUnmergedDeletedByThem;
-        'A': result := etUnmergedAddedByThem;
-        'U': result := etUnmergedBothModified;
-      end;
-    '?':  result := etUntracked;
-    '!':  result := etIgnored;
-  end;
-
-  if result=etUnknown then
+        end;
+      'R':
+        case y of
+          '.': result := etRenamedInIndex;
+          'M': result := etRenamedInIndexM;
+          'T': result := etRenamedInIndexT;
+          'D': result := etRenamedInIndexD;
+        end;
+      'C':
+        case y of
+          '.': result := etCopiedInIndex;
+          'M': result := etCopiedInIndexM;
+          'T': result := etCopiedInIndexT;
+          'D': result := etCopiedInIndexD;
+        end;
+      'U':
+        case y of
+          'D': result := etUnmergedDeletedByThem;
+          'A': result := etUnmergedAddedByThem;
+          'U': result := etUnmergedBothModified;
+        end;
+      '?':  result := etUntracked;
+      '!':  result := etIgnored;
+    end;
+  end else begin
     case y of
       '.':
         case x of
@@ -240,6 +242,7 @@ begin
           'C': result := etTypeChangedInWorktreeSinceIndexC;
         end;
     end;
+  end;
 end;
 
 function NextField(var head:pchar): string;
@@ -264,7 +267,8 @@ begin
   entry^.EntryKind := ekOrdinaryChanged;
   // 1 <XY> <sub> <mH> <mI> <mW> <hH> <hI> <path>
   Inc(head, 2);
-  entry^.EntryType := XYToEntryType(head^, (head+1)^);
+  entry^.EntryTypeStaged := XYToEntryType(head^, (head+1)^, true);
+  entry^.EntryTypeUnStaged := XYToEntryType(head^, (head+1)^, false);
 
   Inc(head, 3);
   entry^.SubModule := [];
@@ -305,7 +309,8 @@ begin
 
   // 2 <XY> <sub> <mH> <mI> <mW> <hH> <hI> <X><score> <path><sep><origPath>
   Inc(head, 2);
-  entry^.EntryType := XYToEntryType(head^, (head+1)^);
+  entry^.EntryTypeStaged := XYToEntryType(head^, (head+1)^, true);
+  entry^.EntryTypeUnStaged := XYToEntryType(head^, (head+1)^, false);
 
   Inc(head, 3);
   entry^.SubModule := [];
@@ -339,7 +344,8 @@ begin
 
   // u <XY> <sub> <m1> <m2> <m3> <mW> <h1> <h2> <h3> <path>
   Inc(head, 2);
-  entry^.EntryType := XYToEntryType(head^, (head+1)^);
+  entry^.EntryTypeStaged := XYToEntryType(head^, (head+1)^, true);
+  entry^.EntryTypeUnStaged := XYToEntryType(head^, (head+1)^, false);
 
   Inc(head, 3);
   entry^.SubModule := [];
@@ -375,12 +381,14 @@ begin
     '?':
       begin
         entry^.EntryKind := ekUntracked;
-        entry^.EntryType := etUntracked;
+        entry^.EntryTypeUnStaged := etUntracked;
+        entry^.EntryTypeStaged := etUnknown;
       end;
     '!':
       begin
         entry^.EntryKind := ekIgnored;
-        entry^.EntryType := etIgnored;
+        entry^.EntryTypeUnStaged := etIgnored;
+        entry^.EntryTypeStaged := etUnknown;
       end
     else
       entry^.EntryKind := ekUnknown;

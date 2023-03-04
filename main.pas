@@ -18,8 +18,8 @@ type
     btnSignOff: TButton;
     btnCommit: TButton;
     btnPush: TButton;
-    ListBox1: TListBox;
-    ListBox2: TListBox;
+    lstUnstaged: TListBox;
+    lstStaged: TListBox;
     panCommitState: TPanel;
     panBranch: TPanel;
     panFileState: TPanel;
@@ -35,6 +35,7 @@ type
     Splitter2: TSplitter;
     txtDiff: TSynEdit;
     procedure FormCreate(Sender: TObject);
+    procedure FormDestroy(Sender: TObject);
     procedure FormShow(Sender: TObject);
   private
     fBranch: String;
@@ -46,11 +47,13 @@ type
     fIgnoredMode: string;
     fCommitsAhead: Integer;
     fCommitsBehind: Integer;
+    fEntries: TFPList;
     procedure OpenDirectory(aDir: string);
     procedure GitStatus;
     procedure GitStatusBranch(var head: pchar; tail: pchar);
     procedure GitStatusFiles(var head: pchar; tail: pchar);
     procedure UpdateBranch;
+    procedure Clear;
   public
 
   end;
@@ -79,7 +82,7 @@ end;
 
 procedure TfrmMain.FormCreate(Sender: TObject);
 begin
-  fUntrackedMode := 'normal';
+  fUntrackedMode := 'all';
   fIgnoredMode := 'no';
 
   fGitCommand := fConfig.ReadString('git');
@@ -88,7 +91,12 @@ begin
   end;
 
   //WriteLn('git=', fGitCommand);
+  fEntries := TFpList.Create;
+end;
 
+procedure TfrmMain.FormDestroy(Sender: TObject);
+begin
+  Clear;
 end;
 
 procedure TfrmMain.OpenDirectory(aDir: string);
@@ -99,7 +107,6 @@ end;
 
 procedure TfrmMain.GitStatus;
 var
-  aList: TStringlist;
   aCommand: string;
   M: TMemoryStream;
   head, tail: PChar;
@@ -178,12 +185,15 @@ var
   entry: PFileEntry;
   start: pchar;
 begin
+  // clear lists
+  Clear;
+
   // scan header lines
   while (head<tail) do begin
 
     start := head;
     n := strlen(head);
-    //WriteLn(start);
+    WriteLn(start);
 
     case head^ of
       '1': ParseOrdinaryChanged(head, tail, entry);
@@ -195,7 +205,20 @@ begin
     end;
 
     if entry<>nil then begin
-      // add entries
+      fEntries.Add(entry);
+
+      // staged list
+      case entry^.EntryTypeStaged of
+        etUpdatedInIndex..etCopiedInIndexD:
+          lstStaged.Items.AddObject(entry^.path, TObject(entry));
+      end;
+
+      // unstaged list
+      case entry^.EntryTypeUnStaged of
+        etUpdatedInIndex..etCopiedInIndexD:;
+        etIndexAndWorktreeMatchesM..etIndexAndWorktreeMatchesC:;
+        else lstUnstaged.Items.AddObject(entry^.path, TObject(entry));
+      end;
 
     end;
 
@@ -223,6 +246,20 @@ begin
     s += 'Upstream: ';
   s += fUpstream;
   panBranch.Caption :=  s;
+end;
+
+procedure TfrmMain.Clear;
+var
+  i: Integer;
+  entry: PFileEntry;
+begin
+  for i:=0 to fEntries.Count-1 do begin
+    entry := PFileEntry(fEntries[i]);
+    if entry<>nil then
+      Dispose(entry)
+  end;
+  lstUnstaged.Clear;
+  lstStaged.Clear;
 end;
 
 end.
