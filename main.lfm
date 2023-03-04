@@ -119,41 +119,41 @@ object frmMain: TfrmMain
         TabOrder = 0
         object btnRescan: TButton
           Left = 0
-          Height = 20
+          Height = 25
           Top = 3
-          Width = 131
+          Width = 121
           Caption = 'btnRescan'
           TabOrder = 0
         end
         object btnStageChanged: TButton
           Left = 0
-          Height = 20
-          Top = 26
-          Width = 131
+          Height = 25
+          Top = 31
+          Width = 121
           Caption = 'btnStageChanged'
           TabOrder = 1
         end
         object btnSignOff: TButton
           Left = 0
-          Height = 20
-          Top = 49
-          Width = 131
+          Height = 25
+          Top = 59
+          Width = 121
           Caption = 'btnSignOff'
           TabOrder = 2
         end
         object btnCommit: TButton
           Left = 0
-          Height = 20
-          Top = 72
-          Width = 131
+          Height = 25
+          Top = 87
+          Width = 121
           Caption = 'btnCommit'
           TabOrder = 3
         end
         object btnPush: TButton
           Left = 0
-          Height = 20
-          Top = 95
-          Width = 131
+          Height = 25
+          Top = 115
+          Width = 121
           Caption = 'btnPush'
           TabOrder = 4
         end
@@ -200,7 +200,7 @@ object frmMain: TfrmMain
       ParentColor = False
       ParentFont = False
       TabOrder = 2
-      Gutter.Width = 53
+      Gutter.Width = 48
       Gutter.MouseActions = <>
       RightGutter.Width = 0
       RightGutter.MouseActions = <>
@@ -656,7 +656,7 @@ object frmMain: TfrmMain
           MouseActions = <>
         end
         object SynGutterLineNumber1: TSynGutterLineNumber
-          Width = 13
+          Width = 11
           MouseActions = <>
           MarkupInfo.Background = clBtnFace
           MarkupInfo.Foreground = clNone
@@ -678,6 +678,7 @@ object frmMain: TfrmMain
           MarkupInfo.Foreground = clGray
         end
         object SynGutterCodeFolding1: TSynGutterCodeFolding
+          Width = 7
           MouseActions = <>
           MarkupInfo.Background = clNone
           MarkupInfo.Foreground = clGray

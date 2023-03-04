@@ -54,6 +54,7 @@ type
     procedure GitStatusFiles(var head: pchar; tail: pchar);
     procedure UpdateBranch;
     procedure Clear;
+    function  TryGitIn(aPath: string): boolean;
   public
 
   end;
@@ -88,6 +89,26 @@ begin
   fGitCommand := fConfig.ReadString('git');
   if (fGitCommand='') or (not FileExists(fGitCommand)) then begin
     fGitCommand := FindDefaultExecutablePath('git' + EXE_EXTENSION);
+    if fGitCommand<>'' then begin
+      if not TryGitIn(ExtractFilePath(fGitCommand)) then
+        fGitCommand := '';
+    end;
+  end;
+  {$ifdef MsWindows}
+  if (fGitCommand='') then begin
+    // try some known git locations
+    if not TryGitIn(GetEnvironmentVariable('ProgramFiles') + '\git\bin\') then
+    if not TryGitIn(GetEnvironmentVariable('ProgramW6432') + '\git\bin\') then
+    if not TryGitIn(GetEnvironmentVariable('SystemDrive') + '\msysgit\bin\') then
+    if not TryGitIn(GetEnvironmentVariable('HOMEDRIVE') + '\msysgit\bin\') then
+      ;
+  end;
+  {$endif}
+
+  if fGitCommand='' then begin
+    WriteLn(StdErr, 'Could not find git command');
+    Application.Terminate;
+    exit;
   end;
 
   //WriteLn('git=', fGitCommand);
@@ -253,13 +274,30 @@ var
   i: Integer;
   entry: PFileEntry;
 begin
-  for i:=0 to fEntries.Count-1 do begin
-    entry := PFileEntry(fEntries[i]);
-    if entry<>nil then
-      Dispose(entry)
-  end;
+  if fEntries<>nil then
+    for i:=0 to fEntries.Count-1 do begin
+      entry := PFileEntry(fEntries[i]);
+      if entry<>nil then
+        Dispose(entry)
+    end;
   lstUnstaged.Clear;
   lstStaged.Clear;
+end;
+
+function TfrmMain.TryGitIn(aPath: string): boolean;
+var
+  outputStr: RawByteString;
+begin
+  aPath := aPath + 'git' + EXE_EXTENSION;
+  result := FileExists(aPath);
+  if result then begin
+    RunProcess(aPath + ' --version', GetCurrentDir, outputStr);
+    result := pos('git version', outputStr)=1;
+    if result then begin
+      fGitCommand := aPath;
+      fConfig.WriteString('git', fGitCommand);
+    end;
+  end;
 end;
 
 end.

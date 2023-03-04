@@ -14,6 +14,7 @@ type
   procedure RunProcess(const aCommand, startDir: string; callback:TOutputEvent); overload;
   procedure RunProcess(const aCommand, startDir: string; cmdOutput: TStrings); overload;
   procedure RunProcess(const aCommand, startDir: string; stream: TStream); overload;
+  procedure RunProcess(const aCommand, startDir: string; out cmdOutput: RawByteString); overload;
 
 implementation
 
@@ -71,6 +72,20 @@ procedure RunProcess(const aCommand, startDir: string; stream: TStream);
   end;
 begin
   RunProcess(aCommand, startDir, @CollectOutput);
+end;
+
+procedure RunProcess(const aCommand, startDir: string; out
+  cmdOutput: RawByteString);
+var
+  M: TMemoryStream;
+begin
+  M := TMemoryStream.Create;
+  try
+    RunProcess(aCommand, startDir, M);
+    SetString(cmdOutput, M.Memory, M.Size);
+  finally
+    M.Free;
+  end;
 end;
 
 end.
