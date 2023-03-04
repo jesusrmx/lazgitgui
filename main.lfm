@@ -1,7 +1,7 @@
 object frmMain: TfrmMain
-  Left = 178
+  Left = 95
   Height = 686
-  Top = 114
+  Top = 212
   Width = 924
   Caption = 'frmMain'
   ClientHeight = 686
@@ -709,8 +709,70 @@ object frmMain: TfrmMain
     Width = 924
     Align = alTop
     Alignment = taLeftJustify
-    Caption = 'Current Branch:'
+    ClientHeight = 26
+    ClientWidth = 924
     TabOrder = 2
+    object Label1: TLabel
+      AnchorSideLeft.Control = panBranch
+      AnchorSideTop.Control = panBranch
+      AnchorSideTop.Side = asrCenter
+      Left = 11
+      Height = 17
+      Top = 5
+      Width = 43
+      BorderSpacing.Left = 10
+      Caption = 'Branch:'
+    end
+    object lblBranch: TLabel
+      AnchorSideLeft.Control = Label1
+      AnchorSideLeft.Side = asrBottom
+      AnchorSideTop.Control = Label1
+      Left = 64
+      Height = 17
+      Top = 5
+      Width = 31
+      BorderSpacing.Left = 10
+      Caption = 'main'
+      Font.Color = clRed
+      Font.Style = [fsBold]
+      ParentFont = False
+    end
+    object lblAheadBehind: TLabel
+      AnchorSideLeft.Control = lblBranch
+      AnchorSideLeft.Side = asrBottom
+      AnchorSideTop.Control = Label1
+      Left = 115
+      Height = 17
+      Top = 5
+      Width = 215
+      BorderSpacing.Left = 20
+      BorderSpacing.Right = 20
+      Caption = '0 commits ahead, 0 commits behind of'
+    end
+    object Label2: TLabel
+      AnchorSideLeft.Control = lblAheadBehind
+      AnchorSideLeft.Side = asrBottom
+      AnchorSideTop.Control = Label1
+      Left = 350
+      Height = 17
+      Top = 5
+      Width = 46
+      Caption = 'Remote:'
+    end
+    object lblRemote: TLabel
+      AnchorSideLeft.Control = Label2
+      AnchorSideLeft.Side = asrBottom
+      AnchorSideTop.Control = Label1
+      Left = 406
+      Height = 17
+      Top = 5
+      Width = 79
+      BorderSpacing.Left = 10
+      Caption = 'remote/main'
+      Font.Color = clBlue
+      Font.Style = [fsBold]
+      ParentFont = False
+    end
   end
   object splitterMain: TSplitter
     Left = 256

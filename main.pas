@@ -18,6 +18,11 @@ type
     btnSignOff: TButton;
     btnCommit: TButton;
     btnPush: TButton;
+    Label1: TLabel;
+    Label2: TLabel;
+    lblRemote: TLabel;
+    lblAheadBehind: TLabel;
+    lblBranch: TLabel;
     lstUnstaged: TListBox;
     lstStaged: TListBox;
     panCommitState: TPanel;
@@ -255,19 +260,22 @@ var
 begin
   ahead := fCommitsAhead>0;
   behind := fCommitsBehind<0;
+
+  label1.Visible := not ahead and not behind;
+  lblBranch.Caption := fBranch;
+
   s := '';
-  if not ahead and not behind then
-    s += 'Branch: ';
-  s += fBranch;
-  if ahead then s += format(' %d commits ahead', [fCommitsAhead]);
-  if ahead and behind then s += '/';
-  if behind then s += format(' %d commits behind', [-fCommitsBehind]);
+  if ahead then s += format('%d commits ahead', [fCommitsAhead]);
+  if ahead and behind then s += ', ';
+  if behind then s += format('%d commits behind', [-fCommitsBehind]);
   if ahead or behind then s += ' of';
-  s += ' ';
-  if not ahead and not behind then
-    s += 'Upstream: ';
-  s += fUpstream;
-  panBranch.Caption :=  s;
+
+  lblAheadBehind.Visible := s<>'';
+  if s<>'' then
+    lblAheadBehind.Caption := s;
+
+  label2.Visible := not ahead and not behind;
+  lblRemote.Caption := fUpstream;
 end;
 
 procedure TfrmMain.Clear;
