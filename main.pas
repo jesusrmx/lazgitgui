@@ -5,8 +5,8 @@ unit main;
 interface
 
 uses
-  Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls,
-  ExtCtrls, SynEdit, FileUtil, unitconfig, unitprocess, unitentries;
+  Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, ExtCtrls,
+  SynEdit, SynHighlighterDiff, FileUtil, unitconfig, unitprocess, unitentries;
 
 type
 
@@ -32,6 +32,7 @@ type
     panStagedContainer: TPanel;
     panStaged: TPanel;
     splitterMain: TSplitter;
+    SynDiffSyn1: TSynDiffSyn;
     txtComment: TMemo;
     panLeft: TPanel;
     panContent: TPanel;

@@ -204,10 +204,12 @@ object frmMain: TfrmMain
       ParentColor = False
       ParentFont = False
       TabOrder = 2
+      Gutter.Visible = False
       Gutter.Width = 53
       Gutter.MouseActions = <>
       RightGutter.Width = 0
       RightGutter.MouseActions = <>
+      Highlighter = SynDiffSyn1
       Keystrokes = <      
         item
           Command = ecUp
@@ -635,6 +637,7 @@ object frmMain: TfrmMain
       Lines.Strings = (
         'txtDiff'
       )
+      Options = [eoAutoIndent, eoBracketHighlight, eoGroupUndo, eoHideRightMargin, eoScrollPastEol, eoSmartTabs, eoTabsToSpaces, eoTrimTrailingSpaces]
       VisibleSpecialChars = [vscSpace, vscTabAtLast]
       SelectedColor.BackPriority = 50
       SelectedColor.ForePriority = 50
@@ -783,5 +786,10 @@ object frmMain: TfrmMain
     Height = 660
     Top = 26
     Width = 5
+  end
+  object SynDiffSyn1: TSynDiffSyn
+    Enabled = False
+    Left = 840
+    Top = 64
   end
 end
