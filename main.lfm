@@ -27,7 +27,6 @@ object frmMain: TfrmMain
       Align = alTop
       ItemHeight = 0
       TabOrder = 0
-      TopIndex = -1
     end
     object Splitter1: TSplitter
       Cursor = crVSplit
@@ -82,7 +81,6 @@ object frmMain: TfrmMain
         Align = alClient
         ItemHeight = 0
         TabOrder = 1
-        TopIndex = -1
       end
     end
   end
@@ -120,41 +118,41 @@ object frmMain: TfrmMain
         TabOrder = 0
         object btnRescan: TButton
           Left = 0
-          Height = 27
+          Height = 20
           Top = 3
-          Width = 110
+          Width = 131
           Caption = 'btnRescan'
           TabOrder = 0
         end
         object btnStageChanged: TButton
           Left = 0
-          Height = 27
-          Top = 33
-          Width = 110
+          Height = 20
+          Top = 26
+          Width = 131
           Caption = 'btnStageChanged'
           TabOrder = 1
         end
         object btnSignOff: TButton
           Left = 0
-          Height = 27
-          Top = 63
-          Width = 110
+          Height = 20
+          Top = 49
+          Width = 131
           Caption = 'btnSignOff'
           TabOrder = 2
         end
         object btnCommit: TButton
           Left = 0
-          Height = 27
-          Top = 93
-          Width = 110
+          Height = 20
+          Top = 72
+          Width = 131
           Caption = 'btnCommit'
           TabOrder = 3
         end
         object btnPush: TButton
           Left = 0
-          Height = 27
-          Top = 123
-          Width = 110
+          Height = 20
+          Top = 95
+          Width = 131
           Caption = 'btnPush'
           TabOrder = 4
         end

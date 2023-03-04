@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls,
-  ExtCtrls, SynEdit, FileUtil, unitconfig, unitprocess;
+  ExtCtrls, SynEdit, FileUtil, unitconfig, unitprocess, unitentries;
 
 type
 
@@ -48,8 +48,8 @@ type
     fCommitsBehind: Integer;
     procedure OpenDirectory(aDir: string);
     procedure GitStatus;
-    procedure GitStatusBranch(aList: TStrings);
-    procedure GitStatusFiles(aList: TStrings);
+    procedure GitStatusBranch(var head: pchar; tail: pchar);
+    procedure GitStatusFiles(var head: pchar; tail: pchar);
     procedure UpdateBranch;
   public
 
@@ -101,73 +101,105 @@ procedure TfrmMain.GitStatus;
 var
   aList: TStringlist;
   aCommand: string;
+  M: TMemoryStream;
+  head, tail: PChar;
 begin
-  aList := TStringList.Create;
+  M := TMemoryStream.Create;
   try
-    aCommand := format('%s status -b --long --porcelain=2 --ahead-behind --ignored=%s --untracked-files=%s',
+    aCommand := format('%s status -b --long --porcelain=2 --ahead-behind --ignored=%s --untracked-files=%s -z',
       [fGitCommand, fIgnoredMode, fUntrackedMode]);
-    RunProcess(aCommand, fDir, aList);
-    GitStatusBranch(aList);
-    GitStatusFiles(aList);
+
+    RunProcess(aCommand, fDir, M);
+    head := M.Memory;
+    tail := head + M.Size;
+    GitStatusBranch(head, tail);
+    GitStatusFiles(head, tail);
   finally
-    aList.Free;
+    M.Free;
   end;
 end;
 
-procedure TfrmMain.GitStatusBranch(aList: TStrings);
+function FindPattern(var head:pchar; tail: pchar; pattern: string): boolean;
 var
-  s: string;
+  len: SizeInt;
+  p: pchar;
+begin
+  result := false;
+  while head<tail do begin
+    p := strpos(head, pchar(pattern));
+    if p<>nil then begin
+      head := p;
+      result := true;
+      break;
+    end;
+    len := strlen(head);
+    head := head + len + 1;
+  end;
+end;
+
+procedure TfrmMain.GitStatusBranch(var head: pchar; tail: pchar);
+var
+  ab: string;
   i, n: Integer;
 begin
   fBranch := '';
   fUpstream := '';
   fCommitsAhead := 0;
   fCommitsBehind := 0;
-  if (aList<>nil) then
-    for i:=0 to aList.Count do begin
-      s := aList[i];
-      if (fBranch='') and (pos('# branch.head', s)=1) then
-        fBranch := copy(s, 15, 255)
-      else
-      if (fUpstream='') and (pos('# branch.upstream', s)=1) then
-        fUpstream := copy(s, 19, 255)
-      else
-      if pos('# branch.ab', s)=1 then begin
-        s := copy(s, 13, 255);
-        n := pos(' ', s);
-        fCommitsAhead := StrToIntDef(copy(s, 1, n-1), 0);
-        fCommitsBehind := StrToIntDef(copy(s, n+1, Length(s)), 0);
-        break;
-      end;
+  ab := '';
+
+  // scan header lines
+  while (head<tail) and (head^='#') do begin
+
+    n := strlen(head);
+
+    if (fBranch='') and (strlcomp(head, '# branch.head', 13)=0) then begin
+      SetString(fBranch, head + 14, n - 14);
+    end else
+    if (fUpstream='') and (strlcomp(head, '# branch.upstream', 17)=0) then begin
+      SetString(fUpstream, head + 18, n - 18);
+    end else
+    if (ab='') and (strlcomp(head, '# branch.ab', 11)=0) then begin
+      SetString(ab, head + 12, n - 12);
+      i := pos(' ', ab);
+      fCommitsAhead := StrToIntDef(copy(ab, 1, i-1), 0);
+      fCommitsBehind := StrToIntDef(copy(ab, i+1, Length(ab)), 0);
     end;
+
+    inc(head, n + 1);
+  end;
+
   UpdateBranch;
 end;
 
-procedure TfrmMain.GitStatusFiles(aList: TStrings);
+procedure TfrmMain.GitStatusFiles(var head: pchar; tail: pchar);
 var
-  i: Integer;
-  s: string;
+  n: Integer;
+  entry: PFileEntry;
+  start: pchar;
 begin
-  //WriteLn('Getting status files from: ');
-  //WriteLn(aList.Text);
-  for i:=4 to aList.Count-1 do begin
-    s := aList[i];
-    if s='' then
-      continue;
-    case s[1] of
-      '1': // changed tracked entries
-        begin
+  // scan header lines
+  while (head<tail) do begin
 
-        end;
-      '2': // renamed or copied entries
-        begin
+    start := head;
+    n := strlen(head);
+    //WriteLn(start);
 
-        end;
-      'u': // unmerged entries
-        begin
-
-        end;
+    case head^ of
+      '1': ParseOrdinaryChanged(head, tail, entry);
+      '2': ParseRenamedCopied(head, tail, entry);
+      'u': ParseUnmerged(head, tail, entry);
+      '?',
+      '!': ParseOther(head, tail, entry);
+      else entry := nil;
     end;
+
+    if entry<>nil then begin
+      // add entries
+
+    end;
+
+    head := start + n + 1;
   end;
 end;
 
