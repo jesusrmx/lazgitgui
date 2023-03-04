@@ -117,20 +117,29 @@ end;
 procedure TfrmMain.GitStatusBranch(aList: TStrings);
 var
   s: string;
-  n: Integer;
+  i, n: Integer;
 begin
   fBranch := '';
   fUpstream := '';
   fCommitsAhead := 0;
   fCommitsBehind := 0;
-  if (aList<>nil) and (aList.Count>2) then begin
-    fBranch := copy(aList[1], 15, 255);
-    fUpstream := copy(aList[2], 19, 255);
-    s := copy(aList[3], 13, 255);
-    n := pos(' ', s);
-    fCommitsAhead := StrToIntDef(copy(s, 1, n-1), 0);
-    fCommitsBehind := StrToIntDef(copy(s, n+1, Length(s)), 0);
-  end;
+  if (aList<>nil) then
+    for i:=0 to aList.Count do begin
+      s := aList[i];
+      if (fBranch='') and (pos('# branch.head', s)=1) then
+        fBranch := copy(s, 15, 255)
+      else
+      if (fUpstream='') and (pos('# branch.upstream', s)=1) then
+        fUpstream := copy(s, 19, 255)
+      else
+      if pos('# branch.ab', s)=1 then begin
+        s := copy(s, 13, 255);
+        n := pos(' ', s);
+        fCommitsAhead := StrToIntDef(copy(s, 1, n-1), 0);
+        fCommitsBehind := StrToIntDef(copy(s, n+1, Length(s)), 0);
+        break;
+      end;
+    end;
   UpdateBranch;
 end;
 
