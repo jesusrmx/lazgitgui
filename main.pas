@@ -49,6 +49,7 @@ type
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormShow(Sender: TObject);
+    procedure lstUnstagedClick(Sender: TObject);
   private
     fBranch: String;
     fConfig: TConfig;
@@ -69,6 +70,7 @@ type
     function  TryGitIn(aPath: string): boolean;
     procedure RestoreGui;
     procedure SaveGui;
+    procedure GitDiff(Sender: TObject);
   public
 
   end;
@@ -93,6 +95,11 @@ const
 procedure TfrmMain.FormShow(Sender: TObject);
 begin
   OpenDirectory(targetDir);
+end;
+
+procedure TfrmMain.lstUnstagedClick(Sender: TObject);
+begin
+  GitDiff(Sender);
 end;
 
 procedure TfrmMain.FormCreate(Sender: TObject);
@@ -367,6 +374,33 @@ begin
   fConfig.WriteInteger('pancommit.height', pancommit.Height, SECTION_GEOMETRY);
 
   fConfig.CloseConfig;
+end;
+
+procedure TfrmMain.GitDiff(Sender: TObject);
+var
+  aCommand, arg: string;
+  M: TMemoryStream;
+  head, tail: PChar;
+  srcUnstaged: boolean;
+  Entry: PFileEntry;
+  aIndex: Integer;
+begin
+  srcUnstaged := Sender=lstUnstaged;
+  aIndex := TListBox(Sender).ItemIndex;
+  if aIndex<0 then exit;
+  Entry := PFileEntry(TListBox(Sender).Items.Objects[aIndex]);
+
+  M := TMemoryStream.Create;
+  try
+    if srcUnstaged then arg := ''
+    else                arg := '--cached ';
+    aCommand := format('%s diff %s%s', [fGitCommand, arg, Entry^.path]);
+    RunProcess(aCommand, fDir, M);
+    M.Position := 0;
+    txtDiff.Lines.LoadFromStream(M);
+  finally
+    M.Free;
+  end;
 end;
 
 end.

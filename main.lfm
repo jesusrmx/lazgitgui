@@ -29,6 +29,7 @@ object frmMain: TfrmMain
       Width = 254
       Align = alTop
       ItemHeight = 0
+      OnClick = lstUnstagedClick
       TabOrder = 0
       TopIndex = -1
     end
@@ -84,6 +85,8 @@ object frmMain: TfrmMain
         Width = 252
         Align = alClient
         ItemHeight = 0
+        OnClick = lstUnstagedClick
+        Options = []
         TabOrder = 1
         TopIndex = -1
       end
