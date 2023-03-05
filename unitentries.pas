@@ -94,6 +94,7 @@ type
     EntryTypeStaged: TEntryType;
     EntryTypeUnStaged: TEntryType;
     SubModule: TSubmoduleType;
+    x, y: char;
     m1, m2, m3, mW: Integer;    // m1=mH and m2=mI for ekOrdinaryChanged and ekRenamedCopied
     h1, h2, h3: string[41];     // h1=hH and h2=hI for ekOrdinaryChanged and ekRenamedCopied
     xScore: string[7];
@@ -269,6 +270,8 @@ begin
   Inc(head, 2);
   entry^.EntryTypeStaged := XYToEntryType(head^, (head+1)^, true);
   entry^.EntryTypeUnStaged := XYToEntryType(head^, (head+1)^, false);
+  entry^.x := head^;
+  entry^.y := (head+1)^;
 
   Inc(head, 3);
   entry^.SubModule := [];
@@ -311,6 +314,8 @@ begin
   Inc(head, 2);
   entry^.EntryTypeStaged := XYToEntryType(head^, (head+1)^, true);
   entry^.EntryTypeUnStaged := XYToEntryType(head^, (head+1)^, false);
+  entry^.x := head^;
+  entry^.y := (head+1)^;
 
   Inc(head, 3);
   entry^.SubModule := [];
@@ -346,6 +351,8 @@ begin
   Inc(head, 2);
   entry^.EntryTypeStaged := XYToEntryType(head^, (head+1)^, true);
   entry^.EntryTypeUnStaged := XYToEntryType(head^, (head+1)^, false);
+  entry^.x := head^;
+  entry^.y := (head+1)^;
 
   Inc(head, 3);
   entry^.SubModule := [];
@@ -377,6 +384,9 @@ end;
 procedure ParseOther(var head: pchar; tail: pchar; out entry: PFileEntry);
 begin
   New(entry);
+  entry^.x := head^;
+  entry^.y := '.';
+
   case head^ of
     '?':
       begin
