@@ -6,13 +6,16 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, ExtCtrls,
-  SynEdit, SynHighlighterDiff, FileUtil, unitconfig, unitprocess, unitentries;
+  ActnList, SynEdit, SynHighlighterDiff, FileUtil, unitconfig, unitprocess,
+  unitentries;
 
 type
 
   { TfrmMain }
 
   TfrmMain = class(TForm)
+    actRescan: TAction;
+    ActionList1: TActionList;
     btnRescan: TButton;
     btnStageChanged: TButton;
     btnSignOff: TButton;
@@ -41,6 +44,7 @@ type
     splitterStaged: TSplitter;
     splitterCommit: TSplitter;
     txtDiff: TSynEdit;
+    procedure actRescanExecute(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
@@ -130,6 +134,12 @@ end;
 procedure TfrmMain.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
 begin
   SaveGui;
+end;
+
+procedure TfrmMain.actRescanExecute(Sender: TObject);
+begin
+  WriteLn('Rescan');
+  GitStatus;
 end;
 
 procedure TfrmMain.FormDestroy(Sender: TObject);
@@ -293,12 +303,14 @@ var
   i: Integer;
   entry: PFileEntry;
 begin
-  if fEntries<>nil then
+  if fEntries<>nil then begin
     for i:=0 to fEntries.Count-1 do begin
       entry := PFileEntry(fEntries[i]);
       if entry<>nil then
         Dispose(entry)
     end;
+    fEntries.Clear;
+  end;
   lstUnstaged.Clear;
   lstStaged.Clear;
 end;

@@ -128,7 +128,7 @@ object frmMain: TfrmMain
           Height = 27
           Top = 5
           Width = 125
-          Caption = 'btnRescan'
+          Action = actRescan
           TabOrder = 0
         end
         object btnStageChanged: TButton
@@ -793,5 +793,13 @@ object frmMain: TfrmMain
     Enabled = False
     Left = 840
     Top = 64
+  end
+  object ActionList1: TActionList
+    Left = 294
+    Top = 64
+    object actRescan: TAction
+      Caption = 'Rescan'
+      OnExecute = actRescanExecute
+    end
   end
 end
