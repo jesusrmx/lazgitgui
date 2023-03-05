@@ -169,6 +169,7 @@ begin
     tail := head + M.Size;
     GitStatusBranch(head, tail);
     GitStatusFiles(head, tail);
+    Caption := 'Current Directory: ' + ExpandFileName(fDir);
   finally
     M.Free;
   end;
