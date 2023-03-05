@@ -7,7 +7,7 @@ interface
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, ExtCtrls,
   ActnList, SynEdit, SynHighlighterDiff, FileUtil, unitconfig, unitprocess,
-  unitentries;
+  unitentries, Types, lclType;
 
 type
 
@@ -21,6 +21,7 @@ type
     btnSignOff: TButton;
     btnCommit: TButton;
     btnPush: TButton;
+    imgList: TImageList;
     Label1: TLabel;
     Label2: TLabel;
     lblRemote: TLabel;
@@ -50,6 +51,8 @@ type
     procedure FormDestroy(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure lstUnstagedClick(Sender: TObject);
+    procedure lstUnstagedDrawItem(Control: TWinControl; Index: Integer;
+      ARect: TRect; State: TOwnerDrawState);
   private
     fBranch: String;
     fConfig: TConfig;
@@ -100,6 +103,65 @@ end;
 procedure TfrmMain.lstUnstagedClick(Sender: TObject);
 begin
   GitDiff(Sender);
+end;
+
+function OwnerDrawStateToStr(State: TOwnerDrawState): string;
+  procedure Add(st: string);
+  begin
+    if result<>'' then result += ',';
+    result += st;
+  end;
+var
+  stateItem: TOwnerDrawStateType;
+  s: string;
+begin
+  for stateItem in State do begin
+    WriteStr(s, stateItem);
+    Add(s);
+  end;
+  result := '[' + result + ']';
+end;
+
+procedure TfrmMain.lstUnstagedDrawItem(Control: TWinControl; Index: Integer;
+  ARect: TRect; State: TOwnerDrawState);
+var
+  lb: TListBox;
+  x, y: Integer;
+  ts: TTextStyle;
+  entry: PFileEntry;
+  aCanvas: TCanvas;
+  aColor: TColor;
+  sel: boolean;
+begin
+  if index<0 then
+    exit;
+
+  lb := TListBox(Control);
+  entry := PFileEntry(lb.Items.Objects[index]);
+
+  sel := (odSelected in State) and lb.Focused;
+
+  aCanvas := lb.Canvas;
+  if lb.Focused then
+    if sel then aColor := clHighlight
+    else        aColor := lb.Color
+  else          aColor := lb.Color;
+  aCanvas.Brush.Color := aColor;
+  aCanvas.FillRect(aRect);
+
+  if lb.Focused then
+    if sel then aColor := clHighlightText
+    else        aColor := clBlack
+  else          aColor := clBlack;
+
+  lb.Canvas.Font.Color := aColor;
+  ts := lb.Canvas.TextStyle;
+  ts.Alignment := taLeftJustify;
+  ts.Layout := tlCenter;
+  lb.Canvas.Brush.Style := bsClear;
+  lb.Canvas.TextRect(aRect, aRect.Left + 22, aRect.Top, entry^.path);
+
+  imgList.Draw(lb.Canvas, aRect.Left + 2, aRect.Top + 1, 0);
 end;
 
 procedure TfrmMain.FormCreate(Sender: TObject);
