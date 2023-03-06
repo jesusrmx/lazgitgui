@@ -647,7 +647,27 @@ object frmMain: TfrmMain
       MouseTextActions = <>
       MouseSelActions = <>
       Lines.Strings = (
-        'txtDiff'
+        ' var'
+        '   curClass: jClass;'
+        ' begin'
+        '-  Result := JNI_FALSE;'
+        '-  curClass := (PEnv^).FindClass(PEnv, className);'
+        '+  Result:= JNI_FALSE;'
+        '+  curClass:= (PEnv^).FindClass(PEnv, className);'
+        '   if curClass <> nil then'
+        '   begin'
+        '-    if (PEnv^).RegisterNatives(PEnv, curClass, methods, countMethods) > 0 then Result := JNI_TRUE;'
+        '+    if (PEnv^).RegisterNatives(PEnv, curClass, methods, countMethods) > 0 then Result:= JNI_TRUE;'
+        '   end;'
+        ' end;'
+        ' '
+        ' function RegisterNativeMethods(PEnv: PJNIEnv; className: PChar): integer;'
+        ' begin'
+        '-  Result := RegisterNativeMethodsArray(PEnv, className, @NativeMethods[0], Length(NativeMethods));'
+        '+  Result:= RegisterNativeMethodsArray(PEnv, className, @NativeMethods[0], Length(NativeMethods));'
+        ' end;'
+        ' '
+        ' function JNI_OnLoad(VM: PJavaVM; {%H-}reserved: pointer): JInt; cdecl;'
       )
       Options = [eoAutoIndent, eoBracketHighlight, eoGroupUndo, eoHideRightMargin, eoScrollPastEol, eoSmartTabs, eoTabsToSpaces, eoTrimTrailingSpaces]
       VisibleSpecialChars = [vscSpace, vscTabAtLast]
