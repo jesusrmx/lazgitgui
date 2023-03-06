@@ -19,3 +19,4 @@ link*.res
 .DS_Store
 lazgitgui
 *.lps
+*.log

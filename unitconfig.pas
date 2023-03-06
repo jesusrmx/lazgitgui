@@ -5,7 +5,7 @@ unit unitconfig;
 interface
 
 uses
-  Classes, SysUtils, IniFiles;
+  Classes, SysUtils, FileUtil, IniFiles, LazLogger;
 
 const
   SECTION_DEFAULT = 'options';
@@ -32,7 +32,50 @@ type
     procedure WriteInteger(aKey:string; avalue:Integer; section:string=SECTION_DEFAULT);
   end;
 
+  procedure Setup;
+
+var
+  fConfig: TConfig;
+
 implementation
+
+procedure Setup;
+var
+  aFile, s: string;
+  i: Integer;
+begin
+
+  aFile := '';
+  for i:=1 to paramCount do begin
+    s := paramStr(i);
+    if pos('--logfile=', s)=1 then begin
+      aFile := copy(s, 11, Length(s));
+      break;
+    end;
+  end;
+
+  if aFile='' then begin
+    aFile := fConfig.ReadString('logfile', '<progdir>');
+    if aFile='<progdir>' then begin
+      {$ifdef Darwin}
+      aFile := ProgramDirectoryWithBundle;
+      {$else}
+      aFile := '';
+      {$endif}
+      aFile += 'lazgitgui.log';
+    end;
+  end;
+
+  aFile := ExpandFileName(aFile);
+  if not DirectoryExists(ExtractFilePath(aFile)) then
+    ForceDirectories(ExtractFilePath(aFile));
+
+  if FileExists(aFile) then
+    DeleteFile(aFile);
+
+  DebugLogger.LogName := aFile;
+
+end;
 
 { TConfig }
 

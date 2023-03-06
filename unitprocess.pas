@@ -38,7 +38,7 @@ begin
   try
     Process.ParseCmdLine(aCommand);
     Process.CurrentDirectory := startDir;
-    Process.Options := [poUsePipes];
+    Process.Options := [poUsePipes, poNoConsole];
     Process.Execute;
     repeat
       BytesRead := Process.Output.Read(Buffer^, BUFSIZE);

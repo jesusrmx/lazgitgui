@@ -17,6 +17,8 @@ uses
 
 begin
 
+  Setup;
+
   if ParamCount=0 then begin
     WriteLn(stdErr, 'A file or directory is needed in the command line');
     exit;

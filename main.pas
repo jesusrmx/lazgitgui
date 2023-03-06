@@ -5,7 +5,7 @@ unit main;
 interface
 
 uses
-  Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, ExtCtrls,
+  Classes, SysUtils, LazLogger, Forms, Controls, Graphics, Dialogs, StdCtrls, ExtCtrls,
   ActnList, SynEdit, SynHighlighterDiff, FileUtil, unitconfig, unitprocess,
   unitentries, Types, lclType;
 
@@ -55,7 +55,6 @@ type
       ARect: TRect; State: TOwnerDrawState);
   private
     fBranch: String;
-    fConfig: TConfig;
     fGitCommand: string;
     fDir: string;
     fUpstream: String;
@@ -203,12 +202,12 @@ begin
   {$endif}
 
   if fGitCommand='' then begin
-    WriteLn(StdErr, 'Could not find git command');
+    DebugLn('Error: Could not find git command');
     Application.Terminate;
     exit;
   end;
 
-  //WriteLn('git=', fGitCommand);
+  //DebugLn('git=', fGitCommand);
   fEntries := TFpList.Create;
 
   txtDiff.Clear;
@@ -231,7 +230,7 @@ end;
 
 procedure TfrmMain.actRescanExecute(Sender: TObject);
 begin
-  WriteLn('Rescan');
+  DebugLn('Rescan');
   GitStatus;
 end;
 
@@ -335,7 +334,7 @@ begin
 
     start := head;
     n := strlen(head);
-    WriteLn(start);
+    DebugLn(start);
 
     case head^ of
       '1': ParseOrdinaryChanged(head, tail, entry);
