@@ -161,7 +161,21 @@ begin
   lb.Canvas.Brush.Style := bsClear;
   lb.Canvas.TextRect(aRect, aRect.Left + 22, aRect.Top, entry^.path);
 
-  imgList.Draw(lb.Canvas, aRect.Left + 2, aRect.Top + 1, 0);
+  index := 0;
+  if lb=lstUnstaged then
+    case entry^.EntryTypeUnStaged of
+      etWorktreeChangedSinceIndex..etWorktreeChangedSinceIndexT:  index := 6;
+      etIgnored:                                                  index := 5;
+    end
+  else
+    case entry^.EntryTypeStaged of
+      etUpdatedInIndex..etUpdatedInIndexD:                        index := 7;
+      etAddedToIndex..etAddedToIndexD:                            index := 2;
+      etDeletedFromIndex:                                         index := 3;
+      etCopiedInIndex..etCopiedInIndexD:                          index := 4;
+    end;
+
+  imgList.Draw(lb.Canvas, aRect.Left + 2, aRect.Top + 1, index);
 end;
 
 procedure TfrmMain.FormCreate(Sender: TObject);
