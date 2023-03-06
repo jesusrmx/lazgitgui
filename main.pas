@@ -178,6 +178,9 @@ begin
 end;
 
 procedure TfrmMain.FormCreate(Sender: TObject);
+var
+  aFont: string;
+  aQuality: TFontQuality;
 begin
   fUntrackedMode := 'all';
   fIgnoredMode := 'no';
@@ -212,13 +215,23 @@ begin
 
   txtDiff.Clear;
 
-  {$ifdef Darwin}
   with txtDiff.Font do begin
-    Name := 'Menlo';
-    Quality := fqAntialiased;
-    size := 10;
+    aFont := Name;
+    aQuality := Quality;
+    {$ifdef Darwin}
+    aFont := 'Menlo';
+    aQuality := fqAntialiased;
+    {$endif}
+    {$ifdef MsWindows}
+    aFont := 'Courier New';
+    {$endif}
+    Name := fConfig.ReadString('font.name', aFont, 'Viewer');
+    Size := fConfig.ReadInteger('font.size', 10, 'Viewer');
+    if fConfig.ReadBoolean('font.antialiased', aQuality=fqAntialiased, 'Viewer') then
+      Quality := fqAntialiased
+    else
+      Quality := fqNonAntialiased;
   end;
-  {$endif}
 
   RestoreGui;
 end;
@@ -230,7 +243,6 @@ end;
 
 procedure TfrmMain.actRescanExecute(Sender: TObject);
 begin
-  DebugLn('Rescan');
   GitStatus;
 end;
 
