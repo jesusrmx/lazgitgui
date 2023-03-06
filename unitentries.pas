@@ -107,13 +107,15 @@ procedure ParseRenamedCopied(var head: pchar; tail: pchar; out entry: PFileEntry
 procedure ParseUnmerged(var head: pchar; tail: pchar; out entry: PFileEntry);
 procedure ParseOther(var head: pchar; tail: pchar; out entry: PFileEntry);
 
+function EntryTypeToStr(X, Y: char): string;
+
 
 implementation
 
 {
 X          Y     Meaning
 -------------------------------------------------
-	       [AMD]   not updated
+         [AMD]   not updated
 M        [ MTD]  updated in index
 T        [ MTD]  type changed in index
 A        [ MTD]  added to index
@@ -124,8 +126,8 @@ C        [ MTD]  copied in index
 [ MTARC]    M    work tree changed since index
 [ MTARC]    T    type changed in work tree since index
 [ MTARC]    D    deleted in work tree
-	          R    renamed in work tree
-	          C    copied in work tree
+	    R    renamed in work tree
+	    C    copied in work tree
 -------------------------------------------------
 D           D    unmerged, both deleted
 A           U    unmerged, added by us
@@ -139,6 +141,26 @@ U           U    unmerged, both modified
 !           !    ignored
 -------------------------------------------------
 }
+
+resourcestring
+  rsLazGitGuiUnmodified = 'Unmodified';
+  rsLazGitGuiModifiedNotStaged = 'Modified, not staged';
+  rsLazGitGuiStagedForCommit = 'Staged for commit';
+  rsLazGitGuiPortionsStagedForCommit = 'Portions staged for commit';
+  rsLazGitGuiStagedForCommitMissing = 'Staged for commit, missing';
+  rsLazGitGuiFileTypeChangedNotStaged = 'File type changed, not staged';
+  rsLazGitGuiFileTypeChangedOldTypeStagedForCommit = 'File type changed, old type staged for commit';
+  rsLazGitGuiFileTypeChangedStaged = 'File type changed, staged';
+  rsLazGitGuiFileTypeChangeStagedModificationNotStaged = 'File type change staged, Modification not staged';
+  rsLazGitGuiFileTypeChangeFileMissing = 'File type change staged, Missing';
+  rsLazGitGuiUntrackedNotStaged = 'Untracked, not staged';
+  rsLazGitGuiMissing = 'Missing';
+  rsLazGitGuiStagedForRemoval = 'Staged for removal';
+  rsLazGitGuiStagedForRemovalStillPresent = 'Staged for removal, still present';
+  rsLazGitGuiRequiresMergeResolution = 'Requires merge resolution';
+  rsLazGitGuiFileStateMissingDescription = 'File state missing description';
+  rsLazGitGuiIgnored = 'Ignored';
+
 function XYToEntryType(x, y: char; staged:boolean): TEntryType;
 begin
   result := etUnknown;
@@ -243,6 +265,40 @@ begin
           'C': result := etTypeChangedInWorktreeSinceIndexC;
         end;
     end;
+  end;
+end;
+
+function EntryTypeToStr(X, Y: char): string;
+begin
+  // ref: https://github.com/git/git/blob/master/git-gui/git-gui.sh (c. 2098)
+  case x+y of
+    '..': result := rsLazGitGuiUnmodified;
+    '.M': result := rsLazGitGuiModifiedNotStaged;
+    'M.': result := rsLazGitGuiStagedForCommit;
+    'MM': result := rsLazGitGuiPortionsStagedForCommit;
+    'MD': result := rsLazGitGuiStagedForCommitMissing;
+    '.T': result := rsLazGitGuiFileTypeChangedNotStaged;
+    'MT': result := rsLazGitGuiFileTypeChangedOldTypeStagedForCommit;
+    'AT': result := rsLazGitGuiFileTypeChangedOldTypeStagedForCommit;
+    'T.': result := rsLazGitGuiFileTypeChangedStaged;
+    'TM': result := rsLazGitGuiFileTypeChangeStagedModificationNotStaged;
+    'TD': result := rsLazGitGuiFileTypeChangeFileMissing;
+    '.O': result := rsLazGitGuiUntrackedNotStaged; // 'O'='?' ???
+    'A.': result := rsLazGitGuiStagedForCommit;
+    'AM': result := rsLazGitGuiPortionsStagedForCommit;
+    'AD': result := rsLazGitGuiStagedForCommitMissing;
+    '.D': result := rsLazGitGuiMissing;
+    'D.': result := rsLazGitGuiStagedForRemoval;
+    'DO': result := rsLazGitGuiStagedForRemovalStillPresent; // 'O'='?' ???
+    '.U': result := rsLazGitGuiRequiresMergeResolution;
+    'U.': result := rsLazGitGuiRequiresMergeResolution;
+    'UU': result := rsLazGitGuiRequiresMergeResolution;
+    'UM': result := rsLazGitGuiRequiresMergeResolution;
+    'UD': result := rsLazGitGuiRequiresMergeResolution;
+    'UT': result := rsLazGitGuiRequiresMergeResolution;
+    '?.': result := rsLazGitGuiUntrackedNotStaged;
+    '!.': result := rsLazGitGuiIgnored;
+    else  result := rsLazGitGuiFileStateMissingDescription;
   end;
 end;
 

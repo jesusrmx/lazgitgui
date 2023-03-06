@@ -233,6 +233,8 @@ begin
       Quality := fqNonAntialiased;
   end;
 
+  panFileState.Caption := '';
+
   RestoreGui;
 end;
 
@@ -486,6 +488,7 @@ begin
   aIndex := TListBox(Sender).ItemIndex;
   if aIndex<0 then exit;
   Entry := PFileEntry(TListBox(Sender).Items.Objects[aIndex]);
+  panFileState.Caption := EntryTypeToStr(Entry^.x, Entry^.y);
 
   M := TMemoryStream.Create;
   try
