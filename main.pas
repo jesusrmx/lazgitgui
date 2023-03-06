@@ -211,6 +211,16 @@ begin
   //WriteLn('git=', fGitCommand);
   fEntries := TFpList.Create;
 
+  txtDiff.Clear;
+
+  {$ifdef Darwin}
+  with txtDiff.Font do begin
+    Name := 'Menlo';
+    Quality := fqAntialiased;
+    size := 10;
+  end;
+  {$endif}
+
   RestoreGui;
 end;
 
