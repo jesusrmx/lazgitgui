@@ -53,11 +53,14 @@ type
     procedure lstUnstagedClick(Sender: TObject);
     procedure lstUnstagedDrawItem(Control: TWinControl; Index: Integer;
       ARect: TRect; State: TOwnerDrawState);
+    procedure lstUnstagedMouseDown(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
   private
     fBranch: String;
     fGitCommand: string;
     fDir: string;
     fMerging: Boolean;
+    fMouseDown: TPoint;
     fUpstream: String;
     fUntrackedMode: string;
     fIgnoredMode: string;
@@ -74,6 +77,7 @@ type
     procedure RestoreGui;
     procedure SaveGui;
     procedure GitDiff(Sender: TObject);
+    procedure ItemAction(sender: TListbox; aIndex: Integer);
   public
 
   end;
@@ -101,8 +105,22 @@ begin
 end;
 
 procedure TfrmMain.lstUnstagedClick(Sender: TObject);
+var
+  aIndex: Integer;
 begin
-  GitDiff(Sender);
+  aIndex := TListBox(Sender).GetIndexAtXY(fMouseDown.X, fMouseDown.Y);
+  if aIndex>=0 then begin
+    if (fMouseDown.X>0) and (fMouseDown.X < 20) then
+      ItemAction(TListbox(sender), aIndex)
+    else
+      GitDiff(Sender);
+  end;
+  fMouseDown.X := 0;
+end;
+
+procedure TfrmMain.ItemAction(sender: TListbox; aIndex: Integer);
+begin
+  ShowMessage('ItemAction on '+Sender.Items[aIndex]);
 end;
 
 function OwnerDrawStateToStr(State: TOwnerDrawState): string;
@@ -179,6 +197,12 @@ begin
     end;
 
   imgList.Draw(lb.Canvas, aRect.Left + 2, aRect.Top + 1, index);
+end;
+
+procedure TfrmMain.lstUnstagedMouseDown(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
+begin
+  fMouseDown := Point(x, y);
 end;
 
 procedure TfrmMain.FormCreate(Sender: TObject);
