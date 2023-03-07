@@ -248,21 +248,21 @@ begin
         end;
       'T':
         case x of
-          '.': result := etDeletedInWorktree;
-          'M': result := etDeletedInWorktreeM;
-          'T': result := etDeletedInWorktreeT;
-          'A': result := etDeletedInWorktreeA;
-          'R': result := etDeletedInWorktreeR;
-          'C': result := etDeletedInWorktreeC;
-        end;
-      'D':
-        case x of
           '.': result := etTypeChangedInWorktreeSinceIndex;
           'M': result := etTypeChangedInWorktreeSinceIndexM;
           'T': result := etTypeChangedInWorktreeSinceIndexT;
           'A': result := etTypeChangedInWorktreeSinceIndexA;
           'R': result := etTypeChangedInWorktreeSinceIndexR;
           'C': result := etTypeChangedInWorktreeSinceIndexC;
+        end;
+      'D':
+        case x of
+          '.': result := etDeletedInWorktree;
+          'M': result := etDeletedInWorktreeM;
+          'T': result := etDeletedInWorktreeT;
+          'A': result := etDeletedInWorktreeA;
+          'R': result := etDeletedInWorktreeR;
+          'C': result := etDeletedInWorktreeC;
         end;
     end;
   end;
