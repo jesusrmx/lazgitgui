@@ -57,6 +57,7 @@ type
     fBranch: String;
     fGitCommand: string;
     fDir: string;
+    fMerging: Boolean;
     fUpstream: String;
     fUntrackedMode: string;
     fIgnoredMode: string;
@@ -277,9 +278,10 @@ begin
     RunProcess(aCommand, fDir, M);
     head := M.Memory;
     tail := head + M.Size;
+    fMerging := false;
     GitStatusBranch(head, tail);
     GitStatusFiles(head, tail);
-    Caption := 'Current Directory: ' + ExpandFileName(fDir);
+    UpdateBranch;
   finally
     M.Free;
   end;
@@ -334,8 +336,6 @@ begin
 
     inc(head, n + 1);
   end;
-
-  UpdateBranch;
 end;
 
 procedure TfrmMain.GitStatusFiles(var head: pchar; tail: pchar);
@@ -357,7 +357,11 @@ begin
     case head^ of
       '1': ParseOrdinaryChanged(head, tail, entry);
       '2': ParseRenamedCopied(head, tail, entry);
-      'u': ParseUnmerged(head, tail, entry);
+      'u':
+        begin
+          fMerging := true;
+          ParseUnmerged(head, tail, entry);
+        end;
       '?',
       '!': ParseOther(head, tail, entry);
       else entry := nil;
@@ -398,7 +402,10 @@ begin
   behind := fCommitsBehind<0;
 
   label1.Visible := not ahead and not behind;
-  lblBranch.Caption := fBranch;
+  s := fBranch;
+  if fMerging then
+    s += ' (MERGING)';
+  lblBranch.Caption := s;
 
   s := '';
   if ahead then s += format('%d commits ahead', [fCommitsAhead]);
@@ -411,6 +418,8 @@ begin
 
   label2.Visible := not ahead and not behind;
   lblRemote.Caption := fUpstream;
+  Caption := 'Current Directory: ' + ExpandFileName(fDir);
+
 end;
 
 procedure TfrmMain.Clear;
