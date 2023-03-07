@@ -166,6 +166,7 @@ begin
       etWorktreeChangedSinceIndex..etWorktreeChangedSinceIndexT:  index := 6;
       etDeletedInWorktree..etDeletedInWorktreeC:                  index := 3;
       etIgnored:                                                  index := 5;
+      etUnmergedAddedByUs..etUnmergedBothModified:                index := 11;
     end
   else
     case entry^.EntryTypeStaged of

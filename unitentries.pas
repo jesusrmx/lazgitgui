@@ -161,11 +161,18 @@ resourcestring
   rsLazGitGuiRequiresMergeResolution = 'Requires merge resolution';
   rsLazGitGuiFileStateMissingDescription = 'File state missing description';
   rsLazGitGuiIgnored = 'Ignored';
+  rsLazGitGuiUnmergedBothDeleted = 'Unmerged, Both deleted';
+  rsLazGitGuiUnmergedAddedByUs = 'Unmerged, Added by Us';
+  rsLazGitGuiUnmergedDeletedByThem = 'Unmerged, Deleted by Them';
+  rsLazGitGuiUnmergedAddedByThem = 'Unmerged, Added by Them';
+  rsLazGitGuiUnmergedDeletedByUs = 'Unmerged, Deleted by Us';
+  rsLazGitGuiUnmergedBothAdded  = 'Unmerged, Both added';
+  rsLazGitGuiUnmergedBothModified = 'Unmerged, Both Modified';
 
-function XYToEntryType(x, y: char; staged:boolean): TEntryType;
+function XYToEntryType(x, y: char; staged:boolean; merging:boolean=false): TEntryType;
 begin
   result := etUnknown;
-  if staged then begin
+  if staged and (not merging) then begin
     case x of
       '.':
         case y of
@@ -195,15 +202,10 @@ begin
           'M': result := etAddedToIndexM;
           'T': result := etAddedToIndexT;
           'D': result := etAddedToIndexD;
-          'U': result := etUnmergedAddedByUs;
-          'A': result := etUnmergedBothAdded;
         end;
       'D':
         case y of
           '.': result := etDeletedFromIndex;
-          'D': result := etUnmergedBothDeleted;
-          'U': result := etUnmergedDeletedByUs;
-
         end;
       'R':
         case y of
@@ -219,53 +221,59 @@ begin
           'T': result := etCopiedInIndexT;
           'D': result := etCopiedInIndexD;
         end;
-      'U':
-        case y of
-          'D': result := etUnmergedDeletedByThem;
-          'A': result := etUnmergedAddedByThem;
-          'U': result := etUnmergedBothModified;
-        end;
       '?':  result := etUntracked;
       '!':  result := etIgnored;
     end;
   end else begin
-    case y of
-      '.':
-        case x of
-          'M': result := etIndexAndWorktreeMatchesM;
-          'T': result := etIndexAndWorktreeMatchesT;
-          'A': result := etIndexAndWorktreeMatchesA;
-          'R': result := etIndexAndWorktreeMatchesR;
-          'C': result := etIndexAndWorktreeMatchesC;
-        end;
-      'M':
-        case x of
-          '.': result := etWorktreeChangedSinceIndex;
-          'M': result := etWorktreeChangedSinceIndexM;
-          'T': result := etWorktreeChangedSinceIndexT;
-          'A': result := etWorktreeChangedSinceIndexA;
-          'R': result := etWorktreeChangedSinceIndexR;
-          'C': result := etWorktreeChangedSinceIndexC;
-        end;
-      'T':
-        case x of
-          '.': result := etTypeChangedInWorktreeSinceIndex;
-          'M': result := etTypeChangedInWorktreeSinceIndexM;
-          'T': result := etTypeChangedInWorktreeSinceIndexT;
-          'A': result := etTypeChangedInWorktreeSinceIndexA;
-          'R': result := etTypeChangedInWorktreeSinceIndexR;
-          'C': result := etTypeChangedInWorktreeSinceIndexC;
-        end;
-      'D':
-        case x of
-          '.': result := etDeletedInWorktree;
-          'M': result := etDeletedInWorktreeM;
-          'T': result := etDeletedInWorktreeT;
-          'A': result := etDeletedInWorktreeA;
-          'R': result := etDeletedInWorktreeR;
-          'C': result := etDeletedInWorktreeC;
-        end;
-    end;
+
+    if merging then
+      case x+y of
+        'DD': result := etUnmergedBothDeleted;
+        'AU': result := etUnmergedAddedByUs;
+        'UD': result := etUnmergedDeletedByThem;
+        'UA': result := etUnmergedAddedByThem;
+        'DU': result := etUnmergedDeletedByUs;
+        'AA': result := etUnmergedBothAdded;
+        'UU': result := etUnmergedBothModified;
+      end
+    else
+      case y of
+        '.':
+          case x of
+            'M': result := etIndexAndWorktreeMatchesM;
+            'T': result := etIndexAndWorktreeMatchesT;
+            'A': result := etIndexAndWorktreeMatchesA;
+            'R': result := etIndexAndWorktreeMatchesR;
+            'C': result := etIndexAndWorktreeMatchesC;
+          end;
+        'M':
+          case x of
+            '.': result := etWorktreeChangedSinceIndex;
+            'M': result := etWorktreeChangedSinceIndexM;
+            'T': result := etWorktreeChangedSinceIndexT;
+            'A': result := etWorktreeChangedSinceIndexA;
+            'R': result := etWorktreeChangedSinceIndexR;
+            'C': result := etWorktreeChangedSinceIndexC;
+          end;
+        'T':
+          case x of
+            '.': result := etTypeChangedInWorktreeSinceIndex;
+            'M': result := etTypeChangedInWorktreeSinceIndexM;
+            'T': result := etTypeChangedInWorktreeSinceIndexT;
+            'A': result := etTypeChangedInWorktreeSinceIndexA;
+            'R': result := etTypeChangedInWorktreeSinceIndexR;
+            'C': result := etTypeChangedInWorktreeSinceIndexC;
+          end;
+        'D':
+          case x of
+            '.': result := etDeletedInWorktree;
+            'M': result := etDeletedInWorktreeM;
+            'T': result := etDeletedInWorktreeT;
+            'A': result := etDeletedInWorktreeA;
+            'R': result := etDeletedInWorktreeR;
+            'C': result := etDeletedInWorktreeC;
+          end;
+      end;
   end;
 end;
 
@@ -292,12 +300,19 @@ begin
     'D.': result := rsLazGitGuiStagedForRemoval;
     'DO': result := rsLazGitGuiStagedForRemovalStillPresent; // 'O'='?' ???
     'R.': result := rsLazGitGuiStagedForRename;
+
+    'DD': result := rsLazGitGuiUnmergedBothDeleted;
+    'AU': result := rsLazGitGuiUnmergedAddedByUs;
+    'UD': result := rsLazGitGuiUnmergedDeletedByThem;
+    'UA': result := rsLazGitGuiUnmergedAddedByThem;
+    'DU': result := rsLazGitGuiUnmergedDeletedByUs;
+    'AA': result := rsLazGitGuiUnmergedBothAdded;
+    'UU': result := rsLazGitGuiUnmergedBothModified;
     '.U': result := rsLazGitGuiRequiresMergeResolution;
     'U.': result := rsLazGitGuiRequiresMergeResolution;
-    'UU': result := rsLazGitGuiRequiresMergeResolution;
     'UM': result := rsLazGitGuiRequiresMergeResolution;
-    'UD': result := rsLazGitGuiRequiresMergeResolution;
     'UT': result := rsLazGitGuiRequiresMergeResolution;
+
     '?.': result := rsLazGitGuiUntrackedNotStaged;
     '!.': result := rsLazGitGuiIgnored;
     else  result := rsLazGitGuiFileStateMissingDescription;
@@ -411,8 +426,8 @@ begin
 
   // u <XY> <sub> <m1> <m2> <m3> <mW> <h1> <h2> <h3> <path>
   Inc(head, 2);
-  entry^.EntryTypeStaged := XYToEntryType(head^, (head+1)^, true);
-  entry^.EntryTypeUnStaged := XYToEntryType(head^, (head+1)^, false);
+  entry^.EntryTypeStaged := XYToEntryType(head^, (head+1)^, true, true);
+  entry^.EntryTypeUnStaged := XYToEntryType(head^, (head+1)^, false, true);
   entry^.x := head^;
   entry^.y := (head+1)^;
 
