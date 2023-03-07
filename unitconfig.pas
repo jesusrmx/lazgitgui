@@ -54,27 +54,18 @@ begin
     end;
   end;
 
-  if aFile='' then begin
-    aFile := fConfig.ReadString('logfile', '<progdir>');
-    if aFile='<progdir>' then begin
-      {$ifdef Darwin}
-      aFile := ProgramDirectoryWithBundle;
-      {$else}
-      aFile := '';
-      {$endif}
-      aFile += 'lazgitgui.log';
-    end;
+  if aFile='' then
+    aFile := fConfig.ReadString('logfile', '');
+
+  if aFile<>'' then begin
+    aFile := ExpandFileName(aFile);
+    if not DirectoryExists(ExtractFilePath(aFile)) then
+      ForceDirectories(ExtractFilePath(aFile));
+    if FileExists(aFile) then
+      DeleteFile(aFile);
   end;
 
-  aFile := ExpandFileName(aFile);
-  if not DirectoryExists(ExtractFilePath(aFile)) then
-    ForceDirectories(ExtractFilePath(aFile));
-
-  if FileExists(aFile) then
-    DeleteFile(aFile);
-
   DebugLogger.LogName := aFile;
-
 end;
 
 { TConfig }
