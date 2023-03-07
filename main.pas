@@ -158,12 +158,13 @@ begin
   ts.Alignment := taLeftJustify;
   ts.Layout := tlCenter;
   lb.Canvas.Brush.Style := bsClear;
-  lb.Canvas.TextRect(aRect, aRect.Left + 22, aRect.Top, entry^.path);
+  lb.Canvas.TextRect(aRect, aRect.Left + 22, aRect.Top, lb.Items[index]);
 
   index := 0;
   if lb=lstUnstaged then
     case entry^.EntryTypeUnStaged of
       etWorktreeChangedSinceIndex..etWorktreeChangedSinceIndexT:  index := 6;
+      etDeletedInWorktree..etDeletedInWorktreeC:                  index := 3;
       etIgnored:                                                  index := 5;
     end
   else
@@ -172,6 +173,7 @@ begin
       etAddedToIndex..etAddedToIndexD:                            index := 2;
       etDeletedFromIndex:                                         index := 3;
       etCopiedInIndex..etCopiedInIndexD:                          index := 4;
+      etRenamedInIndex..etRenamedInIndexD:                        index := 10;
     end;
 
   imgList.Draw(lb.Canvas, aRect.Left + 2, aRect.Top + 1, index);
@@ -265,6 +267,7 @@ var
   M: TMemoryStream;
   head, tail: PChar;
 begin
+  DebugLn('Status ----------------------------------------------');
   M := TMemoryStream.Create;
   try
     aCommand := format('%s status -b --long --porcelain=2 --ahead-behind --ignored=%s --untracked-files=%s -z',
@@ -364,15 +367,19 @@ begin
 
       // staged list
       case entry^.EntryTypeStaged of
-        etUpdatedInIndex..etCopiedInIndexD:
+        etUpdatedInIndex..etDeletedFromIndex:
           lstStaged.Items.AddObject(entry^.path, TObject(entry));
+        etRenamedInIndex..etCopiedInIndexD:
+          lstStaged.Items.AddObject(entry^.origPath + ' -> ' + entry^.path, TObject(entry));
       end;
 
       // unstaged list
       case entry^.EntryTypeUnStaged of
+        etUnknown:;
         etUpdatedInIndex..etCopiedInIndexD:;
         etIndexAndWorktreeMatchesM..etIndexAndWorktreeMatchesC:;
-        else lstUnstaged.Items.AddObject(entry^.path, TObject(entry));
+        else
+          lstUnstaged.Items.AddObject(entry^.path, TObject(entry));
       end;
 
     end;

@@ -157,6 +157,7 @@ resourcestring
   rsLazGitGuiMissing = 'Missing';
   rsLazGitGuiStagedForRemoval = 'Staged for removal';
   rsLazGitGuiStagedForRemovalStillPresent = 'Staged for removal, still present';
+  rsLazGitGuiStagedForRename = 'Staged for Rename';
   rsLazGitGuiRequiresMergeResolution = 'Requires merge resolution';
   rsLazGitGuiFileStateMissingDescription = 'File state missing description';
   rsLazGitGuiIgnored = 'Ignored';
@@ -290,6 +291,7 @@ begin
     '.D': result := rsLazGitGuiMissing;
     'D.': result := rsLazGitGuiStagedForRemoval;
     'DO': result := rsLazGitGuiStagedForRemovalStillPresent; // 'O'='?' ???
+    'R.': result := rsLazGitGuiStagedForRename;
     '.U': result := rsLazGitGuiRequiresMergeResolution;
     'U.': result := rsLazGitGuiRequiresMergeResolution;
     'UU': result := rsLazGitGuiRequiresMergeResolution;
@@ -353,15 +355,15 @@ begin
 
   n := strlen(head);
   entry^.path := head;
-
   inc(head, n+1);
-  entry^.origPath := head;
+  entry^.origPath := '';
 end;
 
 procedure ParseRenamedCopied(var head: pchar; tail: pchar; out entry: PFileEntry
   );
 var
   s: string;
+  n: Integer;
 begin
   New(entry);
   entry^.EntryKind := ekRenamedCopied;
@@ -392,8 +394,12 @@ begin
 
   entry^.h1 := NextField(head);
   entry^.h2 := NextField(head);
+  entry^.xScore := NextField(head);
 
   entry^.path := head;
+  n := strlen(head);
+  inc(head, n+1);
+  entry^.origPath := head;
 end;
 
 procedure ParseUnmerged(var head: pchar; tail: pchar; out entry: PFileEntry);
