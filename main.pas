@@ -119,8 +119,16 @@ begin
 end;
 
 procedure TfrmMain.ItemAction(sender: TListbox; aIndex: Integer);
+var
+  Entry: PFileEntry;
 begin
-  ShowMessage('ItemAction on '+Sender.Items[aIndex]);
+  //ShowMessage('ItemAction on '+Sender.Items[aIndex]);
+  Entry := PFileEntry(Sender.Items.Objects[aIndex]);
+  if sender=lstUnstaged then begin
+
+  end else begin
+
+  end;
 end;
 
 function OwnerDrawStateToStr(State: TOwnerDrawState): string;
