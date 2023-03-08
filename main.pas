@@ -59,7 +59,7 @@ type
     fClickedIndex: Integer;
     fGitCommand: string;
     fDir, fTopLevelDir: string;
-    fMerging: Boolean;
+    fMerging, fMergingConflict: Boolean;
     fUpstream: String;
     fUntrackedMode: string;
     fIgnoredMode: string;
@@ -79,6 +79,7 @@ type
     procedure SaveGui;
     procedure GitDiff(Sender: TObject);
     procedure ItemAction(sender: TListbox; aIndex: Integer);
+    function GitMerging: boolean;
   public
 
   end;
@@ -123,6 +124,11 @@ begin
         begin
           RunProcess(fGitCommand+' rm '+ Entry^.path, fTopLevelDir, cmdOut);
           GitStatus;
+        end;
+      // other merge conflicts:
+      // see:
+      etUnmergedDeletedByUs:
+        begin
         end
       else
         ShowMessage('Not yet implemented for Unstaged: '+cmdOut);
@@ -141,6 +147,16 @@ begin
         ShowMessage('Not yet implemented for Staged: '+cmdOut);
     end;
   end;
+end;
+
+function TfrmMain.GitMerging: boolean;
+var
+  cmdOut: RawByteString;
+begin
+  //result := FileExists(fTopLevelDir + '.git/MERGE_HEAD');
+  // ref: https://stackoverflow.com/a/55192451
+  // todo: close output and close stderr
+  result := RunProcess(fGitCommand + ' rev-list -1 MERGE_HEAD', fDir, cmdOut) = 0;
 end;
 
 function OwnerDrawStateToStr(State: TOwnerDrawState): string;
@@ -352,7 +368,8 @@ begin
     RunProcess(aCommand, fDir, M);
     head := M.Memory;
     tail := head + M.Size;
-    fMerging := false;
+    fMergingConflict := false;
+    fMerging := GitMerging;
     GitStatusBranch(head, tail);
     GitStatusFiles(head, tail);
     UpdateBranch;
@@ -433,7 +450,7 @@ begin
       '2': ParseRenamedCopied(head, tail, entry);
       'u':
         begin
-          fMerging := true;
+          fMergingConflict := true;
           ParseUnmerged(head, tail, entry);
         end;
       '?',
@@ -477,8 +494,11 @@ begin
 
   label1.Visible := not ahead and not behind;
   s := fBranch;
-  if fMerging then
-    s += ' (MERGING)';
+  if fMerging then begin
+    s += ' (MERGING';
+    if fMergingConflict then s += ' CONFLICT';
+    s += ')';
+  end;
   lblBranch.Caption := s;
 
   s := '';
