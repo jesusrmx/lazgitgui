@@ -5,7 +5,7 @@ unit unitentries;
 interface
 
 uses
-  Classes, SysUtils;
+  Classes, SysUtils, LazLogger;
 
 type
 
@@ -108,6 +108,7 @@ procedure ParseUnmerged(var head: pchar; tail: pchar; out entry: PFileEntry);
 procedure ParseOther(var head: pchar; tail: pchar; out entry: PFileEntry);
 
 function EntryTypeToStr(X, Y: char): string;
+procedure DumpEntry(Entry: PFileEntry);
 
 
 implementation
@@ -316,6 +317,31 @@ begin
     '?.': result := rsLazGitGuiUntrackedNotStaged;
     '!.': result := rsLazGitGuiIgnored;
     else  result := rsLazGitGuiFileStateMissingDescription;
+  end;
+end;
+
+procedure DumpEntry(Entry: PFileEntry);
+var
+  s: string;
+begin
+  with Entry^ do begin
+    WriteStr(s, EntryKind);
+    DbgOut('Entry: kind: %s', [s]);
+    WriteStr(s, EntryTypeStaged);
+    DbgOut(' TypeStaged: %s', [s]);
+    WriteStr(s, EntryTypeUnStaged);
+    DbgOut(' TypeUnStaged: %s', [s]);
+    DbgOut(' SubModule: [');
+    if smtSubmodule in SubModule then DbgOut('smtSubmodule ');
+    if smtCommitChanged in SubModule then DbgOut('smtCommitChanged ');
+    if smtUnTrackedChanges in SubModule then dbgOut('smtUntrackedChanged ');
+    if smtTrackedChanges in SubModule then dbgOut('smtTrackedChanged ');
+    DbgOut('] XY=%s%s',[X,Y]);
+    DbgOut(' FileModes HI3W: %s %s %s %s ', [OctStr(m1, 5), OctStr(m2, 5), OctStr(m3, 5), OctStr(mW, 5)]);
+    DbgOut(' ObjNames: HI3: %s %s %s ', [h1, h2, h3]);
+    DbgOut(' XScore: %s',[xScore]);
+    DbgOut(' Path: %s',[path]);
+    DebugLn(' OrigPath: %s', [OrigPath]);
   end;
 end;
 
