@@ -11,17 +11,18 @@ uses
 type
   TOutputEvent = procedure(const aBuffer; aSize:longint) is nested;
 
-  procedure RunProcess(const aCommand, startDir: string; callback:TOutputEvent); overload;
-  procedure RunProcess(const aCommand, startDir: string; cmdOutput: TStrings); overload;
-  procedure RunProcess(const aCommand, startDir: string; stream: TStream); overload;
-  procedure RunProcess(const aCommand, startDir: string; out cmdOutput: RawByteString); overload;
+  function RunProcess(const aCommand, startDir: string; callback:TOutputEvent): Integer; overload;
+  function RunProcess(const aCommand, startDir: string; cmdOutput: TStrings): Integer; overload;
+  function RunProcess(const aCommand, startDir: string; stream: TStream): Integer; overload;
+  function RunProcess(const aCommand, startDir: string; out cmdOutput: RawByteString): Integer; overload;
 
 implementation
 
 const
   BUFSIZE = 1024 * 2;
 
-procedure RunProcess(const aCommand, startDir: string; callback:TOutputEvent);
+function RunProcess(const aCommand, startDir: string; callback: TOutputEvent
+  ): Integer;
 var
   Process: TProcessUTF8;
   Buffer, Tail: PByte;
@@ -47,19 +48,21 @@ begin
       CallBack(Buffer^, BytesRead);
     until BytesRead=0;
     DebugLn('Exit: Status=%d Code=%d', [Process.ExitStatus, Process.ExitCode]);
+    result := Process.ExitCode;
   finally
     Process.Free;
     FreeMem(Buffer);
   end;
 end;
 
-procedure RunProcess(const aCommand, startDir: string; cmdOutput: TStrings);
+function RunProcess(const aCommand, startDir: string; cmdOutput: TStrings
+  ): Integer;
 var
   M: TMemoryStream;
 begin
   M := TMemoryStream.Create;
   try
-    RunProcess(aCommand, startDir, M);
+    result := RunProcess(aCommand, startDir, M);
     M.Position := 0;
     cmdOutput.LoadFromStream(M);
   finally
@@ -68,23 +71,23 @@ begin
 
 end;
 
-procedure RunProcess(const aCommand, startDir: string; stream: TStream);
+function RunProcess(const aCommand, startDir: string; stream: TStream): Integer;
   procedure CollectOutput(const buffer; size:Longint);
   begin
     stream.WriteBuffer(Buffer, size);
   end;
 begin
-  RunProcess(aCommand, startDir, @CollectOutput);
+  result := RunProcess(aCommand, startDir, @CollectOutput);
 end;
 
-procedure RunProcess(const aCommand, startDir: string; out
-  cmdOutput: RawByteString);
+function RunProcess(const aCommand, startDir: string; out
+  cmdOutput: RawByteString): Integer;
 var
   M: TMemoryStream;
 begin
   M := TMemoryStream.Create;
   try
-    RunProcess(aCommand, startDir, M);
+    result := RunProcess(aCommand, startDir, M);
     SetString(cmdOutput, M.Memory, M.Size);
   finally
     M.Free;
