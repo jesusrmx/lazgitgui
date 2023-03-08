@@ -50,23 +50,24 @@ type
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormShow(Sender: TObject);
-    procedure lstUnstagedClick(Sender: TObject);
     procedure lstUnstagedDrawItem(Control: TWinControl; Index: Integer;
       ARect: TRect; State: TOwnerDrawState);
     procedure lstUnstagedMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
   private
     fBranch: String;
+    fClickedIndex: Integer;
     fGitCommand: string;
-    fDir: string;
+    fDir, fTopLevelDir: string;
     fMerging: Boolean;
-    fMouseDown: TPoint;
     fUpstream: String;
     fUntrackedMode: string;
     fIgnoredMode: string;
     fCommitsAhead: Integer;
     fCommitsBehind: Integer;
     fEntries: TFPList;
+    procedure DoGitDiff(Data: PtrInt);
+    procedure DoItemAction(Data: PtrInt);
     procedure OpenDirectory(aDir: string);
     procedure GitStatus;
     procedure GitStatusBranch(var head: pchar; tail: pchar);
@@ -104,30 +105,41 @@ begin
   OpenDirectory(targetDir);
 end;
 
-procedure TfrmMain.lstUnstagedClick(Sender: TObject);
-var
-  aIndex: Integer;
-begin
-  aIndex := TListBox(Sender).GetIndexAtXY(fMouseDown.X, fMouseDown.Y);
-  if aIndex>=0 then begin
-    if (fMouseDown.X>0) and (fMouseDown.X < 20) then
-      ItemAction(TListbox(sender), aIndex)
-    else
-      GitDiff(Sender);
-  end;
-  fMouseDown.X := 0;
-end;
-
 procedure TfrmMain.ItemAction(sender: TListbox; aIndex: Integer);
 var
   Entry: PFileEntry;
+  cmdOut: RawByteString;
 begin
-  //ShowMessage('ItemAction on '+Sender.Items[aIndex]);
   Entry := PFileEntry(Sender.Items.Objects[aIndex]);
   if sender=lstUnstaged then begin
-
+    WriteStr(cmdOut, Entry^.EntryTypeUnStaged);
+    case Entry^.EntryTypeUnStaged of
+      etUntracked:
+        begin
+          RunProcess(fGitCommand+' add '+ Entry^.path, fTopLevelDir, cmdOut);
+          GitStatus;
+        end;
+      etDeletedInWorktree:
+        begin
+          RunProcess(fGitCommand+' rm '+ Entry^.path, fTopLevelDir, cmdOut);
+          GitStatus;
+        end
+      else
+        ShowMessage('Not yet implemented for Unstaged: '+cmdOut);
+    end;
   end else begin
-
+    WriteStr(cmdOut, Entry^.EntryTypeStaged);
+    case Entry^.EntryTypeStaged of
+      etAddedToIndex..etAddedToIndexD,
+      etRenamedInIndex..etRenamedInIndexD,
+      etDeletedFromIndex:
+        begin
+          RunProcess(fGitCommand+' restore --staged '+ Entry^.path, fTopLevelDir, cmdOut);
+          GitStatus;
+        end;
+      else
+        ShowMessage('Not yet implemented for Staged: '+cmdOut);
+    end;
   end;
 end;
 
@@ -209,8 +221,17 @@ end;
 
 procedure TfrmMain.lstUnstagedMouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
+var
+  aIndex: Integer;
 begin
-  fMouseDown := Point(x, y);
+  aIndex := TListBox(Sender).GetIndexAtXY(x, y);
+  if aIndex>=0 then begin
+    if (x>0) and (x < 20) then begin
+      fClickedIndex := aIndex;
+      Application.QueueAsyncCall(@DoItemAction, ptrInt(Sender));
+    end else
+      Application.QueueAsyncCall(@DoGitDiff, PtrInt(Sender));
+  end;
 end;
 
 procedure TfrmMain.FormCreate(Sender: TObject);
@@ -290,9 +311,30 @@ begin
 end;
 
 procedure TfrmMain.OpenDirectory(aDir: string);
+var
+  cmdOut: RawByteString;
 begin
+  aDir := ExpandFileName(aDir);
+  if (fTopLevelDir='') or (pos(fTopLevelDir, aDir)<>1) then begin
+    if DirectoryExists(aDir + '.git') then
+      fTopLevelDir := aDir
+    else begin
+      RunProcess(fGitCommand + ' rev-parse --show-toplevel', aDir, cmdOut);
+      fTopLevelDir := IncludeTrailingPathDelimiter(Trim(cmdOut));
+    end;
+  end;
   fDir := aDir;
   GitStatus;
+end;
+
+procedure TfrmMain.DoItemAction(Data: PtrInt);
+begin
+  ItemAction(TListBox(Data), fClickedIndex);
+end;
+
+procedure TfrmMain.DoGitDiff(Data: PtrInt);
+begin
+  GitDiff(TObject(Data));
 end;
 
 procedure TfrmMain.GitStatus;
@@ -450,7 +492,7 @@ begin
 
   label2.Visible := not ahead and not behind;
   lblRemote.Caption := fUpstream;
-  Caption := 'Current Directory: ' + ExpandFileName(fDir);
+  Caption := '(' + fTopLevelDir + ')';
 
 end;
 

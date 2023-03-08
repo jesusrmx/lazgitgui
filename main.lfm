@@ -31,7 +31,6 @@ object frmMain: TfrmMain
       DoubleBuffered = False
       IntegralHeight = True
       ItemHeight = 20
-      OnClick = lstUnstagedClick
       OnDrawItem = lstUnstagedDrawItem
       OnMouseDown = lstUnstagedMouseDown
       Options = []
@@ -93,8 +92,8 @@ object frmMain: TfrmMain
         Align = alClient
         IntegralHeight = True
         ItemHeight = 20
-        OnClick = lstUnstagedClick
         OnDrawItem = lstUnstagedDrawItem
+        OnMouseDown = lstUnstagedMouseDown
         Options = []
         Style = lbOwnerDrawFixed
         TabOrder = 1
