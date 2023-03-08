@@ -6,7 +6,7 @@ unit unitprocess;
 interface
 
 uses
-  Classes, SysUtils, Process, UTF8Process;
+  Classes, SysUtils, Process, UTF8Process, LazLogger;
 
 type
   TOutputEvent = procedure(const aBuffer; aSize:longint) is nested;
@@ -38,12 +38,15 @@ begin
   try
     Process.ParseCmdLine(aCommand);
     Process.CurrentDirectory := startDir;
-    Process.Options := [poUsePipes, poNoConsole];
+    Process.Options := [poUsePipes, poNoConsole, poWaitOnExit];
+    DebugLn('ApplicationName: ', Process.Executable);
+    DebugLn('Parameters: ', Process.Parameters.CommaText);
     Process.Execute;
     repeat
       BytesRead := Process.Output.Read(Buffer^, BUFSIZE);
       CallBack(Buffer^, BytesRead);
     until BytesRead=0;
+    DebugLn('Exit: Status=%d Code=%d', [Process.ExitStatus, Process.ExitCode]);
   finally
     Process.Free;
     FreeMem(Buffer);
