@@ -48,10 +48,10 @@ begin
       CallBack(Buffer^, BytesRead);
     until BytesRead=0;
     DebugLn('Exit: Status=%d Code=%d', [Process.ExitStatus, Process.ExitCode]);
-    {$ifdef Darwin}
-    result := Process.ExitStatus;
-    {$else}
+    {$ifdef MSWindows}
     result := Process.ExitCode;
+    {$else}
+    result := Process.ExitStatus;
     {$endif}
   finally
     Process.Free;
