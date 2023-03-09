@@ -48,7 +48,11 @@ begin
       CallBack(Buffer^, BytesRead);
     until BytesRead=0;
     DebugLn('Exit: Status=%d Code=%d', [Process.ExitStatus, Process.ExitCode]);
+    {$ifdef Darwin}
+    result := Process.ExitStatus;
+    {$else}
     result := Process.ExitCode;
+    {$endif}
   finally
     Process.Free;
     FreeMem(Buffer);
