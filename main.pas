@@ -24,6 +24,7 @@ type
     imgList: TImageList;
     Label1: TLabel;
     Label2: TLabel;
+    lblMerging: TLabel;
     lblRemote: TLabel;
     lblAheadBehind: TLabel;
     lblBranch: TLabel;
@@ -493,13 +494,14 @@ begin
   behind := fCommitsBehind<0;
 
   label1.Visible := not ahead and not behind;
-  s := fBranch;
+  lblBranch.Caption := fBranch;
+  s := '';
   if fMerging then begin
-    s += ' (MERGING';
+    s += '(MERGING';
     if fMergingConflict then s += ' CONFLICT';
     s += ')';
   end;
-  lblBranch.Caption := s;
+  lblMerging.Caption := s;
 
   s := '';
   if ahead then s += format('%d commits ahead', [fCommitsAhead]);
@@ -510,8 +512,9 @@ begin
   if s='' then s:=' ';
   lblAheadBehind.Caption := s;
 
-  label2.Visible := not ahead and not behind;
+  label2.Visible := (not ahead and not behind) and (fUpstream<>'');
   lblRemote.Caption := fUpstream;
+
   Caption := '(' + fTopLevelDir + ')';
 
 end;

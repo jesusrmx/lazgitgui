@@ -773,15 +773,16 @@ object frmMain: TfrmMain
       Width = 31
       BorderSpacing.Left = 10
       Caption = 'main'
-      Font.Color = clRed
+      Font.Color = clFuchsia
       Font.Style = [fsBold]
+      ParentColor = False
       ParentFont = False
     end
     object lblAheadBehind: TLabel
-      AnchorSideLeft.Control = lblBranch
+      AnchorSideLeft.Control = lblMerging
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = Label1
-      Left = 115
+      Left = 192
       Height = 17
       Top = 5
       Width = 231
@@ -793,7 +794,7 @@ object frmMain: TfrmMain
       AnchorSideLeft.Control = lblAheadBehind
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = Label1
-      Left = 366
+      Left = 443
       Height = 17
       Top = 5
       Width = 46
@@ -804,13 +805,27 @@ object frmMain: TfrmMain
       AnchorSideLeft.Control = Label2
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = Label1
-      Left = 422
+      Left = 499
       Height = 17
       Top = 5
       Width = 79
       BorderSpacing.Left = 10
       Caption = 'remote/main'
       Font.Color = clBlue
+      Font.Style = [fsBold]
+      ParentFont = False
+    end
+    object lblMerging: TLabel
+      AnchorSideLeft.Control = lblBranch
+      AnchorSideLeft.Side = asrBottom
+      AnchorSideTop.Control = Label1
+      Left = 105
+      Height = 17
+      Top = 5
+      Width = 67
+      BorderSpacing.Left = 10
+      Caption = '(MERGING)'
+      Font.Color = clRed
       Font.Style = [fsBold]
       ParentFont = False
     end
