@@ -118,12 +118,12 @@ begin
     case Entry^.EntryTypeUnStaged of
       etUntracked:
         begin
-          RunProcess(fGitCommand+' add '+ Entry^.path, fTopLevelDir, cmdOut);
+          cmdLine.RunProcess(fGitCommand+' add '+ Entry^.path, fTopLevelDir, cmdOut);
           GitStatus;
         end;
       etDeletedInWorktree:
         begin
-          RunProcess(fGitCommand+' rm '+ Entry^.path, fTopLevelDir, cmdOut);
+          cmdLine.RunProcess(fGitCommand+' rm '+ Entry^.path, fTopLevelDir, cmdOut);
           GitStatus;
         end;
       // other merge conflicts:
@@ -141,7 +141,7 @@ begin
       etRenamedInIndex..etRenamedInIndexD,
       etDeletedFromIndex:
         begin
-          RunProcess(fGitCommand+' restore --staged '+ Entry^.path, fTopLevelDir, cmdOut);
+          cmdLine.RunProcess(fGitCommand+' restore --staged '+ Entry^.path, fTopLevelDir, cmdOut);
           GitStatus;
         end;
       else
@@ -157,7 +157,7 @@ begin
   //result := FileExists(fTopLevelDir + '.git/MERGE_HEAD');
   // ref: https://stackoverflow.com/a/55192451
   // todo: close output and close stderr
-  result := RunProcess(fGitCommand + ' rev-list -1 MERGE_HEAD', fDir, cmdOut) = 0;
+  result := cmdLine.RunProcess(fGitCommand + ' rev-list -1 MERGE_HEAD', fDir, cmdOut) = 0;
 end;
 
 function OwnerDrawStateToStr(State: TOwnerDrawState): string;
@@ -334,10 +334,12 @@ begin
   aDir := ExpandFileName(aDir);
   if (fTopLevelDir='') or (pos(fTopLevelDir, aDir)<>1) then begin
     if DirectoryExists(aDir + '.git') then
-      fTopLevelDir := aDir
+      fTopLevelDir := IncludeTrailingPathDelimiter(aDir)
     else begin
-      RunProcess(fGitCommand + ' rev-parse --show-toplevel', aDir, cmdOut);
-      fTopLevelDir := IncludeTrailingPathDelimiter(Trim(cmdOut));
+      if cmdLine.RunProcess(fGitCommand + ' rev-parse --show-toplevel', aDir, cmdOut)<>0 then
+        DebugLn('Error getting top level directory: (%d) %s', [cmdLine.ExitCode, cmdLine.ErrorLog])
+      else
+        fTopLevelDir := IncludeTrailingPathDelimiter(SetDirSeparators(Trim(cmdOut)));
     end;
   end;
   fDir := aDir;
@@ -366,7 +368,7 @@ begin
     aCommand := format('%s status -b --long --porcelain=2 --ahead-behind --ignored=%s --untracked-files=%s -z',
       [fGitCommand, fIgnoredMode, fUntrackedMode]);
 
-    RunProcess(aCommand, fDir, M);
+    cmdLine.RunProcess(aCommand, fDir, M);
     head := M.Memory;
     tail := head + M.Size;
     fMergingConflict := false;
@@ -543,7 +545,7 @@ begin
   aPath := aPath + 'git' + EXE_EXTENSION;
   result := FileExists(aPath);
   if result then begin
-    RunProcess(aPath + ' --version', GetCurrentDir, outputStr);
+    cmdLine.RunProcess(aPath + ' --version', GetCurrentDir, outputStr);
     result := pos('git version', outputStr)=1;
     if result then begin
       fGitCommand := aPath;
@@ -609,9 +611,14 @@ begin
     if srcUnstaged then arg := ''
     else                arg := '--cached ';
     aCommand := format('%s diff %s%s', [fGitCommand, arg, Entry^.path]);
-    RunProcess(aCommand, fDir, M);
-    M.Position := 0;
-    txtDiff.Lines.LoadFromStream(M);
+    cmdLine.waitOnExit := true;
+    aIndex := cmdLine.RunProcess(aCommand, fTopLevelDir, M);
+    if aIndex<>0 then begin
+      txtDiff.Text := format('Error getting diff: %d',[aIndex]);
+    end else begin
+      M.Position := 0;
+      txtDiff.Lines.LoadFromStream(M);
+    end;
   finally
     M.Free;
   end;
