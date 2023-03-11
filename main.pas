@@ -65,7 +65,7 @@ type
     fDir: string;
     procedure DoGitDiff(Data: PtrInt);
     procedure DoItemAction(Data: PtrInt);
-    procedure OnBranchClick(Sender: TObject);
+    procedure OnBranchMenuClick(Sender: TObject);
     procedure OpenDirectory(aDir: string);
     procedure UpdateBranch;
     procedure RestoreGui;
@@ -87,6 +87,14 @@ implementation
 
 resourcestring
   rsNewBranch = 'New Branch';
+  rsReload = 'Reload';
+
+const
+  MENU_INVALID        = -1;
+
+  MENU_BRANCH_NEW     = 1;
+  MENU_BRANCH_RELOAD  = 2;
+  MENU_BRANCH_SWITCH  = 3;
 
 { TfrmMain }
 
@@ -102,14 +110,19 @@ begin
   popBranch.PopUp;
 end;
 
-procedure TfrmMain.OnBranchClick(Sender: TObject);
+procedure TfrmMain.OnBranchMenuClick(Sender: TObject);
 var
   mi: TMenuItem;
 begin
   mi := TMenuItem(sender);
   case mi.tag of
-    0: ShowMessage('Creating a new local branch');
-    1: ShowMessage('Switching to branch '+mi.Caption)
+    MENU_BRANCH_NEW: ShowMessage('Creating a new local branch');
+    MENU_BRANCH_RELOAD:
+      begin
+        UpdateBranchMenu;
+        popBranch.PopUp;
+      end;
+    MENU_BRANCH_SWITCH: ShowMessage('Switching to branch '+mi.Caption)
   end;
 end;
 
@@ -177,8 +190,14 @@ begin
 
   mi := TMenuItem.Create(Self);
   mi.Caption := rsNewBranch;
-  mi.OnClick := @OnBranchClick;
-  mi.Tag := 0;
+  mi.OnClick := @OnBranchMenuClick;
+  mi.Tag := MENU_BRANCH_NEW;
+  popBranch.Items.Add(mi);
+
+  mi := TMenuItem.Create(Self);
+  mi.Caption := rsReload;
+  mi.OnClick := @OnBranchMenuClick;
+  mi.Tag := MENU_BRANCH_RELOAD;
   popBranch.Items.Add(mi);
 
   try
@@ -206,10 +225,10 @@ begin
         if pos('/', branchLine[0])<>0 then
           continue;
 
-        if popBranch.Items.Count=1 then begin
+        if popBranch.Items.Count=2 then begin
           mi := TMenuItem.Create(Self);
           mi.Caption := '-';
-          mi.Tag := -1;
+          mi.Tag := MENU_INVALID;
           popBranch.Items.Add(mi);
         end;
 
@@ -222,8 +241,8 @@ begin
         mi.AutoCheck := true;
         mi.Checked := branchLine[3]='*';
         if not mi.Checked then
-          mi.OnClick := @OnBranchClick;
-        mi.Tag := 1;
+          mi.OnClick := @OnBranchMenuClick;
+        mi.Tag := MENU_BRANCH_SWITCH;
         mi.RadioItem := true;
         popBranch.Items.Add(mi);
 
