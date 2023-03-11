@@ -106,6 +106,9 @@ const
   EXE_EXTENSION = '';
   {$endif}
 
+resourcestring
+  rsNewBranch = 'New Branch';
+
 { TfrmMain }
 
 procedure TfrmMain.FormShow(Sender: TObject);
@@ -217,7 +220,7 @@ begin
   popBranch.Items.Clear;
 
   mi := TMenuItem.Create(Self);
-  mi.Caption := 'New Branch';
+  mi.Caption := rsNewBranch;
   mi.OnClick := @OnBranchClick;
   mi.Tag := 0;
   popBranch.Items.Add(mi);
