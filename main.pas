@@ -7,7 +7,7 @@ interface
 uses
   Classes, SysUtils, LazLogger, Forms, Controls, Graphics, Dialogs, StdCtrls, ExtCtrls,
   ActnList, SynEdit, SynHighlighterDiff, StrUtils, FileUtil, unitconfig, unitprocess,
-  unitentries, Types, lclType, Menus;
+  unitentries, unitgit, Types, lclType, Menus;
 
 type
 
@@ -60,33 +60,19 @@ type
     procedure lstUnstagedMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
   private
-    fBranch: String;
+    fGit: TGit;
     fClickedIndex: Integer;
-    fGitCommand: string;
-    fDir, fTopLevelDir: string;
-    fMerging, fMergingConflict: Boolean;
-    fUpstream: String;
-    fUntrackedMode: string;
-    fIgnoredMode: string;
-    fCommitsAhead: Integer;
-    fCommitsBehind: Integer;
-    fEntries: TFPList;
+    fDir: string;
     procedure DoGitDiff(Data: PtrInt);
     procedure DoItemAction(Data: PtrInt);
     procedure OnBranchClick(Sender: TObject);
     procedure OpenDirectory(aDir: string);
-    procedure GitStatus;
-    procedure GitStatusBranch(var head: pchar; tail: pchar);
-    procedure GitStatusFiles(var head: pchar; tail: pchar);
     procedure UpdateBranch;
-    procedure Clear;
-    function  TryGitIn(aPath: string): boolean;
     procedure RestoreGui;
     procedure SaveGui;
-    procedure GitDiff(Sender: TObject);
     procedure ItemAction(sender: TListbox; aIndex: Integer);
-    function GitMerging: boolean;
     procedure UpdateBranchMenu;
+    procedure UpdateStatus;
   public
 
   end;
@@ -98,13 +84,6 @@ var
 implementation
 
 {$R *.lfm}
-
-const
-  {$ifdef MsWindows}
-  EXE_EXTENSION = '.exe';
-  {$else}
-  EXE_EXTENSION = '';
-  {$endif}
 
 resourcestring
   rsNewBranch = 'New Branch';
@@ -155,13 +134,13 @@ begin
     case Entry^.EntryTypeUnStaged of
       etUntracked:
         begin
-          cmdLine.RunProcess(fGitCommand+' add '+ Entry^.path, fTopLevelDir, cmdOut);
-          GitStatus;
+          fGit.Add(Entry);
+          UpdateStatus;
         end;
       etDeletedInWorktree:
         begin
-          cmdLine.RunProcess(fGitCommand+' rm '+ Entry^.path, fTopLevelDir, cmdOut);
-          GitStatus;
+          fGit.Rm(Entry);
+          UpdateStatus;
         end;
       // other merge conflicts:
       // see:
@@ -178,8 +157,8 @@ begin
       etRenamedInIndex..etRenamedInIndexD,
       etDeletedFromIndex:
         begin
-          cmdLine.RunProcess(fGitCommand+' restore --staged '+ Entry^.path, fTopLevelDir, cmdOut);
-          GitStatus;
+          fGit.Restore(entry, true);
+          UpdateStatus;
         end;
       else
         ShowMessage('Not yet implemented for Staged: '+cmdOut);
@@ -187,36 +166,13 @@ begin
   end;
 end;
 
-function TfrmMain.GitMerging: boolean;
-var
-  cmdOut: RawByteString;
-begin
-  //result := FileExists(fTopLevelDir + '.git/MERGE_HEAD');
-  // ref: https://stackoverflow.com/a/55192451
-  // todo: close output and close stderr
-  result := cmdLine.RunProcess(fGitCommand + ' rev-list -1 MERGE_HEAD', fDir, cmdOut) = 0;
-end;
-
 procedure TfrmMain.UpdateBranchMenu;
 var
-  cmd: string;
   list, branchLine: TStringList;
-  cmdOut: RawByteString;
   n, i: integer;
   p, q: pchar;
   mi: TMenuItem;
 begin
-  cmd := ' branch -vv ' +
-         '--format="' +
-         '%(refname:short)|' +
-         '%(objecttype)|' +
-         '%(upstream:short)|' +
-         '%(HEAD)|' +
-         '%(worktreepath)|' +
-         '%(contents:subject)' +
-         '" -a';
-  // fill branch list
-
   popBranch.Items.Clear;
 
   mi := TMenuItem.Create(Self);
@@ -227,11 +183,24 @@ begin
 
   try
     list := TStringList.Create;
-    branchLine := TStringList.Create;
-    branchLine.StrictDelimiter := true;
-    branchLine.Delimiter := '|';
-    if cmdLine.RunProcess(fGitCommand + cmd, fTopLevelDir, cmdOut) = 0 then begin
-      list.Text := cmdOut;
+
+    if fGit.BranchList(list, [
+        '%(refname:short)',
+        '%(objecttype)',
+        '%(upstream:short)',
+        '%(HEAD)',
+        '%(worktreepath)',
+        '%(contents:subject)'])<>0 then
+    begin
+      txtDiff.Text := fGit.ErrorLog;
+      exit;
+    end;
+
+    try
+      branchLine := TStringList.Create;
+      branchLine.StrictDelimiter := true;
+      branchLine.Delimiter := '|';
+
       for i:=0 to list.Count-1 do begin
         BranchLine.DelimitedText := list[i];
         if pos('/', branchLine[0])<>0 then
@@ -259,10 +228,26 @@ begin
         popBranch.Items.Add(mi);
 
       end;
-    end else
-      DebugLn('Unable to get branch list, error: ', cmdLine.ErrorLog);
+
+    finally
+      branchLine.free;
+    end;
   finally
-    list.free;
+    list.Free;
+  end;
+end;
+
+procedure TfrmMain.UpdateStatus;
+begin
+  lstUnstaged.Items.BeginUpdate;
+  lstStaged.Items.BeginUpdate;
+  try
+    if fGit.Status(lstUnstaged.Items, lstStaged.Items)<>0 then
+      txtDiff.Text := fGit.ErrorLog;
+    UpdateBranch;
+  finally
+    lstStaged.Items.EndUpdate;
+    lstUnstaged.Items.EndUpdate;
   end;
 end;
 
@@ -359,53 +344,38 @@ end;
 
 procedure TfrmMain.FormCreate(Sender: TObject);
 var
-  aFont: string;
+  s: string;
   aQuality: TFontQuality;
 begin
-  fUntrackedMode := 'all';
-  fIgnoredMode := 'no';
+  fGit := TGit.Create;
 
-  fGitCommand := fConfig.ReadString('git');
-  if (fGitCommand='') or (not FileExists(fGitCommand)) then begin
-    fGitCommand := FindDefaultExecutablePath('git' + EXE_EXTENSION);
-    if fGitCommand<>'' then begin
-      if not TryGitIn(ExtractFilePath(fGitCommand)) then
-        fGitCommand := '';
-    end;
-  end;
-  {$ifdef MsWindows}
-  if (fGitCommand='') then begin
-    // try some known git locations
-    if not TryGitIn(GetEnvironmentVariable('ProgramFiles') + '\git\bin\') then
-    if not TryGitIn(GetEnvironmentVariable('ProgramW6432') + '\git\bin\') then
-    if not TryGitIn(GetEnvironmentVariable('SystemDrive') + '\msysgit\bin\') then
-    if not TryGitIn(GetEnvironmentVariable('HOMEDRIVE') + '\msysgit\bin\') then
-      ;
-  end;
-  {$endif}
+  fConfig.OpenConfig;
 
-  if fGitCommand='' then begin
+  s := fConfig.ReadString('git');
+  fGit.SetupExe(s);
+
+  if fGit.Exe='' then begin
+    fConfig.CloseConfig;
     DebugLn('Error: Could not find git command');
     Application.Terminate;
     exit;
   end;
 
-  //DebugLn('git=', fGitCommand);
-  fEntries := TFpList.Create;
+  //DebugLn('git=', fGit.Exe);
 
   txtDiff.Clear;
 
   with txtDiff.Font do begin
-    aFont := Name;
+    s := Name;
     aQuality := Quality;
     {$ifdef Darwin}
-    aFont := 'Menlo';
+    s := 'Menlo';
     aQuality := fqAntialiased;
     {$endif}
     {$ifdef MsWindows}
-    aFont := 'Courier New';
+    s := 'Courier New';
     {$endif}
-    Name := fConfig.ReadString('font.name', aFont, 'Viewer');
+    Name := fConfig.ReadString('font.name', s, 'Viewer');
     Size := fConfig.ReadInteger('font.size', 10, 'Viewer');
     if fConfig.ReadBoolean('font.antialiased', aQuality=fqAntialiased, 'Viewer') then
       Quality := fqAntialiased
@@ -416,6 +386,8 @@ begin
   panFileState.Caption := '';
 
   RestoreGui;
+
+  fConfig.CloseConfig;
 end;
 
 procedure TfrmMain.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
@@ -425,31 +397,20 @@ end;
 
 procedure TfrmMain.actRescanExecute(Sender: TObject);
 begin
-  GitStatus;
+  UpdateStatus;
 end;
 
 procedure TfrmMain.FormDestroy(Sender: TObject);
 begin
-  Clear;
+  fGit.Free;
 end;
 
 procedure TfrmMain.OpenDirectory(aDir: string);
-var
-  cmdOut: RawByteString;
 begin
   aDir := ExpandFileName(aDir);
-  if (fTopLevelDir='') or (pos(fTopLevelDir, aDir)<>1) then begin
-    if DirectoryExists(aDir + '.git') then
-      fTopLevelDir := IncludeTrailingPathDelimiter(aDir)
-    else begin
-      if cmdLine.RunProcess(fGitCommand + ' rev-parse --show-toplevel', aDir, cmdOut)<>0 then
-        DebugLn('Error getting top level directory: (%d) %s', [cmdLine.ExitCode, cmdLine.ErrorLog])
-      else
-        fTopLevelDir := IncludeTrailingPathDelimiter(SetDirSeparators(Trim(cmdOut)));
-    end;
-  end;
+  fGit.OpenDir(aDir);
   fDir := aDir;
-  GitStatus;
+  UpdateStatus;
 end;
 
 procedure TfrmMain.DoItemAction(Data: PtrInt);
@@ -458,138 +419,17 @@ begin
 end;
 
 procedure TfrmMain.DoGitDiff(Data: PtrInt);
-begin
-  GitDiff(TObject(Data));
-end;
-
-procedure TfrmMain.GitStatus;
 var
-  aCommand: string;
-  M: TMemoryStream;
-  head, tail: PChar;
-begin
-  DebugLn('Status ----------------------------------------------');
-  M := TMemoryStream.Create;
-  try
-    aCommand := format('%s status -b --long --porcelain=2 --ahead-behind --ignored=%s --untracked-files=%s -z',
-      [fGitCommand, fIgnoredMode, fUntrackedMode]);
-
-    cmdLine.RunProcess(aCommand, fDir, M);
-    head := M.Memory;
-    tail := head + M.Size;
-    fMergingConflict := false;
-    fMerging := GitMerging;
-    GitStatusBranch(head, tail);
-    GitStatusFiles(head, tail);
-    UpdateBranch;
-  finally
-    M.Free;
-  end;
-end;
-
-function FindPattern(var head:pchar; tail: pchar; pattern: string): boolean;
-var
-  len: SizeInt;
-  p: pchar;
-begin
-  result := false;
-  while head<tail do begin
-    p := strpos(head, pchar(pattern));
-    if p<>nil then begin
-      head := p;
-      result := true;
-      break;
-    end;
-    len := strlen(head);
-    head := head + len + 1;
-  end;
-end;
-
-procedure TfrmMain.GitStatusBranch(var head: pchar; tail: pchar);
-var
-  ab: string;
-  i, n: Integer;
-begin
-  fBranch := '';
-  fUpstream := '';
-  fCommitsAhead := 0;
-  fCommitsBehind := 0;
-  ab := '';
-
-  // scan header lines
-  while (head<tail) and (head^='#') do begin
-
-    n := strlen(head);
-
-    if (fBranch='') and (strlcomp(head, '# branch.head', 13)=0) then begin
-      SetString(fBranch, head + 14, n - 14);
-    end else
-    if (fUpstream='') and (strlcomp(head, '# branch.upstream', 17)=0) then begin
-      SetString(fUpstream, head + 18, n - 18);
-    end else
-    if (ab='') and (strlcomp(head, '# branch.ab', 11)=0) then begin
-      SetString(ab, head + 12, n - 12);
-      i := pos(' ', ab);
-      fCommitsAhead := StrToIntDef(copy(ab, 1, i-1), 0);
-      fCommitsBehind := StrToIntDef(copy(ab, i+1, Length(ab)), 0);
-    end;
-
-    inc(head, n + 1);
-  end;
-end;
-
-procedure TfrmMain.GitStatusFiles(var head: pchar; tail: pchar);
-var
-  n: Integer;
+  lb: TListbox absolute Data;
+  res: Integer;
   entry: PFileEntry;
-  start: pchar;
 begin
-  // clear lists
-  Clear;
-
-  // scan header lines
-  while (head<tail) do begin
-
-    start := head;
-    n := strlen(head);
-    DebugLn(start);
-
-    case head^ of
-      '1': ParseOrdinaryChanged(head, tail, entry);
-      '2': ParseRenamedCopied(head, tail, entry);
-      'u':
-        begin
-          fMergingConflict := true;
-          ParseUnmerged(head, tail, entry);
-        end;
-      '?',
-      '!': ParseOther(head, tail, entry);
-      else entry := nil;
-    end;
-
-    if entry<>nil then begin
-      fEntries.Add(entry);
-
-      // staged list
-      case entry^.EntryTypeStaged of
-        etUpdatedInIndex..etDeletedFromIndex:
-          lstStaged.Items.AddObject(entry^.path, TObject(entry));
-        etRenamedInIndex..etCopiedInIndexD:
-          lstStaged.Items.AddObject(entry^.origPath + ' -> ' + entry^.path, TObject(entry));
-      end;
-
-      // unstaged list
-      case entry^.EntryTypeUnStaged of
-        etUnknown:;
-        etUpdatedInIndex..etCopiedInIndexD:;
-        etIndexAndWorktreeMatchesM..etIndexAndWorktreeMatchesC:;
-        else
-          lstUnstaged.Items.AddObject(entry^.path, TObject(entry));
-      end;
-
-    end;
-
-    head := start + n + 1;
+  if lb.ItemIndex>=0 then begin
+    entry := PFileEntry(lb.Items.Objects[lb.ItemIndex]);
+    panFileState.Caption := EntryTypeToStr(entry^.x, entry^.y);
+    res := fGit.Diff(entry, lb=lstUnstaged, txtDiff.Lines);
+    if res<>0 then
+      txtDiff.Text := format('Error getting diff: %d%s%s',[res, LineEnding, fGit.ErrorLog]);
   end;
 end;
 
@@ -598,71 +438,39 @@ var
   s: string;
   ahead, behind: boolean;
 begin
-  ahead := fCommitsAhead>0;
-  behind := fCommitsBehind<0;
+  ahead := fGit.CommitsAhead>0;
+  behind := fGit.CommitsBehind<0;
 
   label1.Visible := not ahead and not behind;
-  lblBranch.Caption := fBranch;
+  lblBranch.Caption := fGit.Branch;
   s := '';
-  if fMerging then begin
+  if fGit.Merging then begin
     s += '(MERGING';
-    if fMergingConflict then s += ' CONFLICT';
+    if fGit.MergingConflict then s += ' CONFLICT';
     s += ')';
   end;
   lblMerging.Caption := s;
 
   s := '';
-  if ahead then s += format('%d commits ahead', [fCommitsAhead]);
+  if ahead then s += format('%d commits ahead', [fGit.CommitsAhead]);
   if ahead and behind then s += ', ';
-  if behind then s += format('%d commits behind', [-fCommitsBehind]);
+  if behind then s += format('%d commits behind', [-fGit.CommitsBehind]);
   if ahead or behind then s += ' of';
 
   if s='' then s:=' ';
   lblAheadBehind.Caption := s;
 
-  label2.Visible := (not ahead and not behind) and (fUpstream<>'');
-  lblRemote.Caption := fUpstream;
+  label2.Visible := (not ahead and not behind) and (fGit.Upstream<>'');
+  lblRemote.Caption := fGit.Upstream;
 
-  Caption := '(' + fTopLevelDir + ')';
+  Caption := '(' + fGit.TopLevelDir + ')';
 
-end;
-
-procedure TfrmMain.Clear;
-var
-  i: Integer;
-  entry: PFileEntry;
-begin
-  if fEntries<>nil then begin
-    for i:=0 to fEntries.Count-1 do begin
-      entry := PFileEntry(fEntries[i]);
-      if entry<>nil then
-        Dispose(entry)
-    end;
-    fEntries.Clear;
-  end;
-  lstUnstaged.Clear;
-  lstStaged.Clear;
-end;
-
-function TfrmMain.TryGitIn(aPath: string): boolean;
-var
-  outputStr: RawByteString;
-begin
-  aPath := aPath + 'git' + EXE_EXTENSION;
-  result := FileExists(aPath);
-  if result then begin
-    cmdLine.RunProcess(aPath + ' --version', GetCurrentDir, outputStr);
-    result := pos('git version', outputStr)=1;
-    if result then begin
-      fGitCommand := aPath;
-      fConfig.WriteString('git', fGitCommand);
-    end;
-  end;
 end;
 
 procedure TfrmMain.RestoreGui;
 begin
   fConfig.OpenConfig;
+
   Left :=   fConfig.ReadInteger('mainform.Left',    Left,   SECTION_GEOMETRY);
   Top :=    fConfig.ReadInteger('mainform.Top',     Top,    SECTION_GEOMETRY);
   Width :=  fConfig.ReadInteger('mainform.Width',   Width,  SECTION_GEOMETRY);
@@ -695,39 +503,6 @@ begin
   fConfig.WriteInteger('pancommit.height', pancommit.Height, SECTION_GEOMETRY);
 
   fConfig.CloseConfig;
-end;
-
-procedure TfrmMain.GitDiff(Sender: TObject);
-var
-  aCommand, arg: string;
-  M: TMemoryStream;
-  head, tail: PChar;
-  srcUnstaged: boolean;
-  Entry: PFileEntry;
-  aIndex: Integer;
-begin
-  srcUnstaged := Sender=lstUnstaged;
-  aIndex := TListBox(Sender).ItemIndex;
-  if aIndex<0 then exit;
-  Entry := PFileEntry(TListBox(Sender).Items.Objects[aIndex]);
-  panFileState.Caption := EntryTypeToStr(Entry^.x, Entry^.y);
-
-  M := TMemoryStream.Create;
-  try
-    if srcUnstaged then arg := ''
-    else                arg := '--cached ';
-    aCommand := format('%s diff %s%s', [fGitCommand, arg, Entry^.path]);
-    cmdLine.waitOnExit := true;
-    aIndex := cmdLine.RunProcess(aCommand, fTopLevelDir, M);
-    if aIndex<>0 then begin
-      txtDiff.Text := format('Error getting diff: %d',[aIndex]);
-    end else begin
-      M.Position := 0;
-      txtDiff.Lines.LoadFromStream(M);
-    end;
-  finally
-    M.Free;
-  end;
 end;
 
 end.
