@@ -767,6 +767,7 @@ object frmMain: TfrmMain
       AnchorSideLeft.Control = Label1
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = Label1
+      Cursor = crHandPoint
       Left = 64
       Height = 17
       Top = 5
@@ -777,6 +778,9 @@ object frmMain: TfrmMain
       Font.Style = [fsBold]
       ParentColor = False
       ParentFont = False
+      PopupMenu = popBranch
+      OnClick = lblBranchClick
+      OnContextPopup = lblBranchContextPopup
     end
     object lblAheadBehind: TLabel
       AnchorSideLeft.Control = lblMerging
@@ -913,5 +917,9 @@ object frmMain: TfrmMain
       8BF3FFA2FFF3C1FF399BFF4F73FF2FA8F9FF14FF8BF3FF3BDCFFB99EFF67F95F
       90F3FF8CFF053BFFCFF2FF4E99FFFF0D1C5CE9B9
     }
+  end
+  object popBranch: TPopupMenu
+    Left = 64
+    Top = 56
   end
 end

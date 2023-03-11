@@ -6,8 +6,8 @@ interface
 
 uses
   Classes, SysUtils, LazLogger, Forms, Controls, Graphics, Dialogs, StdCtrls, ExtCtrls,
-  ActnList, SynEdit, SynHighlighterDiff, FileUtil, unitconfig, unitprocess,
-  unitentries, Types, lclType;
+  ActnList, SynEdit, SynHighlighterDiff, StrUtils, FileUtil, unitconfig, unitprocess,
+  unitentries, Types, lclType, Menus;
 
 type
 
@@ -36,6 +36,7 @@ type
     panUnstaged: TPanel;
     panStagedContainer: TPanel;
     panStaged: TPanel;
+    popBranch: TPopupMenu;
     splitterMain: TSplitter;
     SynDiffSyn1: TSynDiffSyn;
     txtComment: TMemo;
@@ -51,6 +52,9 @@ type
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormShow(Sender: TObject);
+    procedure lblBranchClick(Sender: TObject);
+    procedure lblBranchContextPopup(Sender: TObject; MousePos: TPoint;
+      var Handled: Boolean);
     procedure lstUnstagedDrawItem(Control: TWinControl; Index: Integer;
       ARect: TRect; State: TOwnerDrawState);
     procedure lstUnstagedMouseDown(Sender: TObject; Button: TMouseButton;
@@ -69,6 +73,7 @@ type
     fEntries: TFPList;
     procedure DoGitDiff(Data: PtrInt);
     procedure DoItemAction(Data: PtrInt);
+    procedure OnBranchClick(Sender: TObject);
     procedure OpenDirectory(aDir: string);
     procedure GitStatus;
     procedure GitStatusBranch(var head: pchar; tail: pchar);
@@ -81,6 +86,7 @@ type
     procedure GitDiff(Sender: TObject);
     procedure ItemAction(sender: TListbox; aIndex: Integer);
     function GitMerging: boolean;
+    procedure UpdateBranchMenu;
   public
 
   end;
@@ -105,6 +111,34 @@ const
 procedure TfrmMain.FormShow(Sender: TObject);
 begin
   OpenDirectory(targetDir);
+end;
+
+procedure TfrmMain.lblBranchClick(Sender: TObject);
+begin
+  if popBranch.Items.Count=0 then
+    UpdateBranchMenu;
+  popBranch.PopUp;
+end;
+
+procedure TfrmMain.OnBranchClick(Sender: TObject);
+var
+  mi: TMenuItem;
+begin
+  mi := TMenuItem(sender);
+  case mi.tag of
+    0: ShowMessage('Creating a new local branch');
+    1: ShowMessage('Switching to branch '+mi.Caption)
+  end;
+end;
+
+procedure TfrmMain.lblBranchContextPopup(Sender: TObject; MousePos: TPoint;
+  var Handled: Boolean);
+begin
+
+  if popBranch.Items.Count>0 then
+    exit;
+
+  UpdateBranchMenu;
 end;
 
 procedure TfrmMain.ItemAction(sender: TListbox; aIndex: Integer);
@@ -158,6 +192,75 @@ begin
   // ref: https://stackoverflow.com/a/55192451
   // todo: close output and close stderr
   result := cmdLine.RunProcess(fGitCommand + ' rev-list -1 MERGE_HEAD', fDir, cmdOut) = 0;
+end;
+
+procedure TfrmMain.UpdateBranchMenu;
+var
+  cmd: string;
+  list, branchLine: TStringList;
+  cmdOut: RawByteString;
+  n, i: integer;
+  p, q: pchar;
+  mi: TMenuItem;
+begin
+  cmd := ' branch -vv ' +
+         '--format="' +
+         '%(refname:short)|' +
+         '%(objecttype)|' +
+         '%(upstream:short)|' +
+         '%(HEAD)|' +
+         '%(worktreepath)|' +
+         '%(contents:subject)' +
+         '" -a';
+  // fill branch list
+
+  popBranch.Items.Clear;
+
+  mi := TMenuItem.Create(Self);
+  mi.Caption := 'New Branch';
+  mi.OnClick := @OnBranchClick;
+  mi.Tag := 0;
+  popBranch.Items.Add(mi);
+
+  try
+    list := TStringList.Create;
+    branchLine := TStringList.Create;
+    branchLine.StrictDelimiter := true;
+    branchLine.Delimiter := '|';
+    if cmdLine.RunProcess(fGitCommand + cmd, fTopLevelDir, cmdOut) = 0 then begin
+      list.Text := cmdOut;
+      for i:=0 to list.Count-1 do begin
+        BranchLine.DelimitedText := list[i];
+        if pos('/', branchLine[0])<>0 then
+          continue;
+
+        if popBranch.Items.Count=1 then begin
+          mi := TMenuItem.Create(Self);
+          mi.Caption := '-';
+          mi.Tag := -1;
+          popBranch.Items.Add(mi);
+        end;
+
+        mi := TMenuItem.Create(Self);
+        if branchLine[2]='' then
+          mi.Caption := branchLine[0]
+        else
+          mi.Caption := branchLine[0]; //+ ' -> ' + branchLine[2];
+        mi.GroupIndex := 1;
+        mi.AutoCheck := true;
+        mi.Checked := branchLine[3]='*';
+        if not mi.Checked then
+          mi.OnClick := @OnBranchClick;
+        mi.Tag := 1;
+        mi.RadioItem := true;
+        popBranch.Items.Add(mi);
+
+      end;
+    end else
+      DebugLn('Unable to get branch list, error: ', cmdLine.ErrorLog);
+  finally
+    list.free;
+  end;
 end;
 
 function OwnerDrawStateToStr(State: TOwnerDrawState): string;
