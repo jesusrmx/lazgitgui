@@ -2,6 +2,7 @@ unit unitprocess;
 
 {$mode ObjFPC}{$H+}
 {$ModeSwitch nestedprocvars}
+{.$define Debug}
 
 interface
 
@@ -62,9 +63,11 @@ begin
     opts := [poUsePipes, poNoConsole];
     if waitOnExit then Include(opts, poWaitOnExit);
     Process.Options := opts;
+    {$IFDEF DEBUG}
     DebugLn('  ExecName: ', Process.Executable);
     DebugLn('Parameters: ', Process.Parameters.CommaText);
-    DEbugLn('CurrentDir: ', startDir);
+    DebugLn('CurrentDir: ', startDir);
+    {$ENDIF}
     Process.Execute;
     repeat
       BytesRead := Process.Output.Read(Buffer^, BUFSIZE);
@@ -78,8 +81,10 @@ begin
     end;
     fErrorLog := Err.DataString;
 
+    {$IFDEF DEBUG}
     DebugLn('Exit: Status=%d Code=%d', [Process.ExitStatus, Process.ExitCode]);
     DebugLn('StdErr: %s',[fErrorLog]);
+    {$ENDIF}
 
     {$ifdef MSWindows}
     fExitCode := Process.ExitCode;
