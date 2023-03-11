@@ -57,7 +57,9 @@ implementation
 const
   {$ifdef MsWindows}
   EXE_EXTENSION = '.exe';
-
+  {$else}
+  EXE_EXTENSION = '';
+  {$endif}
 
 function FindPattern(var head:pchar; tail: pchar; pattern: string): boolean;
 var
@@ -326,7 +328,7 @@ begin
     if cmd<>'' then cmd += '|';
     cmd += opt;
   end;
-  cmd := ' branch -vv -format="' + cmd + '" -a';
+  cmd := ' branch -vv --format="' + cmd + '" -a';
   result := cmdLine.RunProcess(fGitCommand + cmd, fTopLevelDir, List);
 end;
 
@@ -357,10 +359,6 @@ begin
   // todo: close output and close stderr
   result := cmdLine.RunProcess(fGitCommand + ' rev-list -1 MERGE_HEAD', fTopLevelDir, cmdOut) = 0;
 end;
-
-  {$else}
-  EXE_EXTENSION = '';
-  {$endif}
 
 end.
 
