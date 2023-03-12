@@ -62,6 +62,12 @@
         <Filename Value="unitgit.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit>
+      <Unit>
+        <Filename Value="unitnewbranch.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="frmNewBranch"/>
+        <ResourceBaseClass Value="Form"/>
+      </Unit>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

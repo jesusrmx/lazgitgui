@@ -1,0 +1,104 @@
+object frmNewBranch: TfrmNewBranch
+  Left = 378
+  Height = 408
+  Top = 182
+  Width = 640
+  Caption = 'frmNewBranch'
+  ClientHeight = 408
+  ClientWidth = 640
+  LCLVersion = '2.3.0.0'
+  object tabSource: TTabControl
+    Left = 16
+    Height = 201
+    Top = 57
+    Width = 616
+    Style = tsButtons
+    TabIndex = 0
+    Tabs.Strings = (
+      'Local Branches'
+      'Tracking Branches'
+      'Tags'
+    )
+    Anchors = [akTop, akLeft, akRight, akBottom]
+    TabOrder = 3
+  end
+  object radNew: TRadioButton
+    Left = 16
+    Height = 19
+    Top = 11
+    Width = 50
+    Caption = 'Name'
+    Checked = True
+    TabOrder = 6
+    TabStop = True
+  end
+  object radTracking: TRadioButton
+    Left = 16
+    Height = 19
+    Top = 32
+    Width = 171
+    Caption = 'Match tracking branch name'
+    TabOrder = 0
+  end
+  object txtName: TEdit
+    Left = 80
+    Height = 23
+    Top = 11
+    Width = 264
+    TabOrder = 1
+    Text = 'txtName'
+  end
+  object ListBox1: TListBox
+    AnchorSideLeft.Control = tabSource
+    AnchorSideTop.Control = tabSource
+    AnchorSideRight.Control = tabSource
+    AnchorSideRight.Side = asrBottom
+    AnchorSideBottom.Control = tabSource
+    AnchorSideBottom.Side = asrBottom
+    Left = 21
+    Height = 166
+    Top = 85
+    Width = 604
+    Anchors = [akTop, akLeft, akRight, akBottom]
+    BorderSpacing.Left = 5
+    BorderSpacing.Top = 28
+    BorderSpacing.Right = 7
+    BorderSpacing.Bottom = 7
+    ItemHeight = 0
+    TabOrder = 2
+  end
+  object ButtonPanel1: TButtonPanel
+    Left = 6
+    Height = 34
+    Top = 368
+    Width = 628
+    OKButton.Name = 'OKButton'
+    OKButton.DefaultCaption = True
+    HelpButton.Name = 'HelpButton'
+    HelpButton.DefaultCaption = True
+    CloseButton.Name = 'CloseButton'
+    CloseButton.DefaultCaption = True
+    CancelButton.Name = 'CancelButton'
+    CancelButton.DefaultCaption = True
+    TabOrder = 4
+    ShowButtons = [pbOK, pbCancel]
+  end
+  object Panel1: TPanel
+    Left = 17
+    Height = 98
+    Top = 263
+    Width = 615
+    Alignment = taLeftJustify
+    Anchors = [akLeft, akRight, akBottom]
+    ClientHeight = 98
+    ClientWidth = 615
+    TabOrder = 5
+    object Label1: TLabel
+      Left = 8
+      Height = 15
+      Top = 8
+      Width = 42
+      Caption = 'Options'
+    end
+  end
+end
