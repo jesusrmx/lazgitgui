@@ -23,15 +23,17 @@ type
     fCommitsAhead: Integer;
     fCommitsBehind: Integer;
     fEntries: TFPList;
+    fVersion: String;
     function GetErrorLog: RawByteString;
     procedure GitStatusBranch(var head: pchar; tail: pchar);
     procedure GitStatusFiles(var head: pchar; tail: pchar; lstUnstaged, lstStaged: TStrings);
     function  TryGitIn(aPath: string): boolean;
     function GitMerging: boolean;
+    function GetVersion(gitCmd:string; out aVersion:string): boolean;
   public
     constructor create;
     destructor destroy; override;
-    procedure SetupExe(aExeFile: string);
+    procedure SetupExe(aExeFile, aVersion: string);
     procedure Clear;
     function Status(unstagedList, stagedList: TStrings): Integer;
     function Diff(entry: PFileEntry; Unstaged:boolean; Lines:TStrings): Integer;
@@ -50,6 +52,7 @@ type
     property Upstream: string read fUpstream;
     property TopLevelDir: string read fTopLevelDir;
     property ErrorLog: RawByteString read GetErrorLog;
+    property Version: string read FVersion;
   end;
 
 implementation
@@ -96,16 +99,12 @@ begin
   inherited destroy;
 end;
 
-procedure TGit.SetupExe(aExeFile: string);
+procedure TGit.SetupExe(aExeFile, aVersion: string);
 begin
   fGitCommand := aExeFile;
-  if (fGitCommand='') or (not FileExists(fGitCommand)) then begin
+  if (fGitCommand='') or (not FileExists(fGitCommand)) then
     fGitCommand := FindDefaultExecutablePath('git' + EXE_EXTENSION);
-    if fGitCommand<>'' then begin
-      if not TryGitIn(ExtractFilePath(fGitCommand)) then
-        fGitCommand := '';
-    end;
-  end;
+
   {$ifdef MsWindows}
   if (fGitCommand='') then begin
     // try some known git locations
@@ -113,9 +112,15 @@ begin
     if not TryGitIn(GetEnvironmentVariable('ProgramW6432') + '\git\bin\') then
     if not TryGitIn(GetEnvironmentVariable('SystemDrive') + '\msysgit\bin\') then
     if not TryGitIn(GetEnvironmentVariable('HOMEDRIVE') + '\msysgit\bin\') then
-      ;
   end;
   {$endif}
+
+  if fGitCommand<>'' then begin
+    // if version is given assume it's ok (it should come from config file)
+    if (aVersion='') and not GetVersion(fGitCommand, aVersion) then
+      exit;
+    fVersion := aVersion;
+  end;
 end;
 
 procedure TGit.Clear;
@@ -254,15 +259,9 @@ begin
 end;
 
 function TGit.TryGitIn(aPath: string): boolean;
-var
-  outputStr: RawByteString;
 begin
   aPath := aPath + 'git' + EXE_EXTENSION;
   result := FileExists(aPath);
-  if result then begin
-    cmdLine.RunProcess(aPath + ' --version', GetCurrentDir, outputStr);
-    result := pos('git version', outputStr)=1;
-  end;
 end;
 
 function TGit.Diff(entry: PFileEntry; Unstaged: boolean; Lines: TStrings
@@ -353,6 +352,18 @@ begin
   // ref: https://stackoverflow.com/a/55192451
   // todo: close output and close stderr
   result := cmdLine.RunProcess(fGitCommand + ' rev-list -1 MERGE_HEAD', fTopLevelDir, cmdOut) = 0;
+end;
+
+function TGit.GetVersion(gitCmd: string; out aVersion: string): boolean;
+var
+  cmdOut: RawByteString;
+begin
+  cmdLine.RunProcess(gitCmd + ' --version', GetCurrentDir, cmdOut);
+  result := pos('git version', cmdOut)=1;
+  if result then
+    aVersion := Trim(copy(cmdOut, 13, 256))
+  else
+    aVersion := '';
 end;
 
 end.

@@ -371,20 +371,22 @@ end;
 
 procedure TfrmMain.FormCreate(Sender: TObject);
 var
-  s: string;
+  s, v: string;
   aQuality: TFontQuality;
 begin
   fGit := TGit.Create;
 
   fConfig.OpenConfig;
 
-  s := '';
+  s := ''; v := '';
   if Application.HasOption('git') then
     s := Application.GetOptionValue('git');
-  if s='' then
+  if s='' then begin
     s := fConfig.ReadString('git');
+    v := fConfig.ReadString('gitversion');
+  end;
 
-  fGit.SetupExe(s);
+  fGit.SetupExe(s, v);
 
   if fGit.Exe='' then begin
     fConfig.CloseConfig;
@@ -393,7 +395,10 @@ begin
     exit;
   end;
 
-  fConfig.WriteString('git', fGit.Exe);
+  if (fGit.Exe<>s) or (fGit.Version<>v) then begin
+    fConfig.WriteString('git', fGit.Exe);
+    fConfig.WriteString('gitversion', fGit.Version);
+  end;
 
   //DebugLn('git=', fGit.Exe);
 
