@@ -283,7 +283,7 @@ begin
     if Unstaged then  arg := ''
     else              arg := '--cached ';
     aCommand := format('%s diff %s%s', [fGitCommand, arg, Entry^.path]);
-    cmdLine.waitOnExit := true;
+    //cmdLine.waitOnExit := true;
     result := cmdLine.RunProcess(aCommand, fTopLevelDir, M);
     if result=0 then begin
       M.Position := 0;
