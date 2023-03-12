@@ -41,6 +41,7 @@ type
     function Rm(entry: PFileEntry): Integer;
     function Restore(entry: PFileEntry; staged: boolean): Integer;
     function BranchList(list: TStrings; opts:array of string): Integer;
+    function Switch(branchName: string): Integer;
     function OpenDir(aDir: string): Integer;
 
     property Exe: string read fGitCommand;
@@ -324,6 +325,15 @@ begin
   end;
   cmd := ' branch -vv --format="' + cmd + '" -a';
   result := cmdLine.RunProcess(fGitCommand + cmd, fTopLevelDir, List);
+end;
+
+function TGit.Switch(branchName: string): Integer;
+var
+  cmdOut: RawByteString;
+  cmd: String;
+begin
+  cmd := ' checkout ' + branchName;
+  result := cmdLine.RunProcess(fGitCommand + cmd, fTopLevelDir, cmdOut);
 end;
 
 function TGit.OpenDir(aDir: string): Integer;

@@ -67,6 +67,7 @@ type
     procedure DoGitDiff(Data: PtrInt);
     procedure DoItemAction(Data: PtrInt);
     procedure OnBranchMenuClick(Sender: TObject);
+    procedure OnBranchSwitch(Data: PtrInt);
     procedure OnReloadBranchMenu(Data: PtrInt);
     procedure OpenDirectory(aDir: string);
     procedure UpdateBranch;
@@ -124,8 +125,22 @@ begin
         fPopPoint := popBranch.PopupPoint;
         Application.QueueAsyncCall(@OnReloadBranchMenu, 0);
       end;
-    MENU_BRANCH_SWITCH: ShowMessage('Switching to branch '+mi.Caption)
+    MENU_BRANCH_SWITCH:
+      begin
+        Application.QueueAsyncCall(@OnBranchSwitch, PtrInt(Sender));
+      end;
   end;
+end;
+
+procedure TfrmMain.OnBranchSwitch(Data: PtrInt);
+var
+  mi: TMenuItem;
+begin
+  mi := TMenuItem(TObject(Data));
+  if fGit.Switch(mi.Caption)>0 then
+    txtDiff.Text := fGit.ErrorLog
+  else
+    UpdateStatus;
 end;
 
 procedure TfrmMain.OnReloadBranchMenu(Data: PtrInt);
