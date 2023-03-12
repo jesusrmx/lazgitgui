@@ -63,9 +63,11 @@ type
     fGit: TGit;
     fClickedIndex: Integer;
     fDir: string;
+    fPopPoint: TPoint;
     procedure DoGitDiff(Data: PtrInt);
     procedure DoItemAction(Data: PtrInt);
     procedure OnBranchMenuClick(Sender: TObject);
+    procedure OnReloadBranchMenu(Data: PtrInt);
     procedure OpenDirectory(aDir: string);
     procedure UpdateBranch;
     procedure RestoreGui;
@@ -119,11 +121,17 @@ begin
     MENU_BRANCH_NEW: ShowMessage('Creating a new local branch');
     MENU_BRANCH_RELOAD:
       begin
-        UpdateBranchMenu;
-        popBranch.PopUp;
+        fPopPoint := popBranch.PopupPoint;
+        Application.QueueAsyncCall(@OnReloadBranchMenu, 0);
       end;
     MENU_BRANCH_SWITCH: ShowMessage('Switching to branch '+mi.Caption)
   end;
+end;
+
+procedure TfrmMain.OnReloadBranchMenu(Data: PtrInt);
+begin
+  UpdateBranchMenu;
+  popBranch.PopUp(fPopPoint.x, fPopPoint.y);
 end;
 
 procedure TfrmMain.lblBranchContextPopup(Sender: TObject; MousePos: TPoint;
@@ -209,7 +217,7 @@ begin
         '%(upstream:short)',
         '%(HEAD)',
         '%(worktreepath)',
-        '%(contents:subject)'])<>0 then
+        '%(contents:subject)'])>0 then
     begin
       txtDiff.Text := fGit.ErrorLog;
       exit;
