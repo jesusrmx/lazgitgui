@@ -5,7 +5,7 @@ unit unitgit;
 interface
 
 uses
-  Classes, SysUtils, FileUtil, lazlogger, unitconfig, unitprocess, unitentries;
+  Classes, SysUtils, FileUtil, lazlogger, unitprocess, unitentries;
 
 type
 
@@ -98,7 +98,6 @@ end;
 
 procedure TGit.SetupExe(aExeFile: string);
 begin
-  fConfig.OpenConfig;
   fGitCommand := aExeFile;
   if (fGitCommand='') or (not FileExists(fGitCommand)) then begin
     fGitCommand := FindDefaultExecutablePath('git' + EXE_EXTENSION);
@@ -263,10 +262,6 @@ begin
   if result then begin
     cmdLine.RunProcess(aPath + ' --version', GetCurrentDir, outputStr);
     result := pos('git version', outputStr)=1;
-    if result then begin
-      fGitCommand := aPath;
-      fConfig.WriteString('git', fGitCommand);
-    end;
   end;
 end;
 

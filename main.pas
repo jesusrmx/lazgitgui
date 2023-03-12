@@ -378,7 +378,12 @@ begin
 
   fConfig.OpenConfig;
 
-  s := fConfig.ReadString('git');
+  s := '';
+  if Application.HasOption('git') then
+    s := Application.GetOptionValue('git');
+  if s='' then
+    s := fConfig.ReadString('git');
+
   fGit.SetupExe(s);
 
   if fGit.Exe='' then begin
@@ -387,6 +392,8 @@ begin
     Application.Terminate;
     exit;
   end;
+
+  fConfig.WriteString('git', fGit.Exe);
 
   //DebugLn('git=', fGit.Exe);
 
