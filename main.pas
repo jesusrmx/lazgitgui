@@ -525,12 +525,8 @@ procedure TfrmMain.RestoreGui;
 begin
   fConfig.OpenConfig;
 
-  Left :=   fConfig.ReadInteger('mainform.Left',    Left,   SECTION_GEOMETRY);
-  Top :=    fConfig.ReadInteger('mainform.Top',     Top,    SECTION_GEOMETRY);
-  Width :=  fConfig.ReadInteger('mainform.Width',   Width,  SECTION_GEOMETRY);
-  Height := fConfig.ReadInteger('mainform.Height',  Height, SECTION_GEOMETRY);
-  if fConfig.ReadBoolean('mainform.maximized', false, SECTION_GEOMETRY) then
-    WindowState := wsMaximized;
+  fConfig.ReadWindow(Self, 'mainform', SECTION_GEOMETRY);
+
   lstUnstaged.Height := fConfig.ReadInteger('lstUnstaged.Height', lstUnstaged.Height, SECTION_GEOMETRY);
   panLeft.Width := fConfig.ReadInteger('panleft.width', panLeft.Width, SECTION_GEOMETRY);
   pancommit.Height := fConfig.ReadInteger('pancommit.height', pancommit.Height, SECTION_GEOMETRY);
@@ -544,14 +540,7 @@ var
 begin
   fConfig.OpenConfig;
 
-  isMaximized := WindowState=wsMaximized;
-  fConfig.WriteBoolean('mainform.maximized', isMaximized, SECTION_GEOMETRY);
-  if not isMaximized then begin
-    fConfig.WriteInteger('mainform.Left', Left, SECTION_GEOMETRY);
-    fConfig.WriteInteger('mainform.Top', Top, SECTION_GEOMETRY);
-    fConfig.WriteInteger('mainform.Width', Width, SECTION_GEOMETRY);
-    fConfig.WriteInteger('mainform.Height', Height, SECTION_GEOMETRY);
-  end;
+  fConfig.WriteWindow(Self, 'mainform', SECTION_GEOMETRY);
   fConfig.WriteInteger('lstUnstaged.Height', lstUnstaged.Height, SECTION_GEOMETRY);
   fConfig.WriteInteger('panleft.width', panLeft.Width, SECTION_GEOMETRY);
   fConfig.WriteInteger('pancommit.height', pancommit.Height, SECTION_GEOMETRY);

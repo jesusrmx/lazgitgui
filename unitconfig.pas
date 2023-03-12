@@ -5,7 +5,7 @@ unit unitconfig;
 interface
 
 uses
-  Classes, SysUtils, FileUtil, IniFiles, LazLogger;
+  Classes, SysUtils, FileUtil, IniFiles, LazLogger, Forms;
 
 const
   SECTION_DEFAULT = 'options';
@@ -24,6 +24,8 @@ type
   public
     procedure OpenConfig;
     procedure CloseConfig;
+    procedure ReadWindow(aForm: TForm; aKey:string; section:string=SECTION_DEFAULT);
+    procedure WriteWindow(aForm: TForm; aKey:string; section:string=SECTION_DEFAULT);
     function ReadString(aKey:string; default:string=''; section:string=SECTION_DEFAULT): string;
     function ReadBoolean(aKey:string; default:boolean=false; section:string=SECTION_DEFAULT): boolean;
     function ReadInteger(aKey:string; default:Integer=0; section:string=SECTION_DEFAULT): Integer;
@@ -94,6 +96,30 @@ begin
     if fIniFIle<>nil then
       FreeAndNil(fIniFile);
     fConfigFileOpenCount := 0;
+  end;
+end;
+
+procedure TConfig.ReadWindow(aForm: TForm; aKey: string; section: string);
+begin
+  aForm.Left :=   fConfig.ReadInteger(aKey + '.Left',    aForm.Left,   section);
+  aForm.Top :=    fConfig.ReadInteger(aKey + '.Top',     aForm.Top,    section);
+  aForm.Width :=  fConfig.ReadInteger(aKey + '.Width',   aForm.Width,  section);
+  aForm.Height := fConfig.ReadInteger(aKey + '.Height',  aForm.Height, section);
+  if fConfig.ReadBoolean(aKey + '.maximized', false, section) then
+    aForm.WindowState := wsMaximized;
+end;
+
+procedure TConfig.WriteWindow(aForm: TForm; aKey: string; section: string);
+var
+  isMaximized: Boolean;
+begin
+  isMaximized := aForm.WindowState=wsMaximized;
+  fConfig.WriteBoolean(aKey + '.maximized', isMaximized, SECTION_GEOMETRY);
+  if not isMaximized then begin
+    fConfig.WriteInteger(aKey + '.Left', aForm.Left, SECTION_GEOMETRY);
+    fConfig.WriteInteger(aKey + '.Top', aForm.Top, SECTION_GEOMETRY);
+    fConfig.WriteInteger(aKey + '.Width', aForm.Width, SECTION_GEOMETRY);
+    fConfig.WriteInteger(aKey + '.Height', aForm.Height, SECTION_GEOMETRY);
   end;
 end;
 
