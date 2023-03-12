@@ -7,7 +7,7 @@ interface
 uses
   Classes, SysUtils, LazLogger, Forms, Controls, Graphics, Dialogs, StdCtrls, ExtCtrls,
   ActnList, SynEdit, SynHighlighterDiff, StrUtils, FileUtil, unitconfig, unitprocess,
-  unitentries, unitgit, Types, lclType, Menus;
+  unitentries, unitgit, Types, lclType, Menus, unitnewbranch;
 
 type
 
@@ -116,10 +116,22 @@ end;
 procedure TfrmMain.OnBranchMenuClick(Sender: TObject);
 var
   mi: TMenuItem;
+  f: TfrmNewBranch;
 begin
   mi := TMenuItem(sender);
   case mi.tag of
-    MENU_BRANCH_NEW: ShowMessage('Creating a new local branch');
+    MENU_BRANCH_NEW:
+      begin
+        f := TfrmNewBranch.Create(Self);
+        f.Git := fGit;
+        try
+          if f.ShowModal=mrOk then begin
+            ShowMessage('Creating a branch');
+          end;
+        finally
+          f.Free;
+        end;
+      end;
     MENU_BRANCH_RELOAD:
       begin
         fPopPoint := popBranch.PopupPoint;
