@@ -13,8 +13,8 @@ object frmNewBranch: TfrmNewBranch
   LCLVersion = '2.3.0.0'
   object tabSource: TTabControl
     Left = 8
-    Height = 246
-    Top = 8
+    Height = 211
+    Top = 43
     Width = 623
     OnChange = tabSourceChange
     TabIndex = 0
@@ -25,22 +25,12 @@ object frmNewBranch: TfrmNewBranch
     )
     Anchors = [akTop, akLeft, akRight, akBottom]
     TabOrder = 2
-    object Label2: TLabel
-      AnchorSideTop.Control = tabSource
-      Left = 16
-      Height = 15
-      Top = 32
-      Width = 32
-      Anchors = [akLeft]
-      Caption = 'Name'
-    end
   end
   object txtName: TEdit
-    AnchorSideTop.Control = tabSource
-    Left = 72
-    Height = 23
-    Top = 36
-    Width = 264
+    Left = 64
+    Height = 26
+    Top = 8
+    Width = 224
     BorderSpacing.Top = 28
     OnChange = txtNameChange
     TabOrder = 0
@@ -53,12 +43,12 @@ object frmNewBranch: TfrmNewBranch
     AnchorSideBottom.Control = tabSource
     AnchorSideBottom.Side = asrBottom
     Left = 13
-    Height = 179
-    Top = 68
+    Height = 169
+    Top = 78
     Width = 611
     Anchors = [akTop, akLeft, akRight, akBottom]
     BorderSpacing.Left = 5
-    BorderSpacing.Top = 60
+    BorderSpacing.Top = 35
     BorderSpacing.Right = 7
     BorderSpacing.Bottom = 7
     ItemHeight = 0
@@ -67,11 +57,12 @@ object frmNewBranch: TfrmNewBranch
     ParentShowHint = False
     ShowHint = True
     TabOrder = 1
+    TopIndex = -1
   end
   object ButtonPanel1: TButtonPanel
     Left = 6
-    Height = 34
-    Top = 368
+    Height = 35
+    Top = 367
     Width = 628
     OKButton.Name = 'OKButton'
     OKButton.DefaultCaption = True
@@ -107,10 +98,18 @@ object frmNewBranch: TfrmNewBranch
     TabOrder = 4
     object Label1: TLabel
       Left = 8
-      Height = 15
+      Height = 17
       Top = 8
-      Width = 42
+      Width = 43
       Caption = 'Options'
     end
+  end
+  object Label2: TLabel
+    AnchorSideRight.Control = tabSource
+    Left = 16
+    Height = 17
+    Top = 10
+    Width = 34
+    Caption = 'Name'
   end
 end

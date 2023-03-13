@@ -86,13 +86,16 @@ begin
       '%(upstream:short)',
       '%(HEAD)',
       '%(worktreepath)',
-      '%(contents:subject)',
+      '%(contents)',
       '%(authorname)',
       '%(authordate)',
       '%(committerdate)',
       '%(creatordate)',
+      '%(*objecttype)',
+      '%(*objectname)',
       '%(*authorname)',
-      '%(*authordate)'
+      '%(*authordate)',
+      '%(*contents)'
       ])>0
   then begin
     DebugLn(fGit.ErrorLog);
@@ -123,9 +126,14 @@ begin
       s := '';
       info := PRefInfo(lb.Items.Objects[aIndex]);
       s += info^.refName + LineEnding;
-      //s += 'Updated ' + DateTimeToGitFmt(info^.authorDate) + LineEnding;
-      //s += LineEnding;
-      s += 'commit: ' + info^.objName + LineEnding;
+
+      if (info^.objType=rotTag) and (info^.refered<>nil) then begin
+        s +=  'Tag: ' + info^.objName + LineEnding +
+              info^.authorName + '(' + DateTimeToGitFmt(info^.authorDate) + ')' + LineEnding +
+              info^.subject + LineEnding;
+        info := info^.refered;
+      end;
+      s += 'Commit: ' + info^.objName + LineEnding;
       s += format('%s (%s)', [info^.authorName, DateTimeToGitFmt(info^.authorDate)]) + LineEnding;
       s += info^.subject;
       HintInfo^.HintStr := s;

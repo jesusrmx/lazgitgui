@@ -28,6 +28,7 @@ type
     creatorDate: TDateTime;
     isTracking: boolean;
     subType: TRefObjectSubType;
+    refered: PRefInfo;
   end;
 
   { TGit }
@@ -116,8 +117,12 @@ var
 begin
   for i:=0 to list.Count-1 do begin
     info := PRefInfo(list.Objects[i]);
+    if info^.refered<>nil then begin
+      Finalize(info^.refered^);
+      Dispose(info^.refered);
+    end;
     Finalize(info^);
-    dispose(info);
+    Dispose(info);
   end;
   list.clear;
 end;
@@ -450,7 +455,8 @@ var
   i, j: Integer;
   lst, line: TStringList;
   s, cmd, arg: String;
-  info: PRefInfo;
+  info, refered: PRefInfo;
+  withRefered: boolean;
 begin
 
   ClearRefList(list);
@@ -460,21 +466,25 @@ begin
   line.StrictDelimiter := true;
   line.Delimiter := '|';
   try
+    withRefered := false;
     cmd := '';
     for s in opts do begin
       if cmd<>'' then cmd += '|';
       cmd += s;
     end;
-    //DebugLn('format: ', cmd);
+
+    withRefered := pos('(*', cmd)>0;
     cmd := ' for-each-ref --format="' + cmd + '"';
     if pattern<>'' then
       cmd += ' ' + pattern;
+    DebugLn('Command: ', cmd);
     result := cmdLine.RunProcess(fGitCommand + cmd, fTopLevelDir, lst);
 
     for i:=0 to lst.Count-1 do begin
-      //DebugLn('%d: %s',[i, lst[i]]);
       line.DelimitedText := lst[i];
+      DebugLn('%d: (%d) %s ',[i, line.Count, lst[i]]);
       new(info);
+      info^.refered := nil;
 
       for j:=0 to Length(opts)-1 do begin
         s := line[j];
@@ -501,16 +511,20 @@ begin
       end;
 
       // second pass to detect refered tag object properties
-      if info^.objType=rotTag then
+      if withRefered and (info^.objType=rotTag) then begin
+        new(refered);
+        info^.refered := refered;
         for j:=0 to Length(opts)-1 do begin
           s := line[j];
           case CleanRefField(opts[j], arg) of
-            '*objecttype': info^.objType := StrToRefObjType(s);
-            '*objectname': info^.objName := s;
-            '*authorname': info^.authorName := s;
-            '*authordate': info^.authorDate := GitDateToDateTime(s);
+            '*objecttype': refered^.objType := StrToRefObjType(s);
+            '*objectname': refered^.objName := s;
+            '*authorname': refered^.authorName := s;
+            '*authordate': refered^.authorDate := GitDateToDateTime(s);
+            '*contents': refered^.subject := s;
           end;
         end;
+      end;
 
       case info^.objType of
         rotCommit:
