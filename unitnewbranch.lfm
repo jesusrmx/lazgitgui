@@ -1,7 +1,7 @@
 object frmNewBranch: TfrmNewBranch
-  Left = 141
+  Left = 259
   Height = 408
-  Top = 179
+  Top = 177
   Width = 640
   Caption = 'frmNewBranch'
   ClientHeight = 408
@@ -12,10 +12,10 @@ object frmNewBranch: TfrmNewBranch
   OnShow = FormShow
   LCLVersion = '2.3.0.0'
   object tabSource: TTabControl
-    Left = 16
-    Height = 201
-    Top = 57
-    Width = 616
+    Left = 8
+    Height = 246
+    Top = 8
+    Width = 623
     OnChange = tabSourceChange
     TabIndex = 0
     Tabs.Strings = (
@@ -24,34 +24,26 @@ object frmNewBranch: TfrmNewBranch
       'Tags'
     )
     Anchors = [akTop, akLeft, akRight, akBottom]
-    TabOrder = 3
-  end
-  object radNew: TRadioButton
-    Left = 16
-    Height = 21
-    Top = 8
-    Width = 57
-    Caption = 'Name'
-    Checked = True
-    OnClick = radTrackingClick
-    TabOrder = 6
-    TabStop = True
-  end
-  object radTracking: TRadioButton
-    Left = 16
-    Height = 21
-    Top = 32
-    Width = 183
-    Caption = 'Match tracking branch name'
-    OnClick = radTrackingClick
-    TabOrder = 0
+    TabOrder = 2
+    object Label2: TLabel
+      AnchorSideTop.Control = tabSource
+      Left = 16
+      Height = 15
+      Top = 32
+      Width = 32
+      Anchors = [akLeft]
+      Caption = 'Name'
+    end
   end
   object txtName: TEdit
-    Left = 80
-    Height = 26
-    Top = 6
+    AnchorSideTop.Control = tabSource
+    Left = 72
+    Height = 23
+    Top = 36
     Width = 264
-    TabOrder = 1
+    BorderSpacing.Top = 28
+    OnChange = txtNameChange
+    TabOrder = 0
   end
   object lstSource: TListBox
     AnchorSideLeft.Control = tabSource
@@ -60,23 +52,26 @@ object frmNewBranch: TfrmNewBranch
     AnchorSideRight.Side = asrBottom
     AnchorSideBottom.Control = tabSource
     AnchorSideBottom.Side = asrBottom
-    Left = 21
-    Height = 166
-    Top = 85
-    Width = 604
+    Left = 13
+    Height = 179
+    Top = 68
+    Width = 611
     Anchors = [akTop, akLeft, akRight, akBottom]
     BorderSpacing.Left = 5
-    BorderSpacing.Top = 28
+    BorderSpacing.Top = 60
     BorderSpacing.Right = 7
     BorderSpacing.Bottom = 7
     ItemHeight = 0
-    TabOrder = 2
-    TopIndex = -1
+    OnClick = lstSourceClick
+    OnShowHint = lstSourceShowHint
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 1
   end
   object ButtonPanel1: TButtonPanel
     Left = 6
-    Height = 35
-    Top = 367
+    Height = 34
+    Top = 368
     Width = 628
     OKButton.Name = 'OKButton'
     OKButton.DefaultCaption = True
@@ -87,24 +82,34 @@ object frmNewBranch: TfrmNewBranch
     CloseButton.DefaultCaption = True
     CancelButton.Name = 'CancelButton'
     CancelButton.DefaultCaption = True
-    TabOrder = 4
+    TabOrder = 3
     ShowButtons = [pbOK, pbCancel]
+    object lblHint: TLabel
+      AnchorSideTop.Control = ButtonPanel1
+      AnchorSideTop.Side = asrCenter
+      Left = 0
+      Height = 1
+      Top = 17
+      Width = 1
+      Font.Style = [fsBold]
+      ParentFont = False
+    end
   end
   object Panel1: TPanel
-    Left = 17
+    Left = 9
     Height = 98
     Top = 263
-    Width = 615
+    Width = 622
     Alignment = taLeftJustify
     Anchors = [akLeft, akRight, akBottom]
     ClientHeight = 98
-    ClientWidth = 615
-    TabOrder = 5
+    ClientWidth = 622
+    TabOrder = 4
     object Label1: TLabel
       Left = 8
-      Height = 17
+      Height = 15
       Top = 8
-      Width = 43
+      Width = 42
       Caption = 'Options'
     end
   end

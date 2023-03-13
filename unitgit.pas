@@ -5,9 +5,30 @@ unit unitgit;
 interface
 
 uses
-  Classes, SysUtils, FileUtil, lazlogger, unitprocess, unitentries;
+  Classes, SysUtils, FileUtil, DateUtils, lazlogger, unitprocess, unitentries;
 
 type
+
+  TRefObjectType = (rotBlob, rotTree, rotCommit, rotTag);
+  TRefObjectSubType = (rostLocal, rostTracking, rostTag, rostOther);
+
+  PRefInfo = ^TRefInfo;
+  TRefInfo = record
+    refName: string;
+    objType: TRefObjectType;
+    objName: string;
+    upstream: string;
+    push: string;
+    head: boolean;
+    worktreepath: string;
+    subject: string; // for branch list
+    authorName: string;
+    authorDate: TDateTime;
+    commiterDate: TDateTime;
+    creatorDate: TDateTime;
+    isTracking: boolean;
+    subType: TRefObjectSubType;
+  end;
 
   { TGit }
 
@@ -41,6 +62,7 @@ type
     function Rm(entry: PFileEntry): Integer;
     function Restore(entry: PFileEntry; staged: boolean): Integer;
     function BranchList(list: TStrings; opts:array of string): Integer;
+    function RefList(list: TStrings; pattern:string; opts:array of string): Integer;
     function Switch(branchName: string): Integer;
     function OpenDir(aDir: string): Integer;
 
@@ -55,6 +77,10 @@ type
     property ErrorLog: RawByteString read GetErrorLog;
     property Version: string read FVersion;
   end;
+
+  procedure ClearRefList(list: TStrings);
+  function GitDateToDateTime(s: string): TDateTime;
+  function DateTimeToGitFmt(d: TDateTime): string;
 
 implementation
 
@@ -81,6 +107,19 @@ begin
     len := strlen(head);
     head := head + len + 1;
   end;
+end;
+
+procedure ClearRefList(list: TStrings);
+var
+  i: Integer;
+  info: PRefInfo;
+begin
+  for i:=0 to list.Count-1 do begin
+    info := PRefInfo(list.Objects[i]);
+    Finalize(info^);
+    dispose(info);
+  end;
+  list.clear;
 end;
 
 { TGit }
@@ -325,6 +364,168 @@ begin
   end;
   cmd := ' branch -vv --format="' + cmd + '" -a';
   result := cmdLine.RunProcess(fGitCommand + cmd, fTopLevelDir, List);
+end;
+
+function CleanRefField(const aField: string; out opt:string): string;
+var
+  i: SizeInt;
+begin
+  opt := '';
+  result := aField;
+  delete(result, 1, 2);
+  i := pos(':', result);
+  if i<=0 then
+    i := pos(')', result)
+  else
+    opt := copy(result, i+1, Length(result)-i-1);
+  if i>0 then
+    delete(result, i, Length(result))
+end;
+
+function StrToRefObjType(objType: string): TRefObjectType;
+begin
+  case objType of
+    'commit': result := rotCommit;
+    'blob': result := rotBlob;
+    'tree': result := rotTree;
+    'tag': result := rotTag;
+  end;
+end;
+
+function GitDateToDateTime(s: string): TDateTime;
+  function MonthToInt(m: string): Integer;
+  begin
+    case m of
+      'Jan': result := 1;
+      'Feb': result := 2;
+      'Mar': result := 3;
+      'Apr': result := 4;
+      'May': result := 5;
+      'Jun': result := 6;
+      'Jul': result := 7;
+      'Aug': result := 8;
+      'Sep': result := 9;
+      'Oct': result := 10;
+      'Nov': result := 11;
+      'Dec': result := 12;
+      else   result := 0;
+    end;
+  end;
+var
+  i, mmm, dd, yyyy: Integer;
+  tt: string;
+begin
+  // Mon Dec 6 00:39:46 2021 +0100
+  if (Length(s)<29) or (Length(s)>30) then
+    exit(0);
+
+  mmm := MonthToInt(copy(s, 5, 3));
+  dd := StrToIntDef(Trim(copy(s, 9, 2)), -1);
+  if dd<0 then
+    exit(0);
+
+  i := 10;
+  if s[11]=' ' then inc(i);
+  delete(s, 1, i);
+  tt := copy(s, 1, 8);
+  yyyy := StrToIntDef(copy(s, 10, 4), -1);
+  if yyyy<0 then
+    exit(0);
+  delete(s, 1, 14);
+  insert(':', s, 4);
+
+  s := format('%.4d-%.2d-%.2dT%sZ%s',[yyyy, mmm, dd, tt, s]);
+  result := ISO8601ToDateDef(s, 0);
+  result := UniversalTimeToLocal(result);
+end;
+
+function DateTimeToGitFmt(d: TDateTime): string;
+begin
+  //result := FormatDateTime('ddd mmm d hh:nn:ss yyyy', d);
+  result := DateTimeToStr(d);
+end;
+
+function TGit.RefList(list: TStrings; pattern: string; opts: array of string): Integer;
+var
+  i, j: Integer;
+  lst, line: TStringList;
+  s, cmd, arg: String;
+  info: PRefInfo;
+begin
+
+  ClearRefList(list);
+
+  lst := TStringList.Create;
+  line := TStringList.Create;
+  line.StrictDelimiter := true;
+  line.Delimiter := '|';
+  try
+    cmd := '';
+    for s in opts do begin
+      if cmd<>'' then cmd += '|';
+      cmd += s;
+    end;
+    //DebugLn('format: ', cmd);
+    cmd := ' for-each-ref --format="' + cmd + '"';
+    if pattern<>'' then
+      cmd += ' ' + pattern;
+    result := cmdLine.RunProcess(fGitCommand + cmd, fTopLevelDir, lst);
+
+    for i:=0 to lst.Count-1 do begin
+      //DebugLn('%d: %s',[i, lst[i]]);
+      line.DelimitedText := lst[i];
+      new(info);
+
+      for j:=0 to Length(opts)-1 do begin
+        s := line[j];
+        if j=0 then cmd := s; // the first field becomes the lists item text
+        case CleanRefField(opts[j], arg) of
+          'refname':
+            begin
+              info^.refName := s;
+              info^.isTracking := ((arg='') and (pos('refs/remotes', s)=1)) or
+                                  ((arg='short') and (pos('/', s)>0));
+            end;
+          'objecttype': info^.objType := StrToRefObjType(s);
+          'objectname': info^.objName := s;
+          'upstream': info^.upstream := s;
+          'push': info^.push := s;
+          'HEAD': info^.head := s='*';
+          'worktreepath': info^.worktreepath := s;
+          'contents': info^.subject := s;
+          'authorname': info^.authorName := s;
+          'authordate': info^.authorDate := GitDateToDateTime(s);
+          'commiterdate': info^.commiterDate := GitDateToDateTime(s);
+          'creatordate': info^.creatorDate := GitDateToDateTime(s);
+        end;
+      end;
+
+      // second pass to detect refered tag object properties
+      if info^.objType=rotTag then
+        for j:=0 to Length(opts)-1 do begin
+          s := line[j];
+          case CleanRefField(opts[j], arg) of
+            '*objecttype': info^.objType := StrToRefObjType(s);
+            '*objectname': info^.objName := s;
+            '*authorname': info^.authorName := s;
+            '*authordate': info^.authorDate := GitDateToDateTime(s);
+          end;
+        end;
+
+      case info^.objType of
+        rotCommit:
+          if info^.isTracking then  info^.subType := rostTracking
+          else                      info^.subType := rostLocal;
+        rotTag:                     info^.subType := rostTag;
+        else                        info^.subType := rostOther;
+      end;
+
+      list.AddObject(cmd, TObject(info));
+    end;
+  finally
+    lst.Free;
+    line.Free;
+  end;
 end;
 
 function TGit.Switch(branchName: string): Integer;

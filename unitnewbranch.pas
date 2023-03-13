@@ -5,7 +5,7 @@ unit unitnewbranch;
 interface
 
 uses
-  Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, ComCtrls,
+  Classes, SysUtils, LazLogger, Forms, Controls, Graphics, Dialogs, StdCtrls, ComCtrls,
   ButtonPanel, ExtCtrls, unitconfig, unitprocess, unitgit;
 
 type
@@ -15,25 +15,28 @@ type
   TfrmNewBranch = class(TForm)
     ButtonPanel1: TButtonPanel;
     Label1: TLabel;
+    Label2: TLabel;
+    lblHint: TLabel;
     Panel1: TPanel;
     tabSource: TTabControl;
     txtName: TEdit;
     lstSource: TListBox;
-    radNew: TRadioButton;
-    radTracking: TRadioButton;
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormShow(Sender: TObject);
-    procedure radTrackingClick(Sender: TObject);
+    procedure lstSourceClick(Sender: TObject);
+    procedure lstSourceShowHint(Sender: TObject; HintInfo: PHintInfo);
     procedure tabSourceChange(Sender: TObject);
+    procedure txtNameChange(Sender: TObject);
   private
+    fBranchName: TCaption;
     fGit: TGit;
-    fLocalBranches, fTrackingBranches, fTags: TStringList;
+    fRefs: TStringList;
     fType: Integer;
     procedure ShowTabIndex(aIndex: Integer);
     procedure CheckOkButton;
-    function AlreadyExists(aName: string; lst:TStrings): boolean;
+    function AlreadyExists(aName: string; subType: TRefObjectSubType): boolean;
     procedure EvaluateOutcome;
   public
     property Git: TGit read fGit write fGit;
@@ -64,75 +67,70 @@ const
 procedure TfrmNewBranch.FormCreate(Sender: TObject);
 begin
   fConfig.ReadWindow(Self, 'newbranchform', SECTION_GEOMETRY);
-  fLocalBranches := TStringList.Create;
-  fTrackingBranches := TStringList.Create;
-  fTags := TStringList.Create;
+  fRefs := TStringList.Create;
 end;
 
 procedure TfrmNewBranch.FormDestroy(Sender: TObject);
 begin
-  fLocalBranches.Free;
-  fTrackingBranches.Free;
-  fTags.Free;
+  ClearRefList(fRefs);
+  fRefs.Free;
 end;
 
 procedure TfrmNewBranch.FormShow(Sender: TObject);
-var
-  list, branchLine: TStringList;
-  s: String;
 begin
 
-  try
-    list := TStringList.Create;
-    branchLine := TStringList.Create;
-    branchLine.StrictDelimiter := true;
-    branchLine.Delimiter := '|';
-
-    if fGit.BranchList(list, [
-        '%(refname:short)',
-        '%(objecttype)',
-        '%(upstream:short)',
-        '%(HEAD)',
-        '%(worktreepath)',
-        '%(contents:subject)'])>0
-    then begin
-      ShowMessage('Error while getting list of branches');
-      Close;
-      exit;
-    end;
-
-    fLocalBranches.clear;
-    fTrackingBranches.clear;
-    fTags.Clear;
-
-    for s in list do begin
-      branchLine.DelimitedText := s;
-      case branchLine[BF_OBJNAME] of
-        'tag':
-          fTags.Add(s);
-
-        'commit':
-          if pos('/', branchLine[BF_REFNAME])>0 then
-            fTrackingBranches.Add(s)
-          else
-            fLocalBranches.Add(s);
-      end;
-    end;
-
-    ShowTabIndex(0);
-
-  finally
-    list.free;
+  if fGit.RefList(fRefs, '', [
+      '%(refname:short)',
+      '%(objecttype)',
+      '%(objectname)',
+      '%(upstream:short)',
+      '%(HEAD)',
+      '%(worktreepath)',
+      '%(contents:subject)',
+      '%(authorname)',
+      '%(authordate)',
+      '%(committerdate)',
+      '%(creatordate)',
+      '%(*authorname)',
+      '%(*authordate)'
+      ])>0
+  then begin
+    DebugLn(fGit.ErrorLog);
+    ShowMessage('Error while getting list of branches');
+    Close;
+    exit;
   end;
+
+  ShowTabIndex(0);
 end;
 
-procedure TfrmNewBranch.radTrackingClick(Sender: TObject);
+procedure TfrmNewBranch.lstSourceClick(Sender: TObject);
 begin
-  if radTracking.Checked then begin
-    tabSource.TabIndex := 1;
-    ShowTabIndex(1);
-  end;
   CheckOkButton;
+end;
+
+procedure TfrmNewBranch.lstSourceShowHint(Sender: TObject; HintInfo: PHintInfo);
+var
+  lb: TListBox;
+  aIndex: Integer;
+  info: PRefInfo;
+  s: string;
+begin
+  if HintInfo^.HintControl is TListBox then begin
+    lb := TListBox(HintInfo^.HintControl);
+    aIndex := lb.ItemAtPos(HintInfo^.CursorPos, true);
+    if aIndex>=0 then begin
+      s := '';
+      info := PRefInfo(lb.Items.Objects[aIndex]);
+      s += info^.refName + LineEnding;
+      //s += 'Updated ' + DateTimeToGitFmt(info^.authorDate) + LineEnding;
+      //s += LineEnding;
+      s += 'commit: ' + info^.objName + LineEnding;
+      s += format('%s (%s)', [info^.authorName, DateTimeToGitFmt(info^.authorDate)]) + LineEnding;
+      s += info^.subject;
+      HintInfo^.HintStr := s;
+    end;
+  end;
 end;
 
 procedure TfrmNewBranch.tabSourceChange(Sender: TObject);
@@ -140,11 +138,18 @@ begin
   ShowTabIndex(tabSource.TabIndex)
 end;
 
+procedure TfrmNewBranch.txtNameChange(Sender: TObject);
+begin
+  CheckOkButton;
+end;
+
 procedure TfrmNewBranch.ShowTabIndex(aIndex: Integer);
 var
   branchLine: TStringList;
   list: TStringList;
-  i: Integer;
+  i, j: Integer;
+  info: PRefInfo;
+  ok: boolean;
 begin
   branchLine := TStringList.Create;
   branchLine.StrictDelimiter := true;
@@ -154,17 +159,23 @@ begin
 
     lstSource.Clear;
 
-    case aIndex of
-      0: list := fLocalBranches;
-      1: list := fTrackingBranches;
-      2: list := fTags;
-      else exit;
+    for i:=0 to fRefs.Count-1 do begin
+      info := PRefInfo(fRefs.Objects[i]);
+      ok := false;
+      case aIndex of
+        0: ok := (info^.objType=rotCommit) and (not info^.isTracking);
+        1: ok := (info^.objType=rotCommit) and info^.isTracking;
+        2: ok := (info^.objType=rotTag);
+        else exit;
+      end;
+      if ok then begin
+        j := lstSource.Items.AddObject(fRefs[i], TObject(info));
+        if (aIndex=0) and info^.head then
+          lstSource.ItemIndex := j;
+      end;
     end;
 
-    for i:=0 to list.Count-1 do begin
-      branchLine.DelimitedText := list[i];
-      lstSource.Items.Add(branchLine[BF_REFNAME]);
-    end;
+    CheckOkButton;
 
   finally
     lstSource.Items.EndUpdate;
@@ -181,14 +192,17 @@ begin
     (fType=BT_NEWLOCAL_TAG);
 end;
 
-function TfrmNewBranch.AlreadyExists(aName: string; lst: TStrings): boolean;
+function TfrmNewBranch.AlreadyExists(aName: string; subType: TRefObjectSubType
+  ): boolean;
 var
   i: Integer;
+  info: PRefInfo;
 begin
   result := false;
   aName := lowercase(aName);
-  for i:=0 to lst.Count-1 do begin
-    if pos(aName + '|', lowercase(lst[i]))=1 then begin
+  for i:=0 to fRefs.Count-1 do begin
+    info := PRefInfo(fRefs.Objects[i]);
+    if (info^.subType=subtype) and (aName=info^.refName) then begin
       result := true;
       break;
     end;
@@ -196,8 +210,74 @@ begin
 end;
 
 procedure TfrmNewBranch.EvaluateOutcome;
+var
+  aIndex: Integer;
+  info: PRefInfo;
 begin
   fType := BT_INVALID;
+
+  lblHint.Font.Color := clRed;
+  fBranchName := Trim(txtName.Text);
+  aIndex := lstSource.ItemIndex;
+  if aIndex<0 then  info := nil
+  else              info := PRefInfo(lstSource.Items.Objects[aIndex]);
+  case tabSource.TabIndex of
+    0: // branch based on a existing local branch tab
+      begin
+        if fBranchName<>'' then begin
+          if AlreadyExists(fBranchName, rostLocal) then begin
+            lblHint.caption := 'Alredy Exists';
+            exit;
+          end;
+          if aIndex<0 then begin
+            lblHint.caption := 'No refering branch selected';
+            exit;
+          end;
+          fType := BT_NEWLOCAL_BRANCH
+        end else begin
+          lblHint.Caption := 'Branch name is empty';
+          exit;
+        end;
+      end;
+    1: // branch based on a tracking branch tab
+      begin
+        if aIndex<0 then begin
+          lblHint.caption := 'No refering branch selected';
+          exit;
+        end;
+        if fBranchName='' then begin
+          if info=nil then begin
+            lblHint.caption := 'Not refers to a tracking branch';
+            exit;
+          end;
+          fBranchName := info^.upstream;
+          if AlreadyExists(fBranchName, rostLocal) then begin
+            lblHint.caption := 'Alredy Exists';
+            exit;
+          end;
+          fType := BT_NEWLOCAL_TRACKING;
+        end;
+      end;
+    2:  // branch based on a tag tab
+      begin
+        if fBranchName<>'' then begin
+          if AlreadyExists(fBranchName, rostLocal) then begin
+            lblHint.caption := 'Alredy Exists';
+            exit;
+          end;
+          if aIndex<0 then begin
+            lblHint.caption := 'No refering tag selected';
+            exit;
+          end;
+          fType := BT_NEWLOCAL_TAG;
+        end else begin
+          lblHint.Caption := 'Branch name is empty';
+          exit;
+        end;
+      end;
+  end;
+  lblHint.Font.Color := clGreen;
+  lblHint.Caption := 'Feasible';
 end;
 
 procedure TfrmNewBranch.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
