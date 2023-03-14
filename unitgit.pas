@@ -24,7 +24,7 @@ type
     subject: string; // for branch list
     authorName: string;
     authorDate: TDateTime;
-    commiterDate: TDateTime;
+    committerDate: TDateTime;
     creatorDate: TDateTime;
     isTracking: boolean;
     subType: TRefObjectSubType;
@@ -522,7 +522,7 @@ begin
           end;
         'authorname': info^.authorName := value;
         'authordate': info^.authorDate := GitDateToDateTime(value);
-        'committerdate': info^.commiterDate := GitDateToDateTime(value);
+        'committerdate': info^.committerDate := GitDateToDateTime(value);
         'creatordate': info^.creatorDate := GitDateToDateTime(value);
         '*objecttype': if refered<>nil then refered^.objType := StrToRefObjType(value);
         '*objectname': if refered<>nil then refered^.objName := value;
@@ -541,7 +541,6 @@ begin
 
     list.addObject(item, TObject(info));
   end;
-
 
   result := true;
 end;
