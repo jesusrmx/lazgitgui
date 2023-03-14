@@ -86,7 +86,7 @@ begin
       '%(upstream:short)',
       '%(HEAD)',
       '%(worktreepath)',
-      '%(contents)',
+      '%(subject)',
       '%(authorname)',
       '%(authordate)',
       '%(committerdate)',
@@ -95,7 +95,7 @@ begin
       '%(*objectname)',
       '%(*authorname)',
       '%(*authordate)',
-      '%(*contents)'
+      '%(*subject)'
       ])>0
   then begin
     DebugLn(fGit.ErrorLog);

@@ -520,6 +520,7 @@ begin
             value := StringReplace(value, #10, eolRepl, [rfReplaceAll]);
             info^.subject :=  value;
           end;
+        'subject': info^.subject := value;
         'authorname': info^.authorName := value;
         'authordate': info^.authorDate := GitDateToDateTime(value);
         'committerdate': info^.committerDate := GitDateToDateTime(value);
@@ -529,6 +530,7 @@ begin
         '*authorname': if refered<>nil then refered^.authorName := value;
         '*authordate': if refered<>nil then refered^.authorDate := GitDateToDateTime(value);
         '*contents': if refered<>nil then refered^.subject := value;
+        '*subject': if refered<>nil then refered^.subject := value;
       end;
 
       inc(fieldIndex);
