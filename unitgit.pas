@@ -458,6 +458,14 @@ var
   arg, value, fld, item: string;
   haveReferedFields: boolean;
 begin
+
+  haveReferedFields := false;
+  for arg in opts do
+    if (arg<>'') and (pos('%(*', arg)>0) then begin
+      haveReferedFields := true;
+      break;
+    end;
+
   result := false;
   p := m.Memory;
   t := p + m.size;
@@ -469,10 +477,13 @@ begin
     n := strlen(p);
     q := p + n;
 
-    // each returned field should correspond to every opts[] requested
-    haveReferedFields := false;
-    fieldIndex := 0;
     new(info);
+    if haveReferedFields and (strpos(p, pchar('tag'+sep))<>nil) then new(refered)
+    else                                                             refered := nil;
+    info^.refered := refered;
+
+    // each returned field should correspond to every opts[] requested
+    fieldIndex := 0;
     while (p<q) and (fieldIndex<Length(opts)) do begin
 
       // get field value, the start of separator is the end of the field
@@ -513,44 +524,15 @@ begin
         'authordate': info^.authorDate := GitDateToDateTime(value);
         'committerdate': info^.commiterDate := GitDateToDateTime(value);
         'creatordate': info^.creatorDate := GitDateToDateTime(value);
-        else
-          if not haveReferedFields and (fld[1]='*') then
-            haveReferedFields := true;
+        '*objecttype': if refered<>nil then refered^.objType := StrToRefObjType(value);
+        '*objectname': if refered<>nil then refered^.objName := value;
+        '*authorname': if refered<>nil then refered^.authorName := value;
+        '*authordate': if refered<>nil then refered^.authorDate := GitDateToDateTime(value);
+        '*contents': if refered<>nil then refered^.subject := value;
       end;
 
       inc(fieldIndex);
       p := r + Length(sep);
-    end;
-
-    // this record has been fully processed (each field is now #0 separated)
-    // if this is a "tag" record, do it again looking for refered properties
-    if haveReferedFields and (info^.objType=rotTag) then begin
-
-      new(refered);
-      info^.refered := refered;
-
-      fieldIndex := 0;
-      p := start;
-      while (p<q) and (fieldIndex<Length(Opts)) do begin
-
-        // now each field is already #0 separated
-        i := strLen(p);
-        value := p;
-
-        // match requested fields
-        fld := CleanRefField(opts[fieldIndex], arg);
-        case fld of
-          '*objecttype': refered^.objType := StrToRefObjType(value);
-          '*objectname': refered^.objName := value;
-          '*authorname': refered^.authorName := value;
-          '*authordate': refered^.authorDate := GitDateToDateTime(value);
-          '*contents': refered^.subject := value;
-        end;
-
-        inc(fieldIndex);
-        p := p + i + 1;
-      end;
-
     end;
 
     p := q + 1;
