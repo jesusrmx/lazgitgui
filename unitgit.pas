@@ -63,7 +63,7 @@ type
     function Rm(entry: PFileEntry): Integer;
     function Restore(entry: PFileEntry; staged: boolean): Integer;
     function BranchList(list: TStrings; opts:array of string): Integer;
-    function RefList(list: TStrings; pattern:string; opts:array of string): Integer;
+    function RefList(list: TStrings; pattern:string; opts:array of string; eolRepl:string=#1): Integer;
     function Switch(branchName: string): Integer;
     function OpenDir(aDir: string): Integer;
 
@@ -450,95 +450,148 @@ begin
   result := DateTimeToStr(d);
 end;
 
-function TGit.RefList(list: TStrings; pattern: string; opts: array of string): Integer;
+function ParseRefList(M: TMemoryStream; list: TStrings; sep:string; eolrepl:string; opts:array of string): boolean;
 var
-  i, j: Integer;
-  lst, line: TStringList;
-  s, cmd, arg: String;
+  p, q, r, t, start: pchar;
   info, refered: PRefInfo;
-  withRefered: boolean;
+  fieldIndex, n, i: Integer;
+  arg, value, fld, item: string;
+  haveReferedFields: boolean;
+begin
+  result := false;
+  p := m.Memory;
+  t := p + m.size;
+
+  while p<t do begin
+
+    // find length of single line "record"
+    start := p;
+    n := strlen(p);
+    q := p + n;
+
+    // each returned field should correspond to every opts[] requested
+    haveReferedFields := false;
+    fieldIndex := 0;
+    new(info);
+    while (p<q) and (fieldIndex<Length(opts)) do begin
+
+      // get field value, the start of separator is the end of the field
+      r := strpos(p, pchar(sep));
+      if r=nil then begin
+        DebugLn('Error: field separator not found at %d',[t-p]);
+        dispose(info);
+        exit;
+      end else
+        r^ := #0;
+
+      value := p;
+      if fieldIndex=0 then
+        item := value;
+
+      // match requested fields
+      fld := CleanRefField(opts[fieldIndex], arg);
+      case fld of
+        'refname':
+          begin
+            info^.refName := value;
+            info^.isTracking := ((arg='') and (pos('refs/remotes', value)=1)) or
+                                ((arg='short') and (pos('/', value)>0));
+          end;
+        'objecttype': info^.objType := StrToRefObjType(value);
+        'objectname': info^.objName := value;
+        'upstream': info^.upstream := value;
+        'push': info^.push := value;
+        'HEAD': info^.head := value='*';
+        'worktreepath': info^.worktreepath := value;
+        'contents':
+          begin
+            value := StringReplace(value, #13#10, eolRepl, [rfReplaceAll]);
+            value := StringReplace(value, #10, eolRepl, [rfReplaceAll]);
+            info^.subject :=  value;
+          end;
+        'authorname': info^.authorName := value;
+        'authordate': info^.authorDate := GitDateToDateTime(value);
+        'committerdate': info^.commiterDate := GitDateToDateTime(value);
+        'creatordate': info^.creatorDate := GitDateToDateTime(value);
+        else
+          if not haveReferedFields and (fld[1]='*') then
+            haveReferedFields := true;
+      end;
+
+      inc(fieldIndex);
+      p := r + Length(sep);
+    end;
+
+    // this record has been fully processed (each field is now #0 separated)
+    // if this is a "tag" record, do it again looking for refered properties
+    if haveReferedFields and (info^.objType=rotTag) then begin
+
+      new(refered);
+      info^.refered := refered;
+
+      fieldIndex := 0;
+      p := start;
+      while (p<q) and (fieldIndex<Length(Opts)) do begin
+
+        // now each field is already #0 separated
+        i := strLen(p);
+        value := p;
+
+        // match requested fields
+        fld := CleanRefField(opts[fieldIndex], arg);
+        case fld of
+          '*objecttype': refered^.objType := StrToRefObjType(value);
+          '*objectname': refered^.objName := value;
+          '*authorname': refered^.authorName := value;
+          '*authordate': refered^.authorDate := GitDateToDateTime(value);
+          '*contents': refered^.subject := value;
+        end;
+
+        inc(fieldIndex);
+        p := p + i + 1;
+      end;
+
+    end;
+
+    p := q + 1;
+    // skip the eol that for-each-ref always add
+    while (p<t) and (p^ in [#10, #13]) do inc(p);
+
+    list.addObject(item, TObject(info));
+  end;
+
+
+  result := true;
+end;
+
+function TGit.RefList(list: TStrings; pattern: string; opts: array of string;
+  eolRepl: string): Integer;
+var
+  cmd, s: String;
+  M: TMemoryStream;
 begin
 
   ClearRefList(list);
 
-  lst := TStringList.Create;
-  line := TStringList.Create;
-  line.StrictDelimiter := true;
-  line.Delimiter := '|';
+  M := TMemoryStream.Create;
   try
-    withRefered := false;
     cmd := '';
-    for s in opts do begin
-      if cmd<>'' then cmd += '|';
-      cmd += s;
-    end;
+    for s in opts do
+      cmd += s + '%02';
 
-    withRefered := pos('(*', cmd)>0;
-    cmd := ' for-each-ref --format="' + cmd + '"';
+    cmd := ' for-each-ref --format="' + cmd + '%00"';
     if pattern<>'' then
       cmd += ' ' + pattern;
-    DebugLn('Command: ', cmd);
-    result := cmdLine.RunProcess(fGitCommand + cmd, fTopLevelDir, lst);
 
-    for i:=0 to lst.Count-1 do begin
-      line.DelimitedText := lst[i];
-      DebugLn('%d: (%d) %s ',[i, line.Count, lst[i]]);
-      new(info);
-      info^.refered := nil;
+    //DebugLn('Command: ', cmd);
 
-      for j:=0 to Length(opts)-1 do begin
-        s := line[j];
-        if j=0 then cmd := s; // the first field becomes the lists item text
-        case CleanRefField(opts[j], arg) of
-          'refname':
-            begin
-              info^.refName := s;
-              info^.isTracking := ((arg='') and (pos('refs/remotes', s)=1)) or
-                                  ((arg='short') and (pos('/', s)>0));
-            end;
-          'objecttype': info^.objType := StrToRefObjType(s);
-          'objectname': info^.objName := s;
-          'upstream': info^.upstream := s;
-          'push': info^.push := s;
-          'HEAD': info^.head := s='*';
-          'worktreepath': info^.worktreepath := s;
-          'contents': info^.subject := s;
-          'authorname': info^.authorName := s;
-          'authordate': info^.authorDate := GitDateToDateTime(s);
-          'commiterdate': info^.commiterDate := GitDateToDateTime(s);
-          'creatordate': info^.creatorDate := GitDateToDateTime(s);
-        end;
-      end;
-
-      // second pass to detect refered tag object properties
-      if withRefered and (info^.objType=rotTag) then begin
-        new(refered);
-        info^.refered := refered;
-        for j:=0 to Length(opts)-1 do begin
-          s := line[j];
-          case CleanRefField(opts[j], arg) of
-            '*objecttype': refered^.objType := StrToRefObjType(s);
-            '*objectname': refered^.objName := s;
-            '*authorname': refered^.authorName := s;
-            '*authordate': refered^.authorDate := GitDateToDateTime(s);
-            '*contents': refered^.subject := s;
-          end;
-        end;
-      end;
-
-      case info^.objType of
-        rotCommit:
-          if info^.isTracking then  info^.subType := rostTracking
-          else                      info^.subType := rostLocal;
-        rotTag:                     info^.subType := rostTag;
-        else                        info^.subType := rostOther;
-      end;
-
-      list.AddObject(cmd, TObject(info));
-    end;
+    result := cmdLine.RunProcess(fGitCommand + cmd, fTopLevelDir, M);
+    if result>0 then
+      exit;
+    //M.SaveToFile('lookatme.txt');
+    ParseRefList(M, list, #2, eolRepl, opts);
   finally
-    lst.Free;
-    line.Free;
+    M.Free;
   end;
 end;
 
