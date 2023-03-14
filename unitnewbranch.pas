@@ -17,6 +17,7 @@ type
     Label1: TLabel;
     Label2: TLabel;
     lblHint: TLabel;
+    txtInfo: TMemo;
     Panel1: TPanel;
     tabSource: TTabControl;
     txtName: TEdit;
@@ -26,7 +27,6 @@ type
     procedure FormDestroy(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure lstSourceClick(Sender: TObject);
-    procedure lstSourceShowHint(Sender: TObject; HintInfo: PHintInfo);
     procedure tabSourceChange(Sender: TObject);
     procedure txtNameChange(Sender: TObject);
   private
@@ -38,6 +38,7 @@ type
     procedure CheckOkButton;
     function AlreadyExists(aName: string; subType: TRefObjectSubType): boolean;
     procedure EvaluateOutcome;
+    procedure ShowInfo;
   public
     property Git: TGit read fGit write fGit;
   end;
@@ -86,7 +87,7 @@ begin
       '%(upstream:short)',
       '%(HEAD)',
       '%(worktreepath)',
-      '%(subject)',
+      '%(contents)',
       '%(authorname)',
       '%(authordate)',
       '%(committerdate)',
@@ -95,7 +96,7 @@ begin
       '%(*objectname)',
       '%(*authorname)',
       '%(*authordate)',
-      '%(*subject)'
+      '%(*contents)'
       ])>0
   then begin
     DebugLn(fGit.ErrorLog);
@@ -109,36 +110,8 @@ end;
 
 procedure TfrmNewBranch.lstSourceClick(Sender: TObject);
 begin
+  ShowInfo;
   CheckOkButton;
-end;
-
-procedure TfrmNewBranch.lstSourceShowHint(Sender: TObject; HintInfo: PHintInfo);
-var
-  lb: TListBox;
-  aIndex: Integer;
-  info: PRefInfo;
-  s: string;
-begin
-  if HintInfo^.HintControl is TListBox then begin
-    lb := TListBox(HintInfo^.HintControl);
-    aIndex := lb.ItemAtPos(HintInfo^.CursorPos, true);
-    if aIndex>=0 then begin
-      s := '';
-      info := PRefInfo(lb.Items.Objects[aIndex]);
-      s += info^.refName + LineEnding;
-
-      if (info^.objType=rotTag) and (info^.refered<>nil) then begin
-        s +=  'Tag: ' + info^.objName + LineEnding +
-              info^.authorName + '(' + DateTimeToGitFmt(info^.authorDate) + ')' + LineEnding +
-              info^.subject + LineEnding;
-        info := info^.refered;
-      end;
-      s += 'Commit: ' + info^.objName + LineEnding;
-      s += format('%s (%s)', [info^.authorName, DateTimeToGitFmt(info^.authorDate)]) + LineEnding;
-      s += info^.subject;
-      HintInfo^.HintStr := s;
-    end;
-  end;
 end;
 
 procedure TfrmNewBranch.tabSourceChange(Sender: TObject);
@@ -183,6 +156,7 @@ begin
       end;
     end;
 
+    ShowInfo;
     CheckOkButton;
 
   finally
@@ -286,6 +260,45 @@ begin
   end;
   lblHint.Font.Color := clGreen;
   lblHint.Caption := 'Feasible';
+end;
+
+procedure TfrmNewBranch.ShowInfo;
+var
+  aIndex: Integer;
+  info: PRefInfo;
+  s: string;
+begin
+
+  txtInfo.Lines.BeginUpdate;
+  try
+    txtInfo.Clear;
+    aIndex := lstSource.ItemIndex;
+    if aIndex<0 then
+      exit;
+    info := PRefInfo(lstSource.Items.Objects[aIndex]);
+
+    s := info^.refName;
+    if info^.upstream<>'' then
+      s := s + ' -> ' + info^.upstream;
+    txtInfo.Lines.Add(s);
+    if info^.worktreepath<>'' then
+      txtInfo.Lines.Add('worktree: '+info^.worktreepath);
+
+    txtInfo.Lines.Add('');
+    if (info^.objType=rotTag) and (info^.refered<>nil) then begin
+      txtInfo.Lines.Add('Tag: %s',[info^.objName]);
+      txtInfo.Lines.Add('%s (%s)',[info^.authorName, DateTimeToGitFmt(info^.authorDate)]);
+      txtInfo.Lines.Add(info^.subject);
+      txtInfo.Lines.Add('');
+      info := info^.refered;
+    end;
+    txtInfo.Lines.Add('Commit: %s',[info^.objName]);
+    txtInfo.Lines.Add('%s (%s)',[info^.authorName, DateTimeToGitFmt(info^.authorDate)]);
+    txtInfo.Lines.Add(info^.subject);
+  finally
+    txtInfo.Lines.EndUpdate;
+  end;
+
 end;
 
 procedure TfrmNewBranch.FormCloseQuery(Sender: TObject; var CanClose: Boolean);

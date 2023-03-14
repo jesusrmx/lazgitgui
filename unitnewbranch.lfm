@@ -1,9 +1,9 @@
 object frmNewBranch: TfrmNewBranch
-  Left = 259
+  Left = 289
   Height = 408
-  Top = 177
+  Top = 132
   Width = 640
-  Caption = 'frmNewBranch'
+  Caption = 'Create a new branch'
   ClientHeight = 408
   ClientWidth = 640
   OnCloseQuery = FormCloseQuery
@@ -13,7 +13,7 @@ object frmNewBranch: TfrmNewBranch
   LCLVersion = '2.3.0.0'
   object tabSource: TTabControl
     Left = 8
-    Height = 211
+    Height = 155
     Top = 43
     Width = 623
     OnChange = tabSourceChange
@@ -28,7 +28,7 @@ object frmNewBranch: TfrmNewBranch
   end
   object txtName: TEdit
     Left = 64
-    Height = 26
+    Height = 23
     Top = 8
     Width = 224
     BorderSpacing.Top = 28
@@ -43,7 +43,7 @@ object frmNewBranch: TfrmNewBranch
     AnchorSideBottom.Control = tabSource
     AnchorSideBottom.Side = asrBottom
     Left = 13
-    Height = 169
+    Height = 113
     Top = 78
     Width = 611
     Anchors = [akTop, akLeft, akRight, akBottom]
@@ -53,16 +53,14 @@ object frmNewBranch: TfrmNewBranch
     BorderSpacing.Bottom = 7
     ItemHeight = 0
     OnClick = lstSourceClick
-    OnShowHint = lstSourceShowHint
     ParentShowHint = False
     ShowHint = True
     TabOrder = 1
-    TopIndex = -1
   end
   object ButtonPanel1: TButtonPanel
     Left = 6
-    Height = 35
-    Top = 367
+    Height = 34
+    Top = 368
     Width = 628
     OKButton.Name = 'OKButton'
     OKButton.DefaultCaption = True
@@ -87,29 +85,45 @@ object frmNewBranch: TfrmNewBranch
     end
   end
   object Panel1: TPanel
-    Left = 9
-    Height = 98
-    Top = 263
-    Width = 622
+    Left = 8
+    Height = 161
+    Top = 201
+    Width = 271
     Alignment = taLeftJustify
-    Anchors = [akLeft, akRight, akBottom]
-    ClientHeight = 98
-    ClientWidth = 622
+    Anchors = [akLeft, akBottom]
+    ClientHeight = 161
+    ClientWidth = 271
     TabOrder = 4
     object Label1: TLabel
       Left = 8
-      Height = 17
+      Height = 15
       Top = 8
-      Width = 43
+      Width = 42
       Caption = 'Options'
     end
   end
   object Label2: TLabel
     AnchorSideRight.Control = tabSource
     Left = 16
-    Height = 17
+    Height = 15
     Top = 10
-    Width = 34
+    Width = 32
     Caption = 'Name'
+  end
+  object txtInfo: TMemo
+    Left = 287
+    Height = 162
+    Top = 200
+    Width = 344
+    Anchors = [akLeft, akRight, akBottom]
+    BorderStyle = bsNone
+    Color = 15925247
+    Font.Height = -12
+    Font.Pitch = fpFixed
+    ParentFont = False
+    ReadOnly = True
+    ScrollBars = ssAutoBoth
+    TabOrder = 5
+    WordWrap = False
   end
 end

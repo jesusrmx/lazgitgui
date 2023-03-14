@@ -514,12 +514,7 @@ begin
         'push': info^.push := value;
         'HEAD': info^.head := value='*';
         'worktreepath': info^.worktreepath := value;
-        'contents':
-          begin
-            value := StringReplace(value, #13#10, eolRepl, [rfReplaceAll]);
-            value := StringReplace(value, #10, eolRepl, [rfReplaceAll]);
-            info^.subject :=  value;
-          end;
+        'contents': info^.subject := value;
         'subject': info^.subject := value;
         'authorname': info^.authorName := value;
         'authordate': info^.authorDate := GitDateToDateTime(value);
@@ -571,7 +566,7 @@ begin
     result := cmdLine.RunProcess(fGitCommand + cmd, fTopLevelDir, M);
     if result>0 then
       exit;
-    //M.SaveToFile('lookatme.txt');
+    //M.SaveToFile('lookatme.reflist');
     ParseRefList(M, list, #2, eolRepl, opts);
   finally
     M.Free;
