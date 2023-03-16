@@ -314,7 +314,6 @@ function TGit.Diff(entry: PFileEntry; Unstaged: boolean; Lines: TStrings
 var
   aCommand, arg: string;
   M: TMemoryStream;
-  head, tail: PChar;
 begin
 
   M := TMemoryStream.Create;
@@ -452,16 +451,16 @@ end;
 
 function ParseRefList(M: TMemoryStream; list: TStrings; sep:string; eolrepl:string; opts:array of string): boolean;
 var
-  p, q, r, t, start: pchar;
+  p, q, r, t: pchar;
   info, refered: PRefInfo;
-  fieldIndex, n, i: Integer;
+  fieldIndex, n: Integer;
   arg, value, fld, item: string;
   haveReferedFields: boolean;
 begin
 
   haveReferedFields := false;
   for arg in opts do
-    if (arg<>'') and (pos('%(*', arg)>0) then begin
+    if pos('%(*', arg)>0 then begin
       haveReferedFields := true;
       break;
     end;
@@ -473,7 +472,6 @@ begin
   while p<t do begin
 
     // find length of single line "record"
-    start := p;
     n := strlen(p);
     q := p + n;
 
