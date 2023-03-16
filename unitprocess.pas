@@ -67,7 +67,7 @@ begin
   Tail := Buffer + BUFSIZE;
   Tail^ := 0;
   try
-    Process.ParseCmdLine(aCommand);
+    Process.ParseCmdLine(aCommand, true);
     Process.CurrentDirectory := startDir;
     opts := [poUsePipes, poNoConsole];
     if fWaitOnExit then Include(opts, poWaitOnExit);

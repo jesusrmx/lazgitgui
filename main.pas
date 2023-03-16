@@ -515,8 +515,11 @@ begin
   end;
   if fGit.Commit(txtComment.Text,'')>0 then
     ShowError
-  else
+  else begin
     UpdateStatus;
+    txtDiff.Clear;
+    txtComment.Clear;
+  end;
 end;
 
 procedure TfrmMain.DoGitDiff(Data: PtrInt);
