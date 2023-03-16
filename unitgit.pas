@@ -63,7 +63,7 @@ type
     function Rm(entry: PFileEntry): Integer;
     function Restore(entry: PFileEntry; staged: boolean): Integer;
     function BranchList(list: TStrings; opts:array of string): Integer;
-    function RefList(list: TStrings; pattern:string; opts:array of string; eolRepl:string=#1): Integer;
+    function RefList(list: TStrings; pattern:string; fields:array of string): Integer;
     function Switch(branchName: string): Integer;
     function OpenDir(aDir: string): Integer;
 
@@ -449,18 +449,18 @@ begin
   result := DateTimeToStr(d);
 end;
 
-function ParseRefList(M: TMemoryStream; list: TStrings; sep:string; eolrepl:string; opts:array of string): boolean;
+function ParseRefList(M: TMemoryStream; list: TStrings; sep:string; fields:array of string): boolean;
 var
   p, q, r, t: pchar;
   info, refered: PRefInfo;
   fieldIndex, n: Integer;
-  arg, value, fld, item: string;
+  field, value, opt, item: string;
   haveReferedFields: boolean;
 begin
 
   haveReferedFields := false;
-  for arg in opts do
-    if pos('%(*', arg)>0 then begin
+  for field in fields do
+    if pos('%(*', field)>0 then begin
       haveReferedFields := true;
       break;
     end;
@@ -480,9 +480,9 @@ begin
     else                                                             refered := nil;
     info^.refered := refered;
 
-    // each returned field should correspond to every opts[] requested
+    // each returned field should correspond to every fields[] requested
     fieldIndex := 0;
-    while (p<q) and (fieldIndex<Length(opts)) do begin
+    while (p<q) and (fieldIndex<Length(fields)) do begin
 
       // get field value, the start of separator is the end of the field
       r := strpos(p, pchar(sep));
@@ -498,13 +498,13 @@ begin
         item := value;
 
       // match requested fields
-      fld := CleanRefField(opts[fieldIndex], arg);
-      case fld of
+      field := CleanRefField(fields[fieldIndex], opt);
+      case field of
         'refname':
           begin
             info^.refName := value;
-            info^.isTracking := ((arg='') and (pos('refs/remotes', value)=1)) or
-                                ((arg='short') and (pos('/', value)>0));
+            info^.isTracking := ((opt='') and (pos('refs/remotes', value)=1)) or
+                                ((opt='short') and (pos('/', value)>0));
           end;
         'objecttype': info^.objType := StrToRefObjType(value);
         'objectname': info^.objName := value;
@@ -540,10 +540,9 @@ begin
   result := true;
 end;
 
-function TGit.RefList(list: TStrings; pattern: string; opts: array of string;
-  eolRepl: string): Integer;
+function TGit.RefList(list: TStrings; pattern: string; fields: array of string): Integer;
 var
-  cmd, s: String;
+  cmd, field: String;
   M: TMemoryStream;
 begin
 
@@ -552,8 +551,8 @@ begin
   M := TMemoryStream.Create;
   try
     cmd := '';
-    for s in opts do
-      cmd += s + '%02';
+    for field in fields do
+      cmd += field + '%02';
 
     cmd := ' for-each-ref --format="' + cmd + '%00"';
     if pattern<>'' then
@@ -565,7 +564,7 @@ begin
     if result>0 then
       exit;
     //M.SaveToFile('lookatme.reflist');
-    ParseRefList(M, list, #2, eolRepl, opts);
+    ParseRefList(M, list, #2, fields);
   finally
     M.Free;
   end;
