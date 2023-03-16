@@ -76,6 +76,7 @@ type
     procedure ItemAction(sender: TListbox; aIndex: Integer);
     procedure UpdateBranchMenu;
     procedure UpdateStatus;
+    procedure ShowError;
   public
 
   end;
@@ -150,7 +151,7 @@ var
 begin
   mi := TMenuItem(TObject(Data));
   if fGit.Switch(mi.Caption)>0 then
-    txtDiff.Text := fGit.ErrorLog
+    ShowError
   else
     UpdateStatus;
 end;
@@ -180,15 +181,20 @@ begin
   if sender=lstUnstaged then begin
     WriteStr(cmdOut, Entry^.EntryTypeUnStaged);
     case Entry^.EntryTypeUnStaged of
-      etUntracked:
+      etUntracked,
+      etWorktreeChangedSinceIndex..etTypeChangedInWorktreeSinceIndexC:
         begin
-          fGit.Add(Entry);
-          UpdateStatus;
+          if fGit.Add(Entry)>0 then
+            ShowError
+          else
+            UpdateStatus;
         end;
       etDeletedInWorktree:
         begin
-          fGit.Rm(Entry);
-          UpdateStatus;
+          if fGit.Rm(Entry)>0 then
+            ShowError
+          else
+            UpdateStatus;
         end;
       // other merge conflicts:
       // see:
@@ -202,11 +208,14 @@ begin
     WriteStr(cmdOut, Entry^.EntryTypeStaged);
     case Entry^.EntryTypeStaged of
       etAddedToIndex..etAddedToIndexD,
+      etUpdatedInIndex..etTypeChangedInIndexD,
       etRenamedInIndex..etRenamedInIndexD,
       etDeletedFromIndex:
         begin
-          fGit.Restore(entry, true);
-          UpdateStatus;
+          if fGit.Restore(entry, true)>0 then
+            ShowError
+          else
+            UpdateStatus;
         end;
       else
         ShowMessage('Not yet implemented for Staged: '+cmdOut);
@@ -246,7 +255,7 @@ begin
         '%(worktreepath)',
         '%(contents:subject)'])>0 then
     begin
-      txtDiff.Text := fGit.ErrorLog;
+      ShowError;
       exit;
     end;
 
@@ -297,12 +306,18 @@ begin
   lstStaged.Items.BeginUpdate;
   try
     if fGit.Status(lstUnstaged.Items, lstStaged.Items)>0 then
-      txtDiff.Text := fGit.ErrorLog;
-    UpdateBranch;
+      ShowError
+    else
+      UpdateBranch;
   finally
     lstStaged.Items.EndUpdate;
     lstUnstaged.Items.EndUpdate;
   end;
+end;
+
+procedure TfrmMain.ShowError;
+begin
+  txtDiff.Text := cmdLine.ErrorLog;
 end;
 
 function OwnerDrawStateToStr(State: TOwnerDrawState): string;
@@ -495,7 +510,7 @@ begin
     panFileState.Caption := EntryTypeToStr(entry^.x, entry^.y);
     res := fGit.Diff(entry, lb=lstUnstaged, txtDiff.Lines);
     if res>0 then
-      txtDiff.Text := format('Error getting diff: %d%s%s',[res, LineEnding, fGit.ErrorLog]);
+      ShowError;
   end;
 end;
 
