@@ -201,9 +201,9 @@ begin
         end;
       // other merge conflicts:
       // see:
-      etUnmergedDeletedByUs:
-        begin
-        end
+      //etUnmergedDeletedByUs:
+      //  begin
+      //  end
       else
         ShowMessage('Not yet implemented for Unstaged: '+cmdOut);
     end;
@@ -513,7 +513,7 @@ begin
     ShowMessage('You have to stage something in order to commit');
     exit;
   end;
-  if fGit.Commit(msg)>0 then
+  if fGit.Commit(txtComment.Text,'')>0 then
     ShowError
   else
     UpdateStatus;
