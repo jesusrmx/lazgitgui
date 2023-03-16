@@ -189,7 +189,7 @@ var
   M: TMemoryStream;
   head, tail: PChar;
 begin
-  DebugLn('Status ----------------------------------------------');
+  // DebugLn('Status ----------------------------------------------');
   M := TMemoryStream.Create;
   try
     aCommand := format('%s status -b --long --porcelain=2 --ahead-behind --ignored=%s --untracked-files=%s -z',
@@ -323,7 +323,7 @@ begin
     aCommand := format('%s diff %s%s', [fGitCommand, arg, Entry^.path]);
     //cmdLine.waitOnExit := true;
     result := cmdLine.RunProcess(aCommand, fTopLevelDir, M);
-    if result=0 then begin
+    if M.Size>0 then begin
       M.Position := 0;
       lines.LoadFromStream(M);
     end;
@@ -604,7 +604,8 @@ var
 begin
   //result := FileExists(fTopLevelDir + '.git/MERGE_HEAD');
   // ref: https://stackoverflow.com/a/55192451
-  // todo: close output and close stderr
+  //cmdLine.StdOutputClosed := true;
+  cmdLine.StdErrorClosed := true;
   result := cmdLine.RunProcess(fGitCommand + ' rev-list -1 MERGE_HEAD', fTopLevelDir, cmdOut) = 0;
 end;
 

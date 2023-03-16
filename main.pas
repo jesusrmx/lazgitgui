@@ -296,7 +296,7 @@ begin
   lstUnstaged.Items.BeginUpdate;
   lstStaged.Items.BeginUpdate;
   try
-    if fGit.Status(lstUnstaged.Items, lstStaged.Items)<>0 then
+    if fGit.Status(lstUnstaged.Items, lstStaged.Items)>0 then
       txtDiff.Text := fGit.ErrorLog;
     UpdateBranch;
   finally
@@ -494,7 +494,7 @@ begin
     entry := PFileEntry(lb.Items.Objects[lb.ItemIndex]);
     panFileState.Caption := EntryTypeToStr(entry^.x, entry^.y);
     res := fGit.Diff(entry, lb=lstUnstaged, txtDiff.Lines);
-    if res<>0 then
+    if res>0 then
       txtDiff.Text := format('Error getting diff: %d%s%s',[res, LineEnding, fGit.ErrorLog]);
   end;
 end;

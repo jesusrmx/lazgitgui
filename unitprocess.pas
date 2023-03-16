@@ -12,8 +12,13 @@ uses
 type
   TOutputEvent = procedure(const aBuffer; aSize:longint) is nested;
 
+  { TCmdLine }
+
   TCmdLine = object
   private
+    fStdErrorClosed: boolean;
+    fStdInputClosed: boolean;
+    fStdOutputClosed: boolean;
     fWaitOnExit: boolean;
     fErrorLog: string;
     fLastCommand: string;
@@ -24,10 +29,14 @@ type
     function RunProcess(const aCommand, startDir: string; stream: TStream): Integer; overload;
     function RunProcess(const aCommand, startDir: string; out cmdOutput: RawByteString): Integer; overload;
 
-    property WaitOnExit: boolean read fWaitOnExit write fWaitOnExit;
     property ErrorLog: string read fErrorLog;
     property ExitCode: Integer read fExitCode;
     property LastCommand: string read fLastCommand;
+    // these properties are disabled automatically after the next command is executed
+    property WaitOnExit: boolean read fWaitOnExit write fWaitOnExit;
+    property StdErrorClosed: boolean read fStdErrorClosed write fStdErrorClosed;
+    property StdOutputClosed: boolean read fStdOutputClosed write fStdOutputClosed;
+    property StdInputClosed: boolean read fStdInputClosed write fStdInputClosed;
   end;
 
 var
@@ -61,25 +70,31 @@ begin
     Process.ParseCmdLine(aCommand);
     Process.CurrentDirectory := startDir;
     opts := [poUsePipes, poNoConsole];
-    if waitOnExit then Include(opts, poWaitOnExit);
+    if fWaitOnExit then Include(opts, poWaitOnExit);
     Process.Options := opts;
+    if StdErrorClosed then Process.CloseStderr;
+    if StdOutputClosed then Process.CloseOutput;
+    if StdInputClosed then Process.CloseInput;
     {$IFDEF DEBUG}
-    DebugLn('  ExecName: ', Process.Executable);
-    DebugLn('Parameters: ', Process.Parameters.CommaText);
+    DebugLn('Command: ', aCommand);
     DebugLn('CurrentDir: ', startDir);
     {$ENDIF}
     Process.Execute;
-    repeat
-      BytesRead := Process.Output.Read(Buffer^, BUFSIZE);
-      Callback(Buffer^, BytesRead);
-    until BytesRead=0;
+
+    if not StdOutputClosed then
+      repeat
+        BytesRead := Process.Output.Read(Buffer^, BUFSIZE);
+        Callback(Buffer^, BytesRead);
+      until BytesRead=0;
 
     // collect any reported error
-    while Process.StdErr.NumBytesAvailable>0 do begin
-      BytesRead := Process.Stderr.Read(Buffer^, BUFSIZE);
-      Err.WriteBuffer(Buffer^, BytesRead);
+    if not StdErrorClosed then begin
+      while Process.StdErr.NumBytesAvailable>0 do begin
+        BytesRead := Process.Stderr.Read(Buffer^, BUFSIZE);
+        Err.WriteBuffer(Buffer^, BytesRead);
+      end;
+      fErrorLog := Err.DataString;
     end;
-    fErrorLog := Err.DataString;
 
     {$IFDEF DEBUG}
     DebugLn('Exit: Status=%d Code=%d', [Process.ExitStatus, Process.ExitCode]);
@@ -93,10 +108,13 @@ begin
     {$endif}
     result := fExitCode;
   finally
-    fWaitOnExit := false;
     Process.Free;
     FreeMem(Buffer);
     Err.Free;
+    fWaitOnExit := false;
+    fStdErrorClosed := false;
+    fStdOutputClosed := false;
+    fStdInputClosed := false;
   end;
 end;
 
