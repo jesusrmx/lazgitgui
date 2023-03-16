@@ -14,6 +14,7 @@ type
   { TfrmMain }
 
   TfrmMain = class(TForm)
+    actCommit: TAction;
     actRescan: TAction;
     ActionList1: TActionList;
     btnRescan: TButton;
@@ -47,6 +48,7 @@ type
     splitterStaged: TSplitter;
     splitterCommit: TSplitter;
     txtDiff: TSynEdit;
+    procedure actCommitExecute(Sender: TObject);
     procedure actRescanExecute(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure FormCreate(Sender: TObject);
@@ -66,6 +68,7 @@ type
     fPopPoint: TPoint;
     procedure DoGitDiff(Data: PtrInt);
     procedure DoItemAction(Data: PtrInt);
+    procedure DoCommit;
     procedure OnBranchMenuClick(Sender: TObject);
     procedure OnBranchSwitch(Data: PtrInt);
     procedure OnReloadBranchMenu(Data: PtrInt);
@@ -481,6 +484,11 @@ begin
   UpdateStatus;
 end;
 
+procedure TfrmMain.actCommitExecute(Sender: TObject);
+begin
+  DoCommit;
+end;
+
 procedure TfrmMain.FormDestroy(Sender: TObject);
 begin
   fGit.Free;
@@ -497,6 +505,18 @@ end;
 procedure TfrmMain.DoItemAction(Data: PtrInt);
 begin
   ItemAction(TListBox(Data), fClickedIndex);
+end;
+
+procedure TfrmMain.DoCommit;
+begin
+  if lstStaged.Count=0 then begin
+    ShowMessage('You have to stage something in order to commit');
+    exit;
+  end;
+  if fGit.Commit(msg)>0 then
+    ShowError
+  else
+    UpdateStatus;
 end;
 
 procedure TfrmMain.DoGitDiff(Data: PtrInt);

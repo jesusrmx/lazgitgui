@@ -66,6 +66,7 @@ type
     function RefList(list: TStrings; pattern:string; fields:array of string): Integer;
     function Switch(branchName: string): Integer;
     function OpenDir(aDir: string): Integer;
+    function Commit(msg, opts: string): Integer;
 
     property Exe: string read fGitCommand;
     property CommitsAhead: Integer read fCommitsAhead;
@@ -595,6 +596,17 @@ begin
         fTopLevelDir := IncludeTrailingPathDelimiter(SetDirSeparators(Trim(cmdOut)));
     end;
   end;
+end;
+
+function TGit.Commit(msg, opts: string): Integer;
+var
+  cmd: string;
+  cmdOut: RawByteString;
+begin
+  cmd := 'commit -m "'+msg+'"';
+  if opts<>'' then
+    cmd += ' '+opts;
+  result := cmdLine.RunProcess(fGitCommand + cmd, fTopLevelDir, cmdOut);
 end;
 
 function TGit.GitMerging: boolean;
