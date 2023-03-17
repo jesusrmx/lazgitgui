@@ -376,10 +376,8 @@ begin
     M.CopyFrom(F, BUFSIZE);
     if IsBinBuffer(M) then
       StoreString(format('File %s is binary, %d bytes',[filename, F.Size]))
-    else begin
+    else
       cut := F.Size>BUFSIZE;
-      M.Position := 0;
-    end;
   finally
     F.Free;
   end;
@@ -408,6 +406,8 @@ begin
   SampleOfFile(filename, M, cut);
   if cut then
     AddCutMsg;
+  // M.SaveToFile('sample.bin');
+  M.Position := 0;
   txtDiff.Lines.LoadFromStream(M);
   M.Free;
 
@@ -632,10 +632,11 @@ begin
     unstaged := lb=lstUnstaged;
     if unstaged and (entry^.EntryTypeUnStaged in [etUntracked, etIgnored]) then
       ViewFile(fGit.TopLevelDir + entry^.path)
-    else
+    else begin
       res := fGit.Diff(entry, unstaged, txtDiff.Lines);
-    if res>0 then
-      ShowError;
+      if res>0 then
+        ShowError;
+    end;
   end;
 end;
 
