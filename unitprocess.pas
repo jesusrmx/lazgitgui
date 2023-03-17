@@ -167,8 +167,11 @@ begin
   Tail := Buffer + BUFSIZE;
   Tail^ := 0;
   try
-
+    {$ifdef MsWindows}
     ParseCommandLine;
+    {$else}
+    Process.ParseCmdLine(aCommand, true);
+    {$endif}
 
     Process.CurrentDirectory := startDir;
     opts := [poUsePipes, poNoConsole];
