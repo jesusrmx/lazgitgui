@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, LazLogger, Forms, Controls, Graphics, Dialogs, StdCtrls, ExtCtrls,
-  ActnList, SynEdit, SynHighlighterDiff, StrUtils, FileUtil, unitconfig, unitprocess,
+  ActnList, synEditTypes, SynEdit, SynHighlighterDiff, StrUtils, FileUtil, unitconfig, unitprocess,
   unitentries, unitgit, Types, lclType, Menus, unitnewbranch;
 
 type
@@ -80,6 +80,7 @@ type
     procedure UpdateBranchMenu;
     procedure UpdateStatus;
     procedure ShowError;
+    procedure ViewFile(filename: string);
   public
 
   end;
@@ -323,6 +324,90 @@ begin
   txtDiff.Text := cmdLine.ErrorLog;
 end;
 
+function isBinBuffer(M: TMemoryStream): boolean;
+var
+  p,q: pbyte;
+begin
+  result := true;
+  p := M.Memory;
+  q := p + M.Size;
+  while (p<q) do begin
+    if not (p^ in [9,10,13,31..255]) then
+      exit;
+    inc(p);
+  end;
+  result := false;
+end;
+
+procedure SampleOfFile(filename: string; out M: TMemoryStream; out cut:boolean);
+const
+  BUFSIZE=1024*2;
+  CUTMSG = lineEnding + 'More content follows';
+var
+  F: TFileStream;
+  offset, readbytes: Int64;
+  cmdout: string;
+
+  procedure StoreString(s:string);
+  begin
+    cut := false;
+    M.WriteBuffer(s[1], Length(s));
+    M.Position := 0;
+  end;
+
+begin
+
+  if not FileExists(filename) then begin
+    StoreString(format('%s does not exists', [filename]));
+    exit;
+  end;
+
+  //{$ifdef Unix}
+  //// use the file command for identifying the file...
+  //cmdLine.RunProcess('file ' + filename, '', cmdOut);
+  // check for ASCII
+  //{$else}
+  //{$endif}
+
+  M := TMemoryStream.Create;
+  try
+    F := TFileStream.Create(filename, fmOpenRead + fmShareDenyNone);
+    M.CopyFrom(F, BUFSIZE);
+    if IsBinBuffer(M) then
+      StoreString(format('File %s is binary, %d bytes',[filename, F.Size]))
+    else begin
+      cut := F.Size>BUFSIZE;
+      M.Position := 0;
+    end;
+  finally
+    F.Free;
+  end;
+
+end;
+
+procedure TfrmMain.ViewFile(filename: string);
+var
+  p: TPoint;
+  n: LongInt;
+  L :TStringList;
+  i: Integer;
+  M: TMemoryStream;
+  cut: boolean;
+begin
+
+  SampleOfFile(filename, M, cut);
+  txtDiff.Lines.LoadFromStream(M);
+  M.Free;
+
+  //L := TStringList.Create;
+  //p := txtDiff.PixelsToRowColumn(Point(txtDiff.Width, txtDiff.Height), []);
+  //n := p.Y div 2;
+  //for i:=1 to n do L.Add('');
+  //L.Add(StringOfChar(' ', 20) + format('Loading %s', [ExtractFileName(filename)]));
+  //txtDiff.Text  := L.Text;
+  //L.Free;
+end;
+
 function OwnerDrawStateToStr(State: TOwnerDrawState): string;
   procedure Add(st: string);
   begin
@@ -527,11 +612,16 @@ var
   lb: TListbox absolute Data;
   res: Integer;
   entry: PFileEntry;
+  unstaged: Boolean;
 begin
   if lb.ItemIndex>=0 then begin
     entry := PFileEntry(lb.Items.Objects[lb.ItemIndex]);
     panFileState.Caption := EntryTypeToStr(entry^.x, entry^.y);
-    res := fGit.Diff(entry, lb=lstUnstaged, txtDiff.Lines);
+    unstaged := lb=lstUnstaged;
+    if unstaged and (entry^.EntryTypeUnStaged in [etUntracked, etIgnored]) then
+      ViewFile(fGit.TopLevelDir + entry^.path)
+    else
+      res := fGit.Diff(entry, unstaged, txtDiff.Lines);
     if res>0 then
       ShowError;
   end;
