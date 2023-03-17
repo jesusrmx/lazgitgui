@@ -9,13 +9,66 @@ uses
   {$IFDEF HASAMIGA}
   athreads,
   {$ENDIF}
-  SysUtils, Interfaces, // this includes the LCL widgetset
+  SysUtils, Classes, Interfaces, lazfileutils,// this includes the LCL widgetset
   Forms, main, unitconfig, unitprocess, unitentries, unitgit, unitnewbranch
   { you can add units after this };
 
 {$R *.res}
 
+{.$define TestParams}
+
+{$ifdef TestParams}
+
+procedure Dump(msg: string; l: TStringList);
+var
+  s: string;
 begin
+  WriteLn(msg);
+  for s in l do
+    WriteLn('  |', s,'|');
+  l.clear;
+end;
+
+var
+  l: TStringList;
+  cmd, arg: string;
+{$endif}
+begin
+
+  {$ifdef TestParams}
+  l := TStringList.Create;
+  try
+    WriteLn;
+    {$ifdef MsWindows}
+    Write('Simulating ');
+    {$endif}
+    WriteLn('Linux/MacOS');
+    cmd := '/home/prog/files good/git.exe';
+    arg := ' commit -m "This isn''t a \"text\" ''message'' of 1\" inch long"';
+    SplitParameters(cmd + arg, l);
+    dump('Using SplitParameters', l);
+    SplitCmdLineParams(cmd + arg, l, true);
+    dump('Using SplitCmdLineParams with ReadBackSlash=TRUE', l);
+    SplitCmdLineParams(cmd + arg, l, false);
+    dump('Using SplitCmdLineParams with ReadBackSlash=FALSE', l);
+
+    WriteLn;
+    {$ifndef MsWindows}
+    Write('Simulating ');
+    {$endif}
+    WriteLn('Windows');
+    cmd := 'c:\home\prog\files good\git.exe';
+    SplitParameters(cmd + arg, l);
+    dump('Using SplitParameters', l);
+    SplitCmdLineParams(cmd + arg, l, true);
+    dump('Using SplitCmdLineParams with ReadBackSlash=TRUE', l);
+    SplitCmdLineParams(cmd + arg, l, false);
+    dump('Using SplitCmdLineParams with ReadBackSlash=FALSE', l);
+  finally
+    l.Free;
+  end;
+
+  {$else}
 
   Setup;
 
@@ -40,5 +93,8 @@ begin
   Application.Initialize;
   Application.CreateForm(TfrmMain, frmMain);
   Application.Run;
+
+  {$endif}
+
 end.
 
