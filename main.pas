@@ -350,6 +350,7 @@ var
 
   procedure StoreString(s:string);
   begin
+    M.Clear;
     cut := false;
     M.WriteBuffer(s[1], Length(s));
     M.Position := 0;
@@ -393,9 +394,20 @@ var
   i: Integer;
   M: TMemoryStream;
   cut: boolean;
+
+  procedure AddCutMsg;
+  var
+    s: string;
+  begin
+    M.Position := M.Size;
+    s := lineEnding + '>8---------------' + lineending + 'More content follows';
+    M.WriteBuffer(s[1], Length(s));
+  end;
 begin
 
   SampleOfFile(filename, M, cut);
+  if cut then
+    AddCutMsg;
   txtDiff.Lines.LoadFromStream(M);
   M.Free;
 
