@@ -2,6 +2,7 @@ unit unitruncmd;
 
 {$mode ObjFPC}{$H+}
 {$ModeSwitch nestedprocvars}
+{.$define Debug}
 
 interface
 
@@ -94,7 +95,9 @@ var
   interrupt: boolean;
 begin
   if assigned(fOnOutput) then begin
+    {$IFDEF DEBUG}
     DebugLn('Notifying: %s',[fLine]);
+    {$ENDIF}
     interrupt := false;
     fOnOutput(Self, fLine, interrupt);
     if interrupt then
@@ -105,12 +108,14 @@ end;
 constructor TRunThread.Create;
 begin
   inherited Create(true);
-  fCmdLine := new(PCmdLine);
+  fCmdLine := new(PCmdLine, Init);
 end;
 
 destructor TRunThread.Destroy;
 begin
+  {$IFDEF DEBUG}
   debugln('TRunThread.Destroy: ');
+  {$ENDIF}
   Dispose(fCmdLine);
   inherited Destroy;
 end;
@@ -123,6 +128,9 @@ var
   var
     aPos: SizeInt;
   begin
+    {$IFDEF DEBUG}
+    DebugLn('Collecting %d bytes',[size]);
+    {$ENDIF}
     aPos := Length(outText);
     SetLength(outText, aPos + size);
     Move(Buffer, OutText[aPos+1], size);
@@ -140,11 +148,19 @@ var
   end;
 
 begin
+  {$IFDEF DEBUG}
   DebugLnEnter('RunThread START Command=%s', [fCommand]);
+  {$ENDIF}
   outText := '';
   fResult := fCmdLine^.RunProcess(fCommand, fStartDir, @CollectOutput);
+  if outText<>'' then begin
+    fLine := outText;
+    Synchronize(@Notify);
+  end;
   fErrorLog := fCmdLine^.ErrorLog;
+  {$IFDEF DEBUG}
   DebugLnExit('RunThread DONE result=%d', [fResult]);
+  {$ENDIF}
 end;
 
 { TfrmRunCommand }
@@ -182,7 +198,9 @@ end;
 
 procedure TfrmRunCommand.OnDone(Sender: TObject);
 begin
+  {$IFDEF DEBUG}
   debugln('TfrmRunCommand.OnDone');
+  {$ENDIF}
   if fRunThread.Result<=0 then begin
     lblResult.Color := clGreen;
     lblResult.Font.Color := clWhite;

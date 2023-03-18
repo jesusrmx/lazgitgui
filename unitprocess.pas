@@ -25,6 +25,9 @@ type
     fLastCommand: string;
     fExitCode: Integer;
   public
+
+    constructor Init;
+
     function RunProcess(const aCommand, startDir: string; callback:TOutputEvent): Integer; overload;
     function RunProcess(const aCommand, startDir: string; cmdOutput: TStrings): Integer; overload;
     function RunProcess(const aCommand, startDir: string; stream: TStream): Integer; overload;
@@ -127,6 +130,16 @@ begin
   result := Mode=mNormal;
 end;
 
+constructor TCmdLine.Init;
+begin
+  fStdErrorClosed := false;
+  fStdInputClosed := false;
+  fStdOutputClosed := false;
+  fWaitOnExit := false;
+  fErrorLog := '';
+  fLastCommand := '';
+  fExitCode := 0;
+end;
 
 function TCmdLine.RunProcess(const aCommand, startDir: string; callback: TOutputEvent): Integer;
 var
