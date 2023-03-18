@@ -1,6 +1,7 @@
 unit main;
 
 {$mode objfpc}{$H+}
+{$ModeSwitch nestedprocvars}
 
 interface
 
@@ -15,6 +16,7 @@ type
 
   TfrmMain = class(TForm)
     actCommit: TAction;
+    actPush: TAction;
     actRescan: TAction;
     ActionList1: TActionList;
     btnRescan: TButton;
@@ -49,6 +51,7 @@ type
     splitterCommit: TSplitter;
     txtDiff: TSynEdit;
     procedure actCommitExecute(Sender: TObject);
+    procedure actPushExecute(Sender: TObject);
     procedure actRescanExecute(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure FormCreate(Sender: TObject);
@@ -69,6 +72,7 @@ type
     procedure DoGitDiff(Data: PtrInt);
     procedure DoItemAction(Data: PtrInt);
     procedure DoCommit;
+    procedure DoPush;
     procedure OnBranchMenuClick(Sender: TObject);
     procedure OnBranchSwitch(Data: PtrInt);
     procedure OnReloadBranchMenu(Data: PtrInt);
@@ -96,6 +100,9 @@ implementation
 resourcestring
   rsNewBranch = 'New Branch';
   rsReload = 'Reload';
+  rsPushingYourCommits = 'Pushing your commits';
+  rsThereAreCommitsBehind = 'There are commits behind, are you sure you want to push?';
+
 
 const
   MENU_INVALID        = -1;
@@ -552,6 +559,11 @@ begin
   DoCommit;
 end;
 
+procedure TfrmMain.actPushExecute(Sender: TObject);
+begin
+  DoPush;
+end;
+
 procedure TfrmMain.FormDestroy(Sender: TObject);
 begin
   fGit.Free;
@@ -583,6 +595,21 @@ begin
     txtDiff.Clear;
     txtComment.Clear;
   end;
+end;
+
+procedure TfrmMain.DoPush;
+var
+  res: TModalResult;
+begin
+  //if fConfig.ReadBoolean('FetchBeforePush', false) then
+  //  doFetch;
+  if fGit.CommitsBehind<0 then begin
+    res := QuestionDlg(rsPushingYourCommits, rsThereAreCommitsBehind, mtConfirmation,
+      [mrYes, 'Push', mrCancel, 'Cancel'], 0 );
+    if res<>mrYes then
+      exit;
+  end;
+  ShowMessage('Pushing..');
 end;
 
 procedure TfrmMain.DoGitDiff(Data: PtrInt);
@@ -636,8 +663,9 @@ begin
   label2.Visible := (not ahead and not behind) and (fGit.Upstream<>'');
   lblRemote.Caption := fGit.Upstream;
 
-  Caption := '[git '+fGit.Version+'](' + fGit.TopLevelDir + ')';
+  actPush.Enabled := ahead;
 
+  Caption := '[git '+fGit.Version+'](' + fGit.TopLevelDir + ')';
 end;
 
 procedure TfrmMain.RestoreGui;
