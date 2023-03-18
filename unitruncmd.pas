@@ -44,6 +44,7 @@ type
     lblResult: TLabel;
     lblCaption: TLabel;
     txtOutput: TMemo;
+    procedure chkCloseOkClick(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -184,6 +185,7 @@ procedure TfrmRunCommand.FormCreate(Sender: TObject);
 begin
 
   fConfig.ReadWindow(Self, 'runcommandform', SECTION_GEOMETRY);
+  chkCloseOk.Checked := fConfig.ReadBoolean('CloseOnSuccess', false, 'RunCommandForm');
 
   fRunThread := TRunThread.Create;
   fRunThread.FreeOnTerminate := true;
@@ -194,6 +196,11 @@ end;
 procedure TfrmRunCommand.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
 begin
   fConfig.WriteWindow(Self, 'runcommandform', SECTION_GEOMETRY);
+end;
+
+procedure TfrmRunCommand.chkCloseOkClick(Sender: TObject);
+begin
+  fConfig.WriteBoolean('CloseOnSuccess', chkCloseOk.Checked, 'RunCommandForm');
 end;
 
 procedure TfrmRunCommand.SetCaption(AValue: string);
@@ -217,6 +224,7 @@ begin
     lblResult.Color := clGreen;
     lblResult.Font.Color := clWhite;
     lblResult.Caption := 'Succeed';
+    if chkCloseOk.Checked then Close;
   end else begin
     txtOutput.Append(fRunThread.ErrorLog);
     lblResult.Color := clRed;
