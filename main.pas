@@ -1,14 +1,14 @@
 unit main;
 
 {$mode objfpc}{$H+}
-{$ModeSwitch nestedprocvars}
 
 interface
 
 uses
-  Classes, SysUtils, Math, LazLogger, Forms, Controls, Graphics, Dialogs, StdCtrls, ExtCtrls,
-  ActnList, synEditTypes, SynEdit, SynHighlighterDiff, StrUtils, FileUtil, unitconfig, unitprocess,
-  unitentries, unitgit, Types, lclType, Menus, unitnewbranch, LConvEncoding;
+  Classes, SysUtils, Math, LazLogger, Forms, Controls, Graphics, Dialogs,
+  StdCtrls, ExtCtrls, ActnList, synEditTypes, SynEdit, SynHighlighterDiff,
+  StrUtils, FileUtil, unitconfig, unitprocess, unitentries, unitgit, Types,
+  lclType, Menus, unitnewbranch, unitruncmd, LConvEncoding;
 
 type
 
@@ -600,6 +600,7 @@ end;
 procedure TfrmMain.DoPush;
 var
   res: TModalResult;
+  rf : TfrmRunCommand;
 begin
   //if fConfig.ReadBoolean('FetchBeforePush', false) then
   //  doFetch;
@@ -609,7 +610,16 @@ begin
     if res<>mrYes then
       exit;
   end;
-  ShowMessage('Pushing..');
+  rf := TfrmRunCommand.Create(Self);
+  rf.Command := fGit.Exe + ' push';
+  rf.StartDir := fGit.TopLevelDir;
+  rf.Title := 'Pushing';
+  rf.Caption := 'Push';
+  try
+    rf.ShowModal;
+  finally
+    rf.Free;
+  end;
 end;
 
 procedure TfrmMain.DoGitDiff(Data: PtrInt);

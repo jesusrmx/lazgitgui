@@ -1,0 +1,85 @@
+object frmRunCommand: TfrmRunCommand
+  Left = 95
+  Height = 278
+  Top = 301
+  Width = 702
+  Caption = 'frmRunCommand'
+  ClientHeight = 278
+  ClientWidth = 702
+  OnShow = FormShow
+  LCLVersion = '2.3.0.0'
+  object lblCaption: TLabel
+    AnchorSideLeft.Control = txtOutput
+    AnchorSideBottom.Control = txtOutput
+    Left = 16
+    Height = 16
+    Top = 3
+    Width = 6
+    Anchors = [akLeft, akBottom]
+    BorderSpacing.Bottom = 5
+    Caption = '-'
+  end
+  object txtOutput: TMemo
+    Left = 16
+    Height = 185
+    Top = 24
+    Width = 665
+    Anchors = [akTop, akLeft, akRight, akBottom]
+    Lines.Strings = (
+      'txtOutput'
+    )
+    TabOrder = 0
+  end
+  object lblResult: TLabel
+    AnchorSideLeft.Control = chkCloseOk
+    AnchorSideLeft.Side = asrBottom
+    AnchorSideTop.Control = txtOutput
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = txtOutput
+    AnchorSideRight.Side = asrBottom
+    AnchorSideBottom.Control = txtOutput
+    Left = 145
+    Height = 16
+    Top = 214
+    Width = 536
+    Alignment = taCenter
+    Anchors = [akTop, akLeft, akRight]
+    AutoSize = False
+    BorderSpacing.Left = 5
+    BorderSpacing.Top = 5
+    Caption = '-'
+    Color = clForm
+    ParentColor = False
+    Transparent = False
+  end
+  object ButtonPanel1: TButtonPanel
+    Left = 6
+    Height = 36
+    Top = 236
+    Width = 690
+    OKButton.Name = 'OKButton'
+    OKButton.DefaultCaption = True
+    HelpButton.Name = 'HelpButton'
+    HelpButton.DefaultCaption = True
+    CloseButton.Name = 'CloseButton'
+    CloseButton.DefaultCaption = True
+    CancelButton.Name = 'CancelButton'
+    CancelButton.DefaultCaption = True
+    TabOrder = 1
+    ShowButtons = [pbClose]
+  end
+  object chkCloseOk: TCheckBox
+    AnchorSideLeft.Control = txtOutput
+    AnchorSideTop.Control = txtOutput
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = txtOutput
+    AnchorSideRight.Side = asrBottom
+    Left = 16
+    Height = 18
+    Top = 214
+    Width = 124
+    BorderSpacing.Top = 5
+    Caption = 'Close on Succeed'
+    TabOrder = 2
+  end
+end

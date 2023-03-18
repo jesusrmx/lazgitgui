@@ -10,7 +10,8 @@ uses
   athreads,
   {$ENDIF}
   SysUtils, Classes, Interfaces, lazfileutils,// this includes the LCL widgetset
-  Forms, main, unitconfig, unitprocess, unitentries, unitgit, unitnewbranch
+  Forms, main, unitconfig, unitprocess, unitentries, unitgit, unitnewbranch,
+  unitruncmd
   { you can add units after this };
 
 {$R *.res}
@@ -92,6 +93,7 @@ begin
   Application.Scaled := True;
   Application.Initialize;
   Application.CreateForm(TfrmMain, frmMain);
+  Application.CreateForm(TfrmRunCommand, frmRunCommand);
   Application.Run;
 
   {$endif}

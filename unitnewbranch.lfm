@@ -28,7 +28,7 @@ object frmNewBranch: TfrmNewBranch
   end
   object txtName: TEdit
     Left = 64
-    Height = 23
+    Height = 22
     Top = 8
     Width = 224
     BorderSpacing.Top = 28
@@ -59,8 +59,8 @@ object frmNewBranch: TfrmNewBranch
   end
   object ButtonPanel1: TButtonPanel
     Left = 6
-    Height = 34
-    Top = 368
+    Height = 36
+    Top = 366
     Width = 628
     OKButton.Name = 'OKButton'
     OKButton.DefaultCaption = True
@@ -78,7 +78,7 @@ object frmNewBranch: TfrmNewBranch
       AnchorSideTop.Side = asrCenter
       Left = 0
       Height = 1
-      Top = 17
+      Top = 18
       Width = 1
       Font.Style = [fsBold]
       ParentFont = False
@@ -96,18 +96,18 @@ object frmNewBranch: TfrmNewBranch
     TabOrder = 4
     object Label1: TLabel
       Left = 8
-      Height = 15
+      Height = 16
       Top = 8
-      Width = 42
+      Width = 47
       Caption = 'Options'
     end
   end
   object Label2: TLabel
     AnchorSideRight.Control = tabSource
     Left = 16
-    Height = 15
+    Height = 16
     Top = 10
-    Width = 32
+    Width = 35
     Caption = 'Name'
   end
   object txtInfo: TMemo
