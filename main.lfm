@@ -7,6 +7,7 @@ object frmMain: TfrmMain
   ClientHeight = 686
   ClientWidth = 924
   Font.Style = [fsBold]
+  Menu = mnuMain
   OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
   OnDestroy = FormDestroy
@@ -862,6 +863,10 @@ object frmMain: TfrmMain
       Caption = 'Pull'
       OnExecute = actPullExecute
     end
+    object actQuit: TAction
+      Caption = 'Quit'
+      OnExecute = actQuitExecute
+    end
   end
   object imgList: TImageList
     Left = 520
@@ -931,5 +936,15 @@ object frmMain: TfrmMain
   object popBranch: TPopupMenu
     Left = 64
     Top = 56
+  end
+  object mnuMain: TMainMenu
+    Left = 192
+    Top = 56
+    object MenuItem1: TMenuItem
+      Caption = 'File'
+      object MenuItem2: TMenuItem
+        Action = actQuit
+      end
+    end
   end
 end

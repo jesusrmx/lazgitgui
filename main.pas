@@ -17,6 +17,7 @@ type
   TfrmMain = class(TForm)
     actCommit: TAction;
     actFetch: TAction;
+    actQuit: TAction;
     actPull: TAction;
     actPush: TAction;
     actRescan: TAction;
@@ -35,6 +36,9 @@ type
     lblBranch: TLabel;
     lstUnstaged: TListBox;
     lstStaged: TListBox;
+    MenuItem1: TMenuItem;
+    MenuItem2: TMenuItem;
+    mnuMain: TMainMenu;
     panCommitState: TPanel;
     panBranch: TPanel;
     panFileState: TPanel;
@@ -56,6 +60,7 @@ type
     procedure actFetchExecute(Sender: TObject);
     procedure actPullExecute(Sender: TObject);
     procedure actPushExecute(Sender: TObject);
+    procedure actQuitExecute(Sender: TObject);
     procedure actRescanExecute(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure FormCreate(Sender: TObject);
@@ -578,6 +583,11 @@ end;
 procedure TfrmMain.actPushExecute(Sender: TObject);
 begin
   DoPush;
+end;
+
+procedure TfrmMain.actQuitExecute(Sender: TObject);
+begin
+  Close;
 end;
 
 procedure TfrmMain.FormDestroy(Sender: TObject);
