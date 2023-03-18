@@ -130,7 +130,11 @@ end;
 
 function Sanitize(aPath: RawbyteString): RawbyteString;
 begin
+  {$ifdef MsWindows}
+  result := '"' + aPath + '"';
+  {$else}
   result := StringReplace(aPath, ' ', '\ ', [rfReplaceAll]);
+  {$endif}
 end;
 
 { TGit }
