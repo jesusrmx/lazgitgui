@@ -32,6 +32,7 @@ type
     property Command: string read fCommand write fCommand;
     property StartDir: string read fStartDir write fStartDir;
     property Result: Integer read fResult;
+    property ErrorLog: string read fErrorLog;
     property OnOutput: TOutputStringEvent read fOnOutput write fOnOutput;
   end;
 
@@ -152,6 +153,7 @@ begin
   DebugLnEnter('RunThread START Command=%s', [fCommand]);
   {$ENDIF}
   outText := '';
+  fCmdLine^.WaitOnExit := true;
   fResult := fCmdLine^.RunProcess(fCommand, fStartDir, @CollectOutput);
   if outText<>'' then begin
     fLine := outText;
@@ -206,10 +208,13 @@ begin
     lblResult.Font.Color := clWhite;
     lblResult.Caption := 'Succeed';
   end else begin
+    txtOutput.Append(fRunThread.ErrorLog);
     lblResult.Color := clRed;
     lblResult.Font.Color := clWhite;
     lblResult.Caption := 'Failed';
   end;
+  txtOutput.SelLength := 0;
+  txtOutput.SelStart := 0;
 end;
 
 procedure TfrmRunCommand.SetTitle(AValue: string);
