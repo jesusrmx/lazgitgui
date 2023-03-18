@@ -392,8 +392,6 @@ begin
   entry^.h1 := NextField(head);
   entry^.h2 := NextField(head);
 
-  entry^.xScore := NextField(head);
-
   n := strlen(head);
   entry^.path := head;
   inc(head, n+1);
