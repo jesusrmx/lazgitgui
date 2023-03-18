@@ -677,7 +677,7 @@ begin
   if pos('%(worktreepath', aField)=1 then
     // TODO: check the real version worktreepath appeared
     //       here I'm only registering the version it worked for me.
-    result := AtLeastVersion('2.32');
+    result := AtLeastVersion('2.25');
 
 end;
 
