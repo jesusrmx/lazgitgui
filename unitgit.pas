@@ -128,6 +128,11 @@ begin
   list.clear;
 end;
 
+function Sanitize(aPath: RawbyteString): RawbyteString;
+begin
+  result := StringReplace(aPath, ' ', '\ ', [rfReplaceAll]);
+end;
+
 { TGit }
 
 constructor TGit.create;
@@ -337,14 +342,14 @@ function TGit.Add(entry: PFileEntry): Integer;
 var
   cmdOut: RawByteString;
 begin
-  result := cmdLine.RunProcess(fGitCommand+' add '+ entry^.path, fTopLevelDir, cmdOut);
+  result := cmdLine.RunProcess(fGitCommand+' add '+ Sanitize(entry^.path), fTopLevelDir, cmdOut);
 end;
 
 function TGit.Rm(entry: PFileEntry): Integer;
 var
   cmdOut: RawByteString;
 begin
-  result := cmdLine.RunProcess(fGitCommand+' rm '+ Entry^.path, fTopLevelDir, cmdOut);
+  result := cmdLine.RunProcess(fGitCommand+' rm '+ Sanitize(Entry^.path), fTopLevelDir, cmdOut);
 end;
 
 function TGit.Restore(entry: PFileEntry; staged: boolean): Integer;
@@ -354,7 +359,7 @@ var
 begin
   args := '';
   if staged then args += '--staged ';
-  result := cmdLine.RunProcess(fGitCommand+' restore '+args+' '+Entry^.path, fTopLevelDir, cmdOut);
+  result := cmdLine.RunProcess(fGitCommand+' restore '+args+' '+Sanitize(Entry^.path), fTopLevelDir, cmdOut);
 end;
 
 function TGit.BranchList(list: TStrings; opts: array of string): Integer;
