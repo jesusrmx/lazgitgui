@@ -105,11 +105,7 @@ const
   MENU_BRANCH_SWITCH  = 3;
 
   VIEWER_BUFSIZE      = 1024*4;
-  VIEWER_CUTMSG       = lineEnding +
-                        '>8---------------' +
-                        lineending +
-                        'More content follows';
-
+  BIN_BUFSIZE         = 1024;
 
 { TfrmMain }
 
@@ -329,33 +325,30 @@ begin
   txtDiff.Text := cmdLine.ErrorLog;
 end;
 
-function isBinBuffer(M: TMemoryStream): boolean;
+function isBinBuffer(Buffer:pbyte; size: SizeInt): boolean;
 var
   p,q: pbyte;
 begin
   result := true;
-  p := M.Memory;
-  q := p + M.Size;
+  p := Buffer;
+  q := p + Size;
   while (p<q) do begin
-    if not (p^ in [9,10,13,31..255]) then
+    if not (p^ in [9,10,13,32..255]) then
       exit;
     inc(p);
   end;
   result := false;
 end;
 
-procedure SampleOfFile(filename: string; out M: TMemoryStream; out cut:boolean);
+procedure SampleOfFile(filename: string; out stream: TStream);
 var
   F: TFileStream;
-  offset, readbytes: Int64;
-  cmdout: string;
+  readbytes: Int64;
+  buffer: pbyte;
 
-  procedure StoreString(s:string);
+  procedure StoreString(msg:string);
   begin
-    M.Clear;
-    cut := false;
-    M.WriteBuffer(s[1], Length(s));
-    M.Position := 0;
+    stream := TStringStream.Create(msg);
   end;
 
 begin
@@ -372,51 +365,25 @@ begin
   //{$else}
   //{$endif}
 
-  M := TMemoryStream.Create;
-  try
-    F := TFileStream.Create(filename, fmOpenRead + fmShareDenyNone);
-    M.CopyFrom(F, Min(VIEWER_BUFSIZE, F.Size));
-    if IsBinBuffer(M) then
-      StoreString(format('File %s is binary, %d bytes',[filename, F.Size]))
-    else
-      cut := F.Size>M.Size;
-  finally
+  F := TFileStream.Create(filename, fmOpenRead + fmShareDenyNone);
+  GetMem(buffer, BIN_BUFSIZE);
+  readBytes := F.Read(buffer^, BIN_BUFSIZE);
+  if IsBinBuffer(buffer, readBytes) then begin
+    StoreString(format('The file ''%s'' is binary, %d bytes',[filename, F.Size]));
     F.Free;
-  end;
+  end else
+    stream := F;
 
 end;
 
 procedure TfrmMain.ViewFile(filename: string);
 var
-  p: TPoint;
-  n: LongInt;
-  L :TStringList;
-  i: Integer;
-  M: TMemoryStream;
-  cut: boolean;
-
-  procedure AddCutMsg;
-  begin
-    M.Position := M.Size;
-    M.WriteBuffer(VIEWER_CUTMSG[1], Length(VIEWER_CUTMSG));
-  end;
+  stream: TStream;
 begin
-
-  SampleOfFile(filename, M, cut);
-  if cut then
-    AddCutMsg;
-  // M.SaveToFile('sample.bin');
-  M.Position := 0;
-  txtDiff.Lines.LoadFromStream(M);
-  M.Free;
-
-  //L := TStringList.Create;
-  //p := txtDiff.PixelsToRowColumn(Point(txtDiff.Width, txtDiff.Height), []);
-  //n := p.Y div 2;
-  //for i:=1 to n do L.Add('');
-  //L.Add(StringOfChar(' ', 20) + format('Loading %s', [ExtractFileName(filename)]));
-  //txtDiff.Text  := L.Text;
-  //L.Free;
+  SampleOfFile(filename, stream);
+  stream.Position := 0;
+  txtDiff.Lines.LoadFromStream(stream);
+  stream.Free;
 end;
 
 function OwnerDrawStateToStr(State: TOwnerDrawState): string;
