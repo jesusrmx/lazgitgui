@@ -26,9 +26,9 @@ object frmRunCommand: TfrmRunCommand
     Top = 24
     Width = 665
     Anchors = [akTop, akLeft, akRight, akBottom]
-    Lines.Strings = (
-      'txtOutput'
-    )
+    Font.Height = -12
+    Font.Pitch = fpFixed
+    ParentFont = False
     TabOrder = 0
   end
   object lblResult: TLabel
