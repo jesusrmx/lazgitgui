@@ -671,7 +671,7 @@ begin
   label2.Visible := (not ahead and not behind) and (fGit.Upstream<>'');
   lblRemote.Caption := fGit.Upstream;
 
-  Caption := '(' + fGit.TopLevelDir + ')';
+  Caption := '[git '+fGit.Version+'](' + fGit.TopLevelDir + ')';
 
 end;
 

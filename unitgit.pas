@@ -52,6 +52,7 @@ type
     function  TryGitIn(aPath: string): boolean;
     function GitMerging: boolean;
     function GetVersion(gitCmd:string; out aVersion:string): boolean;
+    function CompareVersion(aVer: string): boolean;
   public
     constructor create;
     destructor destroy; override;
@@ -361,9 +362,14 @@ var
   args: string;
   cmdOut: RawByteString;
 begin
-  args := '';
-  if staged then args += '--staged ';
-  result := cmdLine.RunProcess(fGitCommand+' restore '+args+' '+Sanitize(Entry^.path), fTopLevelDir, cmdOut);
+  if CompareVersion('2.23') then begin
+    args := ' restore ';
+    if staged then args += '--staged ';
+  end else begin
+    if staged then args := ' reset HEAD '
+    else           args := ' checkout -- ';
+  end;
+  result := cmdLine.RunProcess(fGitCommand+args+' '+Sanitize(Entry^.path), fTopLevelDir, cmdOut);
 end;
 
 function TGit.BranchList(list: TStrings; opts: array of string): Integer;
@@ -640,6 +646,15 @@ begin
     aVersion := Trim(copy(cmdOut, 13, 256))
   else
     aVersion := '';
+end;
+
+// compares if the current version is equal or bigger than aVer
+function TGit.CompareVersion(aVer: string): boolean;
+var
+  cur: String;
+begin
+  cur := copy(fVersion, 1, Length(aVer));
+  result := cur>=aVer;
 end;
 
 end.
