@@ -52,7 +52,8 @@ type
     function  TryGitIn(aPath: string): boolean;
     function GitMerging: boolean;
     function GetVersion(gitCmd:string; out aVersion:string): boolean;
-    function CompareVersion(aVer: string): boolean;
+    function AtLeastVersion(aVer: string): boolean;
+    function RefListEnabledField(aField: string): boolean;
   public
     constructor create;
     destructor destroy; override;
@@ -362,7 +363,7 @@ var
   args: string;
   cmdOut: RawByteString;
 begin
-  if CompareVersion('2.23') then begin
+  if AtLeastVersion('2.23') then begin
     args := ' restore ';
     if staged then args += '--staged ';
   end else begin
@@ -568,7 +569,8 @@ begin
   try
     cmd := '';
     for field in fields do
-      cmd += field + '%02';
+      if RefListEnabledField(field) then
+        cmd += field + '%02';
 
     cmd := ' for-each-ref --format="' + cmd + '%00"';
     if pattern<>'' then
@@ -649,12 +651,22 @@ begin
 end;
 
 // compares if the current version is equal or bigger than aVer
-function TGit.CompareVersion(aVer: string): boolean;
+function TGit.AtLeastVersion(aVer: string): boolean;
 var
   cur: String;
 begin
   cur := copy(fVersion, 1, Length(aVer));
   result := cur>=aVer;
+end;
+
+function TGit.RefListEnabledField(aField: string): boolean;
+begin
+  result := true;
+  if pos('%(worktreepath', aField)=1 then
+    // TODO: check the real version worktreepath appeared
+    //       here I'm only registering the version it worked for me.
+    result := AtLeastVersion('2.32');
+
 end;
 
 end.
