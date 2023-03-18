@@ -18,7 +18,6 @@ object frmMain: TfrmMain
     Top = 26
     Width = 256
     Align = alLeft
-    Caption = 'panLeft'
     ClientHeight = 660
     ClientWidth = 256
     TabOrder = 0
