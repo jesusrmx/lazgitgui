@@ -5,9 +5,9 @@ unit main;
 interface
 
 uses
-  Classes, SysUtils, LazLogger, Forms, Controls, Graphics, Dialogs, StdCtrls, ExtCtrls,
+  Classes, SysUtils, Math, LazLogger, Forms, Controls, Graphics, Dialogs, StdCtrls, ExtCtrls,
   ActnList, synEditTypes, SynEdit, SynHighlighterDiff, StrUtils, FileUtil, unitconfig, unitprocess,
-  unitentries, unitgit, Types, lclType, Menus, unitnewbranch;
+  unitentries, unitgit, Types, lclType, Menus, unitnewbranch, LConvEncoding;
 
 type
 
@@ -103,6 +103,13 @@ const
   MENU_BRANCH_NEW     = 1;
   MENU_BRANCH_RELOAD  = 2;
   MENU_BRANCH_SWITCH  = 3;
+
+  VIEWER_BUFSIZE      = 1024*4;
+  VIEWER_CUTMSG       = lineEnding +
+                        '>8---------------' +
+                        lineending +
+                        'More content follows';
+
 
 { TfrmMain }
 
@@ -340,9 +347,6 @@ begin
 end;
 
 procedure SampleOfFile(filename: string; out M: TMemoryStream; out cut:boolean);
-const
-  BUFSIZE=1024*2;
-  CUTMSG = lineEnding + 'More content follows';
 var
   F: TFileStream;
   offset, readbytes: Int64;
@@ -373,11 +377,11 @@ begin
   M := TMemoryStream.Create;
   try
     F := TFileStream.Create(filename, fmOpenRead + fmShareDenyNone);
-    M.CopyFrom(F, BUFSIZE);
+    M.CopyFrom(F, Min(VIEWER_BUFSIZE, F.Size));
     if IsBinBuffer(M) then
       StoreString(format('File %s is binary, %d bytes',[filename, F.Size]))
     else
-      cut := F.Size>BUFSIZE;
+      cut := F.Size>M.Size;
   finally
     F.Free;
   end;
@@ -394,12 +398,9 @@ var
   cut: boolean;
 
   procedure AddCutMsg;
-  var
-    s: string;
   begin
     M.Position := M.Size;
-    s := lineEnding + '>8---------------' + lineending + 'More content follows';
-    M.WriteBuffer(s[1], Length(s));
+    M.WriteBuffer(VIEWER_CUTMSG[1], Length(VIEWER_CUTMSG));
   end;
 begin
 
