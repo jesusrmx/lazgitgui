@@ -154,6 +154,7 @@ begin
   {$ENDIF}
   outText := '';
   fCmdLine^.WaitOnExit := true;
+  fCmdLine^.RedirStdErr := true;
   fResult := fCmdLine^.RunProcess(fCommand, fStartDir, @CollectOutput);
   if outText<>'' then begin
     fLine := outText;

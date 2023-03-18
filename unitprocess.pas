@@ -2,7 +2,7 @@ unit unitprocess;
 
 {$mode ObjFPC}{$H+}
 {$ModeSwitch nestedprocvars}
-{.$define Debug}
+{$define Debug}
 
 interface
 
@@ -17,6 +17,7 @@ type
   PCmdLine = ^TCmdLine;
   TCmdLine = object
   private
+    fRedirStdErr: boolean;
     fStdErrorClosed: boolean;
     fStdInputClosed: boolean;
     fStdOutputClosed: boolean;
@@ -41,6 +42,7 @@ type
     property StdErrorClosed: boolean read fStdErrorClosed write fStdErrorClosed;
     property StdOutputClosed: boolean read fStdOutputClosed write fStdOutputClosed;
     property StdInputClosed: boolean read fStdInputClosed write fStdInputClosed;
+    property RedirStdErr: boolean read fRedirStdErr write fRedirStdErr;
   end;
 
   function SplitParameters(Params: string; ParamList: TStrings): boolean;
@@ -139,6 +141,7 @@ begin
   fErrorLog := '';
   fLastCommand := '';
   fExitCode := 0;
+  fRedirStdErr := false;
 end;
 
 function TCmdLine.RunProcess(const aCommand, startDir: string; callback: TOutputEvent): Integer;
@@ -190,6 +193,7 @@ begin
     Process.CurrentDirectory := startDir;
     opts := [poUsePipes, poNoConsole];
     if fWaitOnExit then Include(opts, poWaitOnExit);
+    if fRedirStdErr then Include(opts, poStderrToOutPut);
     Process.Options := opts;
     if StdErrorClosed then Process.CloseStderr;
     if StdOutputClosed then Process.CloseOutput;
@@ -200,6 +204,12 @@ begin
     for s in Process.Parameters do
       DebugLn('  |', s,'|');
     DebugLn('CurrentDir: ', startDir);
+    DebugLn('Options: Closed Streams: %s%s%s, redirStdErr=%s',[
+      BoolToStr(StdErrorClosed,'StdERR ',''),
+      BoolToStr(StdOutputClosed,'Output ',''),
+      BoolToStr(StdInputClosed,'Input ',''),
+      BoolToStr(RedirStdErr,'RedirStdErr ','')
+    ]);
     {$ENDIF}
     Process.Execute;
 
