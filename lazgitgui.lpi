@@ -73,6 +73,7 @@
         <Filename Value="unitruncmd.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="frmRunCommand"/>
+        <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
       </Unit>
     </Units>

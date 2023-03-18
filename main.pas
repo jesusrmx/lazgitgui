@@ -16,6 +16,8 @@ type
 
   TfrmMain = class(TForm)
     actCommit: TAction;
+    actFetch: TAction;
+    actPull: TAction;
     actPush: TAction;
     actRescan: TAction;
     ActionList1: TActionList;
@@ -51,6 +53,8 @@ type
     splitterCommit: TSplitter;
     txtDiff: TSynEdit;
     procedure actCommitExecute(Sender: TObject);
+    procedure actFetchExecute(Sender: TObject);
+    procedure actPullExecute(Sender: TObject);
     procedure actPushExecute(Sender: TObject);
     procedure actRescanExecute(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
@@ -73,6 +77,8 @@ type
     procedure DoItemAction(Data: PtrInt);
     procedure DoCommit;
     procedure DoPush;
+    procedure DoFetch;
+    procedure DoPull;
     procedure OnBranchMenuClick(Sender: TObject);
     procedure OnBranchSwitch(Data: PtrInt);
     procedure OnReloadBranchMenu(Data: PtrInt);
@@ -559,6 +565,16 @@ begin
   DoCommit;
 end;
 
+procedure TfrmMain.actFetchExecute(Sender: TObject);
+begin
+  DoFetch;
+end;
+
+procedure TfrmMain.actPullExecute(Sender: TObject);
+begin
+  DoPull;
+end;
+
 procedure TfrmMain.actPushExecute(Sender: TObject);
 begin
   DoPush;
@@ -600,7 +616,6 @@ end;
 procedure TfrmMain.DoPush;
 var
   res: TModalResult;
-  rf : TfrmRunCommand;
 begin
   //if fConfig.ReadBoolean('FetchBeforePush', false) then
   //  doFetch;
@@ -610,16 +625,18 @@ begin
     if res<>mrYes then
       exit;
   end;
-  rf := TfrmRunCommand.Create(Self);
-  rf.Command := fGit.Exe + ' push';
-  rf.StartDir := fGit.TopLevelDir;
-  rf.Title := 'Pushing';
-  rf.Caption := 'Push';
-  try
-    rf.ShowModal;
-  finally
-    rf.Free;
-  end;
+
+  RunInteractive(fGit.Exe + ' push', fGit.TopLevelDir, 'Pushing to remote: ', 'Push');
+end;
+
+procedure TfrmMain.DoFetch;
+begin
+  RunInteractive(fGit.Exe + ' fetch', fGit.TopLevelDir, 'Fetching from remote: ', 'Fetch');
+end;
+
+procedure TfrmMain.DoPull;
+begin
+  RunInteractive(fGit.Exe + ' pull', fGit.TopLevelDir, 'pulling from remote: ', 'Pull');
 end;
 
 procedure TfrmMain.DoGitDiff(Data: PtrInt);

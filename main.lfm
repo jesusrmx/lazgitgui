@@ -37,6 +37,7 @@ object frmMain: TfrmMain
       ParentDoubleBuffered = False
       Style = lbOwnerDrawFixed
       TabOrder = 0
+      TopIndex = -1
     end
     object splitterStaged: TSplitter
       Cursor = crVSplit
@@ -96,6 +97,7 @@ object frmMain: TfrmMain
         Options = []
         Style = lbOwnerDrawFixed
         TabOrder = 1
+        TopIndex = -1
       end
     end
   end
@@ -135,41 +137,41 @@ object frmMain: TfrmMain
         TabOrder = 0
         object btnRescan: TButton
           Left = 5
-          Height = 20
+          Height = 27
           Top = 5
-          Width = 138
+          Width = 125
           Action = actRescan
           TabOrder = 0
         end
         object btnStageChanged: TButton
           Left = 5
-          Height = 20
-          Top = 30
-          Width = 138
-          Caption = 'btnStageChanged'
+          Height = 27
+          Top = 37
+          Width = 125
+          Action = actFetch
           TabOrder = 1
         end
         object btnSignOff: TButton
           Left = 5
-          Height = 20
-          Top = 55
-          Width = 138
-          Caption = 'btnSignOff'
+          Height = 27
+          Top = 69
+          Width = 125
+          Action = actPull
           TabOrder = 2
         end
         object btnCommit: TButton
           Left = 5
-          Height = 20
-          Top = 80
-          Width = 138
+          Height = 27
+          Top = 101
+          Width = 125
           Action = actCommit
           TabOrder = 3
         end
         object btnPush: TButton
           Left = 5
-          Height = 20
-          Top = 105
-          Width = 138
+          Height = 27
+          Top = 133
+          Width = 125
           Action = actPush
           TabOrder = 4
         end
@@ -754,9 +756,9 @@ object frmMain: TfrmMain
       AnchorSideTop.Control = panBranch
       AnchorSideTop.Side = asrCenter
       Left = 11
-      Height = 16
+      Height = 17
       Top = 5
-      Width = 47
+      Width = 43
       BorderSpacing.Left = 10
       Caption = 'Branch:'
       ParentFont = False
@@ -766,8 +768,8 @@ object frmMain: TfrmMain
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = Label1
       Cursor = crHandPoint
-      Left = 68
-      Height = 16
+      Left = 64
+      Height = 17
       Top = 5
       Width = 31
       BorderSpacing.Left = 10
@@ -784,10 +786,10 @@ object frmMain: TfrmMain
       AnchorSideLeft.Control = lblMerging
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = Label1
-      Left = 202
-      Height = 16
+      Left = 192
+      Height = 17
       Top = 5
-      Width = 250
+      Width = 231
       BorderSpacing.Left = 20
       BorderSpacing.Right = 20
       Caption = '0 commits ahead, 0 commits behind of'
@@ -796,10 +798,10 @@ object frmMain: TfrmMain
       AnchorSideLeft.Control = lblAheadBehind
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = Label1
-      Left = 472
-      Height = 16
+      Left = 443
+      Height = 17
       Top = 5
-      Width = 50
+      Width = 46
       Caption = 'Remote:'
       ParentFont = False
     end
@@ -807,10 +809,10 @@ object frmMain: TfrmMain
       AnchorSideLeft.Control = Label2
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = Label1
-      Left = 532
-      Height = 16
+      Left = 499
+      Height = 17
       Top = 5
-      Width = 82
+      Width = 79
       BorderSpacing.Left = 10
       Caption = 'remote/main'
       Font.Color = clBlue
@@ -821,10 +823,10 @@ object frmMain: TfrmMain
       AnchorSideLeft.Control = lblBranch
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = Label1
-      Left = 109
-      Height = 16
+      Left = 105
+      Height = 17
       Top = 5
-      Width = 73
+      Width = 67
       BorderSpacing.Left = 10
       Caption = '(MERGING)'
       Font.Color = clRed
@@ -844,7 +846,7 @@ object frmMain: TfrmMain
     Top = 64
   end
   object ActionList1: TActionList
-    Left = 294
+    Left = 295
     Top = 64
     object actRescan: TAction
       Caption = 'Rescan'
@@ -857,6 +859,14 @@ object frmMain: TfrmMain
     object actPush: TAction
       Caption = 'Push'
       OnExecute = actPushExecute
+    end
+    object actFetch: TAction
+      Caption = 'Fetch'
+      OnExecute = actFetchExecute
+    end
+    object actPull: TAction
+      Caption = 'Pull'
+      OnExecute = actPullExecute
     end
   end
   object imgList: TImageList
