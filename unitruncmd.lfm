@@ -6,15 +6,16 @@ object frmRunCommand: TfrmRunCommand
   Caption = 'frmRunCommand'
   ClientHeight = 278
   ClientWidth = 702
+  OnCreate = FormCreate
   OnShow = FormShow
   LCLVersion = '2.3.0.0'
   object lblCaption: TLabel
     AnchorSideLeft.Control = txtOutput
     AnchorSideBottom.Control = txtOutput
     Left = 16
-    Height = 16
-    Top = 3
-    Width = 6
+    Height = 17
+    Top = 2
+    Width = 4
     Anchors = [akLeft, akBottom]
     BorderSpacing.Bottom = 5
     Caption = '-'
@@ -38,10 +39,10 @@ object frmRunCommand: TfrmRunCommand
     AnchorSideRight.Control = txtOutput
     AnchorSideRight.Side = asrBottom
     AnchorSideBottom.Control = txtOutput
-    Left = 145
+    Left = 142
     Height = 16
     Top = 214
-    Width = 536
+    Width = 539
     Alignment = taCenter
     Anchors = [akTop, akLeft, akRight]
     AutoSize = False
@@ -54,8 +55,8 @@ object frmRunCommand: TfrmRunCommand
   end
   object ButtonPanel1: TButtonPanel
     Left = 6
-    Height = 36
-    Top = 236
+    Height = 35
+    Top = 237
     Width = 690
     OKButton.Name = 'OKButton'
     OKButton.DefaultCaption = True
@@ -75,9 +76,9 @@ object frmRunCommand: TfrmRunCommand
     AnchorSideRight.Control = txtOutput
     AnchorSideRight.Side = asrBottom
     Left = 16
-    Height = 18
+    Height = 21
     Top = 214
-    Width = 124
+    Width = 121
     BorderSpacing.Top = 5
     Caption = 'Close on Succeed'
     TabOrder = 2

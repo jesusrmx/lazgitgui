@@ -14,6 +14,7 @@ type
 
   { TCmdLine }
 
+  PCmdLine = ^TCmdLine;
   TCmdLine = object
   private
     fStdErrorClosed: boolean;
