@@ -693,6 +693,8 @@ begin
 
   actPush.Enabled := ahead;
 
+  txtDiff.Clear;
+
   Caption := '[git '+fGit.Version+'](' + fGit.TopLevelDir + ')';
 end;
 
