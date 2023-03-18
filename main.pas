@@ -262,9 +262,7 @@ begin
         '%(refname:short)',
         '%(objecttype)',
         '%(upstream:short)',
-        '%(HEAD)',
-        '%(worktreepath)',
-        '%(contents:subject)'])>0 then
+        '%(HEAD)'])>0 then
     begin
       ShowError;
       exit;
