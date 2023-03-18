@@ -6,6 +6,7 @@ object frmRunCommand: TfrmRunCommand
   Caption = 'frmRunCommand'
   ClientHeight = 278
   ClientWidth = 702
+  OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
   OnShow = FormShow
   LCLVersion = '2.3.0.0'

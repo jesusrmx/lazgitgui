@@ -8,7 +8,7 @@ interface
 
 uses
   Classes, SysUtils, LazLogger, Forms, Controls, Graphics, Dialogs, StdCtrls, ButtonPanel,
-  unitprocess;
+  unitconfig, unitprocess;
 
 type
   TOutputStringEvent = procedure(sender: TObject; value: string; var interrupt:boolean) of object;
@@ -44,6 +44,7 @@ type
     lblResult: TLabel;
     lblCaption: TLabel;
     txtOutput: TMemo;
+    procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
   private
@@ -181,10 +182,18 @@ end;
 
 procedure TfrmRunCommand.FormCreate(Sender: TObject);
 begin
+
+  fConfig.ReadWindow(Self, 'runcommandform', SECTION_GEOMETRY);
+
   fRunThread := TRunThread.Create;
   fRunThread.FreeOnTerminate := true;
   fRunThread.OnOutput := @OnOutput;
   fRunThread.OnTerminate := @OnDone;
+end;
+
+procedure TfrmRunCommand.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
+begin
+  fConfig.WriteWindow(Self, 'runcommandform', SECTION_GEOMETRY);
 end;
 
 procedure TfrmRunCommand.SetCaption(AValue: string);
