@@ -627,6 +627,7 @@ begin
   end;
 
   RunInteractive(fGit.Exe + ' push', fGit.TopLevelDir, 'Pushing to remote: ', 'Push');
+  UpdateStatus;
 end;
 
 procedure TfrmMain.DoFetch;
