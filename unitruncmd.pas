@@ -7,7 +7,7 @@ unit unitruncmd;
 interface
 
 uses
-  Classes, SysUtils, LazLogger, Forms, Controls, Graphics, Dialogs, StdCtrls, ButtonPanel,
+  Classes, SysUtils, Math, LazLogger, Forms, Controls, Graphics, Dialogs, StdCtrls, ButtonPanel,
   unitconfig, unitprocess;
 
 type
@@ -50,6 +50,8 @@ type
     procedure FormShow(Sender: TObject);
   private
     fCommand: string;
+    fLastIndex: Integer;
+    fLastValue: String;
     fResult: Integer;
     fRunThread: TRunThread;
     fStartDir: string;
@@ -191,6 +193,8 @@ begin
   fRunThread.FreeOnTerminate := true;
   fRunThread.OnOutput := @OnOutput;
   fRunThread.OnTerminate := @OnDone;
+
+  fLastIndex := -1;
 end;
 
 procedure TfrmRunCommand.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
@@ -208,10 +212,48 @@ begin
   lblCaption.Caption := AValue;
 end;
 
+procedure CompareStrings(s1, s2: string; out rate:single);
+var
+  m, n, x, i: integer;
+begin
+  m := min(length(s1), length(s2));
+  x := max(length(s1), length(s2));
+  if (m=0) or (x=0) then begin
+    rate := 0.0;
+    exit;
+  end;
+
+  n := 0;
+  for i:=1 to m do
+    if s1[i]=s2[i] then
+      inc(n)
+    else
+      break;
+
+  rate := n/x;
+end;
+
 procedure TfrmRunCommand.OnOutput(sender: TObject; value: string;
   var interrupt: boolean);
+var
+  lastLine: String;
+  rate: single;
 begin
-  txtOutput.Lines.Add(value);
+  if fLastIndex<0 then begin
+    fLastIndex := txtOutput.Lines.Add(value);
+    fLastValue := value;
+    exit;
+  end;
+
+  lastLine := txtOutput.Lines[fLastIndex];
+  CompareStrings(lastLine, value, rate);
+
+  if rate>90.0 then
+    // they are similar enough
+    txtOutput.Lines[fLastIndex] := value
+  else
+    fLastIndex := txtOutput.Lines.Add(value);
+
   lblResult.Caption := 'Working ....';
 end;
 
