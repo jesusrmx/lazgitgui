@@ -57,7 +57,7 @@ type
   private
     fCommand: string;
     fLastIndex: Integer;
-    fLastValue: String;
+    fCaretY, fCaretX: Integer;
     fResult: Integer;
     fRunThread: TRunThread;
     fStartDir: string;
@@ -228,6 +228,7 @@ procedure TfrmRunCommand.FormCreate(Sender: TObject);
 begin
 
   fConfig.ReadWindow(Self, 'runcommandform', SECTION_GEOMETRY);
+  fConfig.ReadFont(txtOutput.Font, 'RunCmdOutput', fpFixed, SECTION_FONTS);
   chkCloseOk.Checked := fConfig.ReadBoolean('CloseOnSuccess', false, 'RunCommandForm');
 
   fRunThread := TRunThread.Create;
@@ -256,13 +257,24 @@ end;
 procedure TfrmRunCommand.OnOutput(sender: TObject; var interrupt: boolean);
 var
   thread: TRunThread absolute sender;
+  i: Integer;
 begin
 
-  //i := txtOutput.Lines.Count;
-  //if (thread.LineEnding=#13) and (i>0) then
-  //  txtOutput.Lines[i-1] := Thread.Line
-  //else
-    txtOutput.Lines.Add(thread.Line);
+  if pos(#13, thread.LineEnding)>0 then
+    fCaretX := 0;
+
+  txtOutput.Lines.BeginUpdate;
+
+  // get line at fCaretY
+  while fCaretY+1>txtOutput.Lines.Count do
+    txtOutput.Lines.Add('');
+
+  txtOutput.Lines[fCaretY] := thread.Line;
+
+  txtOutput.Lines.EndUpdate;
+
+  if pos(#10, thread.LineEnding)>0 then
+    inc(fCaretY);
 
   lblResult.Caption := 'Working ....';
 end;
