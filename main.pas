@@ -485,13 +485,15 @@ procedure TfrmMain.lstUnstagedMouseDown(Sender: TObject; Button: TMouseButton;
 var
   aIndex: Integer;
 begin
-  aIndex := TListBox(Sender).GetIndexAtXY(x, y);
-  if aIndex>=0 then begin
-    if (x>0) and (x < 20) then begin
-      fClickedIndex := aIndex;
-      Application.QueueAsyncCall(@DoItemAction, ptrInt(Sender));
-    end else
-      Application.QueueAsyncCall(@DoGitDiff, PtrInt(Sender));
+  if button=mbLeft then begin
+    aIndex := TListBox(Sender).GetIndexAtXY(x, y);
+    if aIndex>=0 then begin
+      if (x>0) and (x < 20) then begin
+        fClickedIndex := aIndex;
+        Application.QueueAsyncCall(@DoItemAction, ptrInt(Sender));
+      end else
+        Application.QueueAsyncCall(@DoGitDiff, PtrInt(Sender));
+    end;
   end;
 end;
 
