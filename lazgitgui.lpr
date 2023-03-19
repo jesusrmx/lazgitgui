@@ -93,7 +93,6 @@ begin
   Application.Scaled := True;
   Application.Initialize;
   Application.CreateForm(TfrmMain, frmMain);
-  Application.CreateForm(TfrmRunCommand, frmRunCommand);
   Application.Run;
 
   {$endif}
