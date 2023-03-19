@@ -608,11 +608,16 @@ begin
     if DirectoryExists(aDir + '.git') then
       fTopLevelDir := IncludeTrailingPathDelimiter(aDir)
     else begin
-      result := cmdLine.RunProcess(fGitCommand + ' rev-parse --show-toplevel', aDir, cmdOut);
-      if result<>0 then
-        DebugLn('Error getting top level directory: (%d) %s', [cmdLine.ExitCode, cmdLine.ErrorLog])
-      else
-        fTopLevelDir := IncludeTrailingPathDelimiter(SetDirSeparators(Trim(cmdOut)));
+      cmdOut := ExcludeTrailingPathDelimiter(aDir);
+      if ExtractFileName(cmdOut)='.git' then
+        fTopLevelDir := ExtractFilePath(cmdOut)
+      else begin
+        result := cmdLine.RunProcess(fGitCommand + ' rev-parse --show-toplevel', aDir, cmdOut);
+        if result<>0 then
+          DebugLn('Error getting top level directory: (%d) %s', [cmdLine.ExitCode, cmdLine.ErrorLog])
+        else
+          fTopLevelDir := IncludeTrailingPathDelimiter(SetDirSeparators(Trim(cmdOut)));
+      end;
     end;
   end;
 end;
