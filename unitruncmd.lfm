@@ -84,6 +84,7 @@ object frmRunCommand: TfrmRunCommand
     Width = 111
     BorderSpacing.Top = 5
     Caption = 'Close on Succeed'
+    Enabled = False
     OnClick = chkCloseOkClick
     TabOrder = 2
   end
