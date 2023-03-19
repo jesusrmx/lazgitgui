@@ -636,7 +636,7 @@ begin
       exit;
   end;
 
-  RunInteractive(fGit.Exe + ' push', fGit.TopLevelDir, 'Pushing to remote: ', 'Push');
+  RunInteractive(fGit.Exe + ' push --progress', fGit.TopLevelDir, 'Pushing to remote: ', 'Push');
   UpdateStatus;
 end;
 
