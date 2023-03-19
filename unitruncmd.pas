@@ -11,13 +11,16 @@ uses
   unitconfig, unitprocess;
 
 type
-  TOutputStringEvent = procedure(sender: TObject; value: string; var interrupt:boolean) of object;
+  TOutputStringEvent = procedure(sender: TObject; var interrupt:boolean) of object;
+  TLineEnding = string[3];
 
   { TRunThread }
 
   TRunThread = class(TThread)
   private
     fCommand: string;
+    fHaveProgress: boolean;
+    fLineEnding: TLineEnding;
     fOnOutput: TOutputStringEvent;
     fResult: Integer;
     fErrorLog: string;
@@ -34,6 +37,9 @@ type
     property Result: Integer read fResult;
     property ErrorLog: string read fErrorLog;
     property OnOutput: TOutputStringEvent read fOnOutput write fOnOutput;
+    property HaveProgress: boolean read fHaveProgress write fHaveProgress;
+    property LineEnding: TLineEnding read fLineEnding;
+    property Line: string read fLine;
   end;
 
   { TfrmRunCommand }
@@ -56,7 +62,7 @@ type
     fRunThread: TRunThread;
     fStartDir: string;
     procedure OnDone(Sender: TObject);
-    procedure OnOutput(sender: TObject; value: string; var interrupt: boolean);
+    procedure OnOutput(sender: TObject; var interrupt: boolean);
     procedure SetCaption(AValue: string);
     procedure SetTitle(AValue: string);
   public
@@ -101,10 +107,10 @@ var
 begin
   if assigned(fOnOutput) then begin
     {$IFDEF DEBUG}
-    DebugLn('Notifying: %s',[fLine]);
+    DebugLn('Notifying: %s',[DbgStr(fLine)]);
     {$ENDIF}
     interrupt := false;
-    fOnOutput(Self, fLine, interrupt);
+    fOnOutput(Self, interrupt);
     if interrupt then
       terminate;
   end;
@@ -129,9 +135,28 @@ procedure TRunThread.Execute;
 var
   outText: string;
 
+  function NextLineEnding(p: pchar): pchar;
+  var
+    x, y: pchar;
+  begin
+    x := strpos(p, #10);
+    y := strpos(p, #13);
+    if (x=nil) and (y=nil) then
+      result := nil
+    else if (x=nil) and (y<>nil) then
+      result := y
+    else if (x<>nil) and (y=nil) then
+      result := x
+    else if x<y then
+      result := x
+    else
+      result := y;
+  end;
+
   procedure CollectOutput(const buffer; size:Longint);
   var
-    aPos: SizeInt;
+    aPos: Integer;
+    p, q: pchar;
   begin
     {$IFDEF DEBUG}
     DebugLn('Collecting %d bytes',[size]);
@@ -140,16 +165,31 @@ var
     SetLength(outText, aPos + size);
     Move(Buffer, OutText[aPos+1], size);
 
-    aPos := pos(#10, outText);
-    while (aPos>0) and not Terminated do begin
-      fline := copy(outText, 1, aPos-1);
-      if (aPos>2) and (fline[aPos-2]=#13) then
-        delete(fLine, 1, apos-2);
-      Synchronize(@Notify);
-      Delete(outText, 1, aPos);
-      aPos := pos(#10, outText);
-    end;
+    // buffer is guaranteed to end with #0
+    while outText<>'' do begin
 
+      p := @outText[1];
+      q := NextLineEnding(p);
+      if q=nil then
+        break;
+
+      if (q^=#10) and ((q-1)^=#13) then
+        dec(q);
+
+      if (q^=#10) then
+        fLineEnding := #10
+      else if (q^=#13) and ((q+1)^=#10) then
+        fLineEnding := #13#10
+      else
+        fLineEnding := #13;
+
+      fLine := copy(outText, 1, q-p);
+
+      Synchronize(@Notify);
+
+      delete(outText, 1, (q-p) + length(fLineEnding));
+
+    end;
   end;
 
 begin
@@ -176,6 +216,7 @@ procedure TfrmRunCommand.FormShow(Sender: TObject);
 begin
   lblResult.Caption := 'Starting command, please wait ....';
   txtOutput.Clear;
+  //txtOutput.Lines.Add('');
   Application.ProcessMessages;
 
   fRunThread.Command := fCommand;
@@ -212,47 +253,16 @@ begin
   lblCaption.Caption := AValue;
 end;
 
-procedure CompareStrings(s1, s2: string; out rate:single);
+procedure TfrmRunCommand.OnOutput(sender: TObject; var interrupt: boolean);
 var
-  m, n, x, i: integer;
+  thread: TRunThread absolute sender;
 begin
-  m := min(length(s1), length(s2));
-  x := max(length(s1), length(s2));
-  if (m=0) or (x=0) then begin
-    rate := 0.0;
-    exit;
-  end;
 
-  n := 0;
-  for i:=1 to m do
-    if s1[i]=s2[i] then
-      inc(n)
-    else
-      break;
-
-  rate := n/x;
-end;
-
-procedure TfrmRunCommand.OnOutput(sender: TObject; value: string;
-  var interrupt: boolean);
-var
-  lastLine: String;
-  rate: single;
-begin
-  if fLastIndex<0 then begin
-    fLastIndex := txtOutput.Lines.Add(value);
-    fLastValue := value;
-    exit;
-  end;
-
-  lastLine := txtOutput.Lines[fLastIndex];
-  CompareStrings(lastLine, value, rate);
-
-  if rate>90.0 then
-    // they are similar enough
-    txtOutput.Lines[fLastIndex] := value
-  else
-    fLastIndex := txtOutput.Lines.Add(value);
+  //i := txtOutput.Lines.Count;
+  //if (thread.LineEnding=#13) and (i>0) then
+  //  txtOutput.Lines[i-1] := Thread.Line
+  //else
+    txtOutput.Lines.Add(thread.Line);
 
   lblResult.Caption := 'Working ....';
 end;
