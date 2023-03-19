@@ -5,11 +5,12 @@ unit unitconfig;
 interface
 
 uses
-  Classes, SysUtils, FileUtil, IniFiles, LazLogger, Forms;
+  Classes, SysUtils, FileUtil, IniFiles, LazLogger, Graphics, Forms;
 
 const
   SECTION_DEFAULT = 'options';
   SECTION_GEOMETRY = 'geometry';
+  SECTION_FONTS = 'fonts';
 
 type
 
@@ -26,6 +27,7 @@ type
     procedure CloseConfig;
     procedure ReadWindow(aForm: TForm; aKey:string; section:string=SECTION_DEFAULT);
     procedure WriteWindow(aForm: TForm; aKey:string; section:string=SECTION_DEFAULT);
+    procedure ReadFont(aFont: TFont; aKey:string; defPitch:TFontPitch=fpFixed; section:string=SECTION_DEFAULT);
     function ReadString(aKey:string; default:string=''; section:string=SECTION_DEFAULT): string;
     function ReadBoolean(aKey:string; default:boolean=false; section:string=SECTION_DEFAULT): boolean;
     function ReadInteger(aKey:string; default:Integer=0; section:string=SECTION_DEFAULT): Integer;
@@ -120,6 +122,33 @@ begin
     fConfig.WriteInteger(aKey + '.Top', aForm.Top, SECTION_GEOMETRY);
     fConfig.WriteInteger(aKey + '.Width', aForm.Width, SECTION_GEOMETRY);
     fConfig.WriteInteger(aKey + '.Height', aForm.Height, SECTION_GEOMETRY);
+  end;
+end;
+
+procedure TConfig.ReadFont(aFont: TFont; aKey: string; defPitch: TFontPitch;
+  section: string);
+var
+  s: String;
+  aQuality: TFontQuality;
+begin
+  with aFont do begin
+    s := Name;
+    aQuality := Quality;
+    if defPitch=fpFixed then begin
+      {$ifdef Darwin}
+      s := 'Menlo';
+      aQuality := fqAntialiased;
+      {$endif}
+      {$ifdef MsWindows}
+      s := 'Courier New';
+      {$endif}
+    end;
+    Name := fConfig.ReadString(aKey+'.font.name', s, section);
+    Size := fConfig.ReadInteger(aKey+'.font.size', 10, section);
+    if fConfig.ReadBoolean(aKey+'.font.antialiased', aQuality=fqAntialiased, section) then
+      Quality := fqAntialiased
+    else
+      Quality := fqNonAntialiased;
   end;
 end;
 

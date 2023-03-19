@@ -532,23 +532,7 @@ begin
 
   txtDiff.Clear;
 
-  with txtDiff.Font do begin
-    s := Name;
-    aQuality := Quality;
-    {$ifdef Darwin}
-    s := 'Menlo';
-    aQuality := fqAntialiased;
-    {$endif}
-    {$ifdef MsWindows}
-    s := 'Courier New';
-    {$endif}
-    Name := fConfig.ReadString('font.name', s, 'Viewer');
-    Size := fConfig.ReadInteger('font.size', 10, 'Viewer');
-    if fConfig.ReadBoolean('font.antialiased', aQuality=fqAntialiased, 'Viewer') then
-      Quality := fqAntialiased
-    else
-      Quality := fqNonAntialiased;
-  end;
+  fConfig.ReadFont(txtDiff.Font, 'viewer', txtDiff.font.Pitch, SECTION_FONTS);
 
   panFileState.Caption := '';
 
