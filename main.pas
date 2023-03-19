@@ -532,7 +532,7 @@ begin
 
   txtDiff.Clear;
 
-  fConfig.ReadFont(txtDiff.Font, 'viewer', txtDiff.font.Pitch, SECTION_FONTS);
+  fConfig.ReadFont(txtDiff.Font, 'viewer', fpFixed, SECTION_FONTS);
 
   panFileState.Caption := '';
 
