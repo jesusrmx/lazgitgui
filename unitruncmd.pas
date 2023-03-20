@@ -216,7 +216,6 @@ procedure TfrmRunCommand.FormShow(Sender: TObject);
 begin
   lblResult.Caption := 'Starting command, please wait ....';
   txtOutput.Clear;
-  //txtOutput.Lines.Add('');
   Application.ProcessMessages;
 
   fRunThread.Command := fCommand;
@@ -257,21 +256,16 @@ end;
 procedure TfrmRunCommand.OnOutput(sender: TObject; var interrupt: boolean);
 var
   thread: TRunThread absolute sender;
-  i: Integer;
 begin
 
   if pos(#13, thread.LineEnding)>0 then
     fCaretX := 0;
-
-  txtOutput.Lines.BeginUpdate;
 
   // get line at fCaretY
   while fCaretY+1>txtOutput.Lines.Count do
     txtOutput.Lines.Add('');
 
   txtOutput.Lines[fCaretY] := thread.Line;
-
-  txtOutput.Lines.EndUpdate;
 
   if pos(#10, thread.LineEnding)>0 then
     inc(fCaretY);
