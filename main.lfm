@@ -19,15 +19,17 @@ object frmMain: TfrmMain
     Top = 26
     Width = 256
     Align = alLeft
+    BevelOuter = bvNone
     ClientHeight = 660
     ClientWidth = 256
     TabOrder = 0
     object lstUnstaged: TListBox
-      Left = 1
+      Left = 5
       Height = 312
-      Top = 21
-      Width = 254
+      Top = 20
+      Width = 251
       Align = alTop
+      BorderSpacing.Left = 5
       DoubleBuffered = False
       IntegralHeight = True
       ItemHeight = 20
@@ -40,20 +42,22 @@ object frmMain: TfrmMain
     end
     object splitterStaged: TSplitter
       Cursor = crVSplit
-      Left = 1
+      Left = 0
       Height = 5
-      Top = 333
-      Width = 254
+      Top = 332
+      Width = 256
       Align = alTop
       ResizeAnchor = akTop
     end
     object panUnstaged: TPanel
-      Left = 1
+      Left = 5
       Height = 20
-      Top = 1
-      Width = 254
+      Top = 0
+      Width = 251
       Align = alTop
       Alignment = taLeftJustify
+      BorderSpacing.Left = 5
+      BevelOuter = bvNone
       Caption = 'Unstaged Changes'
       Color = 8036863
       ParentBackground = False
@@ -61,22 +65,25 @@ object frmMain: TfrmMain
       TabOrder = 2
     end
     object panStagedContainer: TPanel
-      Left = 1
-      Height = 321
-      Top = 338
-      Width = 254
+      Left = 0
+      Height = 323
+      Top = 337
+      Width = 256
       Align = alClient
+      BevelOuter = bvNone
       Caption = 'panStagedContainer'
-      ClientHeight = 321
-      ClientWidth = 254
+      ClientHeight = 323
+      ClientWidth = 256
       TabOrder = 3
       object panStaged: TPanel
-        Left = 1
+        Left = 5
         Height = 20
-        Top = 1
-        Width = 252
+        Top = 0
+        Width = 251
         Align = alTop
         Alignment = taLeftJustify
+        BorderSpacing.Left = 5
+        BevelOuter = bvNone
         Caption = 'Staged Changes (will commit)'
         Color = 64142
         ParentBackground = False
@@ -84,11 +91,13 @@ object frmMain: TfrmMain
         TabOrder = 0
       end
       object lstStaged: TListBox
-        Left = 1
-        Height = 299
-        Top = 21
-        Width = 252
+        Left = 5
+        Height = 298
+        Top = 20
+        Width = 251
         Align = alClient
+        BorderSpacing.Left = 5
+        BorderSpacing.Bottom = 5
         IntegralHeight = True
         ItemHeight = 20
         OnDrawItem = lstUnstagedDrawItem
@@ -105,37 +114,41 @@ object frmMain: TfrmMain
     Top = 26
     Width = 663
     Align = alClient
+    BevelOuter = bvNone
     ClientHeight = 660
     ClientWidth = 663
     TabOrder = 1
     object panCommit: TPanel
-      Left = 1
+      Left = 0
       Height = 208
-      Top = 451
-      Width = 661
+      Top = 452
+      Width = 663
       Align = alBottom
+      BevelOuter = bvNone
       Caption = 'panCommit'
       ClientHeight = 208
-      ClientWidth = 661
+      ClientWidth = 663
       TabOrder = 0
       object panCommitButtons: TPanel
-        Left = 1
-        Height = 186
-        Top = 21
+        Left = 0
+        Height = 183
+        Top = 20
         Width = 135
         Align = alLeft
+        BorderSpacing.Bottom = 5
+        BevelOuter = bvNone
         ChildSizing.LeftRightSpacing = 5
         ChildSizing.TopBottomSpacing = 5
         ChildSizing.VerticalSpacing = 5
         ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
         ChildSizing.Layout = cclLeftToRightThenTopToBottom
         ChildSizing.ControlsPerLine = 1
-        ClientHeight = 186
+        ClientHeight = 183
         ClientWidth = 135
         TabOrder = 0
         object btnRescan: TButton
           Left = 5
-          Height = 20
+          Height = 25
           Top = 5
           Width = 125
           Action = actRescan
@@ -143,69 +156,73 @@ object frmMain: TfrmMain
         end
         object btnStageChanged: TButton
           Left = 5
-          Height = 20
-          Top = 30
+          Height = 25
+          Top = 35
           Width = 125
           Action = actFetch
           TabOrder = 1
         end
         object btnSignOff: TButton
           Left = 5
-          Height = 20
-          Top = 55
+          Height = 25
+          Top = 65
           Width = 125
           Action = actPull
           TabOrder = 2
         end
         object btnCommit: TButton
           Left = 5
-          Height = 20
-          Top = 80
+          Height = 25
+          Top = 95
           Width = 125
           Action = actCommit
           TabOrder = 3
         end
         object btnPush: TButton
           Left = 5
-          Height = 20
-          Top = 105
+          Height = 25
+          Top = 125
           Width = 125
           Action = actPush
           TabOrder = 4
         end
       end
       object txtComment: TMemo
-        Left = 136
-        Height = 186
-        Top = 21
-        Width = 524
+        Left = 135
+        Height = 183
+        Top = 20
+        Width = 523
         Align = alClient
+        BorderSpacing.Right = 5
+        BorderSpacing.Bottom = 5
         TabOrder = 1
       end
       object panCommitState: TPanel
-        Left = 1
+        Left = 0
         Height = 20
-        Top = 1
-        Width = 659
+        Top = 0
+        Width = 663
         Align = alTop
+        BevelOuter = bvNone
         TabOrder = 2
       end
     end
     object splitterCommit: TSplitter
       Cursor = crVSplit
-      Left = 1
+      Left = 0
       Height = 5
-      Top = 446
-      Width = 661
+      Top = 447
+      Width = 663
       Align = alBottom
       ResizeAnchor = akBottom
     end
     inline txtDiff: TSynEdit
-      Left = 1
-      Height = 425
-      Top = 21
-      Width = 661
+      Left = 0
+      Height = 427
+      Top = 20
+      Width = 658
       Align = alClient
+      BorderSpacing.Right = 5
       Font.Height = 10
       Font.Name = 'Andale Mono'
       Font.Pitch = fpFixed
@@ -214,7 +231,7 @@ object frmMain: TfrmMain
       ParentFont = False
       TabOrder = 2
       Gutter.Visible = False
-      Gutter.Width = 53
+      Gutter.Width = 50
       Gutter.MouseActions = <>
       RightGutter.Width = 0
       RightGutter.MouseActions = <>
@@ -692,7 +709,7 @@ object frmMain: TfrmMain
           MouseActions = <>
         end
         object SynGutterLineNumber1: TSynGutterLineNumber
-          Width = 13
+          Width = 11
           MouseActions = <>
           MarkupInfo.Background = clBtnFace
           MarkupInfo.Foreground = clNone
@@ -714,6 +731,7 @@ object frmMain: TfrmMain
           MarkupInfo.Foreground = clGray
         end
         object SynGutterCodeFolding1: TSynGutterCodeFolding
+          Width = 9
           MouseActions = <>
           MarkupInfo.Background = clNone
           MarkupInfo.Foreground = clGray
@@ -723,12 +741,14 @@ object frmMain: TfrmMain
       end
     end
     object panFileState: TPanel
-      Left = 1
+      Left = 0
       Height = 20
-      Top = 1
-      Width = 661
+      Top = 0
+      Width = 658
       Align = alTop
       Alignment = taLeftJustify
+      BorderSpacing.Right = 5
+      BevelOuter = bvNone
       Caption = 'Modified, Not Staged.'
       Color = 251903
       ParentBackground = False
@@ -743,6 +763,7 @@ object frmMain: TfrmMain
     Width = 924
     Align = alTop
     Alignment = taLeftJustify
+    BevelOuter = bvNone
     ClientHeight = 26
     ClientWidth = 924
     TabOrder = 2
@@ -750,10 +771,10 @@ object frmMain: TfrmMain
       AnchorSideLeft.Control = panBranch
       AnchorSideTop.Control = panBranch
       AnchorSideTop.Side = asrCenter
-      Left = 11
-      Height = 16
-      Top = 5
-      Width = 47
+      Left = 10
+      Height = 15
+      Top = 6
+      Width = 40
       BorderSpacing.Left = 10
       Caption = 'Branch:'
       ParentFont = False
@@ -763,10 +784,10 @@ object frmMain: TfrmMain
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = Label1
       Cursor = crHandPoint
-      Left = 68
-      Height = 16
-      Top = 5
-      Width = 31
+      Left = 60
+      Height = 15
+      Top = 6
+      Width = 27
       BorderSpacing.Left = 10
       Caption = 'main'
       Font.Color = clFuchsia
@@ -781,10 +802,10 @@ object frmMain: TfrmMain
       AnchorSideLeft.Control = lblMerging
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = Label1
-      Left = 202
-      Height = 16
-      Top = 5
-      Width = 250
+      Left = 181
+      Height = 15
+      Top = 6
+      Width = 214
       BorderSpacing.Left = 20
       BorderSpacing.Right = 20
       Caption = '0 commits ahead, 0 commits behind of'
@@ -793,10 +814,10 @@ object frmMain: TfrmMain
       AnchorSideLeft.Control = lblAheadBehind
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = Label1
-      Left = 472
-      Height = 16
-      Top = 5
-      Width = 50
+      Left = 415
+      Height = 15
+      Top = 6
+      Width = 44
       Caption = 'Remote:'
       ParentFont = False
     end
@@ -804,10 +825,10 @@ object frmMain: TfrmMain
       AnchorSideLeft.Control = Label2
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = Label1
-      Left = 532
-      Height = 16
-      Top = 5
-      Width = 82
+      Left = 469
+      Height = 15
+      Top = 6
+      Width = 74
       BorderSpacing.Left = 10
       Caption = 'remote/main'
       Font.Color = clBlue
@@ -818,10 +839,10 @@ object frmMain: TfrmMain
       AnchorSideLeft.Control = lblBranch
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = Label1
-      Left = 109
-      Height = 16
-      Top = 5
-      Width = 73
+      Left = 97
+      Height = 15
+      Top = 6
+      Width = 64
       BorderSpacing.Left = 10
       Caption = '(MERGING)'
       Font.Color = clRed
