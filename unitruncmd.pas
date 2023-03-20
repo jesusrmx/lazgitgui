@@ -61,6 +61,7 @@ type
     fResult: Integer;
     fRunThread: TRunThread;
     fStartDir: string;
+    fTitle: String;
     procedure OnDone(Sender: TObject);
     procedure OnOutput(sender: TObject; var interrupt: boolean);
     procedure SetCaption(AValue: string);
@@ -215,6 +216,7 @@ end;
 procedure TfrmRunCommand.FormShow(Sender: TObject);
 begin
   lblResult.Caption := 'Starting command, please wait ....';
+  Caption := fTitle;
   txtOutput.Clear;
   Application.ProcessMessages;
 
@@ -295,7 +297,7 @@ end;
 
 procedure TfrmRunCommand.SetTitle(AValue: string);
 begin
-  Caption := AValue;
+  fTitle := AValue;
 end;
 
 end.
