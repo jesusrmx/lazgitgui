@@ -10,9 +10,15 @@
       <UseXPManifest Value="True"/>
       <XPManifest>
         <DpiAware Value="True"/>
+        <TextName Value="LazGitGUI"/>
+        <TextDesc Value="An interface to git status with some additional tools and with a familiar git gui interface."/>
       </XPManifest>
       <Icon Value="0"/>
     </General>
+    <VersionInfo>
+      <AutoIncrementBuild Value="True"/>
+      <MajorVersionNr Value="1"/>
+    </VersionInfo>
     <BuildModes>
       <Item Name="Default" Default="True"/>
     </BuildModes>
