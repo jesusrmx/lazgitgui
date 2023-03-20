@@ -36,6 +36,9 @@ type
   TOutputStringEvent = procedure(sender: TObject; var interrupt:boolean) of object;
   TLineEnding = string[3];
 
+
+  // TODO: add crtitical sections where needed
+
   { TRunThread }
 
   TRunThread = class(TThread)
@@ -97,6 +100,7 @@ type
   end;
 
   function RunInteractive(command, startdir, title, caption:string): Integer;
+  function RunInThread(Command, startDir: string; OnOutput: TOutputStringEvent; OnDone: TNotifyEvent; startIt:boolean=true): TRunThread;
 
 var
   frmRunCommand: TfrmRunCommand;
@@ -118,6 +122,19 @@ begin
   finally
     rf.Free;
   end;
+end;
+
+function RunInThread(Command, startDir: string; OnOutput: TOutputStringEvent;
+  OnDone: TNotifyEvent; startIt: boolean): TRunThread;
+begin
+  Result := TRunThread.Create;
+  Result.Command := Command;
+  Result.StartDir := startDir;
+  Result.FreeOnTerminate := true;
+  Result.OnOutput := OnOutput;
+  Result.OnTerminate := OnDone;
+  if startIt then
+    Result.Start;
 end;
 
 {$R *.lfm}

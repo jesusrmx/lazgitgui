@@ -30,7 +30,7 @@ uses
   Classes, SysUtils, Math, LazLogger, Forms, Controls, Graphics, Dialogs,
   StdCtrls, ExtCtrls, ActnList, synEditTypes, SynEdit, SynHighlighterDiff,
   StrUtils, FileUtil, unitconfig, unitprocess, unitentries, unitgit, Types,
-  lclType, Menus, unitnewbranch, unitruncmd, LConvEncoding;
+  lclType, Menus, Buttons, unitnewbranch, unitruncmd, LConvEncoding;
 
 type
 
@@ -39,6 +39,7 @@ type
   TfrmMain = class(TForm)
     actCommit: TAction;
     actFetch: TAction;
+    actLog: TAction;
     actQuit: TAction;
     actPull: TAction;
     actPush: TAction;
@@ -63,13 +64,17 @@ type
     mnuMain: TMainMenu;
     panCommitState: TPanel;
     panBranch: TPanel;
+    panLog: TPanel;
+    panStatus: TPanel;
     panFileState: TPanel;
     panUnstaged: TPanel;
     panStagedContainer: TPanel;
     panStaged: TPanel;
     popBranch: TPopupMenu;
+    btnLog: TSpeedButton;
     splitterMain: TSplitter;
     SynDiffSyn1: TSynDiffSyn;
+    txtLog: TSynEdit;
     txtComment: TMemo;
     panLeft: TPanel;
     panContent: TPanel;
@@ -80,6 +85,7 @@ type
     txtDiff: TSynEdit;
     procedure actCommitExecute(Sender: TObject);
     procedure actFetchExecute(Sender: TObject);
+    procedure actLogExecute(Sender: TObject);
     procedure actPullExecute(Sender: TObject);
     procedure actPushExecute(Sender: TObject);
     procedure actQuitExecute(Sender: TObject);
@@ -103,11 +109,14 @@ type
     procedure DoGitDiff(Data: PtrInt);
     procedure DoItemAction(Data: PtrInt);
     procedure DoCommit;
+    procedure DoLog;
     procedure DoPush;
     procedure DoFetch;
     procedure DoPull;
     procedure OnBranchMenuClick(Sender: TObject);
     procedure OnBranchSwitch(Data: PtrInt);
+    procedure OnLogDone(Sender: TObject);
+    procedure OnLogOutput(sender: TObject; var interrupt: boolean);
     procedure OnReloadBranchMenu(Data: PtrInt);
     procedure OpenDirectory(aDir: string);
     procedure UpdateBranch;
@@ -201,6 +210,19 @@ begin
     ShowError
   else
     UpdateStatus;
+end;
+
+procedure TfrmMain.OnLogDone(Sender: TObject);
+var
+  thread: TRunThread absolute Sender;
+begin
+end;
+
+procedure TfrmMain.OnLogOutput(sender: TObject; var interrupt: boolean);
+var
+  thread: TRunThread absolute sender;
+begin
+  txtLog.Lines.Add(thread.Line);
 end;
 
 procedure TfrmMain.OnReloadBranchMenu(Data: PtrInt);
@@ -555,6 +577,7 @@ begin
   txtDiff.Clear;
 
   fConfig.ReadFont(txtDiff.Font, 'viewer', fpFixed, SECTION_FONTS);
+  fConfig.ReadFont(txtLog.Font, 'log', fpFixed, SECTION_FONTS);
 
   panFileState.Caption := '';
 
@@ -581,6 +604,11 @@ end;
 procedure TfrmMain.actFetchExecute(Sender: TObject);
 begin
   DoFetch;
+end;
+
+procedure TfrmMain.actLogExecute(Sender: TObject);
+begin
+  DoLog;
 end;
 
 procedure TfrmMain.actPullExecute(Sender: TObject);
@@ -628,6 +656,24 @@ begin
     UpdateStatus;
     txtDiff.Clear;
     txtComment.Clear;
+  end;
+end;
+
+procedure TfrmMain.DoLog;
+var
+  cmd: string;
+begin
+  if actLog.Checked then begin
+    panLog.Visible := true;
+    panStatus.Visible := false;
+    txtLog.Clear;
+    cmd :=  fGit.Exe + ' ' +
+            //'-c color.ui=always ' +
+            'log --oneline --graph --decorate --all';
+    RunInThread(cmd, fGit.TopLevelDir, @OnLogOutput, @OnLogDone, true);
+  end else begin
+    panLog.Visible := false;
+    panStatus.Visible := true;
   end;
 end;
 

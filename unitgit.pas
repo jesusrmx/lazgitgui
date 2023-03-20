@@ -93,6 +93,7 @@ type
     function OpenDir(aDir: string): Integer;
     function Commit(msg, opts: string): Integer;
     function Push(repo, opts: string; callback:TOutputEvent): Integer;
+    function Log(opts: string; callback:TOutputEvent): Integer;
 
     property Exe: string read fGitCommand;
     property CommitsAhead: Integer read fCommitsAhead;
@@ -663,6 +664,14 @@ begin
   cmd := ' push '+repo;
   if opts<>'' then
     cmd += ' ' +opts;
+  result := cmdLine.RunProcess(fGitCommand + cmd, fTopLevelDir, callback);
+end;
+
+function TGit.Log(opts: string; callback: TOutputEvent): Integer;
+var
+  cmd: string;
+begin
+  cmd := ' log '+opts;
   result := cmdLine.RunProcess(fGitCommand + cmd, fTopLevelDir, callback);
 end;
 
