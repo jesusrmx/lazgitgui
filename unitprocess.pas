@@ -220,7 +220,7 @@ begin
       until BytesRead=0;
 
     // collect any reported error
-    if not StdErrorClosed then begin
+    if not StdErrorClosed and (not (poStderrToOutPut in Process.Options)) then begin
       while Process.StdErr.NumBytesAvailable>0 do begin
         BytesRead := Process.Stderr.Read(Buffer^, BUFSIZE);
         Err.WriteBuffer(Buffer^, BytesRead);
