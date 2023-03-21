@@ -106,6 +106,9 @@ type
     fClickedIndex: Integer;
     fDir: string;
     fPopPoint: TPoint;
+    {$IFDEF CaptureOutput}
+    fCap: TMemoryStream;
+    {$ENDIF}
     procedure DoGitDiff(Data: PtrInt);
     procedure DoItemAction(Data: PtrInt);
     procedure DoCommit;
@@ -216,12 +219,21 @@ procedure TfrmMain.OnLogDone(Sender: TObject);
 var
   thread: TRunThread absolute Sender;
 begin
+  {$IFDEF CaptureOutput}
+  fCap.SaveToFile('colorido.bin');
+  fCap.Free;
+  {$endif}
 end;
 
 procedure TfrmMain.OnLogOutput(sender: TObject; var interrupt: boolean);
 var
   thread: TRunThread absolute sender;
 begin
+  {$IFDEF CaptureOutput}
+  if thread.Line<>'' then
+    fCap.WriteBuffer(thread.Line[1], Length(thread.Line));
+  fCap.WriteBuffer(thread.LineEnding[1], Length(thread.LineEnding));
+  {$ENDIF}
   txtLog.Lines.Add(thread.Line);
 end;
 
@@ -667,6 +679,9 @@ begin
     panLog.Visible := true;
     panStatus.Visible := false;
     txtLog.Clear;
+    {$IFDEF CaptureOutput}
+    fCap := TMemoryStream.Create;
+    {$ENDIF}
     cmd :=  fGit.Exe + ' ' +
             //'-c color.ui=always ' +
             'log --oneline --graph --decorate --all';
