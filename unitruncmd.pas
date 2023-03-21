@@ -29,8 +29,8 @@ unit unitruncmd;
 interface
 
 uses
-  Classes, SysUtils, Math, LazLogger, Forms, Controls, Graphics, Dialogs, StdCtrls, ButtonPanel,
-  unitconfig, unitprocess;
+  Classes, SysUtils, Math, LazLogger, SynEdit, Forms, Controls, Graphics,
+  Dialogs, StdCtrls, ButtonPanel, unitconfig, unitprocess, unitansiescapes;
 
 type
   TOutputStringEvent = procedure(sender: TObject; var interrupt:boolean) of object;
@@ -74,10 +74,11 @@ type
     chkCloseOk: TCheckBox;
     lblResult: TLabel;
     lblCaption: TLabel;
-    txtOutput: TMemo;
+    txtOutput: TSynEdit;
     procedure chkCloseOkClick(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure FormCreate(Sender: TObject);
+    procedure FormDestroy(Sender: TObject);
     procedure FormShow(Sender: TObject);
   private
     fCommand: string;
@@ -87,6 +88,7 @@ type
     fRunThread: TRunThread;
     fStartDir: string;
     fTitle: String;
+    fAnsiHandler: TAnsiEscapesHandler;
     procedure OnDone(Sender: TObject);
     procedure OnOutput(sender: TObject; var interrupt: boolean);
     procedure SetCaption(AValue: string);
@@ -267,6 +269,8 @@ end;
 procedure TfrmRunCommand.FormCreate(Sender: TObject);
 begin
 
+  fConfig.OpenConfig;
+
   fConfig.ReadWindow(Self, 'runcommandform', SECTION_GEOMETRY);
   fConfig.ReadFont(txtOutput.Font, 'RunCmdOutput', fpFixed, SECTION_FONTS);
   chkCloseOk.Checked := fConfig.ReadBoolean('CloseOnSuccess', false, 'RunCommandForm');
@@ -277,6 +281,15 @@ begin
   fRunThread.OnTerminate := @OnDone;
 
   fLastIndex := -1;
+
+  fAnsiHandler := TAnsiEscapesHandler.Create(txtOutput);
+
+  fConfig.CloseConfig;
+end;
+
+procedure TfrmRunCommand.FormDestroy(Sender: TObject);
+begin
+  fAnsiHandler.Free;
 end;
 
 procedure TfrmRunCommand.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
@@ -298,6 +311,8 @@ procedure TfrmRunCommand.OnOutput(sender: TObject; var interrupt: boolean);
 var
   thread: TRunThread absolute sender;
 begin
+  fAnsiHandler.ProcessLine(thread.Line, thread.LineEnding);
+  {
 
   if pos(#13, thread.LineEnding)>0 then
     fCaretX := 0;
@@ -310,7 +325,7 @@ begin
 
   if pos(#10, thread.LineEnding)>0 then
     inc(fCaretY);
-
+  }
   lblResult.Caption := 'Working ....';
 end;
 
@@ -330,8 +345,6 @@ begin
     lblResult.Font.Color := clWhite;
     lblResult.Caption := 'Failed';
   end;
-  txtOutput.SelLength := 0;
-  txtOutput.SelStart := 0;
 end;
 
 procedure TfrmRunCommand.SetTitle(AValue: string);

@@ -719,12 +719,14 @@ end;
 
 procedure TfrmMain.DoFetch;
 begin
-  RunInteractive(fGit.Exe + ' fetch', fGit.TopLevelDir, 'Fetching from remote: ', 'Fetch');
+  RunInteractive(fGit.Exe + ' -c color.ui=always fetch', fGit.TopLevelDir, 'Fetching from remote: ', 'Fetch');
+  UpdateStatus;
 end;
 
 procedure TfrmMain.DoPull;
 begin
-  RunInteractive(fGit.Exe + ' pull', fGit.TopLevelDir, 'pulling from remote: ', 'Pull');
+  RunInteractive(fGit.Exe + ' -c color.ui=always pull', fGit.TopLevelDir, 'pulling from remote: ', 'Pull');
+  UpdateStatus;
 end;
 
 procedure TfrmMain.DoGitDiff(Data: PtrInt);
