@@ -30,7 +30,8 @@ uses
   Classes, SysUtils, Math, LazLogger, Forms, Controls, Graphics, Dialogs,
   StdCtrls, ExtCtrls, ActnList, synEditTypes, SynEdit, SynHighlighterDiff,
   StrUtils, FileUtil, unitconfig, unitprocess, unitentries, unitgit, Types,
-  lclType, Menus, Buttons, unitnewbranch, unitruncmd, LConvEncoding;
+  lclType, Menus, Buttons, unitnewbranch, unitruncmd, unitansiescapes,
+  LConvEncoding;
 
 type
 
@@ -106,6 +107,7 @@ type
     fClickedIndex: Integer;
     fDir: string;
     fPopPoint: TPoint;
+    fAnsiHandler: TAnsiEscapesHandler;
     {$IFDEF CaptureOutput}
     fCap: TMemoryStream;
     {$ENDIF}
@@ -234,7 +236,7 @@ begin
     fCap.WriteBuffer(thread.Line[1], Length(thread.Line));
   fCap.WriteBuffer(thread.LineEnding[1], Length(thread.LineEnding));
   {$ENDIF}
-  txtLog.Lines.Add(thread.Line);
+  fAnsiHandler.ProcessLine(thread.Line, thread.LineEnding);
 end;
 
 procedure TfrmMain.OnReloadBranchMenu(Data: PtrInt);
@@ -595,6 +597,10 @@ begin
 
   RestoreGui;
 
+  txtLog.Color := clBlack;
+  txtLog.Font.Color := clWhite;
+  fAnsiHandler := TAnsiEscapesHandler.Create(txtLog);
+
   fConfig.CloseConfig;
 end;
 
@@ -640,6 +646,7 @@ end;
 
 procedure TfrmMain.FormDestroy(Sender: TObject);
 begin
+  fAnsiHandler.Free;
   fGit.Free;
 end;
 
@@ -679,11 +686,12 @@ begin
     panLog.Visible := true;
     panStatus.Visible := false;
     txtLog.Clear;
+    fAnsiHandler.Reset;
     {$IFDEF CaptureOutput}
     fCap := TMemoryStream.Create;
     {$ENDIF}
     cmd :=  fGit.Exe + ' ' +
-            //'-c color.ui=always ' +
+            '-c color.ui=always ' +
             'log --oneline --graph --decorate --all';
     RunInThread(cmd, fGit.TopLevelDir, @OnLogOutput, @OnLogDone, true);
   end else begin

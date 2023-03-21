@@ -676,7 +676,7 @@ object frmMain: TfrmMain
           TabOrder = 0
           object btnRescan: TButton
             Left = 5
-            Height = 25
+            Height = 20
             Top = 5
             Width = 125
             Action = actRescan
@@ -684,32 +684,32 @@ object frmMain: TfrmMain
           end
           object btnStageChanged: TButton
             Left = 5
-            Height = 25
-            Top = 35
+            Height = 20
+            Top = 30
             Width = 125
             Action = actFetch
             TabOrder = 1
           end
           object btnSignOff: TButton
             Left = 5
-            Height = 25
-            Top = 65
+            Height = 20
+            Top = 55
             Width = 125
             Action = actPull
             TabOrder = 2
           end
           object btnCommit: TButton
             Left = 5
-            Height = 25
-            Top = 95
+            Height = 20
+            Top = 80
             Width = 125
             Action = actCommit
             TabOrder = 3
           end
           object btnPush: TButton
             Left = 5
-            Height = 25
-            Top = 125
+            Height = 20
+            Top = 105
             Width = 125
             Action = actPush
             TabOrder = 4
@@ -761,7 +761,7 @@ object frmMain: TfrmMain
         ParentFont = False
         TabOrder = 2
         Gutter.Visible = False
-        Gutter.Width = 50
+        Gutter.Width = 53
         Gutter.MouseActions = <>
         RightGutter.Width = 0
         RightGutter.MouseActions = <>
@@ -1240,7 +1240,7 @@ object frmMain: TfrmMain
             MouseActions = <>
           end
           object SynGutterLineNumber1: TSynGutterLineNumber
-            Width = 11
+            Width = 13
             MouseActions = <>
             MarkupInfo.Background = clBtnFace
             MarkupInfo.Foreground = clNone
@@ -1262,7 +1262,6 @@ object frmMain: TfrmMain
             MarkupInfo.Foreground = clGray
           end
           object SynGutterCodeFolding1: TSynGutterCodeFolding
-            Width = 9
             MouseActions = <>
             MarkupInfo.Background = clNone
             MarkupInfo.Foreground = clGray
@@ -1298,9 +1297,9 @@ object frmMain: TfrmMain
       AnchorSideTop.Control = panBranch
       AnchorSideTop.Side = asrCenter
       Left = 10
-      Height = 15
-      Top = 6
-      Width = 40
+      Height = 16
+      Top = 5
+      Width = 47
       BorderSpacing.Left = 10
       Caption = 'Branch:'
       ParentFont = False
@@ -1310,10 +1309,10 @@ object frmMain: TfrmMain
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = Label1
       Cursor = crHandPoint
-      Left = 60
-      Height = 15
-      Top = 6
-      Width = 27
+      Left = 67
+      Height = 16
+      Top = 5
+      Width = 31
       BorderSpacing.Left = 10
       Caption = 'main'
       Font.Color = clFuchsia
@@ -1328,10 +1327,10 @@ object frmMain: TfrmMain
       AnchorSideLeft.Control = lblMerging
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = Label1
-      Left = 181
-      Height = 15
-      Top = 6
-      Width = 214
+      Left = 201
+      Height = 16
+      Top = 5
+      Width = 250
       BorderSpacing.Left = 20
       BorderSpacing.Right = 20
       Caption = '0 commits ahead, 0 commits behind of'
@@ -1340,10 +1339,10 @@ object frmMain: TfrmMain
       AnchorSideLeft.Control = lblAheadBehind
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = Label1
-      Left = 415
-      Height = 15
-      Top = 6
-      Width = 44
+      Left = 471
+      Height = 16
+      Top = 5
+      Width = 50
       Caption = 'Remote:'
       ParentFont = False
     end
@@ -1351,10 +1350,10 @@ object frmMain: TfrmMain
       AnchorSideLeft.Control = Label2
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = Label1
-      Left = 469
-      Height = 15
-      Top = 6
-      Width = 74
+      Left = 531
+      Height = 16
+      Top = 5
+      Width = 82
       BorderSpacing.Left = 10
       Caption = 'remote/main'
       Font.Color = clBlue
@@ -1365,10 +1364,10 @@ object frmMain: TfrmMain
       AnchorSideLeft.Control = lblBranch
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = Label1
-      Left = 97
-      Height = 15
-      Top = 6
-      Width = 64
+      Left = 108
+      Height = 16
+      Top = 5
+      Width = 73
       BorderSpacing.Left = 10
       Caption = '(MERGING)'
       Font.Color = clRed
