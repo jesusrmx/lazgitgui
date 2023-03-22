@@ -123,6 +123,7 @@ type
     path: string;
     origPath: string;
   end;
+  TPFileEntryArray = array of PFileEntry;
 
 procedure ParseOrdinaryChanged(var head: pchar; tail: pchar; out entry: PFileEntry);
 procedure ParseRenamedCopied(var head: pchar; tail: pchar; out entry: PFileEntry);

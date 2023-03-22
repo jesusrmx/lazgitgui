@@ -84,7 +84,8 @@ type
     procedure Clear;
     function Status(unstagedList, stagedList: TStrings): Integer;
     function Diff(entry: PFileEntry; Unstaged:boolean; Lines:TStrings): Integer;
-    function Add(entry: PFileEntry): Integer;
+    function Add(entry: PFileEntry): Integer; overload;
+    function Add(entryArray: TPFileEntryArray): Integer; overload;
     function Rm(entry: PFileEntry): Integer;
     function Restore(entry: PFileEntry; staged: boolean): Integer;
     function BranchList(list: TStrings; opts:array of string): Integer;
@@ -162,6 +163,20 @@ begin
   {$else}
   result := StringReplace(aPath, ' ', '\ ', [rfReplaceAll]);
   {$endif}
+end;
+
+function MakePathList(entryArray: TPFileEntryArray): string;
+var
+  entry: PFileEntry;
+  procedure Add(aPath:string);
+  begin
+    if result<>'' then result += ' ';
+    result += Sanitize(aPath);
+  end;
+begin
+  result := '';
+  for entry in entryArray do
+    Add(entry^.path);
 end;
 
 { TGit }
@@ -374,6 +389,15 @@ var
   cmdOut: RawByteString;
 begin
   result := cmdLine.RunProcess(fGitCommand+' add '+ Sanitize(entry^.path), fTopLevelDir, cmdOut);
+end;
+
+function TGit.Add(entryArray: TPFileEntryArray): Integer;
+var
+  list: string;
+  cmdOut: RawByteString;
+begin
+  list := MakePathList(entryArray);
+  result := cmdLine.RunProcess(fGitCommand+' add '+ list, fTopLevelDir, cmdOut);
 end;
 
 function TGit.Rm(entry: PFileEntry): Integer;

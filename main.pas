@@ -318,25 +318,27 @@ procedure TfrmMain.OnStageItemClick(Sender: TObject);
 var
   mi: TMenuItem;
   i, aIndex: Integer;
-  list: string;
-  procedure Add(aIndex: Integer);
-  begin
-    if list<>'' then list += ' ';
-    list += lstUnstaged.Items[aIndex];
-  end;
+  entryArray: TPFileEntryArray;
 begin
-  list := '';
   mi := TMenuItem(Sender);
   aIndex := mi.Tag;
+  if aIndex<0 then SetLength(entryArray, lstUnstaged.SelCount)
+  else             SetLength(entryArray, 1);
   if aIndex<0 then begin
+    aIndex := 0;
     for i:=0 to lstUnstaged.Count-1 do begin
-      if lstUnstaged.Selected[i] then
-        Add(i);
+      if lstUnstaged.Selected[i] then begin
+        entryArray[aIndex] := PFileEntry(lstUnstaged.Items.Objects[i]);
+        inc(aIndex);
+      end;
     end;
   end else
-    Add(aIndex);
+    entryArray[0] := PFileEntry(lstUnstaged.Items.Objects[aIndex]);
 
-  DebugLn('Staging: ', list);
+  if fGit.Add(entryArray)>0 then
+    ShowError
+  else
+    UpdateStatus;
 end;
 
 procedure TfrmMain.OnUnstageItemClick(Sender: TObject);
