@@ -23,6 +23,7 @@
 unit main;
 
 {$mode objfpc}{$H+}
+{.$define CaptureOutput}
 
 interface
 
@@ -654,6 +655,11 @@ procedure TfrmMain.OpenDirectory(aDir: string);
 begin
   aDir := ExpandFileName(aDir);
   fGit.OpenDir(aDir);
+  if fGit.TopLevelDir='' then begin
+    ShowMessage('Couldn''t get toplevel directory of '+aDir);
+    Application.Terminate;
+    exit;
+  end;
   fDir := aDir;
   UpdateStatus;
 end;
