@@ -173,6 +173,8 @@ const
   MENU_LIST_STAGE_CHANGED     = 7;
   MENU_LIST_STAGE_ALL         = 8;
   MENU_LIST_UNSTAGE_ALL       = 9;
+  MENU_LIST_STAGE_SELECTION   = 10;
+  MENU_LIST_UNSTAGE_SELECTION = 11;
 
 
   VIEWER_BUFSIZE      = 1024*4;
@@ -185,6 +187,33 @@ begin
   result.OnClick := onClick;
   result.Tag := tag;
   pop.Items.Add(result);
+end;
+
+function GetSelectedIndex(lb: TListbox): Integer;
+var
+  i: Integer;
+begin
+  result := -1;
+  for i:=0 to lb.Count-1 do
+    if lb.Selected[i] then begin
+      result := i;
+      break;
+    end;
+end;
+
+function AreSelectedAllItemsUntracked(lb: TListbox): boolean;
+var
+  Entry: PFileEntry;
+  i, n: Integer;
+begin
+  n := 0;
+  for i:=0 to lb.Count-1 do
+    if lb.Selected[i] then begin
+      Entry := PFileEntry(lb.Items.Objects[i]);
+      if (Entry<>nil) and (Entry^.EntryKind=ekUntracked) then
+        inc(n);
+    end;
+  result := (n>0) and (n=lb.SelCount);
 end;
 
 { TfrmMain }
@@ -312,8 +341,24 @@ var
   mi: TMenuItem;
   Entry: PFileEntry;
   isUnstaged: Boolean;
-  aIndex: Integer;
+  aIndex, selCount: Integer;
   aFile: string;
+
+  procedure AddViewItems;
+  begin
+    if isUnstaged then begin
+      mi := AddPopItem(popLists, 'View Untracked Files', @OnBranchMenuClick, MENU_LIST_VIEW_UNTRACKED);
+      mi.AutoCheck := true;
+      mi.Checked := fConfig.ReadBoolean('ViewUntracked', true);
+      mi := AddPopItem(popLists, 'View Ignored Files', @OnBranchMenuClick, MENU_LIST_VIEW_IGNORED);
+      mi.AutoCheck := true;
+      mi.Checked := fConfig.ReadBoolean('ViewIgnored');
+      mi := AddPopItem(popLists, 'View Unchanged Files', @OnBranchMenuClick, MENU_LIST_VIEW_UNCHANGED);
+      mi.AutoCheck := true;
+      mi.Checked := fConfig.ReadBoolean('ViewChanged');
+    end;
+  end;
+
 begin
   // Unstaged list:
   //
@@ -348,8 +393,9 @@ begin
   end;
 
   popLists.Items.Clear;
+  selCount := lb.SelCount;
 
-  if lb.SelCount=0 then begin
+  if selCount=0 then begin
 
     mi := AddPopItem(popLists, '', nil, 0);
     mi.Action := actRescan;
@@ -373,20 +419,31 @@ begin
       AddPopItem(popLists, '-', nil, 0);
     end;
 
-    if isUnstaged then begin
-      mi := AddPopItem(popLists, 'View Untracked Files', @OnBranchMenuClick, MENU_LIST_VIEW_UNTRACKED);
-      mi.AutoCheck := true;
-      mi.Checked := fConfig.ReadBoolean('ViewUntracked', true);
-      mi := AddPopItem(popLists, 'View Ignored Files', @OnBranchMenuClick, MENU_LIST_VIEW_IGNORED);
-      mi.AutoCheck := true;
-      mi.Checked := fConfig.ReadBoolean('ViewIgnored');
-      mi := AddPopItem(popLists, 'View Unchanged Files', @OnBranchMenuClick, MENU_LIST_VIEW_UNCHANGED);
-      mi.AutoCheck := true;
-      mi.Checked := fConfig.ReadBoolean('ViewChanged');
-    end else begin
-    end;
-  end;
+    AddViewItems;
 
+  end else begin
+    // * Stage selected to commit area
+    // * Restore
+    // * Delete file (if it's un modified?)
+    // * if untracked: Add <file> to ignore file
+    // * if untracked: Add this file type to ignore file
+    if selCount=1 then begin
+      aFile := ExtractFileName(lb.GetSelectedText);
+      aIndex := GetSelectedIndex(lb);
+    end else begin
+      aFile := format('%d files',[selCount]);
+      aIndex := -1;
+    end;
+
+    if isUnstaged then begin
+      AddPopItem(popLists, 'Stage '+aFile, @OnStageItemClick, aIndex);
+      AddPopItem(popLists, '-', nil, 0);
+      AddViewItems;
+    end else begin
+      AddPopItem(popLists, 'Unstage '+aFile, @OnUnstageItemClick, aIndex);
+    end;
+
+  end;
 
 end;
 
