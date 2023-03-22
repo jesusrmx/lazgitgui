@@ -315,8 +315,28 @@ begin
 end;
 
 procedure TfrmMain.OnStageItemClick(Sender: TObject);
+var
+  mi: TMenuItem;
+  i, aIndex: Integer;
+  list: string;
+  procedure Add(aIndex: Integer);
+  begin
+    if list<>'' then list += ' ';
+    list += lstUnstaged.Items[aIndex];
+  end;
 begin
-  ComingSoon;
+  list := '';
+  mi := TMenuItem(Sender);
+  aIndex := mi.Tag;
+  if aIndex<0 then begin
+    for i:=0 to lstUnstaged.Count-1 do begin
+      if lstUnstaged.Selected[i] then
+        Add(i);
+    end;
+  end else
+    Add(aIndex);
+
+  DebugLn('Staging: ', list);
 end;
 
 procedure TfrmMain.OnUnstageItemClick(Sender: TObject);
