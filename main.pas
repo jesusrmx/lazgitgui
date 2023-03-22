@@ -74,6 +74,7 @@ type
     panStaged: TPanel;
     popBranch: TPopupMenu;
     btnLog: TSpeedButton;
+    popLists: TPopupMenu;
     splitterMain: TSplitter;
     SynDiffSyn1: TSynDiffSyn;
     txtLog: TSynEdit;
@@ -99,6 +100,8 @@ type
     procedure lblBranchClick(Sender: TObject);
     procedure lblBranchContextPopup(Sender: TObject; MousePos: TPoint;
       var Handled: Boolean);
+    procedure lstUnstagedContextPopup(Sender: TObject; MousePos: TPoint;
+      var Handled: Boolean);
     procedure lstUnstagedDrawItem(Control: TWinControl; Index: Integer;
       ARect: TRect; State: TOwnerDrawState);
     procedure lstUnstagedMouseDown(Sender: TObject; Button: TMouseButton;
@@ -121,9 +124,13 @@ type
     procedure DoPull;
     procedure OnBranchMenuClick(Sender: TObject);
     procedure OnBranchSwitch(Data: PtrInt);
+    procedure OnIgnoreFileClick(Sender: TObject);
+    procedure OnIgnoreTypeClick(Sender: TObject);
     procedure OnLogDone(Sender: TObject);
     procedure OnLogOutput(sender: TObject; var interrupt: boolean);
     procedure OnReloadBranchMenu(Data: PtrInt);
+    procedure OnStageItemClick(Sender: TObject);
+    procedure OnUnstageItemClick(Sender: TObject);
     procedure OpenDirectory(aDir: string);
     procedure UpdateBranch;
     procedure RestoreGui;
@@ -133,6 +140,7 @@ type
     procedure UpdateStatus;
     procedure ShowError;
     procedure ViewFile(filename: string);
+    procedure ComingSoon;
   public
 
   end;
@@ -153,14 +161,31 @@ resourcestring
 
 
 const
-  MENU_INVALID        = -1;
+  MENU_INVALID                = -1;
 
-  MENU_BRANCH_NEW     = 1;
-  MENU_BRANCH_RELOAD  = 2;
-  MENU_BRANCH_SWITCH  = 3;
+  MENU_BRANCH_NEW             = 1;
+  MENU_BRANCH_RELOAD          = 2;
+  MENU_BRANCH_SWITCH          = 3;
+
+  MENU_LIST_VIEW_UNTRACKED    = 4;
+  MENU_LIST_VIEW_IGNORED      = 5;
+  MENU_LIST_VIEW_UNCHANGED    = 6;
+  MENU_LIST_STAGE_CHANGED     = 7;
+  MENU_LIST_STAGE_ALL         = 8;
+  MENU_LIST_UNSTAGE_ALL       = 9;
+
 
   VIEWER_BUFSIZE      = 1024*4;
   BIN_BUFSIZE         = 1024;
+
+function AddPopItem(pop: TPopupMenu; caption:string; onClick:TNotifyEvent; tag: Integer): TMenuItem;
+begin
+  result := TMenuItem.Create(pop.Owner);
+  result.Caption := caption;
+  result.OnClick := onClick;
+  result.Tag := tag;
+  pop.Items.Add(result);
+end;
 
 { TfrmMain }
 
@@ -182,6 +207,7 @@ var
   f: TfrmNewBranch;
 begin
   mi := TMenuItem(sender);
+
   case mi.tag of
     MENU_BRANCH_NEW:
       begin
@@ -204,6 +230,9 @@ begin
       begin
         Application.QueueAsyncCall(@OnBranchSwitch, PtrInt(Sender));
       end;
+
+    else
+      ComingSoon;
   end;
 end;
 
@@ -216,6 +245,16 @@ begin
     ShowError
   else
     UpdateStatus;
+end;
+
+procedure TfrmMain.OnIgnoreFileClick(Sender: TObject);
+begin
+  ComingSoon;
+end;
+
+procedure TfrmMain.OnIgnoreTypeClick(Sender: TObject);
+begin
+  ComingSoon;
 end;
 
 procedure TfrmMain.OnLogDone(Sender: TObject);
@@ -246,6 +285,16 @@ begin
   popBranch.PopUp(fPopPoint.x, fPopPoint.y);
 end;
 
+procedure TfrmMain.OnStageItemClick(Sender: TObject);
+begin
+  ComingSoon;
+end;
+
+procedure TfrmMain.OnUnstageItemClick(Sender: TObject);
+begin
+  ComingSoon;
+end;
+
 procedure TfrmMain.lblBranchContextPopup(Sender: TObject; MousePos: TPoint;
   var Handled: Boolean);
 begin
@@ -254,6 +303,91 @@ begin
     exit;
 
   UpdateBranchMenu;
+end;
+
+procedure TfrmMain.lstUnstagedContextPopup(Sender: TObject; MousePos: TPoint;
+  var Handled: Boolean);
+var
+  lb: TListBox absolute Sender;
+  mi: TMenuItem;
+  Entry: PFileEntry;
+  isUnstaged: Boolean;
+  aIndex: Integer;
+  aFile: string;
+begin
+  // Unstaged list:
+  //
+  // Items to appear if there is no selection:
+  // * View ignored
+  // * View untracked
+  // * View unchanged (in order to delete)
+  // * Refresh
+  // * Stage all changed
+  // * Staged all
+  //
+  // Items to appear if there is a selection
+  // * Stage selected to commit area
+  // * Restore
+  // * Delete file (if it's un modified?)
+  // * if untracked: Add <file> to ignore file
+  // * if untracked: Add this file type to ignore file
+
+  // Staged list:
+  //
+  // Items to appear:
+  // * Unstage selected
+  // * Unstage all (if not selection)
+  isUnstaged := Sender=lstUnstaged;
+  aIndex := lb.GetIndexAtXY(MousePos.x, MousePos.y);
+  if aIndex>=0 then begin
+    aFile := ExtractFileName(lb.Items[aIndex]);
+    Entry := PFileEntry(lb.Items.Objects[aIndex])
+  end else begin
+    aFile := '';
+    Entry := nil;
+  end;
+
+  popLists.Items.Clear;
+
+  if lb.SelCount=0 then begin
+
+    mi := AddPopItem(popLists, '', nil, 0);
+    mi.Action := actRescan;
+    AddPopItem(popLists, '-', nil, 0);
+
+    if Entry<>nil then begin
+      if isUnstaged then begin
+        AddPopItem(popLists, 'Stage '+aFile, @OnStageItemClick, aIndex);
+        AddPopItem(popLists, 'Stage Changed', @OnBranchMenuClick, MENU_LIST_STAGE_CHANGED);
+        AddPopItem(popLists, 'Stage All', @OnBranchMenuClick, MENU_LIST_STAGE_ALL);
+      end
+      else begin
+        AddPopItem(popLists, 'Unstage '+aFile, @OnUnstageItemClick, aIndex);
+        AddPopItem(popLists, 'Unstage All', @OnBranchMenuClick, MENU_LIST_UNSTAGE_ALL);
+      end;
+      if Entry^.EntryKind=ekUntracked then begin
+        AddPopItem(popLists, '-', nil, 0);
+        AddPopItem(popLists, format('Add "%s" to ignore file', [aFile]), @OnIgnoreFileClick, aIndex);
+        AddPopItem(popLists, format('Add Files like "%s" to ignore file', [aFile]), @OnIgnoreTypeClick, aIndex);
+      end;
+      AddPopItem(popLists, '-', nil, 0);
+    end;
+
+    if isUnstaged then begin
+      mi := AddPopItem(popLists, 'View Untracked Files', @OnBranchMenuClick, MENU_LIST_VIEW_UNTRACKED);
+      mi.AutoCheck := true;
+      mi.Checked := fConfig.ReadBoolean('ViewUntracked', true);
+      mi := AddPopItem(popLists, 'View Ignored Files', @OnBranchMenuClick, MENU_LIST_VIEW_IGNORED);
+      mi.AutoCheck := true;
+      mi.Checked := fConfig.ReadBoolean('ViewIgnored');
+      mi := AddPopItem(popLists, 'View Unchanged Files', @OnBranchMenuClick, MENU_LIST_VIEW_UNCHANGED);
+      mi.AutoCheck := true;
+      mi.Checked := fConfig.ReadBoolean('ViewChanged');
+    end else begin
+    end;
+  end;
+
+
 end;
 
 procedure TfrmMain.ItemAction(sender: TListbox; aIndex: Integer);
@@ -316,17 +450,8 @@ var
 begin
   popBranch.Items.Clear;
 
-  mi := TMenuItem.Create(Self);
-  mi.Caption := rsNewBranch;
-  mi.OnClick := @OnBranchMenuClick;
-  mi.Tag := MENU_BRANCH_NEW;
-  popBranch.Items.Add(mi);
-
-  mi := TMenuItem.Create(Self);
-  mi.Caption := rsReload;
-  mi.OnClick := @OnBranchMenuClick;
-  mi.Tag := MENU_BRANCH_RELOAD;
-  popBranch.Items.Add(mi);
+  AddPopItem(popBranch, rsNewBranch, @OnBranchMenuClick, MENU_BRANCH_NEW);
+  AddPopItem(popBranch, rsReload, @OnBranchMenuClick, MENU_BRANCH_RELOAD);
 
   try
     list := TStringList.Create;
@@ -351,26 +476,16 @@ begin
         if pos('/', branchLine[0])<>0 then
           continue;
 
-        if popBranch.Items.Count=2 then begin
-          mi := TMenuItem.Create(Self);
-          mi.Caption := '-';
-          mi.Tag := MENU_INVALID;
-          popBranch.Items.Add(mi);
-        end;
+        if popBranch.Items.Count=2 then
+          AddPopItem(popBranch, '-', nil, MENU_INVALID);
 
-        mi := TMenuItem.Create(Self);
-        if branchLine[2]='' then
-          mi.Caption := branchLine[0]
-        else
-          mi.Caption := branchLine[0]; //+ ' -> ' + branchLine[2];
+        mi := AddPopItem(popBranch, branchLine[0], @OnBranchMenuClick, MENU_BRANCH_SWITCH);
         mi.GroupIndex := 1;
         mi.AutoCheck := true;
         mi.Checked := branchLine[3]='*';
-        if not mi.Checked then
-          mi.OnClick := @OnBranchMenuClick;
-        mi.Tag := MENU_BRANCH_SWITCH;
+        if mi.Checked then
+          mi.OnClick := nil;
         mi.RadioItem := true;
-        popBranch.Items.Add(mi);
 
       end;
 
@@ -461,6 +576,11 @@ begin
   stream.Position := 0;
   txtDiff.Lines.LoadFromStream(stream);
   stream.Free;
+end;
+
+procedure TfrmMain.ComingSoon;
+begin
+  ShowMessage('This feature will be implemented ASAP');
 end;
 
 function OwnerDrawStateToStr(State: TOwnerDrawState): string;
