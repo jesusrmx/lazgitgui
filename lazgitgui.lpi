@@ -16,9 +16,8 @@
       <Icon Value="0"/>
     </General>
     <VersionInfo>
-      <AutoIncrementBuild Value="True"/>
       <MajorVersionNr Value="1"/>
-      <BuildNr Value="3"/>
+      <BuildNr Value="4"/>
     </VersionInfo>
     <BuildModes>
       <Item Name="Default" Default="True"/>

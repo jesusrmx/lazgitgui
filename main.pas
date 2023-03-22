@@ -395,26 +395,27 @@ begin
   popLists.Items.Clear;
   selCount := lb.SelCount;
 
+  mi := AddPopItem(popLists, '', nil, 0);
+  mi.Action := actRescan;
+  AddPopItem(popLists, '-', nil, 0);
+
   if selCount=0 then begin
 
-    mi := AddPopItem(popLists, '', nil, 0);
-    mi.Action := actRescan;
-    AddPopItem(popLists, '-', nil, 0);
 
     if Entry<>nil then begin
       if isUnstaged then begin
-        AddPopItem(popLists, 'Stage '+aFile, @OnStageItemClick, aIndex);
+        AddPopItem(popLists, format('Stage ''%s''',[aFile]), @OnStageItemClick, aIndex);
         AddPopItem(popLists, 'Stage Changed', @OnBranchMenuClick, MENU_LIST_STAGE_CHANGED);
         AddPopItem(popLists, 'Stage All', @OnBranchMenuClick, MENU_LIST_STAGE_ALL);
       end
       else begin
-        AddPopItem(popLists, 'Unstage '+aFile, @OnUnstageItemClick, aIndex);
+        AddPopItem(popLists, format('Unstage ''%s''',[aFile]), @OnUnstageItemClick, aIndex);
         AddPopItem(popLists, 'Unstage All', @OnBranchMenuClick, MENU_LIST_UNSTAGE_ALL);
       end;
       if Entry^.EntryKind=ekUntracked then begin
         AddPopItem(popLists, '-', nil, 0);
-        AddPopItem(popLists, format('Add "%s" to ignore file', [aFile]), @OnIgnoreFileClick, aIndex);
-        AddPopItem(popLists, format('Add Files like "%s" to ignore file', [aFile]), @OnIgnoreTypeClick, aIndex);
+        AddPopItem(popLists, format('Add ''%s'' to ignore file', [aFile]), @OnIgnoreFileClick, aIndex);
+        AddPopItem(popLists, format('Add Files like ''%s'' to ignore file', [aFile]), @OnIgnoreTypeClick, aIndex);
       end;
       AddPopItem(popLists, '-', nil, 0);
     end;
@@ -436,14 +437,17 @@ begin
     end;
 
     if isUnstaged then begin
-      AddPopItem(popLists, 'Stage '+aFile, @OnStageItemClick, aIndex);
+      AddPopItem(popLists, format('Stage ''%s''',[aFile]), @OnStageItemClick, aIndex);
       AddPopItem(popLists, '-', nil, 0);
       AddViewItems;
     end else begin
-      AddPopItem(popLists, 'Unstage '+aFile, @OnUnstageItemClick, aIndex);
+      AddPopItem(popLists, format('Unstage ''%s''',[aFile]), @OnUnstageItemClick, aIndex);
     end;
 
   end;
+
+  if popLists.Items.Count=2 then
+    popLists.Items.Delete(1);
 
 end;
 
