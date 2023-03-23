@@ -279,31 +279,28 @@ end;
 
 procedure TfrmMain.OnIgnoreFileClick(Sender: TObject);
 var
-  l: TStringlist;
-  aFile, ignored: string;
+  ignored: string;
   mi: TMenuItem absolute Sender;
 begin
   // what file?
   ignored := lstUnstaged.Items[mi.Tag];
-  l := TStringList.Create;
-  try
-    aFile := fGit.TopLevelDir+'.gitignore';
-    if FileExists(aFile) then
-      l.LoadFromFile(aFile);
-    if l.IndexOf(ignored)<0 then begin
-      l.Add(ignored);
-      l.SaveToFile(aFile);
-      UpdateStatus;
-    end else
-      ShowMessage(Format('''%s'' is already in ignored list',[ignored]));
-  finally
-    l.Free;
-  end;
+  if fGit.AddToIgnoreFile(ignored, false, true) then
+    UpdateStatus
+  else
+    ShowMessage(Format('''%s'' is already in ignored list',[ignored]));
 end;
 
 procedure TfrmMain.OnIgnoreTypeClick(Sender: TObject);
+var
+  ignored: string;
+  mi: TMenuItem absolute Sender;
 begin
-  ComingSoon;
+  // what file?
+  ignored := lstUnstaged.Items[mi.Tag];
+  if fGit.AddToIgnoreFile(ignored, true, true) then
+    UpdateStatus
+  else
+    ShowMessage(Format('The type ''*%s'' is already in the ignored list',[ExtractFileExt(ignored)]));
 end;
 
 procedure TfrmMain.OnLogDone(Sender: TObject);
@@ -447,11 +444,14 @@ var
   end;
 
   procedure AddIgnoreUntracked;
+  var
+    ext: string;
   begin
     AddPopItem(popLists, '-', nil, 0);
     AddPopItem(popLists, format('Add ''%s'' to ignore list', [aFile]), @OnIgnoreFileClick, aIndex);
-    if ExtractFileExt(aFile)<>'' then
-      AddPopItem(popLists, format('Add Files like ''%s'' to ignore list', [aFile]), @OnIgnoreTypeClick, aIndex);
+    ext :=ExtractFileExt(aFile);
+    if ext<>'' then
+      AddPopItem(popLists, format('Add ''*%s'' Files to ignore list', [ext]), @OnIgnoreTypeClick, aIndex);
   end;
 
 begin
@@ -505,7 +505,7 @@ begin
         AddUnstageFile;
         AddUnstageAll;
       end;
-      if Entry^.EntryKind=ekUntracked then
+      if Entry^.EntryKind in [ekUntracked, ekIgnored] then
         AddIgnoreUntracked;
       AddPopItem(popLists, '-', nil, 0);
     end else
@@ -528,15 +528,17 @@ begin
     if selCount=1 then begin
       aFile := ExtractFileName(lb.GetSelectedText);
       aIndex := GetSelectedIndex(lb);
+      Entry := PFileEntry(lb.Items.Objects[aIndex])
     end else begin
       aFile := format('%d files',[selCount]);
       aIndex := -1;
+      Entry := nil;
     end;
 
     if isUnstaged then begin
       AddStageFile;
       AddStageAll;
-      if SelCount=1 then
+      if (Entry<>nil) and (Entry^.EntryKind in [ekUntracked, ekIgnored]) then
         AddIgnoreUntracked;
       AddPopItem(popLists, '-', nil, 0);
       AddViewItems;
