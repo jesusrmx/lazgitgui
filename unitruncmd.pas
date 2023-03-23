@@ -312,20 +312,6 @@ var
   thread: TRunThread absolute sender;
 begin
   fAnsiHandler.ProcessLine(thread.Line, thread.LineEnding);
-  {
-
-  if pos(#13, thread.LineEnding)>0 then
-    fCaretX := 0;
-
-  // get line at fCaretY
-  while fCaretY+1>txtOutput.Lines.Count do
-    txtOutput.Lines.Add('');
-
-  txtOutput.Lines[fCaretY] := thread.Line;
-
-  if pos(#10, thread.LineEnding)>0 then
-    inc(fCaretY);
-  }
   lblResult.Caption := 'Working ....';
 end;
 

@@ -287,9 +287,18 @@ begin
     {$ENDIF}
   until (p>=t);
 
-  inc(fRow);
+  if pos(#13, le)>0 then
+    fCol := 0;
 
-  fEditor.Lines.Add(txt);
+  while fRow+1>fEditor.Lines.Count do
+    fEditor.Lines.Add('');
+
+  fEditor.Lines[fRow] := txt;
+
+  if pos(#10, le)>0 then
+    inc(fRow);
+
+  //fEditor.Lines.Add(txt);
   {$IFDEF DEBUG}
   DebugLnExit('TForm1.ProcessLine DONE: txt=%s', [txt]);
   {$ENDIF}
