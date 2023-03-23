@@ -384,11 +384,11 @@ begin
 
   list := MakePathList(entryArray);
 
-  DebugLn('Restoring: ',list);
-  //if fGit.Restore(entryArray, false)>0 then
-  //  ShowError
-  //else
-  //  UpdateStatus;
+  //DebugLn('Restoring: ',list);
+  if fGit.Restore(entryArray, false)>0 then
+    ShowError
+  else
+    UpdateStatus;
 end;
 
 procedure TfrmMain.OnStageAllClick(Sender: TObject);
