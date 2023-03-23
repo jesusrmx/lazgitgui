@@ -316,7 +316,7 @@ begin
 
     start := head;
     n := strlen(head);
-    DebugLn(start);
+    //DebugLn(start);
 
     case head^ of
       '1': ParseOrdinaryChanged(head, tail, entry);
