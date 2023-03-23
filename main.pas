@@ -278,8 +278,27 @@ begin
 end;
 
 procedure TfrmMain.OnIgnoreFileClick(Sender: TObject);
+var
+  l: TStringlist;
+  aFile, ignored: string;
+  mi: TMenuItem absolute Sender;
 begin
-  ComingSoon;
+  // what file?
+  ignored := lstUnstaged.Items[mi.Tag];
+  l := TStringList.Create;
+  try
+    aFile := fGit.TopLevelDir+'.gitignore';
+    if FileExists(aFile) then
+      l.LoadFromFile(aFile);
+    if l.IndexOf(ignored)<0 then begin
+      l.Add(ignored);
+      l.SaveToFile(aFile);
+      UpdateStatus;
+    end else
+      ShowMessage(Format('''%s'' is already in ignored list',[ignored]));
+  finally
+    l.Free;
+  end;
 end;
 
 procedure TfrmMain.OnIgnoreTypeClick(Sender: TObject);
@@ -427,6 +446,14 @@ var
     AddPopItem(popLists, 'Unstage All', @OnStageAllClick, MENU_LIST_UNSTAGE_ALL);
   end;
 
+  procedure AddIgnoreUntracked;
+  begin
+    AddPopItem(popLists, '-', nil, 0);
+    AddPopItem(popLists, format('Add ''%s'' to ignore list', [aFile]), @OnIgnoreFileClick, aIndex);
+    if ExtractFileExt(aFile)<>'' then
+      AddPopItem(popLists, format('Add Files like ''%s'' to ignore list', [aFile]), @OnIgnoreTypeClick, aIndex);
+  end;
+
 begin
   // Unstaged list:
   //
@@ -478,11 +505,8 @@ begin
         AddUnstageFile;
         AddUnstageAll;
       end;
-      if Entry^.EntryKind=ekUntracked then begin
-        AddPopItem(popLists, '-', nil, 0);
-        AddPopItem(popLists, format('Add ''%s'' to ignore file', [aFile]), @OnIgnoreFileClick, aIndex);
-        AddPopItem(popLists, format('Add Files like ''%s'' to ignore file', [aFile]), @OnIgnoreTypeClick, aIndex);
-      end;
+      if Entry^.EntryKind=ekUntracked then
+        AddIgnoreUntracked;
       AddPopItem(popLists, '-', nil, 0);
     end else
     if lb.Count>0 then begin
@@ -512,6 +536,8 @@ begin
     if isUnstaged then begin
       AddStageFile;
       AddStageAll;
+      if SelCount=1 then
+        AddIgnoreUntracked;
       AddPopItem(popLists, '-', nil, 0);
       AddViewItems;
     end else begin
