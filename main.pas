@@ -129,6 +129,7 @@ type
     procedure OnLogDone(Sender: TObject);
     procedure OnLogOutput(sender: TObject; var interrupt: boolean);
     procedure OnReloadBranchMenu(Data: PtrInt);
+    procedure OnStageAllClick(Sender: TObject);
     procedure OnStageItemClick(Sender: TObject);
     procedure OnUnstageItemClick(Sender: TObject);
     procedure OpenDirectory(aDir: string);
@@ -314,6 +315,30 @@ begin
   popBranch.PopUp(fPopPoint.x, fPopPoint.y);
 end;
 
+procedure TfrmMain.OnStageAllClick(Sender: TObject);
+var
+  mi: TMenuItem;
+  cmd, cmdOut: RawByteString;
+begin
+  cmd := '';
+  mi := TMenuItem(sender);
+  case mi.tag of
+    MENU_LIST_STAGE_CHANGED:  cmd := 'add -u';
+    MENU_LIST_STAGE_ALL:      cmd := 'add -A';
+    MENU_LIST_UNSTAGE_ALL:    cmd := 'reset';
+  end;
+
+  if cmd<>'' then begin
+    if fGit.Any(cmd, cmdOut)>0 then
+      ShowError
+    else begin
+      UpdateStatus;
+      if cmdOut<>'' then
+        txtDiff.Text := cmdOut;
+    end;
+  end;
+end;
+
 procedure TfrmMain.OnStageItemClick(Sender: TObject);
 var
   mi: TMenuItem;
@@ -381,6 +406,27 @@ var
     end;
   end;
 
+  procedure AddStageFile;
+  begin
+    AddPopItem(popLists, format('Stage ''%s''',[aFile]), @OnStageItemClick, aIndex);
+  end;
+
+  procedure AddUnstageFile;
+  begin
+    AddPopItem(popLists, format('Unstage ''%s''',[aFile]), @OnUnstageItemClick, aIndex);
+  end;
+
+  procedure AddStageAll;
+  begin
+    AddPopItem(popLists, 'Stage Changed', @OnStageAllClick, MENU_LIST_STAGE_CHANGED);
+    AddPopItem(popLists, 'Stage All', @OnStageAllClick, MENU_LIST_STAGE_ALL);
+  end;
+
+  procedure AddUnstageAll;
+  begin
+    AddPopItem(popLists, 'Unstage All', @OnStageAllClick, MENU_LIST_UNSTAGE_ALL);
+  end;
+
 begin
   // Unstaged list:
   //
@@ -423,16 +469,14 @@ begin
 
   if selCount=0 then begin
 
-
     if Entry<>nil then begin
       if isUnstaged then begin
-        AddPopItem(popLists, format('Stage ''%s''',[aFile]), @OnStageItemClick, aIndex);
-        AddPopItem(popLists, 'Stage Changed', @OnBranchMenuClick, MENU_LIST_STAGE_CHANGED);
-        AddPopItem(popLists, 'Stage All', @OnBranchMenuClick, MENU_LIST_STAGE_ALL);
+        AddStageFile;
+        AddStageAll;
       end
       else begin
-        AddPopItem(popLists, format('Unstage ''%s''',[aFile]), @OnUnstageItemClick, aIndex);
-        AddPopItem(popLists, 'Unstage All', @OnBranchMenuClick, MENU_LIST_UNSTAGE_ALL);
+        AddUnstageFile;
+        AddUnstageAll;
       end;
       if Entry^.EntryKind=ekUntracked then begin
         AddPopItem(popLists, '-', nil, 0);
@@ -440,6 +484,13 @@ begin
         AddPopItem(popLists, format('Add Files like ''%s'' to ignore file', [aFile]), @OnIgnoreTypeClick, aIndex);
       end;
       AddPopItem(popLists, '-', nil, 0);
+    end else
+    if lb.Count>0 then begin
+      if isUnstaged then begin
+        AddStageAll;
+        AddPopItem(popLists, '-', nil, 0);
+      end else
+        AddUnstageAll;
     end;
 
     AddViewItems;
@@ -459,17 +510,20 @@ begin
     end;
 
     if isUnstaged then begin
-      AddPopItem(popLists, format('Stage ''%s''',[aFile]), @OnStageItemClick, aIndex);
+      AddStageFile;
+      AddStageAll;
       AddPopItem(popLists, '-', nil, 0);
       AddViewItems;
     end else begin
-      AddPopItem(popLists, format('Unstage ''%s''',[aFile]), @OnUnstageItemClick, aIndex);
+      AddUnstageFile;
     end;
 
   end;
 
-  if popLists.Items.Count=2 then
-    popLists.Items.Delete(1);
+  if popLists.Items.Count>1 then begin
+    if popLists.Items[popLists.Items.Count-1].Caption='-' then
+      popLists.Items.Delete(popLists.Items.Count-1);
+  end;
 
 end;
 

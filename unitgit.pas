@@ -88,6 +88,7 @@ type
     function Add(entryArray: TPFileEntryArray): Integer; overload;
     function Rm(entry: PFileEntry): Integer;
     function Restore(entry: PFileEntry; staged: boolean): Integer;
+    function Reset(opts: string; out outMsg:RawByteString): Integer;
     function BranchList(list: TStrings; opts:array of string): Integer;
     function RefList(list: TStrings; pattern:string; fields:array of string): Integer;
     function Switch(branchName: string): Integer;
@@ -95,6 +96,7 @@ type
     function Commit(msg, opts: string): Integer;
     function Push(repo, opts: string; callback:TOutputEvent): Integer;
     function Log(opts: string; callback:TOutputEvent): Integer;
+    function Any(cmd: string; out cmdout:RawByteString): Integer;
 
     property Exe: string read fGitCommand;
     property CommitsAhead: Integer read fCommitsAhead;
@@ -422,6 +424,12 @@ begin
   result := cmdLine.RunProcess(fGitCommand+args+' '+Sanitize(Entry^.path), fTopLevelDir, cmdOut);
 end;
 
+function TGit.Reset(opts: string; out outMsg: RawByteString): Integer;
+begin
+  opts := ' reset ' + opts;
+  result := cmdLine.RunProcess(fGitCommand+opts, fTopLevelDir, outMsg);
+end;
+
 function TGit.BranchList(list: TStrings; opts: array of string): Integer;
 var
   opt, cmd: String;
@@ -697,6 +705,11 @@ var
 begin
   cmd := ' log '+opts;
   result := cmdLine.RunProcess(fGitCommand + cmd, fTopLevelDir, callback);
+end;
+
+function TGit.Any(cmd: string; out cmdout: RawByteString): Integer;
+begin
+  result := cmdLine.RunProcess(fGitCommand + ' ' + cmd, fTopLevelDir, cmdOut);
 end;
 
 function TGit.GitMerging: boolean;
