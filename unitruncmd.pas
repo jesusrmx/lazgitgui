@@ -24,7 +24,7 @@ unit unitruncmd;
 
 {$mode ObjFPC}{$H+}
 {$ModeSwitch nestedprocvars}
-{$define Debug}
+{.$define Debug}
 
 interface
 
