@@ -87,7 +87,8 @@ type
     function Add(entry: PFileEntry): Integer; overload;
     function Add(entryArray: TPFileEntryArray): Integer; overload;
     function Rm(entry: PFileEntry): Integer;
-    function Restore(entry: PFileEntry; staged: boolean): Integer;
+    function Restore(entry: PFileEntry; staged: boolean): Integer; overload;
+    function Restore(entryArray: TPFileEntryArray; staged: boolean): Integer; overload;
     function Reset(opts: string; out outMsg:RawByteString): Integer;
     function BranchList(list: TStrings; opts:array of string): Integer;
     function RefList(list: TStrings; pattern:string; fields:array of string): Integer;
@@ -114,6 +115,7 @@ type
   procedure ClearRefList(list: TStrings);
   function GitDateToDateTime(s: string): TDateTime;
   function DateTimeToGitFmt(d: TDateTime): string;
+  function MakePathList(entryArray: TPFileEntryArray; sanitizeItems:boolean=true): string;
 
 implementation
 
@@ -168,13 +170,17 @@ begin
   {$endif}
 end;
 
-function MakePathList(entryArray: TPFileEntryArray): string;
+function MakePathList(entryArray: TPFileEntryArray; sanitizeItems: boolean
+  ): string;
 var
   entry: PFileEntry;
   procedure Add(aPath:string);
   begin
     if result<>'' then result += ' ';
-    result += Sanitize(aPath);
+    if sanitizeItems then
+      result += Sanitize(aPath)
+    else
+      result += aPath;
   end;
 begin
   result := '';
@@ -423,6 +429,23 @@ begin
     else           args := ' checkout -- ';
   end;
   result := cmdLine.RunProcess(fGitCommand+args+' '+Sanitize(Entry^.path), fTopLevelDir, cmdOut);
+end;
+
+function TGit.Restore(entryArray: TPFileEntryArray; staged: boolean): Integer;
+var
+  list, args: string;
+  cmdOut: RawByteString;
+begin
+  list := MakePathList(entryArray);
+  if AtLeastVersion('2.23') then begin
+    args := ' restore ';
+    if staged then args += '--staged -- ';
+  end else begin
+    if staged then args := ' reset HEAD -- '
+    else           args := ' checkout -- ';
+  end;
+  args += list;
+  result := cmdLine.RunProcess(fGitCommand+args, fTopLevelDir, cmdOut);
 end;
 
 function TGit.Reset(opts: string; out outMsg: RawByteString): Integer;

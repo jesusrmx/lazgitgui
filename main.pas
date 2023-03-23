@@ -112,6 +112,7 @@ type
     fDir: string;
     fPopPoint: TPoint;
     fAnsiHandler: TAnsiEscapesHandler;
+    fListAlwaysDrawSelection: boolean;
     {$IFDEF CaptureOutput}
     fCap: TMemoryStream;
     {$ENDIF}
@@ -129,6 +130,7 @@ type
     procedure OnLogDone(Sender: TObject);
     procedure OnLogOutput(sender: TObject; var interrupt: boolean);
     procedure OnReloadBranchMenu(Data: PtrInt);
+    procedure OnRestoreFileClick(Sender: TObject);
     procedure OnStageAllClick(Sender: TObject);
     procedure OnStageItemClick(Sender: TObject);
     procedure OnUnstageItemClick(Sender: TObject);
@@ -142,6 +144,7 @@ type
     procedure ShowError;
     procedure ViewFile(filename: string);
     procedure ComingSoon;
+    function MakeMenuItemUnstagedEntryArray(mi: TMenuItem): TPFileEntryArray;
   public
 
   end;
@@ -159,6 +162,13 @@ resourcestring
   rsReload = 'Reload';
   rsPushingYourCommits = 'Pushing your commits';
   rsThereAreCommitsBehind = 'There are commits behind, are you sure you want to push?';
+  rsRestoringWorkFiles = 'Restoring working files';
+  rsRestoringWorkFilesWarning =
+    'You are about to discard changes in %s,'^M^M+
+    'data will be lost and this action cannot be undone'^M^M+
+    'Are you sure to continue?';
+
+
 
 
 const
@@ -176,6 +186,9 @@ const
   MENU_LIST_UNSTAGE_ALL       = 9;
   MENU_LIST_STAGE_SELECTION   = 10;
   MENU_LIST_UNSTAGE_SELECTION = 11;
+
+  LIST_TAG_ALL_SELECTED           = -1;
+  LIST_TAG_ALL_CHANGED            = -2;
 
 
   VIEWER_BUFSIZE      = 1024*4;
@@ -202,18 +215,28 @@ begin
     end;
 end;
 
-function AreSelectedAllItemsUntracked(lb: TListbox): boolean;
+function CountListItemsOfEntryType(lb: TListbox; unstaged, onlySel:boolean; entrySet: TSetOfEntryType): Integer;
 var
   Entry: PFileEntry;
-  i, n: Integer;
+  i: Integer;
 begin
-  n := 0;
+  result := 0;
   for i:=0 to lb.Count-1 do
-    if lb.Selected[i] then begin
+    if (not OnlySel) or lb.Selected[i] then begin
       Entry := PFileEntry(lb.Items.Objects[i]);
-      if (Entry<>nil) and (Entry^.EntryKind=ekUntracked) then
-        inc(n);
+      if (Entry<>nil) then begin
+        if (unstaged and (Entry^.EntryTypeUnStaged in entrySet)) or
+           (not unstaged and (Entry^.EntryTypeStaged in entrySet)) then
+        inc(result);
+      end;
     end;
+end;
+
+function AreAllSelectedItemsOfEntryType(lb: TListbox; unstaged:boolean; entrySet: TSetOfEntryType): boolean;
+var
+  n: Integer;
+begin
+  n := CountListItemsOfEntryType(lb, unstaged, true, entrySet);
   result := (n>0) and (n=lb.SelCount);
 end;
 
@@ -331,6 +354,43 @@ begin
   popBranch.PopUp(fPopPoint.x, fPopPoint.y);
 end;
 
+procedure TfrmMain.OnRestoreFileClick(Sender: TObject);
+var
+  mi: TMenuItem;
+  entryArray: TPFileEntryArray;
+  list, aFile: String;
+  res: TModalResult;
+begin
+  mi := TMenuItem(Sender);
+  entryArray := MakeMenuItemUnstagedEntryArray(mi);
+  list := MakePathList(entryArray, false);
+
+  if Length(entryArray)=1 then
+    aFile := list
+  else
+    aFile := format('%d files',[Length(entryArray)]);
+
+  // this is necessary because we normally hide lists selection
+  // when they are unfocused, but in this case the next dialog
+  // will unfocus the lists and we want to see what files that
+  // are to be restored.
+  fListAlwaysDrawSelection := true;
+
+  res := QuestionDlg(rsRestoringWorkFiles, format(rsRestoringWorkFilesWarning, [aFile]), mtWarning,
+    [mrYes, 'Discard changes', mrCancel, 'Cancel'], 0 );
+  fListAlwaysDrawSelection := false;
+  if res<>mrYes then
+    exit;
+
+  list := MakePathList(entryArray);
+
+  DebugLn('Restoring: ',list);
+  //if fGit.Restore(entryArray, false)>0 then
+  //  ShowError
+  //else
+  //  UpdateStatus;
+end;
+
 procedure TfrmMain.OnStageAllClick(Sender: TObject);
 var
   mi: TMenuItem;
@@ -362,19 +422,7 @@ var
   entryArray: TPFileEntryArray;
 begin
   mi := TMenuItem(Sender);
-  aIndex := mi.Tag;
-  if aIndex<0 then SetLength(entryArray, lstUnstaged.SelCount)
-  else             SetLength(entryArray, 1);
-  if aIndex<0 then begin
-    aIndex := 0;
-    for i:=0 to lstUnstaged.Count-1 do begin
-      if lstUnstaged.Selected[i] then begin
-        entryArray[aIndex] := PFileEntry(lstUnstaged.Items.Objects[i]);
-        inc(aIndex);
-      end;
-    end;
-  end else
-    entryArray[0] := PFileEntry(lstUnstaged.Items.Objects[aIndex]);
+  entryArray := MakeMenuItemUnstagedEntryArray(mi);
 
   if fGit.Add(entryArray)>0 then
     ShowError
@@ -454,29 +502,26 @@ var
       AddPopItem(popLists, format('Add ''*%s'' Files to ignore list', [ext]), @OnIgnoreTypeClick, aIndex);
   end;
 
-begin
-  // Unstaged list:
-  //
-  // Items to appear if there is no selection:
-  // * View ignored
-  // * View untracked
-  // * View unchanged (in order to delete)
-  // * Refresh
-  // * Stage all changed
-  // * Staged all
-  //
-  // Items to appear if there is a selection
-  // * Stage selected to commit area
-  // * Restore
-  // * Delete file (if it's un modified?)
-  // * if untracked: Add <file> to ignore file
-  // * if untracked: Add this file type to ignore file
+  procedure AddRestoreFiles;
+  var
+    n: Integer;
+  begin
+    if isUnstaged then begin
+      AddPopItem(popLists, '-', nil, 0);
+      // this covers the one (index>=0) or all selected (index<0)
+      if ((aIndex>=0)and(Entry^.EntryTypeUnStaged in ChangedInWorktreeSet)) or
+         AreAllSelectedItemsOfEntryType(lstUnstaged, true, ChangedInWorktreeSet)
+      then
+        AddPopItem(popLists, format('Restore ''%s''', [aFile]), @OnRestoreFileClick, aIndex);
+      // we need an option for all changed
+      n := CountListItemsOfEntryType(lstUnstaged, true, false, ChangedInWorktreeSet);
+      if n > 0 then
+        AddPopItem(popLists, 'Restore All Changed', @OnRestoreFileClick, LIST_TAG_ALL_CHANGED);
+    end;
+  end;
 
-  // Staged list:
-  //
-  // Items to appear:
-  // * Unstage selected
-  // * Unstage all (if not selection)
+begin
+
   isUnstaged := Sender=lstUnstaged;
   aIndex := lb.GetIndexAtXY(MousePos.x, MousePos.y);
   if aIndex>=0 then begin
@@ -485,6 +530,7 @@ begin
   end else begin
     aFile := '';
     Entry := nil;
+    aIndex := LIST_TAG_ALL_SELECTED;
   end;
 
   popLists.Items.Clear;
@@ -507,11 +553,13 @@ begin
       end;
       if Entry^.EntryKind in [ekUntracked, ekIgnored] then
         AddIgnoreUntracked;
+      AddRestoreFiles;
       AddPopItem(popLists, '-', nil, 0);
     end else
     if lb.Count>0 then begin
       if isUnstaged then begin
         AddStageAll;
+        AddRestoreFiles;
         AddPopItem(popLists, '-', nil, 0);
       end else
         AddUnstageAll;
@@ -520,26 +568,26 @@ begin
     AddViewItems;
 
   end else begin
-    // * Stage selected to commit area
-    // * Restore
-    // * Delete file (if it's un modified?)
-    // * if untracked: Add <file> to ignore file
-    // * if untracked: Add this file type to ignore file
+
     if selCount=1 then begin
       aFile := ExtractFileName(lb.GetSelectedText);
       aIndex := GetSelectedIndex(lb);
       Entry := PFileEntry(lb.Items.Objects[aIndex])
     end else begin
       aFile := format('%d files',[selCount]);
-      aIndex := -1;
+      aIndex := LIST_TAG_ALL_SELECTED;
       Entry := nil;
     end;
 
     if isUnstaged then begin
       AddStageFile;
       AddStageAll;
+
       if (Entry<>nil) and (Entry^.EntryKind in [ekUntracked, ekIgnored]) then
         AddIgnoreUntracked;
+
+      AddRestoreFiles;
+
       AddPopItem(popLists, '-', nil, 0);
       AddViewItems;
     end else begin
@@ -748,6 +796,31 @@ begin
   ShowMessage('This feature will be implemented ASAP');
 end;
 
+function TfrmMain.MakeMenuItemUnstagedEntryArray(mi: TMenuItem): TPFileEntryArray;
+var
+  aIndex: PtrInt;
+  i, n: Integer;
+  entry: PFileEntry;
+begin
+  n := 0;
+  SetLength(result, lstUnstaged.Count);
+
+  aIndex := mi.Tag;
+  for i:=0 to lstUnstaged.Count-1 do begin
+    entry := PFileEntry(lstUnstaged.Items.Objects[i]);
+    if (aIndex=i) or
+       ((aIndex=LIST_TAG_ALL_SELECTED) and lstUnstaged.Selected[i]) or
+       ((aIndex=LIST_TAG_ALL_CHANGED) and (entry^.EntryTypeUnStaged in ChangedInWorktreeSet))
+    then begin
+      result[n] := entry;
+      inc(n);
+      if aIndex=i then break;
+    end
+  end;
+
+  SetLength(result, n);
+end;
+
 function OwnerDrawStateToStr(State: TOwnerDrawState): string;
   procedure Add(st: string);
   begin
@@ -769,12 +842,10 @@ procedure TfrmMain.lstUnstagedDrawItem(Control: TWinControl; Index: Integer;
   ARect: TRect; State: TOwnerDrawState);
 var
   lb: TListBox;
-  x, y: Integer;
-  ts: TTextStyle;
   entry: PFileEntry;
   aCanvas: TCanvas;
   aColor: TColor;
-  sel: boolean;
+  sel, isFocused: boolean;
 begin
   if index<0 then
     exit;
@@ -782,25 +853,24 @@ begin
   lb := TListBox(Control);
   entry := PFileEntry(lb.Items.Objects[index]);
 
-  sel := (odSelected in State) and lb.Focused;
+  isFocused := lb.Focused or fListAlwaysDrawSelection;
+  sel := (odSelected in State) and isFocused;
 
   aCanvas := lb.Canvas;
-  if lb.Focused then
+  if isFocused then
     if sel then aColor := clHighlight
     else        aColor := lb.Color
   else          aColor := lb.Color;
+
   aCanvas.Brush.Color := aColor;
   aCanvas.FillRect(aRect);
 
-  if lb.Focused then
+  if isFocused then
     if sel then aColor := clHighlightText
     else        aColor := clBlack
   else          aColor := clBlack;
 
   lb.Canvas.Font.Color := aColor;
-  ts := lb.Canvas.TextStyle;
-  ts.Alignment := taLeftJustify;
-  ts.Layout := tlCenter;
   lb.Canvas.Brush.Style := bsClear;
   lb.Canvas.TextRect(aRect, aRect.Left + 22, aRect.Top, lb.Items[index]);
 

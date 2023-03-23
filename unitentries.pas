@@ -108,6 +108,8 @@ type
     etIgnored
   );
 
+  TSetOfEntryType = set of TEntryType;
+
   TSubmoduleType = set of (smtSubmodule, smtCommitChanged, smtTrackedChanges, smtUntrackedChanges);
 
   PFileEntry = ^TFileEntry;
@@ -133,6 +135,8 @@ procedure ParseOther(var head: pchar; tail: pchar; out entry: PFileEntry);
 function EntryTypeToStr(X, Y: char): string;
 procedure DumpEntry(Entry: PFileEntry);
 
+const
+  ChangedInWorktreeSet = [ etWorktreeChangedSinceIndex .. etCopiedInWorkTree ];
 
 implementation
 
