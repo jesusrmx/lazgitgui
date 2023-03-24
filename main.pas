@@ -123,7 +123,7 @@ type
     procedure DoPush;
     procedure DoFetch;
     procedure DoPull;
-    procedure OnBranchMenuClick(Sender: TObject);
+    procedure OnPopupItemClick(Sender: TObject);
     procedure OnBranchSwitch(Data: PtrInt);
     procedure OnIgnoreFileClick(Sender: TObject);
     procedure OnIgnoreTypeClick(Sender: TObject);
@@ -255,7 +255,7 @@ begin
   popBranch.PopUp;
 end;
 
-procedure TfrmMain.OnBranchMenuClick(Sender: TObject);
+procedure TfrmMain.OnPopupItemClick(Sender: TObject);
 var
   mi: TMenuItem;
   f: TfrmNewBranch;
@@ -470,13 +470,13 @@ var
   procedure AddViewItems;
   begin
     if isUnstaged then begin
-      mi := AddPopItem(popLists, 'View Untracked Files', @OnBranchMenuClick, MENU_LIST_VIEW_UNTRACKED);
+      mi := AddPopItem(popLists, 'View Untracked Files', @OnPopupItemClick, MENU_LIST_VIEW_UNTRACKED);
       mi.AutoCheck := true;
       mi.Checked := fConfig.ReadBoolean('ViewUntracked', true);
-      mi := AddPopItem(popLists, 'View Ignored Files', @OnBranchMenuClick, MENU_LIST_VIEW_IGNORED);
+      mi := AddPopItem(popLists, 'View Ignored Files', @OnPopupItemClick, MENU_LIST_VIEW_IGNORED);
       mi.AutoCheck := true;
       mi.Checked := fConfig.ReadBoolean('ViewIgnored');
-      mi := AddPopItem(popLists, 'View Unchanged Files', @OnBranchMenuClick, MENU_LIST_VIEW_UNCHANGED);
+      mi := AddPopItem(popLists, 'View Unchanged Files', @OnPopupItemClick, MENU_LIST_VIEW_UNCHANGED);
       mi.AutoCheck := true;
       mi.Checked := fConfig.ReadBoolean('ViewChanged');
     end;
@@ -675,8 +675,8 @@ var
 begin
   popBranch.Items.Clear;
 
-  AddPopItem(popBranch, rsNewBranch, @OnBranchMenuClick, MENU_BRANCH_NEW);
-  AddPopItem(popBranch, rsReload, @OnBranchMenuClick, MENU_BRANCH_RELOAD);
+  AddPopItem(popBranch, rsNewBranch, @OnPopupItemClick, MENU_BRANCH_NEW);
+  AddPopItem(popBranch, rsReload, @OnPopupItemClick, MENU_BRANCH_RELOAD);
 
   try
     list := TStringList.Create;
@@ -704,7 +704,7 @@ begin
         if popBranch.Items.Count=2 then
           AddPopItem(popBranch, '-', nil, MENU_INVALID);
 
-        mi := AddPopItem(popBranch, branchLine[0], @OnBranchMenuClick, MENU_BRANCH_SWITCH);
+        mi := AddPopItem(popBranch, branchLine[0], @OnPopupItemClick, MENU_BRANCH_SWITCH);
         mi.GroupIndex := 1;
         mi.AutoCheck := true;
         mi.Checked := branchLine[3]='*';
