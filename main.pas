@@ -145,6 +145,7 @@ type
     procedure ViewFile(filename: string);
     procedure ComingSoon;
     function MakeMenuItemUnstagedEntryArray(mi: TMenuItem): TPFileEntryArray;
+    function MakeMenuItemStagedEntryArray(mi: TMenuItem): TPFileEntryArray;
   public
 
   end;
@@ -418,7 +419,6 @@ end;
 procedure TfrmMain.OnStageItemClick(Sender: TObject);
 var
   mi: TMenuItem;
-  i, aIndex: Integer;
   entryArray: TPFileEntryArray;
 begin
   mi := TMenuItem(Sender);
@@ -431,8 +431,17 @@ begin
 end;
 
 procedure TfrmMain.OnUnstageItemClick(Sender: TObject);
+var
+  mi: TMenuItem;
+  entryArray: TPFileEntryArray;
 begin
-  ComingSoon;
+  mi := TMenuItem(Sender);
+  entryArray := MakeMenuItemStagedEntryArray(mi);
+
+  if fGit.Restore(entryArray, true)>0 then
+    ShowError
+  else
+    UpdateStatus;
 end;
 
 procedure TfrmMain.lblBranchContextPopup(Sender: TObject; MousePos: TPoint;
@@ -811,6 +820,31 @@ begin
     if (aIndex=i) or
        ((aIndex=LIST_TAG_ALL_SELECTED) and lstUnstaged.Selected[i]) or
        ((aIndex=LIST_TAG_ALL_CHANGED) and (entry^.EntryTypeUnStaged in ChangedInWorktreeSet))
+    then begin
+      result[n] := entry;
+      inc(n);
+      if aIndex=i then break;
+    end
+  end;
+
+  SetLength(result, n);
+end;
+
+function TfrmMain.MakeMenuItemStagedEntryArray(mi: TMenuItem): TPFileEntryArray;
+var
+  aIndex: PtrInt;
+  i, n: Integer;
+  entry: PFileEntry;
+begin
+  n := 0;
+  SetLength(result, lstStaged.Count);
+
+  aIndex := mi.Tag;
+  for i:=0 to lstStaged.Count-1 do begin
+    entry := PFileEntry(lstStaged.Items.Objects[i]);
+    if (aIndex=i) or
+       ((aIndex=LIST_TAG_ALL_SELECTED) and lstStaged.Selected[i]) or
+       ((aIndex=LIST_TAG_ALL_CHANGED) and (entry^.EntryTypeStaged in ChangedInIndexSet))
     then begin
       result[n] := entry;
       inc(n);

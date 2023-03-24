@@ -137,6 +137,7 @@ procedure DumpEntry(Entry: PFileEntry);
 
 const
   ChangedInWorktreeSet = [ etWorktreeChangedSinceIndex .. etCopiedInWorkTree ];
+  ChangedInIndexSet = [ etUpdatedInIndex .. etCopiedInIndexD ];
 
 implementation
 
