@@ -113,6 +113,9 @@ type
     fPopPoint: TPoint;
     fAnsiHandler: TAnsiEscapesHandler;
     fListAlwaysDrawSelection: boolean;
+    fViewIgnoredFiles: Boolean;
+    fViewTrackedFiles: Boolean;
+    fViewUntrackedFiles: Boolean;
     {$IFDEF CaptureOutput}
     fCap: TMemoryStream;
     {$ENDIF}
@@ -181,7 +184,7 @@ const
 
   MENU_LIST_VIEW_UNTRACKED    = 4;
   MENU_LIST_VIEW_IGNORED      = 5;
-  MENU_LIST_VIEW_UNCHANGED    = 6;
+  MENU_LIST_VIEW_TRACKED      = 6;
   MENU_LIST_STAGE_CHANGED     = 7;
   MENU_LIST_STAGE_ALL         = 8;
   MENU_LIST_UNSTAGE_ALL       = 9;
@@ -275,15 +278,38 @@ begin
           f.Free;
         end;
       end;
+
     MENU_BRANCH_RELOAD:
       begin
         fPopPoint := popBranch.PopupPoint;
         Application.QueueAsyncCall(@OnReloadBranchMenu, 0);
       end;
+
     MENU_BRANCH_SWITCH:
       begin
         Application.QueueAsyncCall(@OnBranchSwitch, PtrInt(Sender));
       end;
+
+    MENU_LIST_VIEW_UNTRACKED:
+      begin
+        fViewUntrackedFiles := mi.Checked;
+        fConfig.WriteBoolean('ViewUntracked', fViewUntrackedFiles);
+        UpdateStatus;
+      end;
+
+    MENU_LIST_VIEW_IGNORED:
+      begin
+        fViewIgnoredFiles := mi.Checked;
+        fConfig.WriteBoolean('ViewIgnored', fViewIgnoredFiles);
+        UpdateStatus;
+      end;
+
+    //MENU_LIST_VIEW_TRACKED:
+    //  begin
+    //    fViewTrackedFiles := mi.Checked;
+    //    fConfig.WriteBoolean('ViewTracked', fViewTrackedFiles);
+    //    UpdateStatus;
+    //  end;
 
     else
       ComingSoon;
@@ -472,11 +498,11 @@ var
     if isUnstaged then begin
       mi := AddPopItem(popLists, 'View Untracked Files', @OnPopupItemClick, MENU_LIST_VIEW_UNTRACKED);
       mi.AutoCheck := true;
-      mi.Checked := fConfig.ReadBoolean('ViewUntracked', true);
+      mi.Checked := fViewUntrackedFiles;
       mi := AddPopItem(popLists, 'View Ignored Files', @OnPopupItemClick, MENU_LIST_VIEW_IGNORED);
       mi.AutoCheck := true;
       mi.Checked := fConfig.ReadBoolean('ViewIgnored');
-      mi := AddPopItem(popLists, 'View Unchanged Files', @OnPopupItemClick, MENU_LIST_VIEW_UNCHANGED);
+      mi := AddPopItem(popLists, 'View Unchanged Files', @OnPopupItemClick, MENU_LIST_VIEW_TRACKED);
       mi.AutoCheck := true;
       mi.Checked := fConfig.ReadBoolean('ViewChanged');
     end;
@@ -727,6 +753,8 @@ begin
   lstUnstaged.Items.BeginUpdate;
   lstStaged.Items.BeginUpdate;
   try
+    if fViewIgnoredFiles then fGit.IgnoredMode:='traditional' else fGit.IgnoredMode:='no';
+    if fViewUntrackedFiles then fGit.UntrackedMode:='all' else fGit.UntrackedMode:='no';
     if fGit.Status(lstUnstaged.Items, lstStaged.Items)>0 then
       ShowError
     else
@@ -993,6 +1021,10 @@ begin
   txtLog.Color := clBlack;
   txtLog.Font.Color := clWhite;
   fAnsiHandler := TAnsiEscapesHandler.Create(txtLog);
+
+  fViewUntrackedFiles := fConfig.ReadBoolean('ViewUntracked', true);
+  fViewIgnoredFiles := fConfig.ReadBoolean('ViewIgnored', false);
+  fViewTrackedFiles := fConfig.ReadBoolean('ViewTracked', false);
 
   fConfig.CloseConfig;
 end;

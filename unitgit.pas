@@ -109,6 +109,8 @@ type
     property Upstream: string read fUpstream;
     property TopLevelDir: string read fTopLevelDir;
     property ErrorLog: RawByteString read GetErrorLog;
+    property UntrackedMode: string read fUntrackedMode write fUntrackedMode;
+    property IgnoredMode: string read fIgnoredMode write fIgnoredMode;
     property Version: string read FVersion;
   end;
 
