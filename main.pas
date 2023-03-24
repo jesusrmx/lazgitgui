@@ -359,33 +359,36 @@ procedure TfrmMain.OnRestoreFileClick(Sender: TObject);
 var
   mi: TMenuItem;
   entryArray: TPFileEntryArray;
-  list, aFile: String;
+  aFile: String;
   res: TModalResult;
 begin
   mi := TMenuItem(Sender);
   entryArray := MakeMenuItemUnstagedEntryArray(mi);
-  list := MakePathList(entryArray, false);
 
   if Length(entryArray)=1 then
-    aFile := list
+    aFile := MakePathList(entryArray, false)
   else
     aFile := format('%d files',[Length(entryArray)]);
 
   // this is necessary because we normally hide lists selection
   // when they are unfocused, but in this case the next dialog
-  // will unfocus the lists and we want to see what files that
-  // are to be restored.
+  // will unfocus the lists and we want to see the selection of
+  // files that will be restored.
   fListAlwaysDrawSelection := true;
 
   res := QuestionDlg(rsRestoringWorkFiles, format(rsRestoringWorkFilesWarning, [aFile]), mtWarning,
     [mrYes, 'Discard changes', mrCancel, 'Cancel'], 0 );
+
   fListAlwaysDrawSelection := false;
+
   if res<>mrYes then
     exit;
 
-  list := MakePathList(entryArray);
+  {$IFDEF DEBUG}
+  aFile := MakePathList(entryArray);
+  DebugLn('Restoring: ',aFile);
+  {$ENDIF}
 
-  //DebugLn('Restoring: ',list);
   if fGit.Restore(entryArray, false)>0 then
     ShowError
   else
@@ -410,8 +413,8 @@ begin
       ShowError
     else begin
       UpdateStatus;
-      if cmdOut<>'' then
-        txtDiff.Text := cmdOut;
+      //if cmdOut<>'' then
+      //  txtDiff.Text := cmdOut;
     end;
   end;
 end;
