@@ -167,7 +167,7 @@ begin
       ok := false;
       case aIndex of
         0: ok := (info^.objType=rotCommit) and (not info^.isTracking);
-        1: ok := (info^.objType=rotCommit) and info^.isTracking;
+        1: ok := (info^.objType=rotCommit) and info^.isTracking and (RightStr(info^.refName, 4)<>'HEAD');
         2: ok := (info^.objType=rotTag);
         else exit;
       end;
@@ -217,20 +217,34 @@ procedure TfrmNewBranch.EvaluateOutcome;
 var
   aIndex: Integer;
   info: PRefInfo;
+  refBranch: string;
+  p: SizeInt;
+
+  procedure AlreadyExisting;
+  begin
+    lblHint.caption := format('Branch ''%s'' alredy exists',[fBranchName]);
+  end;
+
 begin
   fType := BT_INVALID;
 
   lblHint.Font.Color := clRed;
   fBranchName := Trim(txtName.Text);
   aIndex := lstSource.ItemIndex;
-  if aIndex<0 then  info := nil
-  else              info := PRefInfo(lstSource.Items.Objects[aIndex]);
+  if aIndex<0 then begin
+    info := nil;
+    refBranch := '';
+  end else begin
+    info := PRefInfo(lstSource.Items.Objects[aIndex]);
+    refBranch := lstSource.Items[aIndex];
+  end;
+
   case tabSource.TabIndex of
     0: // branch based on a existing local branch tab
       begin
         if fBranchName<>'' then begin
           if AlreadyExists(fBranchName, rostLocal) then begin
-            lblHint.caption := 'Alredy Exists';
+            AlreadyExisting;
             exit;
           end;
           if aIndex<0 then begin
@@ -243,6 +257,7 @@ begin
           exit;
         end;
       end;
+
     1: // branch based on a tracking branch tab
       begin
         if aIndex<0 then begin
@@ -254,19 +269,21 @@ begin
             lblHint.caption := 'Not refers to a tracking branch';
             exit;
           end;
-          fBranchName := info^.upstream;
-          if AlreadyExists(fBranchName, rostLocal) then begin
-            lblHint.caption := 'Alredy Exists';
-            exit;
-          end;
-          fType := BT_NEWLOCAL_TRACKING;
+          p := pos('/', refBranch);
+          fBranchName := copy(refBranch, p+1, MaxInt);
         end;
+        if AlreadyExists(fBranchName, rostLocal) then begin
+          AlreadyExisting;
+          exit;
+        end;
+        fType := BT_NEWLOCAL_TRACKING;
       end;
+
     2:  // branch based on a tag tab
       begin
         if fBranchName<>'' then begin
           if AlreadyExists(fBranchName, rostLocal) then begin
-            lblHint.caption := 'Alredy Exists';
+            AlreadyExisting;
             exit;
           end;
           if aIndex<0 then begin
@@ -280,8 +297,9 @@ begin
         end;
       end;
   end;
+
   lblHint.Font.Color := clGreen;
-  lblHint.Caption := 'Feasible';
+  lblHint.Caption := format('New branch name: %s', [fBranchName]);
 end;
 
 procedure TfrmNewBranch.ShowInfo;

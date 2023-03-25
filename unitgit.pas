@@ -634,6 +634,14 @@ begin
     // skip the eol that for-each-ref always add
     while (p<t) and (p^ in [#10, #13]) do inc(p);
 
+    case info^.objType of
+      rotCommit:
+        if info^.isTracking then  info^.subType := rostTracking
+        else                      info^.subType := rostLocal;
+      rotTag:                     info^.subType := rostTag;
+      else                        info^.subType := rostOther;
+    end;
+
     list.addObject(item, TObject(info));
   end;
 
