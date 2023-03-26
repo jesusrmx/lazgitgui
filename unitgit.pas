@@ -118,6 +118,7 @@ type
   function GitDateToDateTime(s: string): TDateTime;
   function DateTimeToGitFmt(d: TDateTime): string;
   function MakePathList(entryArray: TPFileEntryArray; sanitizeItems:boolean=true): string;
+  function Sanitize(aPath: RawbyteString; force:boolean=true): RawbyteString;
 
 implementation
 
@@ -163,13 +164,16 @@ begin
   list.clear;
 end;
 
-function Sanitize(aPath: RawbyteString): RawbyteString;
+function Sanitize(aPath: RawbyteString; force: boolean): RawbyteString;
 begin
-  {$ifdef MsWindows}
-  result := '"' + aPath + '"';
-  {$else}
-  result := StringReplace(aPath, ' ', '\ ', [rfReplaceAll]);
-  {$endif}
+  if force or (pos(' ', aPath)>0) then begin
+    {$ifdef MsWindows}
+    result := '"' + aPath + '"';
+    {$else}
+    result := StringReplace(aPath, ' ', '\ ', [rfReplaceAll]);
+    {$endif}
+  end else
+    result := aPath;
 end;
 
 function MakePathList(entryArray: TPFileEntryArray; sanitizeItems: boolean

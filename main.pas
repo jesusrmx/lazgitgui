@@ -149,6 +149,7 @@ type
     procedure ComingSoon;
     function MakeMenuItemUnstagedEntryArray(mi: TMenuItem): TPFileEntryArray;
     function MakeMenuItemStagedEntryArray(mi: TMenuItem): TPFileEntryArray;
+    procedure NewBranch;
   public
 
   end;
@@ -261,23 +262,12 @@ end;
 procedure TfrmMain.OnPopupItemClick(Sender: TObject);
 var
   mi: TMenuItem;
-  f: TfrmNewBranch;
 begin
   mi := TMenuItem(sender);
 
   case mi.tag of
     MENU_BRANCH_NEW:
-      begin
-        f := TfrmNewBranch.Create(Self);
-        f.Git := fGit;
-        try
-          if f.ShowModal=mrOk then begin
-            ShowMessage('Creating a branch');
-          end;
-        finally
-          f.Free;
-        end;
-      end;
+        NewBranch;
 
     MENU_BRANCH_RELOAD:
       begin
@@ -884,6 +874,32 @@ begin
   end;
 
   SetLength(result, n);
+end;
+
+procedure TfrmMain.NewBranch;
+var
+  f: TfrmNewBranch;
+begin
+  f := TfrmNewBranch.Create(Self);
+  f.Git := fGit;
+  try
+    if f.ShowModal=mrOk then begin
+      if fGit.Any(fGitCommand + ' ' + f.GetBranchCommandOptions)>0 then begin
+        ShowError;
+        exit;
+      end;
+      if f.Switch then begin
+        if fGit.Switch(f.BranchName)>0 then
+          ShowError;
+        else
+        if f.Fetch then begin
+        end;
+      end;
+      ShowMessage('Creating a branch');
+    end;
+  finally
+    f.Free;
+  end;
 end;
 
 function OwnerDrawStateToStr(State: TOwnerDrawState): string;

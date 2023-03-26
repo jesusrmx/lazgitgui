@@ -36,6 +36,9 @@ type
 
   TfrmNewBranch = class(TForm)
     ButtonPanel1: TButtonPanel;
+    chkFetch: TCheckBox;
+    chkSwitchTo: TCheckBox;
+    txtCustomOptions: TEdit;
     Label1: TLabel;
     Label2: TLabel;
     lblHint: TLabel;
@@ -52,17 +55,23 @@ type
     procedure tabSourceChange(Sender: TObject);
     procedure txtNameChange(Sender: TObject);
   private
-    fBranchName: TCaption;
+    fBranchName, fRefBranch: string;
     fGit: TGit;
     fRefs: TStringList;
     fType: Integer;
+    function GetFetch: boolean;
+    function GetSwitch: boolean;
     procedure ShowTabIndex(aIndex: Integer);
     procedure CheckOkButton;
     function AlreadyExists(aName: string; subType: TRefObjectSubType): boolean;
     procedure EvaluateOutcome;
     procedure ShowInfo;
   public
+    function GetBranchCommandOptions: string;
+    property BranchName: string read fBranchName;
     property Git: TGit read fGit write fGit;
+    property Switch: boolean read GetSwitch;
+    property Fetch: boolean read GetFetch;
   end;
 
 var
@@ -149,14 +158,13 @@ end;
 procedure TfrmNewBranch.ShowTabIndex(aIndex: Integer);
 var
   branchLine: TStringList;
-  list: TStringList;
   i, j: Integer;
   info: PRefInfo;
   ok: boolean;
 begin
-  branchLine := TStringList.Create;
-  branchLine.StrictDelimiter := true;
-  branchLine.Delimiter := '|';
+
+  chkFetch.Enabled := (aIndex=1);
+
   lstSource.Items.BeginUpdate;
   try
 
@@ -183,8 +191,17 @@ begin
 
   finally
     lstSource.Items.EndUpdate;
-    branchLine.Free;
   end;
+end;
+
+function TfrmNewBranch.GetSwitch: boolean;
+begin
+  result := chkSwitchTo.Checked;
+end;
+
+function TfrmNewBranch.GetFetch: boolean;
+begin
+  result := chkFetch.Checked;
 end;
 
 procedure TfrmNewBranch.CheckOkButton;
@@ -217,8 +234,8 @@ procedure TfrmNewBranch.EvaluateOutcome;
 var
   aIndex: Integer;
   info: PRefInfo;
-  refBranch: string;
   p: SizeInt;
+  opts: string;
 
   procedure AlreadyExisting;
   begin
@@ -233,10 +250,10 @@ begin
   aIndex := lstSource.ItemIndex;
   if aIndex<0 then begin
     info := nil;
-    refBranch := '';
+    fRefBranch := '';
   end else begin
     info := PRefInfo(lstSource.Items.Objects[aIndex]);
-    refBranch := lstSource.Items[aIndex];
+    fRefBranch := lstSource.Items[aIndex];
   end;
 
   case tabSource.TabIndex of
@@ -269,8 +286,8 @@ begin
             lblHint.caption := 'Not refers to a tracking branch';
             exit;
           end;
-          p := pos('/', refBranch);
-          fBranchName := copy(refBranch, p+1, MaxInt);
+          p := pos('/', fRefBranch);
+          fBranchName := copy(fRefBranch, p+1, MaxInt);
         end;
         if AlreadyExists(fBranchName, rostLocal) then begin
           AlreadyExisting;
@@ -299,7 +316,8 @@ begin
   end;
 
   lblHint.Font.Color := clGreen;
-  lblHint.Caption := format('New branch name: %s', [fBranchName]);
+  opts := GetBranchCommandOptions;
+  lblHint.Caption := format('git branch %s', [opts]);
 end;
 
 procedure TfrmNewBranch.ShowInfo;
@@ -339,6 +357,24 @@ begin
     txtInfo.Lines.EndUpdate;
   end;
 
+end;
+
+function TfrmNewBranch.GetBranchCommandOptions: string;
+begin
+  if fType = BT_INVALID then begin
+    result := 'Invalid';
+    exit;
+  end;
+
+  result := txtCustomOptions.Text;
+  if result<>'' then begin
+    result += ' ';
+  end else begin
+    if fType=BT_NEWLOCAL_TRACKING then
+      result += '-t ';
+  end;
+
+  result += Sanitize(fBranchName, false) + ' ' + Sanitize(fRefBranch, false);
 end;
 
 procedure TfrmNewBranch.FormCloseQuery(Sender: TObject; var CanClose: Boolean);

@@ -1,7 +1,7 @@
 object frmNewBranch: TfrmNewBranch
-  Left = 289
+  Left = 178
   Height = 408
-  Top = 132
+  Top = 196
   Width = 640
   Caption = 'Create a new branch'
   ClientHeight = 408
@@ -28,7 +28,7 @@ object frmNewBranch: TfrmNewBranch
   end
   object txtName: TEdit
     Left = 64
-    Height = 22
+    Height = 26
     Top = 8
     Width = 224
     BorderSpacing.Top = 28
@@ -56,11 +56,12 @@ object frmNewBranch: TfrmNewBranch
     ParentShowHint = False
     ShowHint = True
     TabOrder = 1
+    TopIndex = -1
   end
   object ButtonPanel1: TButtonPanel
     Left = 6
-    Height = 36
-    Top = 366
+    Height = 35
+    Top = 367
     Width = 628
     OKButton.Name = 'OKButton'
     OKButton.DefaultCaption = True
@@ -78,7 +79,7 @@ object frmNewBranch: TfrmNewBranch
       AnchorSideTop.Side = asrCenter
       Left = 0
       Height = 1
-      Top = 18
+      Top = 17
       Width = 1
       Font.Style = [fsBold]
       ParentFont = False
@@ -87,7 +88,7 @@ object frmNewBranch: TfrmNewBranch
   object Panel1: TPanel
     Left = 8
     Height = 161
-    Top = 201
+    Top = 200
     Width = 271
     Alignment = taLeftJustify
     Anchors = [akLeft, akBottom]
@@ -96,18 +97,47 @@ object frmNewBranch: TfrmNewBranch
     TabOrder = 4
     object Label1: TLabel
       Left = 8
-      Height = 16
+      Height = 17
       Top = 8
-      Width = 47
+      Width = 43
       Caption = 'Options'
+    end
+    object chkSwitchTo: TCheckBox
+      Left = 8
+      Height = 21
+      Top = 32
+      Width = 162
+      Caption = 'Switch to the new branch'
+      Checked = True
+      State = cbChecked
+      TabOrder = 0
+    end
+    object txtCustomOptions: TEdit
+      Left = 8
+      Height = 26
+      Top = 128
+      Width = 256
+      TabOrder = 1
+      TextHint = 'Custom Options'
+    end
+    object chkFetch: TCheckBox
+      Left = 8
+      Height = 21
+      Top = 56
+      Width = 143
+      Caption = 'Fetch Tracked Branch'
+      Checked = True
+      Enabled = False
+      State = cbChecked
+      TabOrder = 2
     end
   end
   object Label2: TLabel
     AnchorSideRight.Control = tabSource
     Left = 16
-    Height = 16
+    Height = 17
     Top = 10
-    Width = 35
+    Width = 34
     Caption = 'Name'
   end
   object txtInfo: TMemo
