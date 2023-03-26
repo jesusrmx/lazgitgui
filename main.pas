@@ -1253,7 +1253,7 @@ begin
   label2.Visible := (not ahead and not behind) and (fGit.Upstream<>'');
   lblRemote.Caption := fGit.Upstream;
 
-  actPush.Enabled := ahead;
+  //actPush.Enabled := ahead;
 
   txtDiff.Clear;
 
