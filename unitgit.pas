@@ -59,6 +59,7 @@ type
   TGit = class
   private
     fBranch: String;
+    fBranchOID: string;
     fGitCommand: string;
     fTopLevelDir: string;
     fMerging, fMergingConflict: Boolean;
@@ -104,6 +105,7 @@ type
     property CommitsAhead: Integer read fCommitsAhead;
     property CommitsBehind: Integer read fCommitsBehind;
     property Branch: string read fBranch;
+    property BranchOID: string read fBranchOID;
     property Merging: boolean read fMerging;
     property MergingConflict: boolean read fMergingConflict;
     property Upstream: string read fUpstream;
@@ -280,6 +282,7 @@ var
   i, n: Integer;
 begin
   fBranch := '';
+  fBranchOID := '';
   fUpstream := '';
   fCommitsAhead := 0;
   fCommitsBehind := 0;
@@ -290,6 +293,9 @@ begin
 
     n := strlen(head);
 
+    if (fBranchOID='') and (strlcomp(head, '# branch.oid', 12)=0) then begin
+      SetString(fBranchOID, head + 13, n - 13);
+    end else
     if (fBranch='') and (strlcomp(head, '# branch.head', 13)=0) then begin
       SetString(fBranch, head + 14, n - 14);
     end else

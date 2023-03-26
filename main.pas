@@ -151,6 +151,8 @@ type
     function MakeMenuItemStagedEntryArray(mi: TMenuItem): TPFileEntryArray;
     procedure NewBranch;
     procedure InvalidateBranchMenu;
+    procedure NewTag;
+    procedure CheckMenuDivisorInLastPosition(pop:TPopupMenu);
   public
 
   end;
@@ -165,6 +167,7 @@ implementation
 
 resourcestring
   rsNewBranch = 'New Branch';
+  rsNewTag = 'Create a tag at this point';
   rsReload = 'Reload';
   rsPushingYourCommits = 'Pushing your commits';
   rsThereAreCommitsBehind = 'There are commits behind, are you sure you want to push?';
@@ -183,15 +186,16 @@ const
   MENU_BRANCH_NEW             = 1;
   MENU_BRANCH_RELOAD          = 2;
   MENU_BRANCH_SWITCH          = 3;
+  MENU_BRANCH_NEW_TAG         = 4;
 
-  MENU_LIST_VIEW_UNTRACKED    = 4;
-  MENU_LIST_VIEW_IGNORED      = 5;
-  MENU_LIST_VIEW_TRACKED      = 6;
-  MENU_LIST_STAGE_CHANGED     = 7;
-  MENU_LIST_STAGE_ALL         = 8;
-  MENU_LIST_UNSTAGE_ALL       = 9;
-  MENU_LIST_STAGE_SELECTION   = 10;
-  MENU_LIST_UNSTAGE_SELECTION = 11;
+  MENU_LIST_VIEW_UNTRACKED    = 14;
+  MENU_LIST_VIEW_IGNORED      = 15;
+  MENU_LIST_VIEW_TRACKED      = 16;
+  MENU_LIST_STAGE_CHANGED     = 17;
+  MENU_LIST_STAGE_ALL         = 18;
+  MENU_LIST_UNSTAGE_ALL       = 19;
+  MENU_LIST_STAGE_SELECTION   = 20;
+  MENU_LIST_UNSTAGE_SELECTION = 21;
 
   LIST_TAG_ALL_SELECTED           = -1;
   LIST_TAG_ALL_CHANGED            = -2;
@@ -269,6 +273,9 @@ begin
   case mi.tag of
     MENU_BRANCH_NEW:
         NewBranch;
+
+    MENU_BRANCH_NEW_TAG:
+        NewTag;
 
     MENU_BRANCH_RELOAD:
       begin
@@ -627,10 +634,7 @@ begin
 
   end;
 
-  if popLists.Items.Count>1 then begin
-    if popLists.Items[popLists.Items.Count-1].Caption='-' then
-      popLists.Items.Delete(popLists.Items.Count-1);
-  end;
+  CheckMenuDivisorInLastPosition(popLists);
 
 end;
 
@@ -695,7 +699,9 @@ begin
   InvalidateBranchMenu;
 
   AddPopItem(popBranch, rsNewBranch, @OnPopupItemClick, MENU_BRANCH_NEW);
+  AddPopItem(popBranch, rsNewTag, @OnPopupItemClick, MENU_BRANCH_NEW_TAG);
   AddPopItem(popBranch, rsReload, @OnPopupItemClick, MENU_BRANCH_RELOAD);
+  AddPopItem(popBranch, '-', nil, MENU_INVALID);
 
   try
     list := TStringList.Create;
@@ -720,9 +726,6 @@ begin
         if pos('/', branchLine[0])<>0 then
           continue;
 
-        if popBranch.Items.Count=2 then
-          AddPopItem(popBranch, '-', nil, MENU_INVALID);
-
         mi := AddPopItem(popBranch, branchLine[0], @OnPopupItemClick, MENU_BRANCH_SWITCH);
         mi.GroupIndex := 1;
         mi.AutoCheck := true;
@@ -738,6 +741,7 @@ begin
     end;
   finally
     list.Free;
+    CheckMenuDivisorInLastPosition(popBranch);
   end;
 end;
 
@@ -927,6 +931,19 @@ end;
 procedure TfrmMain.InvalidateBranchMenu;
 begin
   popBranch.Items.Clear;
+end;
+
+procedure TfrmMain.NewTag;
+begin
+  ComingSoon;
+end;
+
+procedure TfrmMain.CheckMenuDivisorInLastPosition(pop: TPopupMenu);
+begin
+  if pop.Items.Count>1 then begin
+    if pop.Items[pop.Items.Count-1].Caption='-' then
+      pop.Items.Delete(pop.Items.Count-1);
+  end;
 end;
 
 function OwnerDrawStateToStr(State: TOwnerDrawState): string;
@@ -1233,6 +1250,8 @@ begin
 
   label1.Visible := not ahead and not behind;
   lblBranch.Caption := fGit.Branch;
+  lblBranch.Hint := fGit.Branch + LineEnding + fGit.BranchOID;
+
   s := '';
   if fGit.Merging then begin
     s += '(MERGING';
@@ -1257,7 +1276,7 @@ begin
 
   txtDiff.Clear;
 
-  Caption := '[git '+fGit.Version+'](' + fGit.TopLevelDir + ')';
+  Caption := 'LazGitGUI - [git '+fGit.Version+'](' + fGit.TopLevelDir + ')';
 end;
 
 procedure TfrmMain.RestoreGui;
