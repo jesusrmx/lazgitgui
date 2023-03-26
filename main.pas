@@ -150,6 +150,7 @@ type
     function MakeMenuItemUnstagedEntryArray(mi: TMenuItem): TPFileEntryArray;
     function MakeMenuItemStagedEntryArray(mi: TMenuItem): TPFileEntryArray;
     procedure NewBranch;
+    procedure InvalidateBranchMenu;
   public
 
   end;
@@ -313,8 +314,10 @@ begin
   mi := TMenuItem(TObject(Data));
   if fGit.Switch(mi.Caption)>0 then
     ShowError
-  else
+  else begin
     UpdateStatus;
+    InvalidateBranchMenu;
+  end;
 end;
 
 procedure TfrmMain.OnIgnoreFileClick(Sender: TObject);
@@ -689,7 +692,7 @@ var
   p, q: pchar;
   mi: TMenuItem;
 begin
-  popBranch.Items.Clear;
+  InvalidateBranchMenu;
 
   AddPopItem(popBranch, rsNewBranch, @OnPopupItemClick, MENU_BRANCH_NEW);
   AddPopItem(popBranch, rsReload, @OnPopupItemClick, MENU_BRANCH_RELOAD);
@@ -879,27 +882,51 @@ end;
 procedure TfrmMain.NewBranch;
 var
   f: TfrmNewBranch;
+  cmdOut: RawByteString;
 begin
   f := TfrmNewBranch.Create(Self);
   f.Git := fGit;
   try
     if f.ShowModal=mrOk then begin
-      if fGit.Any(fGitCommand + ' ' + f.GetBranchCommandOptions)>0 then begin
+
+      if fGit.Any('branch ' + f.GetBranchCommandOptions, cmdOut)>0 then begin
         ShowError;
         exit;
       end;
-      if f.Switch then begin
-        if fGit.Switch(f.BranchName)>0 then
-          ShowError;
-        else
-        if f.Fetch then begin
-        end;
+
+      // there is a new branch, the next time branch list
+      // is requested, recreate it
+      InvalidateBranchMenu;
+
+      if not f.Switch then
+        exit;
+      if fGit.Switch(f.BranchName)>0 then begin
+        ShowError;
+        exit;
       end;
-      ShowMessage('Creating a branch');
+
+      // switched to the new branch, even if fetching from the
+      // upstream is not requested, force an update status
+      try
+        if not f.Fetch then
+          exit;
+        if fGit.Any('fetch', cmdOut)>0 then begin
+          ShowError;
+          exit;
+        end;
+      finally
+        UpdateStatus;
+      end;
+
     end;
   finally
     f.Free;
   end;
+end;
+
+procedure TfrmMain.InvalidateBranchMenu;
+begin
+  popBranch.Items.Clear;
 end;
 
 function OwnerDrawStateToStr(State: TOwnerDrawState): string;
