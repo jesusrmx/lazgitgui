@@ -308,6 +308,7 @@ procedure TAnsiEscapesHandler.Reset;
 begin
   fCurKind := fDefTokenKind;
   fRow := 0;
+  fHighlighter.ClearAllTokens;
 end;
 
 procedure TAnsiEscapesHandler.Dump;
