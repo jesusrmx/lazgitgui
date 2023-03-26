@@ -113,6 +113,7 @@ begin
 
   if fGit.RefList(fRefs, '', [
       '%(refname:short)',
+      '%(refname:rstrip=-2)',
       '%(objecttype)',
       '%(objectname)',
       '%(upstream:short)',
@@ -174,9 +175,9 @@ begin
       info := PRefInfo(fRefs.Objects[i]);
       ok := false;
       case aIndex of
-        0: ok := (info^.objType=rotCommit) and (not info^.isTracking);
-        1: ok := (info^.objType=rotCommit) and info^.isTracking and (RightStr(info^.refName, 4)<>'HEAD');
-        2: ok := (info^.objType=rotTag);
+        0: ok := info^.subType=rostLocal;// (info^.objType=rotCommit) and (not info^.isTracking);
+        1: ok := (info^.subType=rostTracking) and (RightStr(info^.refName, 4)<>'HEAD'); // (info^.objType=rotCommit) and info^.isTracking and (RightStr(info^.refName, 4)<>'HEAD');
+        2: ok := (info^.subType=rostTag);
         else exit;
       end;
       if ok then begin

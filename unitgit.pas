@@ -580,8 +580,11 @@ begin
     q := p + n;
 
     new(info);
-    if haveReferedFields and (strpos(p, pchar('tag'+sep))<>nil) then new(refered)
-    else                                                             refered := nil;
+    info^.subType := rostOther;
+    info^.isTracking := false;
+
+    if haveReferedFields and (strpos(p, pchar('refs/tags'+sep))<>nil) then  new(refered)
+    else                                                                    refered := nil;
     info^.refered := refered;
 
     // each returned field should correspond to every fields[] requested
@@ -606,9 +609,15 @@ begin
       case field of
         'refname':
           begin
-            info^.refName := value;
-            info^.isTracking := ((opt='') and (pos('refs/remotes', value)=1)) or
-                                ((opt='short') and (pos('/', value)>0));
+            case opt of
+              'short': info^.refName := value;
+              'rstrip=-2':
+                case value of
+                  'refs/tags': info^.subType := rostTag;
+                  'refs/heads': info^.subType := rostLocal;
+                  'refs/remotes': info^.subType := rostTracking;
+                end;
+            end;
           end;
         'objecttype': info^.objType := StrToRefObjType(value);
         'objectname': info^.objName := value;
@@ -638,13 +647,13 @@ begin
     // skip the eol that for-each-ref always add
     while (p<t) and (p^ in [#10, #13]) do inc(p);
 
-    case info^.objType of
-      rotCommit:
-        if info^.isTracking then  info^.subType := rostTracking
-        else                      info^.subType := rostLocal;
-      rotTag:                     info^.subType := rostTag;
-      else                        info^.subType := rostOther;
-    end;
+    if info^.subType=rostOther then
+      case info^.objType of
+        rotCommit:
+          if info^.isTracking then  info^.subType := rostTracking
+          else                      info^.subType := rostLocal;
+        rotTag:                     info^.subType := rostTag;
+      end;
 
     list.addObject(item, TObject(info));
   end;
