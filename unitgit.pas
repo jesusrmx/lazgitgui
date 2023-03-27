@@ -101,6 +101,7 @@ type
     function Any(cmd: string; out cmdout:RawByteString): Integer;
     function Tag(tagName:string; annotated:boolean; tagMsg:string): Integer;
     function AddToIgnoreFile(aFile:string; justType:boolean; global:boolean): boolean;
+    function Describe(opts: string): Integer;
 
     property Exe: string read fGitCommand;
     property CommitsAhead: Integer read fCommitsAhead;
@@ -820,6 +821,14 @@ begin
 
   finally
     l.Free;
+  end;
+end;
+
+function TGit.Describe(opts: string): Integer;
+begin
+
+  if fGit.Any('describe --tags', cmdout)<=0 then begin
+
   end;
 end;
 

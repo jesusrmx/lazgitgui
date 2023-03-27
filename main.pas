@@ -746,10 +746,15 @@ begin
 end;
 
 procedure TfrmMain.UpdateStatus;
+var
+  cmdout: RawByteString;
 begin
   lstUnstaged.Items.BeginUpdate;
   lstStaged.Items.BeginUpdate;
   try
+    // get the more recent tag
+    fGit.Describe('');
+
     if fViewIgnoredFiles then fGit.IgnoredMode:='traditional' else fGit.IgnoredMode:='no';
     if fViewUntrackedFiles then fGit.UntrackedMode:='all' else fGit.UntrackedMode:='no';
     if fGit.Status(lstUnstaged.Items, lstStaged.Items)>0 then
