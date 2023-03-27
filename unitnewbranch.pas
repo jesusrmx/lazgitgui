@@ -55,7 +55,7 @@ type
     procedure tabSourceChange(Sender: TObject);
     procedure txtNameChange(Sender: TObject);
   private
-    fBranchName, fRefBranch: string;
+    fBranchName, fReference: string;
     fGit: TGit;
     fRefs: TStringList;
     fType: Integer;
@@ -251,10 +251,10 @@ begin
   aIndex := lstSource.ItemIndex;
   if aIndex<0 then begin
     info := nil;
-    fRefBranch := '';
+    fReference := '';
   end else begin
     info := PRefInfo(lstSource.Items.Objects[aIndex]);
-    fRefBranch := lstSource.Items[aIndex];
+    fReference := lstSource.Items[aIndex];
   end;
 
   case tabSource.TabIndex of
@@ -287,8 +287,8 @@ begin
             lblHint.caption := 'Not refers to a tracking branch';
             exit;
           end;
-          p := pos('/', fRefBranch);
-          fBranchName := copy(fRefBranch, p+1, MaxInt);
+          p := pos('/', fReference);
+          fBranchName := copy(fReference, p+1, MaxInt);
         end;
         if AlreadyExists(fBranchName, rostLocal) then begin
           AlreadyExisting;
@@ -375,7 +375,7 @@ begin
       result += '-t ';
   end;
 
-  result += Sanitize(fBranchName, false) + ' ' + Sanitize(fRefBranch, false);
+  result += Sanitize(fBranchName, false) + ' ' + Sanitize(fReference, false);
 end;
 
 procedure TfrmNewBranch.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
