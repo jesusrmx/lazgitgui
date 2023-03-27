@@ -742,10 +742,7 @@ var
   cmd: string;
   cmdOut: RawByteString;
 begin
-  msg := QuoteMsg(msg);
-  msg := StringReplace(msg, '"', '\"', [rfReplaceAll]);
   cmd := ' commit -m ' + QuoteMsg(msg);
-  cmd := ' commit -m "'+msg+'"';
   if opts<>'' then
     cmd += ' '+opts;
   result := cmdLine.RunProcess(fGitCommand + cmd, fTopLevelDir, cmdOut);
