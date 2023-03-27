@@ -33,7 +33,7 @@ uses
   {$ENDIF}
   SysUtils, Classes, Interfaces, lazfileutils,// this includes the LCL widgetset
   Forms, main, unitconfig, unitprocess, unitentries, unitgit, unitnewbranch,
-  unitruncmd, unitansiescapes
+  unitruncmd, unitansiescapes, unitnewtag
   { you can add units after this };
 
 {$R *.res}

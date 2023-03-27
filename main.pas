@@ -32,7 +32,7 @@ uses
   StdCtrls, ExtCtrls, ActnList, synEditTypes, SynEdit, SynHighlighterDiff,
   StrUtils, FileUtil, unitconfig, unitprocess, unitentries, unitgit, Types,
   lclType, Menus, Buttons, unitnewbranch, unitruncmd, unitansiescapes,
-  LConvEncoding;
+  unitnewtag, LConvEncoding;
 
 type
 
@@ -934,8 +934,23 @@ begin
 end;
 
 procedure TfrmMain.NewTag;
+var
+  f: TfrmNewTag;
 begin
-  ComingSoon;
+  f := TfrmNewTag.Create(Self);
+  f.Oid := fGit.BranchOID;
+  try
+    if f.ShowModal=mrOk then begin
+      if fGit.Tag(f.txtName.Text, f.chkAnnotated.checked, f.txtMsg.Text)>0 then
+        ShowError
+      else begin
+        ShowMessage('The tag '''+f.txtName.Text+''' was successfully created');
+        // TODO: show the latest tag in branch
+      end;
+    end;
+  finally
+    f.free;
+  end;
 end;
 
 procedure TfrmMain.CheckMenuDivisorInLastPosition(pop: TPopupMenu);

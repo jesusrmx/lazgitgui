@@ -86,6 +86,12 @@
         <Filename Value="unitansiescapes.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit>
+      <Unit>
+        <Filename Value="unitnewtag.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="frmNewTag"/>
+        <ResourceBaseClass Value="Form"/>
+      </Unit>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

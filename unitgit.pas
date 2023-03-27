@@ -99,6 +99,7 @@ type
     function Push(repo, opts: string; callback:TOutputEvent): Integer;
     function Log(opts: string; callback:TOutputEvent): Integer;
     function Any(cmd: string; out cmdout:RawByteString): Integer;
+    function Tag(tagName:string; annotated:boolean; tagMsg:string): Integer;
     function AddToIgnoreFile(aFile:string; justType:boolean; global:boolean): boolean;
 
     property Exe: string read fGitCommand;
@@ -176,6 +177,12 @@ begin
     {$endif}
   end else
     result := aPath;
+end;
+
+function QuoteMsg(msg: string): string;
+begin
+  result := StringReplace(msg, '"', '\"', [rfReplaceAll]);
+  result := '"' + result + '"';
 end;
 
 function MakePathList(entryArray: TPFileEntryArray; sanitizeItems: boolean
@@ -735,7 +742,9 @@ var
   cmd: string;
   cmdOut: RawByteString;
 begin
+  msg := QuoteMsg(msg);
   msg := StringReplace(msg, '"', '\"', [rfReplaceAll]);
+  cmd := ' commit -m ' + QuoteMsg(msg);
   cmd := ' commit -m "'+msg+'"';
   if opts<>'' then
     cmd += ' '+opts;
@@ -763,6 +772,21 @@ end;
 function TGit.Any(cmd: string; out cmdout: RawByteString): Integer;
 begin
   result := cmdLine.RunProcess(fGitCommand + ' ' + cmd, fTopLevelDir, cmdOut);
+end;
+
+function TGit.Tag(tagName: string; annotated: boolean; tagMsg: string): Integer;
+var
+  cmd: String;
+  cmdOut: RawByteString;
+begin
+  cmd := ' tag ';
+  if annotated then begin
+    cmd += '-a ';
+    if tagMsg<>'' then
+      cmd += '-m ' + QuoteMsg(tagMsg) + ' ';
+  end;
+  cmd += tagName;
+  result := cmdLine.RunProcess(fGitCommand + cmd, fTopLevelDir, cmdOut);
 end;
 
 function TGit.AddToIgnoreFile(aFile: string; justType: boolean; global: boolean
