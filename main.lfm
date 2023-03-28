@@ -1398,6 +1398,32 @@ object frmMain: TfrmMain
       Flat = True
       GroupIndex = 1
     end
+    object Label3: TLabel
+      AnchorSideLeft.Control = lblRemote
+      AnchorSideLeft.Side = asrBottom
+      AnchorSideTop.Control = Label1
+      Left = 600
+      Height = 17
+      Top = 5
+      Width = 23
+      BorderSpacing.Left = 10
+      Caption = 'Tag:'
+      ParentFont = False
+    end
+    object lblTag: TLabel
+      AnchorSideLeft.Control = Label3
+      AnchorSideLeft.Side = asrBottom
+      AnchorSideTop.Control = Label1
+      Left = 633
+      Height = 17
+      Top = 5
+      Width = 84
+      BorderSpacing.Left = 10
+      Caption = '<create a tag>'
+      Font.Color = clOlive
+      Font.Style = [fsBold]
+      ParentFont = False
+    end
   end
   object splitterMain: TSplitter
     Left = 256

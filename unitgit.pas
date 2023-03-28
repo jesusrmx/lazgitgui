@@ -70,6 +70,9 @@ type
     fCommitsBehind: Integer;
     fEntries: TFPList;
     fVersion: String;
+    fLastTag: string;
+    fLastTagOID: string;
+    fLastTagCommits: Integer;
     function GetErrorLog: RawByteString;
     procedure GitStatusBranch(var head: pchar; tail: pchar);
     procedure GitStatusFiles(var head: pchar; tail: pchar; lstUnstaged, lstStaged: TStrings);
@@ -101,7 +104,7 @@ type
     function Any(cmd: string; out cmdout:RawByteString): Integer;
     function Tag(tagName:string; annotated:boolean; tagMsg:string): Integer;
     function AddToIgnoreFile(aFile:string; justType:boolean; global:boolean): boolean;
-    function Describe(opts: string): Integer;
+    function Describe(opts: string; out cmdOut:RawByteString): Integer;
 
     property Exe: string read fGitCommand;
     property CommitsAhead: Integer read fCommitsAhead;
@@ -116,6 +119,9 @@ type
     property UntrackedMode: string read fUntrackedMode write fUntrackedMode;
     property IgnoredMode: string read fIgnoredMode write fIgnoredMode;
     property Version: string read FVersion;
+    property LastTag: string read fLastTag;
+    property LastTagOID: string read fLastTagOID;
+    property LastTagCommits: Integer read fLastTagCommits;
   end;
 
   procedure ClearRefList(list: TStrings);
@@ -824,11 +830,33 @@ begin
   end;
 end;
 
-function TGit.Describe(opts: string): Integer;
+function TGit.Describe(opts: string; out cmdOut: RawByteString): Integer;
+var
+  internal: boolean;
+  cmd: string;
+  p: SizeInt;
 begin
-
-  if fGit.Any('describe --tags', cmdout)<=0 then begin
-
+  internal := opts='';
+  cmd := 'describe ';
+  if internal then  cmd += '--tags'
+  else              cmd += opts;
+  result := cmdLine.RunProcess(fGitCommand + ' ' + cmd, fTopLevelDir, cmdOut);
+  if (result<=0) and (internal {or IKnowDescribeOptions(opts)}) then begin
+    // tag-commits-'g'OID
+    fLastTag := '';
+    fLastTagCommits := 0;
+    fLastTagOID := '';
+    cmd := cmdOut;
+    p := cmd.LastIndexOf('-g');
+    if p>=0 then begin
+      fLastTagOID := Trim(copy(cmd, p+3, MAXINT));
+      delete(cmd, p+1, MAXINT);
+      p := cmd.LastIndexOf('-');
+      if p>=0 then begin
+        fLastTagCommits := StrToIntDef(copy(cmd, p+2, MAXINT), 0);
+        fLastTag := copy(cmd, 1, p);
+      end;
+    end;
   end;
 end;
 

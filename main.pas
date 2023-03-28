@@ -55,6 +55,8 @@ type
     imgList: TImageList;
     Label1: TLabel;
     Label2: TLabel;
+    Label3: TLabel;
+    lblTag: TLabel;
     lblMerging: TLabel;
     lblRemote: TLabel;
     lblAheadBehind: TLabel;
@@ -116,6 +118,7 @@ type
     fViewIgnoredFiles: Boolean;
     fViewTrackedFiles: Boolean;
     fViewUntrackedFiles: Boolean;
+    fLastDescribedTag: string;
     {$IFDEF CaptureOutput}
     fCap: TMemoryStream;
     {$ENDIF}
@@ -753,10 +756,12 @@ begin
   lstStaged.Items.BeginUpdate;
   try
     // get the more recent tag
-    fGit.Describe('');
+    fGit.Describe('', cmdout);
+    fLastDescribedTag := cmdOut;
 
     if fViewIgnoredFiles then fGit.IgnoredMode:='traditional' else fGit.IgnoredMode:='no';
     if fViewUntrackedFiles then fGit.UntrackedMode:='all' else fGit.UntrackedMode:='no';
+
     if fGit.Status(lstUnstaged.Items, lstStaged.Items)>0 then
       ShowError
     else
@@ -1292,7 +1297,19 @@ begin
   label2.Visible := (not ahead and not behind) and (fGit.Upstream<>'');
   lblRemote.Caption := fGit.Upstream;
 
-  //actPush.Enabled := ahead;
+  if fGit.LastTag='' then begin
+    lblTag.Caption :='No Tag available';
+    lblTag.Hint := '';
+    label3.Caption := '';
+  end else begin
+    lblTag.Caption := fGit.LastTag;
+    if fGit.LastTagCommits=0 then
+      label3.Caption := 'At tag'
+    else
+      label3.Caption := format('%d commits since',[fGit.LastTagCommits]);
+    lblTag.Hint := fGit.LastTagOID;
+  end;
+
 
   txtDiff.Clear;
 
