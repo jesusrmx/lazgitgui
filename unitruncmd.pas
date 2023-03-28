@@ -195,11 +195,13 @@ var
       result := y;
   end;
 
-  procedure CollectOutput(const buffer; size:Longint);
+  procedure CollectOutput(const buffer; size:Longint; var interrupt: boolean);
   var
     aPos: Integer;
     p, q: pchar;
   begin
+    if terminated or interrupt then
+      exit;
     {$IFDEF DEBUG}
     DebugLn('Collecting %d bytes',[size]);
     {$ENDIF}
@@ -208,7 +210,7 @@ var
     Move(Buffer, OutText[aPos+1], size);
 
     // buffer is guaranteed to end with #0
-    while outText<>'' do begin
+    while (outText<>'') and (not Terminated) do begin
 
       p := @outText[1];
       q := NextLineEnding(p);
@@ -229,6 +231,10 @@ var
 
       Synchronize(@Notify);
 
+      interrupt := terminated;
+      if interrupt then
+        break;
+
       delete(outText, 1, (q-p) + length(fLineEnding));
 
     end;
@@ -242,7 +248,7 @@ begin
   //fCmdLine^.WaitOnExit := true;
   fCmdLine^.RedirStdErr := true;
   fResult := fCmdLine^.RunProcess(fCommand, fStartDir, @CollectOutput);
-  if outText<>'' then begin
+  if (outText<>'') and (not terminated) then begin
     fLine := outText;
     Synchronize(@Notify);
   end;
@@ -250,6 +256,7 @@ begin
   {$IFDEF DEBUG}
   DebugLnExit('RunThread DONE result=%d', [fResult]);
   {$ENDIF}
+  Terminate;
 end;
 
 { TfrmRunCommand }

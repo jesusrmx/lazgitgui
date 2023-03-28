@@ -32,7 +32,7 @@ uses
   Classes, SysUtils, Process, UTF8Process, LazLogger;
 
 type
-  TOutputEvent = procedure(const aBuffer; aSize:longint) is nested;
+  TOutputEvent = procedure(const aBuffer; aSize:longint; var interrupt:boolean) is nested;
 
   { TCmdLine }
 
@@ -174,6 +174,7 @@ var
   opts: TProcessOptions;
   Err: TStringStream;
   s: string;
+  interrupt: Boolean;
 
   procedure ParseCommandLine;
   var
@@ -235,19 +236,26 @@ begin
     {$ENDIF}
     Process.Execute;
 
-    if not StdOutputClosed then
+    if not StdOutputClosed then begin
+      interrupt := false;
       repeat
         BytesRead := Process.Output.Read(Buffer^, BUFSIZE);
-        Callback(Buffer^, BytesRead);
-      until BytesRead=0;
+        Callback(Buffer^, BytesRead, interrupt);
+      until interrupt or (BytesRead=0);
+    end;
 
-    // collect any reported error
-    if not StdErrorClosed and (not (poStderrToOutPut in Process.Options)) then begin
-      while Process.StdErr.NumBytesAvailable>0 do begin
-        BytesRead := Process.Stderr.Read(Buffer^, BUFSIZE);
-        Err.WriteBuffer(Buffer^, BytesRead);
-      end;
-      fErrorLog := Err.DataString;
+    if not interrupt then
+      // collect any reported error
+      if not StdErrorClosed and (not (poStderrToOutPut in Process.Options)) then begin
+        while Process.StdErr.NumBytesAvailable>0 do begin
+          BytesRead := Process.Stderr.Read(Buffer^, BUFSIZE);
+          Err.WriteBuffer(Buffer^, BytesRead);
+        end;
+        fErrorLog := Err.DataString;
+      end
+    else begin
+      // ?
+      // Process.Terminate(256);
     end;
 
     {$IFDEF DEBUG}
@@ -289,7 +297,7 @@ begin
 end;
 
 function TCmdLine.RunProcess(const aCommand, startDir: string; stream: TStream): Integer;
-  procedure CollectOutput(const buffer; size:Longint);
+  procedure CollectOutput(const buffer; size:Longint; var interrupt: boolean);
   begin
     stream.WriteBuffer(Buffer, size);
   end;

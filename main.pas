@@ -77,6 +77,7 @@ type
     popBranch: TPopupMenu;
     btnLog: TSpeedButton;
     popLists: TPopupMenu;
+    btnStop: TSpeedButton;
     splitterMain: TSplitter;
     SynDiffSyn1: TSynDiffSyn;
     txtLog: TSynEdit;
@@ -95,6 +96,7 @@ type
     procedure actPushExecute(Sender: TObject);
     procedure actQuitExecute(Sender: TObject);
     procedure actRescanExecute(Sender: TObject);
+    procedure btnStopClick(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
@@ -364,6 +366,7 @@ begin
   fCap.SaveToFile('colorido.bin');
   fCap.Free;
   {$endif}
+  btnStop.Visible := false;
 end;
 
 procedure TfrmMain.OnLogOutput(sender: TObject; var interrupt: boolean);
@@ -375,6 +378,9 @@ begin
     fCap.WriteBuffer(thread.Line[1], Length(thread.Line));
   fCap.WriteBuffer(thread.LineEnding[1], Length(thread.LineEnding));
   {$ENDIF}
+  interrupt := btnStop.Visible and (btnStop.Tag=1);
+  if interrupt then
+    exit;
   fAnsiHandler.ProcessLine(thread.Line, thread.LineEnding);
 end;
 
@@ -1124,6 +1130,11 @@ begin
   UpdateStatus;
 end;
 
+procedure TfrmMain.btnStopClick(Sender: TObject);
+begin
+  btnStop.Tag := 1;
+end;
+
 procedure TfrmMain.actCommitExecute(Sender: TObject);
 begin
   DoCommit;
@@ -1200,6 +1211,8 @@ begin
   if actLog.Checked then begin
     panLog.Visible := true;
     panStatus.Visible := false;
+    btnStop.Visible := true;
+    btnStop.Tag := 0;
     txtLog.Clear;
     fAnsiHandler.Reset;
     {$IFDEF CaptureOutput}
