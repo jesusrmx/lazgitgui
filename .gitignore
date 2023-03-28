@@ -22,3 +22,7 @@ lazgitgui
 *.log
 *.plist
 PkgInfo
+*.txt
+*.bin
+*.orig
+*.reflist
