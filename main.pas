@@ -322,6 +322,7 @@ begin
   if fGit.Switch(mi.Caption)>0 then
     ShowError
   else begin
+    fDescribed := false;
     UpdateStatus;
     InvalidateBranchMenu;
   end;
@@ -732,7 +733,7 @@ begin
   try
 
     // get the more recent tag
-    if not fDescribed then begin
+    if fConfig.ShowTags and (not fDescribed) then begin
       fGit.Describe('', cmdout);
       fLastDescribedTag := cmdOut;
       fDescribed := true;
@@ -933,8 +934,8 @@ begin
       if fGit.Tag(f.txtName.Text, f.chkAnnotated.checked, f.txtMsg.Text)>0 then
         ShowError
       else begin
-        ShowMessage('The tag '''+f.txtName.Text+''' was successfully created');
-        // TODO: show the latest tag in branch
+        fDescribed := false;
+        UpdateStatus;
       end;
     end;
   finally
@@ -1292,17 +1293,23 @@ begin
   label2.Visible := (not ahead and not behind) and (fGit.Upstream<>'');
   lblRemote.Caption := fGit.Upstream;
 
-  if fGit.LastTag='' then begin
-    lblTag.Caption :='No Tag available';
+  if fConfig.ShowTags then begin
+    if fGit.LastTag='' then begin
+      lblTag.Caption :='No Tag available';
+      lblTag.Hint := '';
+      label3.Caption := '';
+    end else begin
+      lblTag.Caption := fGit.LastTag;
+      if fGit.LastTagCommits=0 then
+        label3.Caption := 'At tag'
+      else
+        label3.Caption := format('%d commits since',[fGit.LastTagCommits]);
+      lblTag.Hint := fGit.LastTagOID;
+    end;
+  end else begin
+    lblTag.Caption :='';
     lblTag.Hint := '';
     label3.Caption := '';
-  end else begin
-    lblTag.Caption := fGit.LastTag;
-    if fGit.LastTagCommits=0 then
-      label3.Caption := 'At tag'
-    else
-      label3.Caption := format('%d commits since',[fGit.LastTagCommits]);
-    lblTag.Hint := fGit.LastTagOID;
   end;
 
 

@@ -43,10 +43,12 @@ type
     fConfigFile: string;
     fConfigFileOpenCount: Integer;
     fIniFile: TIniFile;
+    fShowTags: boolean;
     fViewIgnoredFiles: boolean;
     fViewUntrackedFiles: boolean;
     fViewTrackedFiles: boolean;
     procedure CheckConfigFile;
+    procedure SetShowTags(AValue: boolean);
     procedure SetViewIgnoredFiles(AValue: boolean);
     procedure SetViewTrackedFiles(AValue: boolean);
     procedure SetViewUntrackedFiles(AValue: boolean);
@@ -67,6 +69,7 @@ type
     property ViewUntrackedFiles: boolean read fViewUntrackedFiles write SetViewUntrackedFiles;
     property ViewIgnoredFiles: boolean read fViewIgnoredFiles write SetViewIgnoredFiles;
     property ViewTrackedFiles: boolean read fViewTrackedFiles write SetViewTrackedFiles;
+    property ShowTags: boolean read fShowTags write SetShowTags;
   end;
 
   procedure Setup;
@@ -113,6 +116,13 @@ begin
     fConfigFile := GetAppConfigFile(false, true);
     ForceDirectories(ExtractFilePath(fConfigFile));
   end;
+end;
+
+procedure TConfig.SetShowTags(AValue: boolean);
+begin
+  if fShowTags = AValue then Exit;
+  fShowTags := AValue;
+  WriteBoolean('ShowTags', fShowTags);
 end;
 
 procedure TConfig.SetViewIgnoredFiles(AValue: boolean);
@@ -256,6 +266,7 @@ begin
   fViewUntrackedFiles := ReadBoolean('ViewUntracked', true);
   fViewIgnoredFiles := ReadBoolean('ViewIgnored', false);
   fViewTrackedFiles := ReadBoolean('ViewTracked', false);
+  fShowTags := ReadBoolean('ShowTags', true);
 end;
 
 end.
