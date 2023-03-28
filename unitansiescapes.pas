@@ -49,6 +49,7 @@ type
     function GetAttribute(par,int,fin: string): TtkTokenKind;
   public
     constructor Create(aEditor: TSynEdit);
+    destructor Destroy; override;
     procedure ProcessLine(aLine: string; le: TLineEnding);
     procedure Reset;
     procedure Dump;
@@ -236,6 +237,12 @@ begin
   fEditor.Highlighter := fHighlighter;
 
   reset;
+end;
+
+destructor TAnsiEscapesHandler.Destroy;
+begin
+  fCodes.Free;
+  inherited Destroy;
 end;
 
 procedure TAnsiEscapesHandler.ProcessLine(aLine: string; le: TLineEnding);
