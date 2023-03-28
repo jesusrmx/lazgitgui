@@ -15,6 +15,12 @@ const
 
 type
   TLogEvent = procedure(sender: TObject; thread: TRunThread; event: Integer; var interrupt: boolean) of object;
+  TLogItem = record
+    CommitID: string;
+    DateTime: TDateTime;
+    Author: string;
+    Subject: string;
+  end;
 
   { TLogHandler }
 
