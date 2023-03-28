@@ -125,6 +125,7 @@ type
     fViewTrackedFiles: Boolean;
     fViewUntrackedFiles: Boolean;
     fLastDescribedTag: string;
+    fDescribed: boolean;
     {$IFDEF CaptureOutput}
     fCap: TMemoryStream;
     {$ENDIF}
@@ -765,9 +766,13 @@ begin
   lstUnstaged.Items.BeginUpdate;
   lstStaged.Items.BeginUpdate;
   try
+
     // get the more recent tag
-    fGit.Describe('', cmdout);
-    fLastDescribedTag := cmdOut;
+    if not fDescribed then begin
+      fGit.Describe('', cmdout);
+      fLastDescribedTag := cmdOut;
+      fDescribed := true;
+    end;
 
     if fViewIgnoredFiles then fGit.IgnoredMode:='traditional' else fGit.IgnoredMode:='no';
     if fViewUntrackedFiles then fGit.UntrackedMode:='all' else fGit.UntrackedMode:='no';
