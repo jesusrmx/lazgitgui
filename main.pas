@@ -120,9 +120,6 @@ type
     fLogHandler: TLogHandler;
     fPopPoint: TPoint;
     fListAlwaysDrawSelection: boolean;
-    fViewIgnoredFiles: Boolean;
-    fViewTrackedFiles: Boolean;
-    fViewUntrackedFiles: Boolean;
     fLastDescribedTag: string;
     fDescribed: boolean;
     procedure DoGitDiff(Data: PtrInt);
@@ -296,22 +293,19 @@ begin
 
     MENU_LIST_VIEW_UNTRACKED:
       begin
-        fViewUntrackedFiles := mi.Checked;
-        fConfig.WriteBoolean('ViewUntracked', fViewUntrackedFiles);
+        fConfig.ViewUntrackedFiles := mi.checked;
         UpdateStatus;
       end;
 
     MENU_LIST_VIEW_IGNORED:
       begin
-        fViewIgnoredFiles := mi.Checked;
-        fConfig.WriteBoolean('ViewIgnored', fViewIgnoredFiles);
+        fConfig.ViewIgnoredFiles := mi.checked;
         UpdateStatus;
       end;
 
     //MENU_LIST_VIEW_TRACKED:
     //  begin
-    //    fViewTrackedFiles := mi.Checked;
-    //    fConfig.WriteBoolean('ViewTracked', fViewTrackedFiles);
+    //    fConfig.ViewTrackedFiles := mi.Checked;
     //    UpdateStatus;
     //  end;
 
@@ -482,13 +476,13 @@ var
     if isUnstaged then begin
       mi := AddPopItem(popLists, 'View Untracked Files', @OnPopupItemClick, MENU_LIST_VIEW_UNTRACKED);
       mi.AutoCheck := true;
-      mi.Checked := fViewUntrackedFiles;
+      mi.Checked := fConfig.ViewUntrackedFiles;
       mi := AddPopItem(popLists, 'View Ignored Files', @OnPopupItemClick, MENU_LIST_VIEW_IGNORED);
       mi.AutoCheck := true;
-      mi.Checked := fConfig.ReadBoolean('ViewIgnored');
-      mi := AddPopItem(popLists, 'View Unchanged Files', @OnPopupItemClick, MENU_LIST_VIEW_TRACKED);
+      mi.Checked := fConfig.ViewIgnoredFiles;
+      mi := AddPopItem(popLists, 'View Tracked Files', @OnPopupItemClick, MENU_LIST_VIEW_TRACKED);
       mi.AutoCheck := true;
-      mi.Checked := fConfig.ReadBoolean('ViewChanged');
+      mi.Checked := fConfig.ViewTrackedFiles;
     end;
   end;
 
@@ -744,8 +738,8 @@ begin
       fDescribed := true;
     end;
 
-    if fViewIgnoredFiles then fGit.IgnoredMode:='traditional' else fGit.IgnoredMode:='no';
-    if fViewUntrackedFiles then fGit.UntrackedMode:='all' else fGit.UntrackedMode:='no';
+    if fConfig.ViewIgnoredFiles then fGit.IgnoredMode:='traditional' else fGit.IgnoredMode:='no';
+    if fConfig.ViewUntrackedFiles then fGit.UntrackedMode:='all' else fGit.UntrackedMode:='no';
 
     if fGit.Status(lstUnstaged.Items, lstStaged.Items)>0 then
       ShowError
@@ -1094,9 +1088,7 @@ begin
   fLogHandler := TLogHandler.Create(txtLog, @OnLogEvent);
   fLogHandler.Git := fGit;
 
-  fViewUntrackedFiles := fConfig.ReadBoolean('ViewUntracked', true);
-  fViewIgnoredFiles := fConfig.ReadBoolean('ViewIgnored', false);
-  fViewTrackedFiles := fConfig.ReadBoolean('ViewTracked', false);
+  fConfig.ReadPreferences;
 
   fConfig.CloseConfig;
 end;

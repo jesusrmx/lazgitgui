@@ -43,7 +43,13 @@ type
     fConfigFile: string;
     fConfigFileOpenCount: Integer;
     fIniFile: TIniFile;
+    fViewIgnoredFiles: boolean;
+    fViewUntrackedFiles: boolean;
+    fViewTrackedFiles: boolean;
     procedure CheckConfigFile;
+    procedure SetViewIgnoredFiles(AValue: boolean);
+    procedure SetViewTrackedFiles(AValue: boolean);
+    procedure SetViewUntrackedFiles(AValue: boolean);
   public
     procedure OpenConfig;
     procedure CloseConfig;
@@ -56,6 +62,11 @@ type
     procedure WriteString(aKey:string; avalue:string; section:string=SECTION_DEFAULT);
     procedure WriteBoolean(aKey:string; avalue:boolean; section:string=SECTION_DEFAULT);
     procedure WriteInteger(aKey:string; avalue:Integer; section:string=SECTION_DEFAULT);
+    procedure ReadPreferences;
+
+    property ViewUntrackedFiles: boolean read fViewUntrackedFiles write SetViewUntrackedFiles;
+    property ViewIgnoredFiles: boolean read fViewIgnoredFiles write SetViewIgnoredFiles;
+    property ViewTrackedFiles: boolean read fViewTrackedFiles write SetViewTrackedFiles;
   end;
 
   procedure Setup;
@@ -102,6 +113,27 @@ begin
     fConfigFile := GetAppConfigFile(false, true);
     ForceDirectories(ExtractFilePath(fConfigFile));
   end;
+end;
+
+procedure TConfig.SetViewIgnoredFiles(AValue: boolean);
+begin
+  if fViewIgnoredFiles = AValue then Exit;
+  fViewIgnoredFiles := AValue;
+  WriteBoolean('ViewIgnored', fViewIgnoredFiles);
+end;
+
+procedure TConfig.SetViewTrackedFiles(AValue: boolean);
+begin
+  if fViewTrackedFiles = AValue then Exit;
+  fViewTrackedFiles := AValue;
+  WriteBoolean('ViewTracked', fViewTrackedFiles);
+end;
+
+procedure TConfig.SetViewUntrackedFiles(AValue: boolean);
+begin
+  if fViewUntrackedFiles = AValue then Exit;
+  fViewUntrackedFiles := AValue;
+  WriteBoolean('ViewUntracked', fViewUntrackedFiles);
 end;
 
 procedure TConfig.OpenConfig;
@@ -217,6 +249,13 @@ begin
   OpenConfig;
   fIniFile.WriteInteger(Section, aKey, aValue);
   CloseConfig;
+end;
+
+procedure TConfig.ReadPreferences;
+begin
+  fViewUntrackedFiles := ReadBoolean('ViewUntracked', true);
+  fViewIgnoredFiles := ReadBoolean('ViewIgnored', false);
+  fViewTrackedFiles := ReadBoolean('ViewTracked', false);
 end;
 
 end.
