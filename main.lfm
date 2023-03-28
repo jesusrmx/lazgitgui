@@ -712,13 +712,35 @@ object frmMain: TfrmMain
             Action = actCommit
             TabOrder = 3
           end
-          object btnPush: TButton
+          object panPush: TPanel
             Left = 5
             Height = 25
             Top = 125
             Width = 125
-            Action = actPush
+            AutoSize = True
+            BevelOuter = bvNone
+            ClientHeight = 25
+            ClientWidth = 125
             TabOrder = 4
+            object btnPush: TButton
+              Left = 0
+              Height = 25
+              Top = 0
+              Width = 56
+              Action = actPush
+              Align = alLeft
+              TabOrder = 0
+            end
+            object btnPushDlg: TButton
+              Left = 61
+              Height = 25
+              Top = 0
+              Width = 64
+              Action = actPushDialog
+              Align = alClient
+              BorderSpacing.Left = 5
+              TabOrder = 1
+            end
           end
         end
         object txtComment: TMemo
@@ -1477,6 +1499,10 @@ object frmMain: TfrmMain
       AutoCheck = True
       Caption = 'L'
       OnExecute = actLogExecute
+    end
+    object actPushDialog: TAction
+      Caption = 'Push ...'
+      OnExecute = actPushDialogExecute
     end
   end
   object imgList: TImageList

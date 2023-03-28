@@ -41,6 +41,7 @@ type
   TfrmMain = class(TForm)
     actCommit: TAction;
     actFetch: TAction;
+    actPushDialog: TAction;
     actLog: TAction;
     actQuit: TAction;
     actPull: TAction;
@@ -52,6 +53,7 @@ type
     btnSignOff: TButton;
     btnCommit: TButton;
     btnPush: TButton;
+    btnPushDlg: TButton;
     imgList: TImageList;
     Label1: TLabel;
     Label2: TLabel;
@@ -68,6 +70,7 @@ type
     mnuMain: TMainMenu;
     panCommitState: TPanel;
     panBranch: TPanel;
+    panPush: TPanel;
     panLog: TPanel;
     panStatus: TPanel;
     panFileState: TPanel;
@@ -93,6 +96,7 @@ type
     procedure actFetchExecute(Sender: TObject);
     procedure actLogExecute(Sender: TObject);
     procedure actPullExecute(Sender: TObject);
+    procedure actPushDialogExecute(Sender: TObject);
     procedure actPushExecute(Sender: TObject);
     procedure actQuitExecute(Sender: TObject);
     procedure actRescanExecute(Sender: TObject);
@@ -1153,6 +1157,11 @@ end;
 procedure TfrmMain.actPullExecute(Sender: TObject);
 begin
   DoPull;
+end;
+
+procedure TfrmMain.actPushDialogExecute(Sender: TObject);
+begin
+  ComingSoon;
 end;
 
 procedure TfrmMain.actPushExecute(Sender: TObject);
