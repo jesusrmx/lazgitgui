@@ -23,7 +23,6 @@
 unit main;
 
 {$mode objfpc}{$H+}
-{.$define CaptureOutput}
 
 interface
 
@@ -32,7 +31,7 @@ uses
   StdCtrls, ExtCtrls, ActnList, synEditTypes, SynEdit, SynHighlighterDiff,
   StrUtils, FileUtil, unitconfig, unitprocess, unitentries, unitgit, Types,
   lclType, Menus, Buttons, unitnewbranch, unitruncmd, unitansiescapes,
-  unitnewtag, LConvEncoding;
+  unitnewtag, unitlog, LConvEncoding;
 
 type
 
@@ -118,17 +117,14 @@ type
     fGit: TGit;
     fClickedIndex: Integer;
     fDir: string;
+    fLogHandler: TLogHandler;
     fPopPoint: TPoint;
-    fAnsiHandler: TAnsiEscapesHandler;
     fListAlwaysDrawSelection: boolean;
     fViewIgnoredFiles: Boolean;
     fViewTrackedFiles: Boolean;
     fViewUntrackedFiles: Boolean;
     fLastDescribedTag: string;
     fDescribed: boolean;
-    {$IFDEF CaptureOutput}
-    fCap: TMemoryStream;
-    {$ENDIF}
     procedure DoGitDiff(Data: PtrInt);
     procedure DoItemAction(Data: PtrInt);
     procedure DoCommit;
@@ -136,12 +132,12 @@ type
     procedure DoPush;
     procedure DoFetch;
     procedure DoPull;
+    procedure OnLogEvent(sender: TObject; thread: TRunThread; event: Integer;
+      var interrupt: boolean);
     procedure OnPopupItemClick(Sender: TObject);
     procedure OnBranchSwitch(Data: PtrInt);
     procedure OnIgnoreFileClick(Sender: TObject);
     procedure OnIgnoreTypeClick(Sender: TObject);
-    procedure OnLogDone(Sender: TObject);
-    procedure OnLogOutput(sender: TObject; var interrupt: boolean);
     procedure OnReloadBranchMenu(Data: PtrInt);
     procedure OnRestoreFileClick(Sender: TObject);
     procedure OnStageAllClick(Sender: TObject);
@@ -361,32 +357,6 @@ begin
     UpdateStatus
   else
     ShowMessage(Format('The type ''*%s'' is already in the ignored list',[ExtractFileExt(ignored)]));
-end;
-
-procedure TfrmMain.OnLogDone(Sender: TObject);
-var
-  thread: TRunThread absolute Sender;
-begin
-  {$IFDEF CaptureOutput}
-  fCap.SaveToFile('colorido.bin');
-  fCap.Free;
-  {$endif}
-  btnStop.Visible := false;
-end;
-
-procedure TfrmMain.OnLogOutput(sender: TObject; var interrupt: boolean);
-var
-  thread: TRunThread absolute sender;
-begin
-  {$IFDEF CaptureOutput}
-  if thread.Line<>'' then
-    fCap.WriteBuffer(thread.Line[1], Length(thread.Line));
-  fCap.WriteBuffer(thread.LineEnding[1], Length(thread.LineEnding));
-  {$ENDIF}
-  interrupt := btnStop.Visible and (btnStop.Tag=1);
-  if interrupt then
-    exit;
-  fAnsiHandler.ProcessLine(thread.Line, thread.LineEnding);
 end;
 
 procedure TfrmMain.OnReloadBranchMenu(Data: PtrInt);
@@ -1120,7 +1090,9 @@ begin
 
   txtLog.Color := clBlack;
   txtLog.Font.Color := clWhite;
-  fAnsiHandler := TAnsiEscapesHandler.Create(txtLog);
+
+  fLogHandler := TLogHandler.Create(txtLog, @OnLogEvent);
+  fLogHandler.Git := fGit;
 
   fViewUntrackedFiles := fConfig.ReadBoolean('ViewUntracked', true);
   fViewIgnoredFiles := fConfig.ReadBoolean('ViewIgnored', false);
@@ -1181,7 +1153,7 @@ end;
 
 procedure TfrmMain.FormDestroy(Sender: TObject);
 begin
-  fAnsiHandler.Free;
+  fLogHandler.Free;
   fGit.Free;
 end;
 
@@ -1227,15 +1199,7 @@ begin
     panStatus.Visible := false;
     btnStop.Visible := true;
     btnStop.Tag := 0;
-    txtLog.Clear;
-    fAnsiHandler.Reset;
-    {$IFDEF CaptureOutput}
-    fCap := TMemoryStream.Create;
-    {$ENDIF}
-    cmd :=  fGit.Exe + ' ' +
-            '-c color.ui=always ' +
-            'log --oneline --graph --decorate --all';
-    RunInThread(cmd, fGit.TopLevelDir, @OnLogOutput, @OnLogDone, true);
+    fLogHandler.ShowLog;
   end else begin
     panLog.Visible := false;
     panStatus.Visible := true;
@@ -1269,6 +1233,18 @@ procedure TfrmMain.DoPull;
 begin
   RunInteractive(fGit.Exe + ' -c color.ui=always pull', fGit.TopLevelDir, 'pulling from remote: ', 'Pull');
   UpdateStatus;
+end;
+
+procedure TfrmMain.OnLogEvent(sender: TObject; thread: TRunThread;
+  event: Integer; var interrupt: boolean);
+begin
+  case event of
+    LOGEVENT_OUTPUT:
+      interrupt := btnStop.Visible and (btnStop.Tag=1);
+
+    LOGEVENT_DONE:
+      btnStop.Visible := false;
+  end;
 end;
 
 procedure TfrmMain.DoGitDiff(Data: PtrInt);
