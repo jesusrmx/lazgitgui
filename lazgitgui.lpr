@@ -33,7 +33,7 @@ uses
   {$ENDIF}
   SysUtils, Classes, Interfaces, lazfileutils,// this includes the LCL widgetset
   Forms, main, unitconfig, unitprocess, unitentries, unitgit, unitnewbranch,
-  unitruncmd, unitansiescapes, unitnewtag, unitlog
+  unitruncmd, unitansiescapes, unitnewtag, unitlog, unitdebug
   { you can add units after this };
 
 {$R *.res}
@@ -95,7 +95,8 @@ begin
 
   fConfig := TConfig.Create;
 
-  Setup;
+  TDebugging.Config := fConfig;
+  TDebugging.Setup;
 
   if ParamCount=0 then begin
     WriteLn(stdErr, 'A file or directory is needed in the command line');
