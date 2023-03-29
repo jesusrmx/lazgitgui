@@ -28,7 +28,8 @@ unit unitgit;
 interface
 
 uses
-  Classes, SysUtils, FileUtil, DateUtils, lazlogger, unitprocess, unitentries;
+  Classes, SysUtils, FileUtil, DateUtils, lazlogger, unitifaces, unitprocess,
+  unitentries;
 
 type
 
@@ -60,6 +61,7 @@ type
   private
     fBranch: String;
     fBranchOID: string;
+    fConfig: IConfig;
     fGitCommand: string;
     fTopLevelDir: string;
     fMerging, fMergingConflict: Boolean;
@@ -81,10 +83,11 @@ type
     function GetVersion(gitCmd:string; out aVersion:string): boolean;
     function AtLeastVersion(aVer: string): boolean;
     function RefListEnabledField(aField: string): boolean;
+    procedure SetupExe(aExeFile, aVersion: string);
   public
     constructor create;
     destructor destroy; override;
-    procedure SetupExe(aExeFile, aVersion: string);
+    function Initialize: boolean;
     procedure Clear;
     function Status(unstagedList, stagedList: TStrings): Integer;
     function Diff(entry: PFileEntry; Unstaged:boolean; Lines:TStrings): Integer;
@@ -122,6 +125,7 @@ type
     property LastTag: string read fLastTag;
     property LastTagOID: string read fLastTagOID;
     property LastTagCommits: Integer read fLastTagCommits;
+    property Config: IConfig read fConfig write fConfig;
   end;
 
   procedure ClearRefList(list: TStrings);
@@ -225,6 +229,38 @@ begin
   clear;
   fEntries.Free;
   inherited destroy;
+end;
+
+function TGit.Initialize: boolean;
+var
+  arg, s, v: string;
+  i: Integer;
+begin
+
+  s := ''; v := '';
+  for i:=1 to ParamCount do begin
+    arg := paramStr(i);
+    if pos('--git=', arg)=1 then begin
+      s := copy(arg, 7, Length(arg));
+      break;
+    end;
+  end;
+
+  if (s='') and (fConfig<>nil) then begin
+    s := fConfig.ReadString('git');
+    v := fConfig.ReadString('gitversion');
+  end;
+
+  SetupExe(s, v);
+
+  result := Exe<>'';
+  if result and (fConfig<>nil) then begin
+    if (Exe<>s) or (Version<>v) then begin
+      fConfig.WriteString('git', Exe);
+      fConfig.WriteString('gitversion', Version);
+    end;
+  end;
+
 end;
 
 procedure TGit.SetupExe(aExeFile, aVersion: string);

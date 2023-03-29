@@ -27,10 +27,9 @@ unit unitconfig;
 interface
 
 uses
-  Classes, SysUtils, FileUtil, IniFiles, LazLogger, Graphics, Forms;
+  Classes, SysUtils, FileUtil, IniFiles, LazLogger, Graphics, Forms, unitifaces;
 
 const
-  SECTION_DEFAULT = 'options';
   SECTION_GEOMETRY = 'geometry';
   SECTION_FONTS = 'fonts';
 
@@ -38,7 +37,7 @@ type
 
   { TConfig }
 
-  TConfig = object
+  TConfig = class(TInterfacedObject, IConfig)
   private
     fConfigFile: string;
     fConfigFileOpenCount: Integer;

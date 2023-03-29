@@ -1047,29 +1047,15 @@ var
   aQuality: TFontQuality;
 begin
   fGit := TGit.Create;
+  fGit.Config := fConfig;
 
   fConfig.OpenConfig;
 
-  s := ''; v := '';
-  if Application.HasOption('git') then
-    s := Application.GetOptionValue('git');
-  if s='' then begin
-    s := fConfig.ReadString('git');
-    v := fConfig.ReadString('gitversion');
-  end;
-
-  fGit.SetupExe(s, v);
-
-  if fGit.Exe='' then begin
+  if not fGit.Initialize then begin
     fConfig.CloseConfig;
     DebugLn('Error: Could not find git command');
     Application.Terminate;
     exit;
-  end;
-
-  if (fGit.Exe<>s) or (fGit.Version<>v) then begin
-    fConfig.WriteString('git', fGit.Exe);
-    fConfig.WriteString('gitversion', fGit.Version);
   end;
 
   //DebugLn('git=', fGit.Exe);

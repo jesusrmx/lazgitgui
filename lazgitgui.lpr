@@ -93,6 +93,8 @@ begin
 
   {$else}
 
+  fConfig := TConfig.Create;
+
   Setup;
 
   if ParamCount=0 then begin
