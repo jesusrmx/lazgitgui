@@ -22,6 +22,19 @@ type
     Subject: string;
   end;
 
+  {
+  #SEP="|"
+  SEP="%x02"
+  EOL="%x00"
+  D="t"
+  PRETTY="%p$SEP%h$SEP%an$SEP%ae$SEP%a$D$SEP%D$SEP%s$EOL"
+  #MAX="--max-count=1000"
+  FORMAT="tformat"
+  ALL="--all"
+
+  git log $MAX --pretty="$FORMAT:$PRETTY" $ALL > format.log
+  }
+
   { TLogHandler }
 
   TLogHandler = class
