@@ -31,6 +31,9 @@ uses
   Classes, SysUtils, FileUtil, DateUtils, lazlogger, unitifaces, unitprocess,
   unitentries;
 
+const
+  SECTION_GIT = 'lazgitgui.cfg';
+
 type
 
   TRefObjectType = (rotBlob, rotTree, rotCommit, rotTag);
@@ -233,31 +236,31 @@ end;
 
 function TGit.Initialize: boolean;
 var
-  arg, s, v: string;
+  arg, aFile, aVersion: string;
   i: Integer;
 begin
 
-  s := ''; v := '';
+  aFile := ''; aVersion := '';
   for i:=1 to ParamCount do begin
     arg := paramStr(i);
     if pos('--git=', arg)=1 then begin
-      s := copy(arg, 7, Length(arg));
+      aFile := copy(arg, 7, Length(arg));
       break;
     end;
   end;
 
-  if (s='') and (fConfig<>nil) then begin
-    s := fConfig.ReadString('git');
-    v := fConfig.ReadString('gitversion');
+  if (aFile='') and (fConfig<>nil) then begin
+    aFile := fConfig.ReadString('git', '', SECTION_GIT);
+    aVersion := fConfig.ReadString('gitversion', '', SECTION_GIT);
   end;
 
-  SetupExe(s, v);
+  SetupExe(aFile, aVersion);
 
   result := Exe<>'';
   if result and (fConfig<>nil) then begin
-    if (Exe<>s) or (Version<>v) then begin
-      fConfig.WriteString('git', Exe);
-      fConfig.WriteString('gitversion', Version);
+    if (Exe<>aFile) or (Version<>aVersion) then begin
+      fConfig.WriteString('git', Exe, SECTION_GIT);
+      fConfig.WriteString('gitversion', Version, SECTION_GIT);
     end;
   end;
 
