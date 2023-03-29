@@ -1042,9 +1042,6 @@ begin
 end;
 
 procedure TfrmMain.FormCreate(Sender: TObject);
-var
-  s, v: string;
-  aQuality: TFontQuality;
 begin
   fGit := TGit.Create;
   fGit.Config := fConfig;

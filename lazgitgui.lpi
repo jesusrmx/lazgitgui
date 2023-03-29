@@ -90,6 +90,7 @@
         <Filename Value="unitnewtag.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="frmNewTag"/>
+        <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
       </Unit>
       <Unit>
