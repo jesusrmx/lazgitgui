@@ -1175,7 +1175,9 @@ begin
     panStatus.Visible := false;
     btnStop.Visible := true;
     btnStop.Tag := 0;
+
     fLogHandler.ShowLog;
+
   end else begin
     panLog.Visible := false;
     panStatus.Visible := true;

@@ -108,9 +108,28 @@ end;
 procedure TLogHandler.ShowLog;
 var
   cmd: string;
+  lst: TStringList;
 begin
   fEdit.Clear;
   fAnsiHandler.Reset;
+
+  // check if we have a log cache
+  // do cache exists?
+  //   No: Create it
+  //   Yes: is cache up to date?
+  //        No: Update it
+  // show cached log
+
+  if FileExists(fGit.TopLevelDir + 'lazgitgui.cache') then begin
+    // is up to date?
+    // the info file is a list of local refs with their latest oids
+    lst := TStringList.Create;
+    try
+      lst.LoadFromFile(fGit.TopLevelDir + 'lazgitgui.info');
+    finally
+      lst.Free;
+    end;
+  end;
 
   {$IFDEF CaptureOutput}
   fCap := TMemoryStream.Create;
