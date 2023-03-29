@@ -95,30 +95,36 @@ begin
 
   fConfig := TConfig.Create;
 
-  TDebugging.Config := fConfig;
-  TDebugging.Setup;
+  try
 
-  if ParamCount=0 then begin
-    WriteLn(stdErr, 'A file or directory is needed in the command line');
-    exit;
+    TDebugging.Config := fConfig;
+    TDebugging.Setup;
+
+    if ParamCount=0 then begin
+      WriteLn(stdErr, 'A file or directory is needed in the command line');
+      exit;
+    end;
+
+    targetDir := ParamStr(ParamCount);
+    if FileExists(targetDir) then
+      targetDir := ExtractFilePath(targetDir)
+    else
+    if not DirectoryExists(targetDir) then begin
+      WriteLn(stdErr, 'No file or directory '+targetDir+' exists');
+      exit;
+    end;
+
+    targetDir := IncludeTrailingPathDelimiter(targetDir);
+
+    RequireDerivedFormResource:=True;
+    Application.Scaled := True;
+    Application.Initialize;
+    Application.CreateForm(TfrmMain, frmMain);
+    Application.Run;
+
+  finally
+    fConfig.Free;
   end;
-
-  targetDir := ParamStr(ParamCount);
-  if FileExists(targetDir) then
-    targetDir := ExtractFilePath(targetDir)
-  else
-  if not DirectoryExists(targetDir) then begin
-    WriteLn(stdErr, 'No file or directory '+targetDir+' exists');
-    exit;
-  end;
-
-  targetDir := IncludeTrailingPathDelimiter(targetDir);
-
-  RequireDerivedFormResource:=True;
-  Application.Scaled := True;
-  Application.Initialize;
-  Application.CreateForm(TfrmMain, frmMain);
-  Application.Run;
 
   {$endif}
 
