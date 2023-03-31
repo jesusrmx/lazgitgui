@@ -39,6 +39,7 @@ type
   PCmdLine = ^TCmdLine;
   TCmdLine = object
   private
+    fCaptureFile: string;
     fRedirStdErr: boolean;
     fStdErrorClosed: boolean;
     fStdInputClosed: boolean;
@@ -65,6 +66,7 @@ type
     property StdOutputClosed: boolean read fStdOutputClosed write fStdOutputClosed;
     property StdInputClosed: boolean read fStdInputClosed write fStdInputClosed;
     property RedirStdErr: boolean read fRedirStdErr write fRedirStdErr;
+    property CaptureFile: string read fCaptureFile write fCaptureFile;
   end;
 
   function SplitParameters(Params: string; ParamList: TStrings): boolean;
@@ -173,8 +175,8 @@ var
   BytesRead: LongInt;
   opts: TProcessOptions;
   Err: TStringStream;
-  s: string;
   interrupt: Boolean;
+  Cap: TFileStream;
 
   procedure ParseCommandLine;
   var
@@ -206,6 +208,9 @@ begin
   GetMem(Buffer, BUFSIZE + 1);
   Tail := Buffer + BUFSIZE;
   Tail^ := 0;
+
+  if fCaptureFile<>'' then
+    Cap := TFileStream.Create(fCaptureFile, fmCreate + fmOpenWrite);
   try
     {$ifdef MsWindows}
     ParseCommandLine;
@@ -242,6 +247,7 @@ begin
         BytesRead := Process.Output.Read(Buffer^, BUFSIZE);
         // really make sure that the buffer is zero terminated
         if BytesRead>0 then (Buffer + BytesRead)^ := 0;
+        if fCaptureFile<>'' then Cap.WriteBuffer(Buffer^, BytesRead);
         Callback(Buffer^, BytesRead, interrupt);
       until interrupt or (BytesRead=0);
     end;
@@ -279,6 +285,8 @@ begin
     fStdErrorClosed := false;
     fStdOutputClosed := false;
     fStdInputClosed := false;
+    if fCaptureFile<>'' then cap.Free;
+    fCaptureFile := '';
   end;
 end;
 
