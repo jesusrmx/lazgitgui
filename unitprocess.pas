@@ -75,7 +75,7 @@ var
 implementation
 
 const
-  BUFSIZE = 1024 * 2;
+  BUFSIZE = 1024 * 8;
 
 // copied and modified from: LazUtils, LazFileUtils.SplitCmdLineParams
 // todo: add a parameter to the original function for preserving quotes
@@ -240,6 +240,8 @@ begin
       interrupt := false;
       repeat
         BytesRead := Process.Output.Read(Buffer^, BUFSIZE);
+        // really make sure that the buffer is zero terminated
+        if BytesRead>0 then (Buffer + BytesRead)^ := 0;
         Callback(Buffer^, BytesRead, interrupt);
       until interrupt or (BytesRead=0);
     end;
