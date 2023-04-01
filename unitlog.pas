@@ -39,7 +39,7 @@ type
     Subject: RawByteString;
   end;
 
-  TIndexRecord = record
+  TIndexRecord = packed record
     offset: Int64;
     size: word;
   end;
@@ -302,18 +302,22 @@ function TLogCache.ReadLogItem(aIndex: SizeInt): boolean;
 var
   indexOffset: QWord;
   indxRec: TIndexRecord;
+  sizeofIndex: Integer;
 begin
   result := fIndexStream<>nil;
   if result then begin
 
-    if aIndex<0 then
-      // get the oldest item
-      aIndex := fIndexStream.Size div SizeOf(TIndexRecord);
+    sizeofIndex := SizeOf(TIndexRecord);
 
-    indexOffset := aIndex * SizeOf(TIndexRecord);
+    if aIndex<0 then begin
+      // get the oldest item
+      aIndex := fIndexStream.Size div sizeofIndex;
+    end;
+
+    indexOffset := aIndex * sizeofIndex;
 
     fIndexStream.Position := indexOffset;
-    fIndexStream.Read(indxRec{%H-}, SizeOf(TIndexRecord));
+    fIndexStream.Read(indxRec{%H-}, sizeofIndex);
 
     result := indxRec.offset + indxRec.size < fCacheStream.Size;
     if result then begin
