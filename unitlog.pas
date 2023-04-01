@@ -104,6 +104,7 @@ type
     fNewDate, fOldDate: Int64;
     fOldDateIsStart: boolean;
     flogEvent: TLogThreadEvent;
+    function GetCount: Integer;
     procedure OnLogThreadDone(Sender: TObject);
     procedure OnLogThreadOutput(sender: TObject; var interrupt: boolean);
     function ReadLogItem(aIndex:SizeInt): boolean;
@@ -124,7 +125,9 @@ type
     constructor create(aLogEvent: TLogThreadEvent);
     destructor Destroy; override;
     procedure LoadCache;
+
     property Git: TGit read fGit write fGit;
+    property Count: Integer read GetCount;
   end;
 
   { TLogHandler }
@@ -573,6 +576,14 @@ begin
     dummy := false;
     fLogEvent(Self, thread, LOGEVENT_DONE, dummy);
   end;
+end;
+
+function TLogCache.GetCount: Integer;
+begin
+  if fIndexStream<>nil then
+    result := fIndexStream.Size div SizeOf(TIndexRecord)
+  else
+    result := 0;
 end;
 
 procedure TLogCache.ItemFromCacheBuffer;
