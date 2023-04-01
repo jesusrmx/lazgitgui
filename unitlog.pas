@@ -117,8 +117,9 @@ type
     procedure DoLogStateEnd;
     procedure Run;
     function  GetFilename(aIndex: Integer): string;
-    procedure ReIndexFile(offset: Integer);
+    procedure ReIndexStream(stream:TMemoryStream; offset: Integer);
     procedure OpenCache;
+    procedure ClearRunStreams;
   public
     constructor create(aLogEvent: TLogThreadEvent);
     destructor Destroy; override;
@@ -311,7 +312,7 @@ begin
 
     if aIndex<0 then begin
       // get the oldest item
-      aIndex := fIndexStream.Size div sizeofIndex;
+      aIndex := fIndexStream.Size div sizeofIndex - 1;
     end;
 
     indexOffset := aIndex * sizeofIndex;
@@ -319,7 +320,7 @@ begin
     fIndexStream.Position := indexOffset;
     fIndexStream.Read(indxRec{%H-}, sizeofIndex);
 
-    result := indxRec.offset + indxRec.size < fCacheStream.Size;
+    result := indxRec.offset + indxRec.size <= fCacheStream.Size ;
     if result then begin
 
       if indxRec.size>fMaxBufferSize then begin
@@ -447,15 +448,13 @@ procedure TLogCache.OnLogThreadDone(Sender: TObject);
 var
   thread: TLogThread absolute Sender;
   dummy: boolean;
-  ticks: QWord;
-  aFileCache, aFileRun, aFileIndex, aFileRunIndex: String;
-  runStreamSize: Int64;
+  aFileCache, aFileRun, aFileIndex: String;
+  runStreamSize, cacheStreamSize: Int64;
 begin
 
   aFileCache := GetFilename(FILENAME_CACHE);
   aFileRun := GetFilename(FILENAME_RUN);
   aFileIndex := GetFilename(FILENAME_INDEX);
-  aFileRunIndex := GetFilename(FILENAME_RUNINDEX);
 
   case fLogState of
     lsGetFirst:
@@ -470,37 +469,99 @@ begin
           end;
         end;
 
-        // close active files
-        fRunStream.Free;
-        fCacheStream.Free;
+        // access the cache or the index is forbidden starting here !!!
+        // fLocked := true;
 
         if not FileExists(aFileCache) then begin
+          // close active files if any
+          FreeAndNil(fRunStream);
+          FreeAndNil(fCacheStream);
+
           // The cache file do not exists, the received records are the new cache
           RenameFile(aFileRun, aFileCache);
           fIndexRun.SaveToFile(aFileIndex);
-          fIndexRun.Free;
+          FreeAndNil(fIndexRun);
+          // now queue a re-open
+          FreeAndNil(fIndexStream);
 
           // not necessary to get new records,
           EnterLogState(lsEnd);
         end else begin
+
           // the received records are the first records in the new cache
-          AppendFile(aFileRun, aFileCache);
+          fCacheStream.Position := 0;
+          fRunStream.Seek(0, soFromEnd);
+          fRunStream.CopyFrom(fCacheStream, fCacheStream.Size);
+
+          // free & save run stream, stop using cachestream
+          FreeAndNil(fRunStream);
+          FreeAndNil(fCacheStream);
+
+          // delete old cache file, new cache file is run cache file
           DeleteFile(aFileCache);
           RenameFile(aFileRun, aFileCache);
+
           // a re-index of the existing records is in order
-          ReIndexFile(runStreamSize);
-          // save run index to a temporary file
-          fIndexRun.SaveToFile(aFileRunIndex);
-          fIndexRun.Free;
-          // Append the updated index
-          AppendFile(aFileRunIndex, aFileIndex);
-          DeleteFile(aFileIndex);
-          RenameFile(aFileRunIndex, aFileIndex);
+          ReIndexStream(fIndexStream, runStreamSize);
+
+          // merge indexes, run index is first
+          fIndexStream.Position := 0;
+          fIndexRun.Seek(0, soFromEnd);
+          fIndexRun.CopyFrom(fIndexStream, fIndexStream.Size);
+          fIndexRun.SaveToFile(aFileIndex);
+
+          // fIndexRun is up to date swapping pointers with fIndexStream
+          // would do it, but fCacheStream needs to be reopened again
+          // and it will reload only if fIndexStream=nil, so queue a re-open
+          FreeAndNil(fIndexRun);
+          FreeAndNil(fIndexStream);
 
           // got newer records, now try to get older records...
           EnterLogState(lsGetLast);
         end;
 
+      end;
+
+    lsGetLast:
+      begin
+
+        runStreamSize := fRunStream.Size;
+        if runStreamSize=0 then begin
+          // nothing was received, nothing more to do
+          EnterLogState(lsEnd);
+          exit;
+        end;
+        cacheStreamSize := fCacheStream.Size;
+
+        // access the cache or the index is forbidden starting here !!!
+        // fLocked := true;
+
+        // the received records are the last records in the new cache
+        fRunStream.Position := 0;
+        fCacheStream.Seek(0, soFromEnd);
+        fCacheStream.CopyFrom(fRunStream, fRunStream.Size);
+
+        // Run stream is not needed anymore
+        FreeAndNil(fRunStream);
+        DeleteFile(aFileRun);
+
+        // the running index must be re-indexed
+        ReIndexStream(fIndexRun, cacheStreamSize);
+
+        // merge the runing index with the existing index
+        fIndexRun.Position := 0;
+        fIndexStream.Seek(0, soFromEnd);
+        fIndexStream.CopyFrom(fIndexRun, fIndexRun.Size);
+        // fIndexRun stream is not needed anymore
+        FreeAndNil(fIndexRun);
+        // Save the updated index
+        fIndexStream.SaveToFile(aFileIndex);
+
+        // access the cache or the index is safe now
+        // fLocked := false;
+
+        // we are done ...
+        EnterLogState(lsEnd);
       end;
   end;
 
@@ -604,6 +665,7 @@ destructor TLogCache.Destroy;
 begin
   fIndexStream.Free;
   fCacheStream.Free;
+  ClearRunStreams;
   Finalize(fItem);
   FreeMem(fBuffer);
   inherited Destroy;
@@ -620,8 +682,6 @@ begin
 end;
 
 procedure TLogCache.DoLogStateStart;
-var
-  aRunFile: String;
 begin
   fLogState := lsStart;
 
@@ -638,24 +698,23 @@ begin
 end;
 
 procedure TLogCache.DoLogStateGetFirst;
-var
-  aRunFile: String;
 begin
   fLogState := lsGetFirst;
-
-  aRunFile := GetFilename(FILENAME_RUN);
-  fLogState := lsGetFirst;
-  fRunStream := TFileStream.Create(aRunFile, fmCreate + fmShareExclusive);
-  fIndexRun := TMemoryStream.Create;
-
   Run;
 end;
 
 procedure TLogCache.DoLogStateGetLast;
+var
+  aRunFile: String;
 begin
   fLogState := lsGetLast;
 
+  OpenCache;
+
+  // at the end of OpenCache fIndexStream must be ready
   if fIndexStream<>nil then begin
+
+    // read the last log entry to find its date
     if ReadLogItem(-1) then
       fOldDate := fItem.CommiterDate;
 
@@ -668,14 +727,24 @@ end;
 procedure TLogCache.DoLogStateEnd;
 begin
   fLogState := lsEnd;
+
+  OpenCache;
 end;
 
 procedure TLogCache.Run;
 var
   thread: TLogThread;
   cmd: string;
+  aRunFile: String;
 begin
 
+  // make sure run streams start clean
+  ClearRunStreams;
+  aRunFile := GetFilename(FILENAME_RUN);
+  fRunStream := TFileStream.Create(aRunFile, fmCreate + fmShareExclusive);
+  fIndexRun := TMemoryStream.Create;
+
+  // prepare git log command
   cmd := fGit.Exe + ' log ' + LOG_CMD;
 
   case fLogState of
@@ -693,6 +762,7 @@ begin
 
   end;
 
+  // launch the log thread
   thread := TLogThread.Create;
   thread.Command := cmd;
   thread.StartDir := fGit.TopLevelDir;
@@ -713,30 +783,21 @@ begin
   end;
 end;
 
-procedure TLogCache.ReIndexFile(offset: Integer);
+procedure TLogCache.ReIndexStream(stream: TMemoryStream; offset: Integer);
 var
-  M: TMemoryStream;
+  sizeofIndex, i: Integer;
   indx: TIndexRecord;
-  aSize, i: Integer;
-  aFile: String;
 begin
-  aFile := GetFilename(FILENAME_INDEX);
-  if FileExists(aFile) then begin
-    M := TMemoryStream.Create;
-    M.LoadFromFile(aFile);
-    aSize := SizeOf(TIndexRecord);
-    for i:=1 to M.Size div aSize do begin
-      // read existing record
-      M.Position := (i-1) * aSize;
-      M.Read(indx, aSize);
-      // update with new offset
-      indx.offset += offset;
-      // write back the record
-      M.Position := (i-1) * aSize;
-      M.Write(indx, aSize);
-    end;
-    M.SaveToFile(aFile);
-    M.Free;
+  sizeofIndex := SizeOf(TIndexRecord);
+  for i:=1 to stream.Size div sizeofIndex do begin
+    // read existing record
+    stream.Position := (i-1) * sizeofIndex;
+    stream.Read(indx, sizeofIndex);
+    // update with new offset
+    indx.offset += offset;
+    // write back the record
+    stream.Position := (i-1) * sizeofIndex;
+    stream.Write(indx, sizeofIndex);
   end;
 end;
 
@@ -752,8 +813,16 @@ begin
       fIndexStream := TMemoryStream.Create;
       fIndexStream.LoadFromFile(aFileIndex);
       fCacheStream := TFileStream.Create(aFileCache, fmOpenRead + fmShareDenyNone);
+      // now is no locked anymore
+      // fLocked := false;
     end;
   end;
+end;
+
+procedure TLogCache.ClearRunStreams;
+begin
+  fRunStream.Free;
+  fIndexRun.Free;
 end;
 
 procedure TLogCache.LoadCache;
@@ -815,6 +884,7 @@ end;
 destructor TLogHandler.Destroy;
 begin
   fAnsiHandler.Free;
+  fLogCache.Free;
   inherited Destroy;
 end;
 
