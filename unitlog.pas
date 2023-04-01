@@ -461,6 +461,14 @@ begin
     lsGetFirst:
       begin
         runStreamSize := fRunStream.Size;
+        if runStreamSize=0 then begin
+          // nothing was received, if there is already a cache
+          // try to get the oldest records
+          if FileExists(aFileCache) then begin
+            EnterLogState(lsGetLast);
+            exit;
+          end;
+        end;
 
         // close active files
         fRunStream.Free;
