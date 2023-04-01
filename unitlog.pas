@@ -670,13 +670,13 @@ begin
     lsGetFirst:
       begin
         if fNewDate<>0 then
-          cmd := ' --after=' + IntToStr(fNewDate + 1);  // newest date found + 1 second
+          cmd += ' --after=' + IntToStr(fNewDate + 1);  // newest date found + 1 second
       end;
 
     lsGetLast:
       begin
         if fOldDate>0 then
-          cmd := ' --before=' + IntToStr(fOldDate - 1); // oldest date found - 1 second
+          cmd += ' --before=' + IntToStr(fOldDate - 1); // oldest date found - 1 second
       end;
 
   end;
