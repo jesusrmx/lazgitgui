@@ -375,8 +375,8 @@ begin
     M.WriteByte(FontStylesToByte(attrs.Style));
   end;
   M.WriteWord(fEditor.Lines.Count);
-  for i:=0 to fEditor.Lines.Count do begin
-    Tokens := fHighlighter.Tokens[i+1];
+  for i:=0 to fEditor.Lines.Count-1 do begin
+    Tokens := fHighlighter.Tokens[i];
     if Tokens=nil then begin
       M.WriteWord(0);
       continue;
