@@ -39,6 +39,7 @@ type
     Subject: RawByteString;
   end;
 
+  PIndexRecord = ^TIndexRecord;
   TIndexRecord = packed record
     offset: Int64;
     size: word;
@@ -94,8 +95,8 @@ type
   TLogCache = class
   private
     fGit: TGit;
-    fCacheStream, fRunStream: TFileStream;
-    fIndexStream, fIndexRun: TMemoryStream;
+    fCacheStream: TFileStream;
+    fIndexStream: TMemoryStream;
     fBuffer: PChar;
     fMaxBufferSize: Integer;
     fEntryReadSize: Integer;
@@ -104,6 +105,7 @@ type
     fNewDate, fOldDate: Int64;
     fOldDateIsStart: boolean;
     flogEvent: TLogThreadEvent;
+    fOldIndexOffset: Int64;
     function GetCount: Integer;
     procedure OnLogThreadDone(Sender: TObject);
     procedure OnLogThreadOutput(sender: TObject; var interrupt: boolean);
@@ -119,6 +121,7 @@ type
     procedure Run;
     function  GetFilename(aIndex: Integer): string;
     procedure ReIndexStream(stream:TMemoryStream; offset: Integer);
+    procedure ReIndex;
     procedure OpenCache;
     procedure ClearRunStreams;
   public
@@ -159,6 +162,21 @@ implementation
 const
   FILE_INFO_SIGNATURE = 'lazgitgui-v1.0';
   LOG_CMD = '--pretty="format:%ct'#2'%p'#2'%h'#2'%an'#2'%ae'#2'%D'#2'%s'#2#3'" --all';
+
+procedure AppendFile(toFile, fromFile: string);
+var
+  fTo, fFrom: TFileStream;
+begin
+  fTo := TFileStream.Create(toFile, fmOpenWrite + fmShareDenyWrite);
+  fFrom := TFileStream.Create(fromFile, fmOpenRead + fmShareDenyNone);
+  try
+    fTo.Seek(0, soFromEnd);
+    fTo.CopyFrom(fFrom, fFrom.Size);
+  finally
+    fFrom.Free;
+    fTo.Free;
+  end;
+end;
 
 { TLogThread }
 
@@ -408,20 +426,30 @@ begin
 
   ItemFromLogBuffer(thread.Buffer);
 
-  CacheBufferFromItem(aBuffer, aLen);
-
   case fLogState of
-    lsGetFirst: begin
-      // write log index record
-      indxRec.offset := fRunStream.Position;
+    lsGetFirst, lsGetLast: begin
+      CacheBufferFromItem(aBuffer, aLen);
+
+      // remember the current index offset, we getting newer records
+      // it would help to identify the re-index starting offset
+      // for getting older records it's not used
+      if fOldIndexOffset<0 then
+        fOldIndexOffset := fIndexStream.Size;
+
+      // Prepare and write the index entry
+      indxRec.offset := fCacheStream.Position;
       indxRec.size := aLen;
-      fIndexRun.WriteBuffer(indxRec, sizeOf(TIndexRecord));
-      // write log record
-      fRunStream.WriteBuffer(aBuffer^, aLen);
+      fIndexStream.WriteBuffer(indxRec, sizeOf(TIndexRecord));
+
+      // write log record, write a record length at start
+      // so it can be used to more quickly locate the start of the next
+      // records (mainly to be used in index re-build and recovery tasks)
+      fCacheStream.WriteWord(aLen);
+      fCacheStream.WriteBuffer(aBuffer^, aLen);
+
+      FreeMem(aBuffer);
     end;
   end;
-
-  FreeMem(aBuffer);
 
   // check if it has been interrupted
   if assigned(fLogEvent) then begin
@@ -430,21 +458,6 @@ begin
       exit;
   end;
 
-end;
-
-procedure AppendFile(toFile, fromFile: string);
-var
-  fTo, fFrom: TFileStream;
-begin
-  fTo := TFileStream.Create(toFile, fmOpenWrite + fmShareDenyWrite);
-  fFrom := TFileStream.Create(fromFile, fmOpenRead + fmShareDenyNone);
-  try
-    fTo.Seek(0, soFromEnd);
-    fTo.CopyFrom(fFrom, fFrom.Size);
-  finally
-    fFrom.Free;
-    fTo.Free;
-  end;
 end;
 
 procedure TLogCache.OnLogThreadDone(Sender: TObject);
@@ -462,14 +475,31 @@ begin
   case fLogState of
     lsGetFirst:
       begin
-        runStreamSize := fRunStream.Size;
-        if runStreamSize=0 then begin
-          // nothing was received, if there is already a cache
-          // try to get the oldest records
+
+        // check if something was received
+        if fOldIndexOffset<0 then begin
+          // nothing was received while getting newer records, if a
+          // cache already exists, try to get older missing records
           if FileExists(aFileCache) then begin
             EnterLogState(lsGetLast);
             exit;
           end;
+        end;
+
+        // some newer records were received, if needed, update the
+        // index so newer records appear at the top of the 'list'
+        // if fOldIndexOffset=0 no re-index is needed as the received
+        // records are the first and the current index is ok
+        if fOldIndexOffset>0 then begin
+
+          // starting at fOldIndexOffset all next records should be
+          // re-indexed
+          ReIndex;
+
+        end;
+
+        runStreamSize := fRunStream.Size;
+        if runStreamSize=0 then begin
         end;
 
         // access the cache or the index is forbidden starting here !!!
@@ -699,6 +729,7 @@ begin
   fNewDate := 0;
   fOldDate := 0;
   fOldDateIsStart := false;
+  fOldIndexOffset := -1;
 
   if fIndexStream<>nil then begin
     if ReadLogItem(0) then
@@ -710,6 +741,7 @@ end;
 
 procedure TLogCache.DoLogStateGetFirst;
 begin
+  fOldIndexOffset := -1;
   fLogState := lsGetFirst;
   Run;
 end;
@@ -728,6 +760,8 @@ begin
     // read the last log entry to find its date
     if ReadLogItem(-1) then
       fOldDate := fItem.CommiterDate;
+
+    fOldIndexOffset := -1;
 
     Run;
   end else
@@ -809,6 +843,23 @@ begin
     // write back the record
     stream.Position := (i-1) * sizeofIndex;
     stream.Write(indx, sizeofIndex);
+  end;
+end;
+
+procedure TLogCache.ReIndex;
+var
+  sizeofIndex, i: Integer;
+  indx: TIndexRecord;
+  s, p: PIndexRecord;
+begin
+
+  sizeOfIndex := SizeOf(TIndexRecord);
+  startIndex := fOldIndexOffset div sizeofIndex;
+  endIndex := fIndexStream.Size div sizeOfIndex;
+
+  s := fIndexStream.Memory;
+  p := s + startIndex;
+  for i:= 0 to (endIndex-startIndex) do begin
   end;
 end;
 
