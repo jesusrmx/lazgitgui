@@ -122,6 +122,7 @@ type
     fListAlwaysDrawSelection: boolean;
     fLastDescribedTag: string;
     fDescribed: boolean;
+    procedure DelayedShowMenu(Data: PtrInt);
     procedure DoGitDiff(Data: PtrInt);
     procedure DoItemAction(Data: PtrInt);
     procedure DoCommit;
@@ -1074,6 +1075,11 @@ begin
 
   fConfig.ReadPreferences;
 
+  if fConfig.ReadBoolean('NeedsMenuWorkaround') then begin
+    Self.Menu := nil;
+    Application.QueueAsyncCall(@DelayedShowMenu, 0);
+  end;
+
   fConfig.CloseConfig;
 end;
 
@@ -1244,6 +1250,11 @@ begin
         ShowError;
     end;
   end;
+end;
+
+procedure TfrmMain.DelayedShowMenu(Data: PtrInt);
+begin
+  Self.Menu := mnuMain;
 end;
 
 procedure TfrmMain.UpdateBranch;
