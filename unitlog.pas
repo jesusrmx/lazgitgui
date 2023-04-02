@@ -48,6 +48,7 @@ type
     {$IFDEF CaptureOutput}
     fCap: TMemoryStream;
     {$ENDIF}
+    function GetCacheFile: string;
   public
     constructor create(theEditor: TSynEdit; aLogEvent: TLogEvent);
     destructor Destroy; override;
@@ -78,10 +79,16 @@ begin
   fAnsiHandler.ProcessLine(thread.Line, thread.LineEnding);
 end;
 
+function TLogHandler.GetCacheFile: string;
+begin
+  result := fGit.TopLevelDir + '.git' + pathdelim + 'lazgitgui.txtcache';
+end;
+
 procedure TLogHandler.LogDone(Sender: TObject);
 var
   thread: TRunThread absolute Sender;
   dummy: boolean;
+  aFile: string;
 begin
   {$IFDEF CaptureOutput}
   fCap.SaveToFile('colorido.bin');
@@ -89,6 +96,9 @@ begin
   {$endif}
   dummy := false;
   fLogEvent(Self, thread, LOGEVENT_DONE, dummy);
+
+  aFile := GetCacheFile;
+  fAnsiHandler.SaveToFile(aFile);
 end;
 
 constructor TLogHandler.create(theEditor: TSynEdit; aLogEvent: TLogEvent);
@@ -108,27 +118,16 @@ end;
 procedure TLogHandler.ShowLog;
 var
   cmd: string;
-  lst: TStringList;
 begin
   fEdit.Clear;
   fAnsiHandler.Reset;
 
   // check if we have a log cache
-  // do cache exists?
-  //   No: Create it
-  //   Yes: is cache up to date?
-  //        No: Update it
-  // show cached log
-
-  if FileExists(fGit.TopLevelDir + 'lazgitgui.cache') then begin
-    // is up to date?
-    // the info file is a list of local refs with their latest oids
-    lst := TStringList.Create;
-    try
-      lst.LoadFromFile(fGit.TopLevelDir + 'lazgitgui.info');
-    finally
-      lst.Free;
-    end;
+  cmd := GetCacheFile;
+  if FileExists(cmd) then begin
+    fAnsiHandler.LoadFromFile(cmd);
+    fEdit.Refresh;
+    exit;
   end;
 
   {$IFDEF CaptureOutput}

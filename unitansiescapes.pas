@@ -47,10 +47,13 @@ type
     fCol, fRow: Integer;
     fCurKind: TtkTokenKind;
     function GetAttribute(par,int,fin: string): TtkTokenKind;
+    function TokenIdToAttributesStr(tokenId: TtkTokenKind): string;
   public
     constructor Create(aEditor: TSynEdit);
     destructor Destroy; override;
     procedure ProcessLine(aLine: string; le: TLineEnding);
+    procedure SaveToFile(aFile:string);
+    procedure LoadFromFile(aFile:string);
     procedure Reset;
     procedure Dump;
   end;
@@ -220,6 +223,16 @@ begin
   end;
 end;
 
+function TAnsiEscapesHandler.TokenIdToAttributesStr(tokenId: TtkTokenKind
+  ): string;
+var
+  attrs: TSynHighlighterAttributes;
+begin
+  attrs := fHighlighter.GetCopiedAttribute(tokenId);
+  if attrs=nil then exit('nil');
+  result := TripleToStr(attrs.Foreground, attrs.Background, attrs.Style);
+end;
+
 constructor TAnsiEscapesHandler.Create(aEditor: TSynEdit);
 begin
   inherited Create;
@@ -311,6 +324,125 @@ begin
   {$ENDIF}
 end;
 
+function SortMe(List: TStringList; Index1, Index2: Integer): Integer;
+begin
+  result := PtrInt(List.Objects[Index2]) - PtrInt(List.Objects[Index1]);
+end;
+
+function FontStylesToByte(styles: TFontStyles): byte;
+begin
+  //(fsBold, fsItalic, fsUnderline, fsStrikeOut);
+  result := 0;
+  if fsBold in styles       then result := result or (1 shl 0);
+  if fsItalic in styles     then result := result or (1 shl 1);
+  if fsUnderline in styles  then result := result or (1 shl 2);
+  if fsStrikeOut in styles  then result := result or (1 shl 3);
+end;
+
+function ByteToFontStyles(styles: byte): TFontStyles;
+begin
+  result := [];
+  if styles and (1 shl 0) <> 0 then Include(result, fsBold);
+  if styles and (1 shl 1) <> 0 then Include(result, fsItalic);
+  if styles and (1 shl 2) <> 0 then Include(result, fsUnderline);
+  if styles and (1 shl 3) <> 0 then Include(result, fsStrikeOut);
+end;
+
+procedure TAnsiEscapesHandler.SaveToFile(aFile: string);
+var
+  L: TStringList;
+  i, j: Integer;
+  M: TMemoryStream;
+  tokenId: TtkTokenKind;
+  attrs: TSynHighlighterAttributes;
+  c: TColor;
+  Tokens: PPositionTokens;
+begin
+  // save token list
+  L := TStringList.Create;
+  L.Assign(fCodes);
+  L.CustomSort(@SortMe);
+  M := TMemoryStream.Create;
+
+  M.WriteDWord($97538642);
+  M.WriteWord(L.Count);
+  for i:=0 to L.Count-1 do begin
+    M.WriteAnsiString(L[i]);
+    tokenId := TtkTokenKind(PtrInt(L.Objects[i]));
+    attrs := fHighlighter.GetCopiedAttribute(tokenId);
+    c := attrs.Foreground; M.Write(c, SizeOf(c));
+    c := attrs.Background; M.Write(c, SizeOf(c));
+    M.WriteByte(FontStylesToByte(attrs.Style));
+  end;
+  M.WriteWord(fEditor.Lines.Count);
+  for i:=0 to fEditor.Lines.Count do begin
+    Tokens := fHighlighter.Tokens[i+1];
+    if Tokens=nil then begin
+      M.WriteWord(0);
+      continue;
+    end;
+    M.WriteWord(Tokens^.Count);
+    for j:=0 to Tokens^.Count-1 do begin
+      M.WriteWord(Tokens^.Tokens[j].Column);
+      M.WriteWord(-Tokens^.Tokens[j].Kind);
+    end;
+  end;
+  fEditor.Lines.SaveToStream(M);
+  M.SaveToFile(aFile);
+  M.Free;
+  L.Free;
+end;
+
+procedure TAnsiEscapesHandler.LoadFromFile(aFile: string);
+var
+  M: TMemoryStream;
+  w: Word;
+  dw: Cardinal;
+  i, j, n, t, col: Integer;
+  fg, bg: TColor;
+  code: string;
+  styles:byte;
+  kind: TtkTokenKind;
+begin
+  M := TMemoryStream.Create;
+  try
+    M.LoadFromFile(aFile);
+    dw := M.ReadDWord;
+    if dw<>$97538642 then raise Exception.Create('Invalid file');
+
+    fEditor.Clear;
+    fCodes.Clear;
+    fHighlighter.ClearAllTokens;
+    fHighlighter.ClearAllCopiedAttributes;
+
+    n := M.ReadWord;
+    for i:=0 to n-1 do begin
+      code := M.ReadAnsiString;
+      M.Read(fg, SizeOf(fg));
+      M.Read(bg, SizeOf(bg));
+      Styles := M.ReadByte;
+      kind := fHighlighter.CreateTokenID(code, fg, bg, ByteToFontStyles(styles));
+      if i=0 then
+        fDefTokenKind := kind;
+    end;
+
+    n := M.ReadWord;
+    for i:=0 to n-1 do begin
+      t := M.ReadWord;
+      for j:=1 to t do begin
+        col := M.ReadWord;
+        kind := M.ReadWord;
+        fHighlighter.AddToken(i, col, -kind);
+      end;
+    end;
+
+    fEditor.Lines.LoadFromStream(M);
+
+  finally
+    M.Free;
+  end;
+end;
+
 procedure TAnsiEscapesHandler.Reset;
 begin
   fCurKind := fDefTokenKind;
@@ -323,12 +455,15 @@ var
   attrs: TSynHighlighterAttributes;
   Tokens: PPositionTokens;
   i, j: Integer;
+  tokenId: TtkTokenKind;
 begin
   DebugLn;
   DebugLn('Code Table, %d entries', [fCodes.Count]);
   for i:=0 to fCodes.Count-1 do begin
-    DebugLn('%2d %3d %s',[i, PtrInt(fCodes.Objects[i]), fCodes[i]]);
+    tokenId := TtkTokenKind(PtrInt(fCodes.Objects[i]));
+    DebugLn('%2d %3d %s => %s',[i, tokenId, fCodes[i], TokenIdToAttributesStr(tokenId)]);
   end;
+
   DebugLn;
   DebugLn('Highlighter: %d attributes', [fHighlighter.AttrCount]);
   for i:=0 to fHighlighter.AttrCount-1 do begin
