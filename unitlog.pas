@@ -110,7 +110,7 @@ type
     procedure OnLogThreadDone(Sender: TObject);
     procedure OnLogThreadOutput(sender: TObject; var interrupt: boolean);
     function ReadLogItem(aIndex:SizeInt): boolean;
-    procedure CacheBufferFromItem(out aBuf: PChar; out len: Integer);
+    procedure CacheBufferFromItem(out aBuf: PChar; out len: word);
     procedure ItemFromCacheBuffer;
     procedure ItemFromLogBuffer(aBuf: PChar);
     procedure EnterLogState(aState: TLogState);
@@ -357,7 +357,7 @@ begin
   end;
 end;
 
-procedure TLogCache.CacheBufferFromItem(out aBuf: PChar; out len: Integer);
+procedure TLogCache.CacheBufferFromItem(out aBuf: PChar; out len: word);
 var
   p: pchar;
 
@@ -386,7 +386,8 @@ var
 
 begin
 
-  len := SizeOf(fItem.CommiterDate);
+  len := SizeOf(Word);
+  len += SizeOf(fItem.CommiterDate);
   len += Min(Length(fItem.ParentOID), High(Byte)) + 1;
   len += Min(Length(fItem.CommitOID), High(Byte)) + 1;
   len += Min(Length(fItem.Author), High(Byte)) + 1;
@@ -396,6 +397,10 @@ begin
 
   GetMem(aBuf, len);
   p := aBuf;
+
+  // store record size
+  Move(len, p^, SizeOf(word));
+  inc(p, sizeOf(word));
 
   // store commit date
   Move(fItem.CommiterDate, p^, SizeOf(fItem.CommiterDate));
@@ -414,7 +419,7 @@ procedure TLogCache.OnLogThreadOutput(sender: TObject; var interrupt: boolean);
 var
   thread: TLogThread absolute sender;
   aBuffer: PChar;
-  aLen: Integer;
+  aLen: word;
   indxRec: TIndexRecord;
   notify: boolean;
 begin
@@ -439,14 +444,15 @@ begin
         fOldIndexOffset := fIndexStream.Size;
 
       // Prepare and write the index entry
-      indxRec.offset := fCacheStream.Position;
+      indxRec.offset := fCacheStream.Size;
       indxRec.size := aLen;
+      fIndexStream.Seek(0, soFromEnd);
       fIndexStream.WriteBuffer(indxRec, sizeOf(TIndexRecord));
 
       // write log record, write a record length at start
       // so it can be used to more quickly locate the start of the next
       // records (mainly to be used in index re-build and recovery tasks)
-      fCacheStream.WriteWord(aLen);
+      fCacheStream.Seek(0, soFromEnd);
       fCacheStream.WriteBuffer(aBuffer^, aLen);
 
       // if this records are the first ever or if we are receiving
@@ -584,7 +590,7 @@ begin
   Finalize(fItem);
 
   p := fBuffer;
-
+  inc(p, SizeOf(word));
   fItem.CommiterDate := NextInt64;
   fItem.ParentOID := NextByteString;
   fItem.CommitOID := NextByteString;
@@ -758,8 +764,8 @@ function TLogCache.GetFilename(aIndex: Integer): string;
 begin
   result := fGit.TopLevelDir + '.git' + PathDelim + 'lazgitgui.';
   case aIndex of
-    FILENAME_INDEX:     result += 'index';
-    FILENAME_CACHE:     result += 'cache';
+    FILENAME_INDEX:     result += 'logindex';
+    FILENAME_CACHE:     result += 'logcache';
   end;
 end;
 
@@ -784,14 +790,15 @@ end;
 procedure TLogCache.ReIndex;
 var
   newSize: Integer;
-  buf, p: Pbyte;
+  buf, p, q: Pbyte;
 begin
   newSize := fIndexStream.Size - fOldIndexOffset;
   GetMem(buf, newSize);
 
   p := fIndexStream.Memory + fOldIndexOffset;
+  q := fIndexStream.Memory + newSize;
   Move(p^, buf^, newSize);
-  Move(fIndexStream.Memory^, p^, fIndexStream.Size - newSize);
+  Move(fIndexStream.Memory^, q^, fIndexStream.Size - newSize);
   Move(buf^, fIndexStream.Memory^, newSize);
 
   FreeMem(buf);
