@@ -31,7 +31,7 @@ uses
   StdCtrls, ExtCtrls, ActnList, synEditTypes, SynEdit, SynHighlighterDiff,
   StrUtils, FileUtil, unitconfig, unitprocess, unitentries, unitgit, Types,
   lclType, Menus, Buttons, unitnewbranch, unitruncmd, unitansiescapes,
-  unitnewtag, unitlog, LConvEncoding;
+  unitnewtag, unitlogcache, unitlog, LConvEncoding;
 
 type
 

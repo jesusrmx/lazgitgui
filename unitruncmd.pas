@@ -33,7 +33,6 @@ uses
   Dialogs, StdCtrls, ButtonPanel, unitconfig, unitprocess, unitansiescapes;
 
 type
-  TOutputStringEvent = procedure(sender: TObject; var interrupt:boolean) of object;
   TLineEnding = string[3];
 
 
@@ -46,7 +45,7 @@ type
     fCommand: string;
     fHaveProgress: boolean;
     fLineEnding: TLineEnding;
-    fOnOutput: TOutputStringEvent;
+    fOnOutput: TNotifyInterruptEvent;
     fResult: Integer;
     fErrorLog: string;
     fStartDir: string;
@@ -61,7 +60,7 @@ type
     property StartDir: string read fStartDir write fStartDir;
     property Result: Integer read fResult;
     property ErrorLog: string read fErrorLog;
-    property OnOutput: TOutputStringEvent read fOnOutput write fOnOutput;
+    property OnOutput: TNotifyInterruptEvent read fOnOutput write fOnOutput;
     property HaveProgress: boolean read fHaveProgress write fHaveProgress;
     property LineEnding: TLineEnding read fLineEnding;
     property Line: string read fLine;
@@ -102,7 +101,7 @@ type
   end;
 
   function RunInteractive(command, startdir, title, caption:string): Integer;
-  function RunInThread(Command, startDir: string; OnOutput: TOutputStringEvent; OnDone: TNotifyEvent; startIt:boolean=true): TRunThread;
+  function RunInThread(Command, startDir: string; OnOutput: TNotifyInterruptEvent; OnDone: TNotifyEvent; startIt:boolean=true): TRunThread;
 
 var
   frmRunCommand: TfrmRunCommand;
@@ -126,7 +125,7 @@ begin
   end;
 end;
 
-function RunInThread(Command, startDir: string; OnOutput: TOutputStringEvent;
+function RunInThread(Command, startDir: string; OnOutput: TNotifyInterruptEvent;
   OnDone: TNotifyEvent; startIt: boolean): TRunThread;
 begin
   Result := TRunThread.Create;

@@ -33,6 +33,7 @@ uses
 
 type
   TOutputEvent = procedure(const aBuffer; aSize:longint; var interrupt:boolean) is nested;
+  TNotifyInterruptEvent = procedure(sender: TObject; var interrupt:boolean) of object;
 
   { TCmdLine }
 
