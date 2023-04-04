@@ -109,6 +109,8 @@ type
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormShow(Sender: TObject);
+    procedure gridLogDrawCell(Sender: TObject; aCol, aRow: Integer;
+      aRect: TRect; aState: TGridDrawState);
     procedure lblBranchClick(Sender: TObject);
     procedure lblBranchContextPopup(Sender: TObject; MousePos: TPoint;
       var Handled: Boolean);
@@ -268,6 +270,27 @@ end;
 procedure TfrmMain.FormShow(Sender: TObject);
 begin
   OpenDirectory(targetDir);
+end;
+
+procedure TfrmMain.gridLogDrawCell(Sender: TObject; aCol, aRow: Integer;
+  aRect: TRect; aState: TGridDrawState);
+var
+  aIndex: Integer;
+  s: RawByteString;
+begin
+  if aRow>=gridLog.FixedRows then begin
+    aIndex := aRow - gridLog.FixedRows;
+    if fLogCache.LoadIndex(aIndex) then begin
+      case gridLog.Columns[aCol].Title.Caption of
+        'Subject': s := fLogCache.Item.Subject;
+        'Author': s := fLogCache.Item.Author;
+        'SHA1': s := fLogCache.Item.CommitOID;
+        'Date': s := IntToStr(fLogCache.Item.CommiterDate);
+        else  s := '';
+      end;
+      gridLog.Canvas.TextOut(aRect.left + 7, aRect.Top, s);
+    end;
+  end;
 end;
 
 procedure TfrmMain.lblBranchClick(Sender: TObject);

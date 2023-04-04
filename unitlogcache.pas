@@ -138,6 +138,7 @@ type
     property LogState: TLogState read fLogState;
     property Git: TGit read fGit write fGit;
     property Count: Integer read GetCount;
+    property Item: TLogItem read fItem;
   end;
 
 
