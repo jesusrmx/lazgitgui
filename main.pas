@@ -1229,8 +1229,16 @@ end;
 
 procedure TfrmMain.OnLogCacheEvent(sender: TObject; thread: TLogThread;
   event: Integer; var interrupt: boolean);
+var
+  s: string;
 begin
+  case event of
+    LOGEVENT_OUTPUT:
+      interrupt := btnStop.Visible and (btnStop.Tag=1);
 
+    LOGEVENT_DONE:
+      btnStop.Visible := false;
+  end;
 end;
 
 procedure TfrmMain.DoGitDiff(Data: PtrInt);

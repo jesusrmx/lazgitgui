@@ -98,6 +98,7 @@ type
     fCacheStream: TFileStream;
     fIndexStream: TMemoryStream;
     fBuffer: PChar;
+    fLastReadItemIndex: SizeInt;
     fMaxBufferSize: Integer;
     fEntryReadSize: Integer;
     fItem: TLogItem;
@@ -110,6 +111,7 @@ type
     function GetCount: Integer;
     procedure OnLogThreadDone(Sender: TObject);
     procedure OnLogThreadOutput(sender: TObject; var interrupt: boolean);
+    procedure GetIndexRecord(var aIndex:SizeInt; out indxRec: TIndexRecord);
     function ReadLogItem(aIndex:SizeInt): boolean;
     procedure CacheBufferFromItem(out aBuf: PChar; out len: word);
     procedure ItemFromCacheBuffer;
@@ -124,11 +126,14 @@ type
     procedure ReIndexStream(stream:TMemoryStream; offset: Integer);
     procedure ReIndex;
     procedure OpenCache;
+    procedure DumpItem;
   public
     constructor create(aLogEvent: TLogThreadEvent);
     destructor Destroy; override;
     procedure LoadCache;
+    function LoadIndex(aIndex: Integer): boolean;
 
+    property LogState: TLogState read fLogState;
     property Git: TGit read fGit write fGit;
     property Count: Integer read GetCount;
   end;
@@ -287,24 +292,12 @@ end;
 
 function TLogCache.ReadLogItem(aIndex: SizeInt): boolean;
 var
-  indexOffset: QWord;
   indxRec: TIndexRecord;
-  sizeofIndex: Integer;
 begin
   result := (fIndexStream<>nil) and (fIndexStream.Size>0);
   if result then begin
 
-    sizeofIndex := SizeOf(TIndexRecord);
-
-    if aIndex<0 then begin
-      // get the oldest item
-      aIndex := fIndexStream.Size div sizeofIndex - 1;
-    end;
-
-    indexOffset := aIndex * sizeofIndex;
-
-    fIndexStream.Position := indexOffset;
-    fIndexStream.Read(indxRec{%H-}, sizeofIndex);
+    GetIndexRecord(aIndex, indxRec);
 
     result := indxRec.offset + indxRec.size <= fCacheStream.Size ;
     if result then begin
@@ -318,6 +311,8 @@ begin
       fEntryReadSize := fCacheStream.Read(fBuffer^, indxRec.size);
 
       ItemFromCacheBuffer;
+
+      fLastReadItemIndex := aIndex;
     end;
 
   end;
@@ -436,6 +431,24 @@ begin
 
 end;
 
+procedure TLogCache.GetIndexRecord(var aIndex: SizeInt; out indxRec: TIndexRecord);
+var
+  sizeofIndex: Integer;
+  indexOffset: SizeInt;
+begin
+  sizeofIndex := SizeOf(TIndexRecord);
+
+  if aIndex<0 then begin
+    // get the oldest item
+    aIndex := fIndexStream.Size div sizeofIndex - 1;
+  end;
+
+  indexOffset := aIndex * sizeofIndex;
+
+  fIndexStream.Position := indexOffset;
+  fIndexStream.Read(indxRec{%H-}, sizeofIndex);
+end;
+
 procedure TLogCache.OnLogThreadDone(Sender: TObject);
 var
   thread: TLogThread absolute Sender;
@@ -470,7 +483,7 @@ begin
 
         if fOldIndexOffset>=0 then begin
           // got some records and are ready
-          // what record range were modified?
+          // what record range was modified?
           if assigned(fLogEvent) then begin
             dummy := false;
             fLogEvent(Self, thread, LOGEVENT_DONE, dummy);
@@ -489,7 +502,7 @@ begin
 
         if fOldIndexOffset>0 then begin
           // got some records and are ready
-          // what record range were modified?
+          // what record range was modified?
           if assigned(fLogEvent) then begin
             dummy := false;
             fLogEvent(Self, thread, LOGEVENT_DONE, dummy);
@@ -594,6 +607,7 @@ begin
   fMaxBufferSize := 1024 * 4;
   GetMem(fBuffer, fMaxBufferSize);
   fLogEvent := aLogEvent;
+  fLastReadItemIndex := -1;
 end;
 
 destructor TLogCache.Destroy;
@@ -784,11 +798,34 @@ begin
 
 end;
 
+procedure TLogCache.DumpItem;
+var
+  indxRec: TIndexRecord;
+begin
+  DebugLn;
+  DebugLn('          Index: %d of %d',[fLastReadItemIndex, fIndexStream.Size div SizeOf(TIndexRecord)]);
+  DebugLn('    Commit Date: %d (%s)',[fItem.CommiterDate, DateTimeToStr(UnixToDateTime(fItem.CommiterDate))]);
+  DebugLn('     Parent OID: %s',[fItem.ParentOID]);
+  DebugLn('     Commit OID: %s',[fItem.CommitOID]);
+  DebugLn('         Author: %s',[fItem.ParentOID]);
+  DebugLn('          Email: %s',[fItem.Email]);
+  DebugLn('           Refs: %s',[fItem.Refs]);
+  DebugLn('        Subject: %s',[fItem.Subject]);
+  GetIndexRecord(fLastReadItemIndex, indxRec);
+  DebugLn('   Cache Offset: %d', [indxRec.offset]);
+  DebugLn('Cache Item Size: %d', [indxRec.size]);
+end;
+
 procedure TLogCache.LoadCache;
 begin
 
   // start cache update anyway
   EnterLogState(lsStart);
+end;
+
+function TLogCache.LoadIndex(aIndex: Integer): boolean;
+begin
+  result := ReadLogItem(aIndex);
 end;
 
 
