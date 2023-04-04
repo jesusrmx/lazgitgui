@@ -30,7 +30,7 @@ uses
   Classes, SysUtils, Math, LazLogger, Forms, Controls, Graphics, Dialogs,
   StdCtrls, ExtCtrls, ActnList, synEditTypes, SynEdit, SynHighlighterDiff,
   StrUtils, FileUtil, unitconfig, unitprocess, unitentries, unitgit, Types,
-  lclType, Menus, Buttons, unitnewbranch, unitruncmd, unitansiescapes,
+  lclType, Menus, Buttons, Grids, unitnewbranch, unitruncmd, unitansiescapes,
   unitnewtag, unitlogcache, unitlog, LConvEncoding;
 
 type
@@ -40,6 +40,7 @@ type
   TfrmMain = class(TForm)
     actCommit: TAction;
     actFetch: TAction;
+    actNewLog: TAction;
     actPushDialog: TAction;
     actLog: TAction;
     actQuit: TAction;
@@ -47,12 +48,14 @@ type
     actPush: TAction;
     actRescan: TAction;
     ActionList1: TActionList;
+    btnNewLog: TSpeedButton;
     btnRescan: TButton;
     btnStageChanged: TButton;
     btnSignOff: TButton;
     btnCommit: TButton;
     btnPush: TButton;
     btnPushDlg: TButton;
+    gridLog: TDrawGrid;
     imgList: TImageList;
     Label1: TLabel;
     Label2: TLabel;
@@ -69,6 +72,7 @@ type
     mnuMain: TMainMenu;
     panCommitState: TPanel;
     panBranch: TPanel;
+    panLogNew: TPanel;
     panPush: TPanel;
     panLog: TPanel;
     panStatus: TPanel;
@@ -94,6 +98,7 @@ type
     procedure actCommitExecute(Sender: TObject);
     procedure actFetchExecute(Sender: TObject);
     procedure actLogExecute(Sender: TObject);
+    procedure actNewLogExecute(Sender: TObject);
     procedure actPullExecute(Sender: TObject);
     procedure actPushDialogExecute(Sender: TObject);
     procedure actPushExecute(Sender: TObject);
@@ -118,6 +123,7 @@ type
     fClickedIndex: Integer;
     fDir: string;
     fLogCache: TLogCache;
+    fLogHandler: TLogHandler;
     fPopPoint: TPoint;
     fListAlwaysDrawSelection: boolean;
     fLastDescribedTag: string;
@@ -127,6 +133,7 @@ type
     procedure DoItemAction(Data: PtrInt);
     procedure DoCommit;
     procedure DoLog;
+    procedure DoNewLog;
     procedure DoPush;
     procedure DoFetch;
     procedure DoPull;
@@ -1074,6 +1081,8 @@ begin
 
   fLogCache := TLogCache.Create(@OnLogCacheEvent);
   fLogCache.Git := fGit;
+  fLogHandler := TLogHandler.Create(txtLog, @OnLogEvent);
+  fLogHandler.Git := fGit;
 
   fConfig.ReadPreferences;
 
@@ -1115,6 +1124,11 @@ begin
   DoLog;
 end;
 
+procedure TfrmMain.actNewLogExecute(Sender: TObject);
+begin
+  DoNewLog;
+end;
+
 procedure TfrmMain.actPullExecute(Sender: TObject);
 begin
   DoPull;
@@ -1137,6 +1151,7 @@ end;
 
 procedure TfrmMain.FormDestroy(Sender: TObject);
 begin
+  fLogHandler.Free;
   fLogCache.Free;
   fGit.Free;
 end;
@@ -1181,6 +1196,27 @@ begin
   if actLog.Checked then begin
     panLog.Visible := true;
     panStatus.Visible := false;
+    panLogNew.Visible := false;
+    btnStop.Visible := true;
+    btnStop.Tag := 0;
+
+    fLogHandler.ShowLog;
+
+  end else begin
+    panLog.Visible := false;
+    panLogNew.Visible := false;
+    panStatus.Visible := true;
+  end;
+end;
+
+procedure TfrmMain.DoNewLog;
+var
+  cmd: string;
+begin
+  if actNewLog.Checked then begin
+    panLog.Visible := false;
+    panLogNew.Visible := true;
+    panStatus.Visible := false;
     btnStop.Visible := true;
     btnStop.Tag := 0;
 
@@ -1188,6 +1224,7 @@ begin
 
   end else begin
     panLog.Visible := false;
+    panLogNew.Visible := false;
     panStatus.Visible := true;
   end;
 end;

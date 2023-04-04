@@ -24,11 +24,8 @@ type
     fEdit: TSynEdit;
     fAnsiHandler: TAnsiEscapesHandler;
     flogEvent: TRunThreadEvent;
-    fLogCache: TLogCache;
     procedure LogDone(Sender: TObject);
     procedure LogOutput(sender: TObject; var interrupt: boolean);
-    procedure OnLogCacheEvent(sender: TObject; thread: TLogThread;
-      event: Integer; var interrupt: boolean);
     {$IFDEF CaptureOutput}
     fCap: TMemoryStream;
     {$ENDIF}
@@ -80,12 +77,6 @@ begin
   fAnsiHandler.ProcessLine(thread.Line, thread.LineEnding);
 end;
 
-procedure TLogHandler.OnLogCacheEvent(sender: TObject; thread: TLogThread;
-  event: Integer; var interrupt: boolean);
-begin
-
-end;
-
 procedure TLogHandler.LogDone(Sender: TObject);
 var
   thread: TRunThread absolute Sender;
@@ -110,19 +101,20 @@ end;
 destructor TLogHandler.Destroy;
 begin
   fAnsiHandler.Free;
-  fLogCache.Free;
   inherited Destroy;
 end;
 
 procedure TLogHandler.ShowLog;
+var
+  cmd: string;
 begin
+  fEdit.Clear;
+  fAnsiHandler.Reset;
 
-  if fLogCache=nil then begin
-    fLogCache := TLogCache.create(@OnLogCacheEvent);
-    fLogCache.Git := fGit;
-  end;
-
-  fLogCache.LoadCache;
+  cmd :=  fGit.Exe + ' ' +
+          '-c color.ui=always ' +
+          'log --oneline --graph --decorate --all';
+  RunInThread(cmd, fGit.TopLevelDir, @LogOutput, @LogDone, true);
 end;
 
 end.

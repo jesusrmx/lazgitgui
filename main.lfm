@@ -1,10 +1,10 @@
 object frmMain: TfrmMain
-  Left = 114
-  Height = 700
-  Top = 25
+  Left = 200
+  Height = 570
+  Top = 90
   Width = 924
   Caption = 'frmMain'
-  ClientHeight = 700
+  ClientHeight = 570
   ClientWidth = 924
   Font.Style = [fsBold]
   Menu = mnuMain
@@ -16,12 +16,12 @@ object frmMain: TfrmMain
   LCLVersion = '2.3.0.0'
   object panLeft: TPanel
     Left = 0
-    Height = 674
+    Height = 544
     Top = 26
     Width = 256
     Align = alLeft
     BevelOuter = bvNone
-    ClientHeight = 674
+    ClientHeight = 544
     ClientWidth = 256
     TabOrder = 0
     object lstUnstaged: TListBox
@@ -71,13 +71,13 @@ object frmMain: TfrmMain
     end
     object panStagedContainer: TPanel
       Left = 0
-      Height = 337
+      Height = 207
       Top = 337
       Width = 256
       Align = alClient
       BevelOuter = bvNone
       Caption = 'panStagedContainer'
-      ClientHeight = 337
+      ClientHeight = 207
       ClientWidth = 256
       TabOrder = 3
       object panStaged: TPanel
@@ -97,7 +97,7 @@ object frmMain: TfrmMain
       end
       object lstStaged: TListBox
         Left = 5
-        Height = 312
+        Height = 182
         Top = 20
         Width = 251
         Align = alClient
@@ -118,30 +118,93 @@ object frmMain: TfrmMain
   end
   object panContent: TPanel
     Left = 261
-    Height = 674
+    Height = 544
     Top = 26
     Width = 663
     Align = alClient
     BevelOuter = bvNone
-    ClientHeight = 674
+    ClientHeight = 544
     ClientWidth = 663
     TabOrder = 1
+    object panLogNew: TPanel
+      Left = 0
+      Height = 539
+      Top = 0
+      Width = 658
+      Align = alClient
+      BorderSpacing.Right = 5
+      BorderSpacing.Bottom = 5
+      ClientHeight = 539
+      ClientWidth = 658
+      TabOrder = 2
+      object gridLog: TDrawGrid
+        Left = 1
+        Height = 537
+        Top = 1
+        Width = 656
+        Align = alClient
+        AutoEdit = False
+        AutoFillColumns = True
+        BorderStyle = bsNone
+        Columns = <        
+          item
+            SizePriority = 0
+            Title.Caption = ''
+            Width = 20
+          end        
+          item
+            Title.Caption = 'Subject'
+            Width = 306
+          end        
+          item
+            SizePriority = 0
+            Title.Caption = 'Author'
+            Width = 150
+          end        
+          item
+            SizePriority = 0
+            Title.Caption = 'Date'
+            Width = 90
+          end        
+          item
+            SizePriority = 0
+            Title.Caption = 'SHA1'
+            Width = 90
+          end>
+        DefaultDrawing = False
+        DefaultRowHeight = 16
+        ExtendedSelect = False
+        FixedCols = 0
+        Flat = True
+        Options = [goVertLine, goColSizing, goSmoothScroll, goRowHighlight]
+        RowCount = 1
+        TabOrder = 0
+        TitleStyle = tsNative
+        ColWidths = (
+          20
+          306
+          150
+          90
+          90
+        )
+      end
+    end
     object panLog: TPanel
       Left = 0
-      Height = 669
+      Height = 539
       Top = 0
       Width = 658
       Align = alClient
       BorderSpacing.Right = 5
       BorderSpacing.Bottom = 5
       BevelOuter = bvNone
-      ClientHeight = 669
+      ClientHeight = 539
       ClientWidth = 658
       TabOrder = 1
       Visible = False
       inline txtLog: TSynEdit
         Left = 0
-        Height = 669
+        Height = 539
         Top = 0
         Width = 658
         Align = alClient
@@ -644,7 +707,7 @@ object frmMain: TfrmMain
     end
     object panStatus: TPanel
       Left = 0
-      Height = 669
+      Height = 539
       Top = 0
       Width = 658
       Align = alClient
@@ -652,13 +715,13 @@ object frmMain: TfrmMain
       BorderSpacing.Bottom = 5
       BevelOuter = bvNone
       Caption = 'panStatus'
-      ClientHeight = 669
+      ClientHeight = 539
       ClientWidth = 658
       TabOrder = 0
       object panCommit: TPanel
         Left = 0
         Height = 208
-        Top = 461
+        Top = 331
         Width = 658
         Align = alBottom
         BevelOuter = bvNone
@@ -779,7 +842,7 @@ object frmMain: TfrmMain
       end
       inline txtDiff: TSynEdit
         Left = 0
-        Height = 436
+        Height = 306
         Top = 20
         Width = 658
         Align = alClient
@@ -1304,7 +1367,7 @@ object frmMain: TfrmMain
         Cursor = crVSplit
         Left = 0
         Height = 5
-        Top = 456
+        Top = 326
         Width = 658
         Align = alBottom
         ResizeAnchor = akBottom
@@ -1414,7 +1477,6 @@ object frmMain: TfrmMain
       Top = 2
       Width = 23
       Action = actLog
-      AllowAllUp = True
       Anchors = [akTop, akRight]
       BorderSpacing.Right = 5
       Flat = True
@@ -1447,9 +1509,9 @@ object frmMain: TfrmMain
       ParentFont = False
     end
     object btnStop: TSpeedButton
-      Left = 864
+      Left = 832
       Height = 22
-      Top = 2
+      Top = 0
       Width = 23
       Anchors = [akTop, akRight]
       Caption = 'Stp'
@@ -1457,10 +1519,24 @@ object frmMain: TfrmMain
       Visible = False
       OnClick = btnStopClick
     end
+    object btnNewLog: TSpeedButton
+      AnchorSideTop.Control = panBranch
+      AnchorSideTop.Side = asrCenter
+      AnchorSideRight.Control = btnLog
+      Left = 868
+      Height = 22
+      Top = 2
+      Width = 23
+      Action = actNewLog
+      Anchors = [akTop, akRight]
+      BorderSpacing.Right = 5
+      Flat = True
+      GroupIndex = 1
+    end
   end
   object splitterMain: TSplitter
     Left = 256
-    Height = 674
+    Height = 544
     Top = 26
     Width = 5
   end
@@ -1504,6 +1580,11 @@ object frmMain: TfrmMain
     object actPushDialog: TAction
       Caption = 'Push ...'
       OnExecute = actPushDialogExecute
+    end
+    object actNewLog: TAction
+      AutoCheck = True
+      Caption = 'NL'
+      OnExecute = actNewLogExecute
     end
   end
   object imgList: TImageList
