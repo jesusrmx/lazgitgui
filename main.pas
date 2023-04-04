@@ -31,7 +31,7 @@ uses
   StdCtrls, ExtCtrls, ActnList, synEditTypes, SynEdit, SynHighlighterDiff,
   StrUtils, FileUtil, unitconfig, unitprocess, unitentries, unitgit, Types,
   lclType, Menus, Buttons, unitnewbranch, unitruncmd, unitansiescapes,
-  unitnewtag, unitlog, LConvEncoding;
+  unitnewtag, unitlogcache, unitlog, LConvEncoding;
 
 type
 
@@ -117,7 +117,7 @@ type
     fGit: TGit;
     fClickedIndex: Integer;
     fDir: string;
-    fLogHandler: TLogHandler;
+    fLogCache: TLogCache;
     fPopPoint: TPoint;
     fListAlwaysDrawSelection: boolean;
     fLastDescribedTag: string;
@@ -131,6 +131,8 @@ type
     procedure DoFetch;
     procedure DoPull;
     procedure OnLogEvent(sender: TObject; thread: TRunThread; event: Integer;
+      var interrupt: boolean);
+    procedure OnLogCacheEvent(sender: TObject; thread: TLogThread; event: Integer;
       var interrupt: boolean);
     procedure OnPopupItemClick(Sender: TObject);
     procedure OnBranchSwitch(Data: PtrInt);
@@ -1070,8 +1072,8 @@ begin
   txtLog.Color := clBlack;
   txtLog.Font.Color := clWhite;
 
-  fLogHandler := TLogHandler.Create(txtLog, @OnLogEvent);
-  fLogHandler.Git := fGit;
+  fLogCache := TLogCache.Create(@OnLogCacheEvent);
+  fLogCache.Git := fGit;
 
   fConfig.ReadPreferences;
 
@@ -1135,7 +1137,7 @@ end;
 
 procedure TfrmMain.FormDestroy(Sender: TObject);
 begin
-  fLogHandler.Free;
+  fLogCache.Free;
   fGit.Free;
 end;
 
@@ -1182,7 +1184,7 @@ begin
     btnStop.Visible := true;
     btnStop.Tag := 0;
 
-    fLogHandler.ShowLog;
+    fLogCache.LoadCache;
 
   end else begin
     panLog.Visible := false;
@@ -1221,6 +1223,20 @@ end;
 
 procedure TfrmMain.OnLogEvent(sender: TObject; thread: TRunThread;
   event: Integer; var interrupt: boolean);
+begin
+  case event of
+    LOGEVENT_OUTPUT:
+      interrupt := btnStop.Visible and (btnStop.Tag=1);
+
+    LOGEVENT_DONE:
+      btnStop.Visible := false;
+  end;
+end;
+
+procedure TfrmMain.OnLogCacheEvent(sender: TObject; thread: TLogThread;
+  event: Integer; var interrupt: boolean);
+var
+  s: string;
 begin
   case event of
     LOGEVENT_OUTPUT:

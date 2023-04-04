@@ -1,39 +1,20 @@
 unit unitlog;
 
 {$mode ObjFPC}{$H+}
+{$ModeSwitch nestedprocvars}
+
 {.$define CaptureOutput}
+{.$define Capture}
+{.$define CaptureChunks}
 
 interface
 
 uses
-  Classes, SysUtils, SynEdit, unitansiescapes, unitgit, unitruncmd;
-
-const
-
-  LOGEVENT_OUTPUT = 1;
-  LOGEVENT_DONE   = 2;
+  Classes, SysUtils, Math, DateUtils, LazLogger, SynEdit, unitansiescapes, unitgit,
+  unitprocess, unitruncmd, unitlogcache;
 
 type
-  TLogEvent = procedure(sender: TObject; thread: TRunThread; event: Integer; var interrupt: boolean) of object;
-  TLogItem = record
-    CommitID: string;
-    DateTime: TDateTime;
-    Author: string;
-    Subject: string;
-  end;
-
-  {
-  #SEP="|"
-  SEP="%x02"
-  EOL="%x00"
-  D="t"
-  PRETTY="%p$SEP%h$SEP%an$SEP%ae$SEP%a$D$SEP%D$SEP%s$EOL"
-  #MAX="--max-count=1000"
-  FORMAT="tformat"
-  ALL="--all"
-
-  git log $MAX --pretty="$FORMAT:$PRETTY" $ALL > format.log
-  }
+  TRunThreadEvent = procedure(sender: TObject; thread: TRunThread; event: Integer; var interrupt: boolean) of object;
 
   { TLogHandler }
 
@@ -42,14 +23,17 @@ type
     fGit: TGit;
     fEdit: TSynEdit;
     fAnsiHandler: TAnsiEscapesHandler;
-    flogEvent: TLogEvent;
+    flogEvent: TRunThreadEvent;
+    fLogCache: TLogCache;
     procedure LogDone(Sender: TObject);
     procedure LogOutput(sender: TObject; var interrupt: boolean);
+    procedure OnLogCacheEvent(sender: TObject; thread: TLogThread;
+      event: Integer; var interrupt: boolean);
     {$IFDEF CaptureOutput}
     fCap: TMemoryStream;
     {$ENDIF}
   public
-    constructor create(theEditor: TSynEdit; aLogEvent: TLogEvent);
+    constructor create(theEditor: TSynEdit; aLogEvent: TRunThreadEvent);
     destructor Destroy; override;
     procedure ShowLog;
 
@@ -57,6 +41,24 @@ type
   end;
 
 implementation
+
+const
+  LOG_CMD = '--pretty="format:%ct'#2'%p'#2'%h'#2'%an'#2'%ae'#2'%D'#2'%s'#2#3'" --all';
+
+procedure AppendFile(toFile, fromFile: string);
+var
+  fTo, fFrom: TFileStream;
+begin
+  fTo := TFileStream.Create(toFile, fmOpenWrite + fmShareDenyWrite);
+  fFrom := TFileStream.Create(fromFile, fmOpenRead + fmShareDenyNone);
+  try
+    fTo.Seek(0, soFromEnd);
+    fTo.CopyFrom(fFrom, fFrom.Size);
+  finally
+    fFrom.Free;
+    fTo.Free;
+  end;
+end;
 
 { TLogHandler }
 
@@ -78,6 +80,12 @@ begin
   fAnsiHandler.ProcessLine(thread.Line, thread.LineEnding);
 end;
 
+procedure TLogHandler.OnLogCacheEvent(sender: TObject; thread: TLogThread;
+  event: Integer; var interrupt: boolean);
+begin
+
+end;
+
 procedure TLogHandler.LogDone(Sender: TObject);
 var
   thread: TRunThread absolute Sender;
@@ -91,7 +99,7 @@ begin
   fLogEvent(Self, thread, LOGEVENT_DONE, dummy);
 end;
 
-constructor TLogHandler.create(theEditor: TSynEdit; aLogEvent: TLogEvent);
+constructor TLogHandler.create(theEditor: TSynEdit; aLogEvent: TRunThreadEvent);
 begin
   inherited Create;
   fEdit := theEditor;
@@ -102,42 +110,19 @@ end;
 destructor TLogHandler.Destroy;
 begin
   fAnsiHandler.Free;
+  fLogCache.Free;
   inherited Destroy;
 end;
 
 procedure TLogHandler.ShowLog;
-var
-  cmd: string;
-  lst: TStringList;
 begin
-  fEdit.Clear;
-  fAnsiHandler.Reset;
 
-  // check if we have a log cache
-  // do cache exists?
-  //   No: Create it
-  //   Yes: is cache up to date?
-  //        No: Update it
-  // show cached log
-
-  if FileExists(fGit.TopLevelDir + 'lazgitgui.cache') then begin
-    // is up to date?
-    // the info file is a list of local refs with their latest oids
-    lst := TStringList.Create;
-    try
-      lst.LoadFromFile(fGit.TopLevelDir + 'lazgitgui.info');
-    finally
-      lst.Free;
-    end;
+  if fLogCache=nil then begin
+    fLogCache := TLogCache.create(@OnLogCacheEvent);
+    fLogCache.Git := fGit;
   end;
 
-  {$IFDEF CaptureOutput}
-  fCap := TMemoryStream.Create;
-  {$ENDIF}
-  cmd :=  fGit.Exe + ' ' +
-          '-c color.ui=always ' +
-          'log --oneline --graph --decorate --all';
-  RunInThread(cmd, fGit.TopLevelDir, @LogOutput, @LogDone, true);
+  fLogCache.LoadCache;
 end;
 
 end.
