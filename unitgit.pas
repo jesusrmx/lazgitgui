@@ -774,7 +774,7 @@ begin
         fTopLevelDir := ExtractFilePath(cmdOut)
       else begin
         result := cmdLine.RunProcess(fGitCommand + ' rev-parse --show-toplevel', aDir, cmdOut);
-        if result<>0 then
+        if result>0 then
           DebugLn('Error getting top level directory: (%d) %s', [cmdLine.ExitCode, cmdLine.ErrorLog])
         else
           fTopLevelDir := IncludeTrailingPathDelimiter(SetDirSeparators(Trim(cmdOut)));
