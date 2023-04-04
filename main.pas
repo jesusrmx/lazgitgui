@@ -1279,6 +1279,11 @@ begin
     LOGEVENT_OUTPUT:
       interrupt := btnStop.Visible and (btnStop.Tag=1);
 
+    LOGEVENT_RECORD, LOGEVENT_END:
+      begin
+        gridLog.RowCount := fLogCache.Count + 1;
+      end;
+
     LOGEVENT_DONE:
       btnStop.Visible := false;
   end;

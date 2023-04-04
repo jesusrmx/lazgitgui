@@ -20,6 +20,7 @@ const
   LOGEVENT_OUTPUT = 1;
   LOGEVENT_RECORD = 2;
   LOGEVENT_DONE   = 3;
+  LOGEVENT_END    = 4;
 
   FILENAME_INFO     = 1;
   FILENAME_INDEX    = 2;
@@ -127,6 +128,7 @@ type
     procedure ReIndex;
     procedure OpenCache;
     procedure DumpItem;
+    procedure SendEvent(thread: TLogThread; event: Integer; var interrupt:boolean);
   public
     constructor create(aLogEvent: TLogThreadEvent);
     destructor Destroy; override;
@@ -413,7 +415,7 @@ begin
       fCacheStream.WriteBuffer(aBuffer^, aLen);
 
       // if this records are the first ever or if we are receiving
-      // older records notify. If we are receiving newer records
+      // older records, notify. If we are receiving newer records
       // but there are existing records, do not notify as the index
       // is updated only after all newer records are received
       notify := (fOldIndexOffset=0) or (fLogState=lsGetLast);
@@ -423,11 +425,8 @@ begin
   end;
 
   // check if it has been interrupted
-  if notify and assigned(fLogEvent) then begin
-    fLogEvent(self, thread, LOGEVENT_RECORD, interrupt);
-    if interrupt then
-      exit;
-  end;
+  if notify then
+    SendEvent(thread, LOGEVENT_RECORD, interrupt);
 
 end;
 
@@ -484,10 +483,8 @@ begin
         if fOldIndexOffset>=0 then begin
           // got some records and are ready
           // what record range was modified?
-          if assigned(fLogEvent) then begin
-            dummy := false;
-            fLogEvent(Self, thread, LOGEVENT_DONE, dummy);
-          end;
+          dummy := false;
+          SendEvent(thread, LOGEVENT_DONE, dummy);
         end;
 
         EnterLogState(newState);
@@ -503,10 +500,8 @@ begin
         if fOldIndexOffset>0 then begin
           // got some records and are ready
           // what record range was modified?
-          if assigned(fLogEvent) then begin
-            dummy := false;
-            fLogEvent(Self, thread, LOGEVENT_DONE, dummy);
-          end;
+          dummy := false;
+          SendEvent(thread, LOGEVENT_DONE, dummy);
         end;
 
         EnterLogState(lsEnd);
@@ -682,6 +677,7 @@ end;
 procedure TLogCache.DoLogStateEnd;
 var
   newCount: Int64;
+  dummyInterrupt: boolean;
 begin
   fLogState := lsEnd;
 
@@ -694,6 +690,9 @@ begin
     // flush TFileStream, how?....
     FileFlush(fCacheStream.Handle);
   end;
+
+  dummyInterrupt := false;
+  SendEvent(nil, LOGEVENT_END, dummyInterrupt);
 end;
 
 procedure TLogCache.Run;
@@ -814,6 +813,14 @@ begin
   GetIndexRecord(fLastReadItemIndex, indxRec);
   DebugLn('   Cache Offset: %d', [indxRec.offset]);
   DebugLn('Cache Item Size: %d', [indxRec.size]);
+end;
+
+procedure TLogCache.SendEvent(thread: TLogThread; event: Integer;
+  var interrupt: boolean);
+begin
+  if assigned(fLogEvent) then begin
+    fLogEvent(self, thread, event, interrupt);
+  end;
 end;
 
 procedure TLogCache.LoadCache;
