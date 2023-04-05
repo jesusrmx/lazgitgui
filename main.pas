@@ -281,7 +281,7 @@ var
   aIndex, x, i, w, n: Integer;
   s: RawByteString;
   arr: TRefInfoArray;
-  aColor: TColor;
+  aBrushColor, aFontColor: TColor;
   r: TRect;
 begin
   if aRow>=gridLog.FixedRows then begin
@@ -294,24 +294,44 @@ begin
             s := fLogCache.Item.Subject;
             if fSeenRefs.Find(fLogCache.Item.CommitOID, n ) then begin
               arr := fSeenRefs.Data[n];
-              gridLog.Canvas.Brush.Style := bsSolid;
+
               for i:=0 to Length(arr)-1 do begin
                 w := gridLog.Canvas.TextWidth(arr[i]^.refName) + 6;
 
-                if arr[i]^.head then aColor := clRed
-                else if arr[i]^.subType=rostLocal then aColor := $00C300
-                else aColor := $AADDFF;
+                case arr[i]^.subType of
+                  rostLocal:
+                    begin
+                      if arr[i]^.head then aBrushColor := clRed
+                      else                 aBrushColor := clGreen; //$00C300;
+                      aFontColor := clWhite;
+                    end;
+                  rostTracking:
+                    begin
+                      aBrushColor := $AADDFF;
+                      aFontColor := clBlack;
+                    end;
+                  rostTag:
+                    begin
+                      aBrushColor := clYellow;
+                      aFontColor := clBlack;
+                    end;
+                end;
 
-                r := Rect(x, aRect.Top, x + w, aRect.Bottom);
-                gridLog.Canvas.Brush.Color := aColor;
-                gridLog.Canvas.FillRect(r);
+                r := Rect(x, aRect.Top+1, x + w, aRect.Bottom-1);
 
-                gridLog.Canvas.TextOut(r.Left + 3, r.Top, arr[i]^.refName);
+                gridLog.Canvas.Brush.Style := bsSolid;
+                gridLog.Canvas.Pen.Color := clBlack;
+                gridLog.Canvas.Brush.Color := aBrushColor;
+                gridLog.Canvas.Rectangle(r);
+                gridLog.Canvas.Font.Color := aFontColor;
+                gridLog.Canvas.Brush.Style := bsClear;
+                gridLog.Canvas.TextOut(r.Left + 3, r.Top-1, arr[i]^.refName);
 
                 x += w + 2;
                 if i=Length(arr)-1 then
                   x += 5;
               end;
+              gridLog.Canvas.Font.Color := gridLog.Font.Color;
               gridLog.Canvas.Brush.Color := gridlog.Color;
 
             end;
@@ -322,7 +342,6 @@ begin
         else  s := '';
       end;
 
-      gridLog.Canvas.Brush.Style := bsClear;
       gridLog.Canvas.TextOut(x, aRect.Top, s);
     end;
   end;
@@ -1389,10 +1408,15 @@ begin
     LOGEVENT_OUTPUT:
       interrupt := btnStop.Visible and (btnStop.Tag=1);
 
-    LOGEVENT_RECORD, LOGEVENT_END:
+    LOGEVENT_RECORD:
       begin
-        gridLog.RowCount := fLogCache.Count + gridLog.FixedRows;
+        btnStop.Caption := format('Stp - %d',[fLogCache.LastReceivedItemIndex]);
+      end;
+
+    LOGEVENT_END:
+      begin
         btnStop.Visible := false;
+        gridLog.RowCount := fLogCache.Count + gridLog.FixedRows;
       end;
 
     LOGEVENT_DONE:
