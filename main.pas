@@ -1243,6 +1243,8 @@ begin
     btnStop.Visible := true;
     btnStop.Tag := 0;
 
+    fGit.UpdateRefList;
+
     fLogCache.LoadCache;
 
   end else begin
