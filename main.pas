@@ -31,9 +31,10 @@ uses
   StdCtrls, ExtCtrls, ActnList, synEditTypes, SynEdit, SynHighlighterDiff,
   StrUtils, FileUtil, unitconfig, unitprocess, unitentries, unitgit, Types,
   lclType, Menus, Buttons, Grids, unitnewbranch, unitruncmd, unitansiescapes,
-  unitnewtag, unitlogcache, unitlog, LConvEncoding;
+  unitnewtag, unitlogcache, unitlog, LConvEncoding, fgl;
 
 type
+  TRefsMap = specialize TFPGMap<string, TRefInfoArray>;
 
   { TfrmMain }
 
@@ -130,6 +131,7 @@ type
     fListAlwaysDrawSelection: boolean;
     fLastDescribedTag: string;
     fDescribed: boolean;
+    fSeenRefs: TRefsMap;
     procedure DelayedShowMenu(Data: PtrInt);
     procedure DoGitDiff(Data: PtrInt);
     procedure DoItemAction(Data: PtrInt);
@@ -168,6 +170,7 @@ type
     procedure InvalidateBranchMenu;
     procedure NewTag;
     procedure CheckMenuDivisorInLastPosition(pop:TPopupMenu);
+    procedure CacheRefs;
   public
 
   end;
@@ -275,20 +278,52 @@ end;
 procedure TfrmMain.gridLogDrawCell(Sender: TObject; aCol, aRow: Integer;
   aRect: TRect; aState: TGridDrawState);
 var
-  aIndex: Integer;
+  aIndex, x, i, w, n: Integer;
   s: RawByteString;
+  arr: TRefInfoArray;
+  aColor: TColor;
+  r: TRect;
 begin
   if aRow>=gridLog.FixedRows then begin
     aIndex := aRow - gridLog.FixedRows;
     if fLogCache.LoadIndex(aIndex) then begin
+      x := aRect.Left + 7;
       case gridLog.Columns[aCol].Title.Caption of
-        'Subject': s := fLogCache.Item.Subject;
+        'Subject':
+          begin
+            s := fLogCache.Item.Subject;
+            if fSeenRefs.Find(fLogCache.Item.CommitOID, n ) then begin
+              arr := fSeenRefs.Data[n];
+              gridLog.Canvas.Brush.Style := bsSolid;
+              for i:=0 to Length(arr)-1 do begin
+                w := gridLog.Canvas.TextWidth(arr[i]^.refName) + 6;
+
+                if arr[i]^.head then aColor := clRed
+                else if arr[i]^.subType=rostLocal then aColor := $00C300
+                else aColor := $AADDFF;
+
+                r := Rect(x, aRect.Top, x + w, aRect.Bottom);
+                gridLog.Canvas.Brush.Color := aColor;
+                gridLog.Canvas.FillRect(r);
+
+                gridLog.Canvas.TextOut(r.Left + 3, r.Top, arr[i]^.refName);
+
+                x += w + 2;
+                if i=Length(arr)-1 then
+                  x += 5;
+              end;
+              gridLog.Canvas.Brush.Color := gridlog.Color;
+
+            end;
+          end;
         'Author': s := fLogCache.Item.Author;
         'SHA1': s := fLogCache.Item.CommitOID;
         'Date': s := IntToStr(fLogCache.Item.CommiterDate);
         else  s := '';
       end;
-      gridLog.Canvas.TextOut(aRect.left + 7, aRect.Top, s);
+
+      gridLog.Canvas.Brush.Style := bsClear;
+      gridLog.Canvas.TextOut(x, aRect.Top, s);
     end;
   end;
 end;
@@ -984,6 +1019,53 @@ begin
   end;
 end;
 
+procedure TfrmMain.CacheRefs;
+var
+  i, j, aIndex: Integer;
+  info: PRefInfo;
+  arr: TRefInfoArray;
+  exists: boolean;
+begin
+  fGit.UpdateRefList;
+
+  if fSeenRefs=nil then begin
+    fSeenRefs := TRefsMap.Create;
+    fSeenRefs.Sorted := true;
+  end else
+    fSeenRefs.Clear;
+
+  for i:= 0 to fGit.RefList.Count-1 do begin
+    info := PRefInfo(fGit.RefList.Objects[i]);
+    exists := fSeenRefs.Find(info^.objName, aIndex);
+    if exists then
+      arr := fSeenRefs.KeyData[info^.objName]
+    else
+      arr := nil;
+
+    j := Length(arr);
+    SetLength(arr, j+1);
+    arr[j] := info;
+
+    if not exists then
+      fSeenRefs.Add(info^.objName, arr)
+    else
+      fSeenRefs[info^.objName] := arr;
+  end;
+
+  //DebugLn;
+  //for i:=0 to fGit.RefList.Count-1 do begin
+  //  info := PRefInfo(fGit.RefList.Objects[i]);
+  //  DebugLn('%2d. %s %s',[i, info^.objName, info^.refName]);
+  //end;
+  //DebugLn;
+  //for i:=0 to fSeenRefs.Count-1 do begin
+  //  arr := fSeenRefs.Data[i];
+  //  DebugLn('%d. %s : %d refs', [i, fSeenRefs.Keys[i], Length(arr)]);
+  //  for j:=0 to Length(Arr)-1 do
+  //    DebugLn('   %s',[arr[j]^.refName]);
+  //end;
+end;
+
 function OwnerDrawStateToStr(State: TOwnerDrawState): string;
   procedure Add(st: string);
   begin
@@ -1236,6 +1318,9 @@ procedure TfrmMain.DoNewLog;
 var
   cmd: string;
 begin
+  //CacheRefs;
+  //exit;
+
   if actNewLog.Checked then begin
     panLog.Visible := false;
     panLogNew.Visible := true;
@@ -1243,7 +1328,7 @@ begin
     btnStop.Visible := true;
     btnStop.Tag := 0;
 
-    fGit.UpdateRefList;
+    CacheRefs;
 
     fLogCache.LoadCache;
 

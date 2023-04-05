@@ -57,6 +57,7 @@ type
     subType: TRefObjectSubType;
     refered: PRefInfo;
   end;
+  TRefInfoArray = array of PRefInfo;
 
   { TGit }
 
