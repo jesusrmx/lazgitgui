@@ -171,7 +171,7 @@ object frmMain: TfrmMain
             Title.Caption = 'SHA1'
             Width = 90
           end>
-        DefaultRowHeight = 16
+        DefaultRowHeight = 18
         ExtendedSelect = False
         FixedCols = 0
         Flat = True
