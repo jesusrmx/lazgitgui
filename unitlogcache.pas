@@ -8,12 +8,14 @@ unit unitlogcache;
 {$if defined(Debug) or defined(Capture) or defined(CaptureChunks)}
   {$define UseCounter}
 {$endif}
+{$define UseBufferedStream}
 
 
 interface
 
 uses
-  Classes, SysUtils, Math, DateUtils, LazLogger, unitgit, unitprocess, unitruncmd;
+  Classes, SysUtils, Math, {$ifdef UseBufferedStream} BufStream, {$endif} DateUtils,
+  LazLogger, unitgit, unitprocess, unitruncmd;
 
 const
 
@@ -95,7 +97,11 @@ type
   TLogCache = class
   private
     fGit: TGit;
+    {$ifdef UseBufferedStream}
+    fCacheStream: TBufferedFileStream;
+    {$else}
     fCacheStream: TFileStream;
+    {$endif}
     fIndexStream: TMemoryStream;
     fBuffer: PChar;
     fLastReadItemIndex: SizeInt;
@@ -691,8 +697,11 @@ begin
     // preserve the index
     fIndexStream.SaveToFile(GetFilename(FILENAME_INDEX));
 
-    // flush TFileStream, how?....
+    {$ifdef UseBufferedStream}
+    fCacheStream.Flush;
+    {$else}
     FileFlush(fCacheStream.Handle);
+    {$endif}
   end;
 end;
 
@@ -793,7 +802,11 @@ begin
     mode := fmOpenReadWrite + fmShareDenyWrite;
     if not FileExists(aFileCache) then
       mode += fmCreate;
+    {$ifdef UseBufferedStream}
+    fCacheStream := TBufferedFileStream.Create(aFileCache, mode);
+    {$else}
     fCacheStream := TFileStream.Create(aFileCache, mode);
+    {$endif}
   end;
 
 end;
