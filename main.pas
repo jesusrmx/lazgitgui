@@ -1304,7 +1304,7 @@ begin
 
     LOGEVENT_RECORD, LOGEVENT_END:
       begin
-        gridLog.RowCount := fLogCache.Count + 1;
+        gridLog.RowCount := fLogCache.Count + gridLog.FixedRows;
         btnStop.Visible := false;
       end;
 
