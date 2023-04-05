@@ -100,6 +100,7 @@ type
     fIndexStream: TMemoryStream;
     fBuffer: PChar;
     fLastReadItemIndex: SizeInt;
+    fLastReceivedItemIndex: SizeInt;
     fMaxBufferSize: Integer;
     fEntryReadSize: Integer;
     fItem: TLogItem;
@@ -129,6 +130,8 @@ type
     procedure OpenCache;
     procedure DumpItem;
     procedure SendEvent(thread: TLogThread; event: Integer; var interrupt:boolean);
+    procedure RecoverIndex;
+    procedure SaveIndexStream;
   public
     constructor create(aLogEvent: TLogThreadEvent);
     destructor Destroy; override;
@@ -139,6 +142,8 @@ type
     property Git: TGit read fGit write fGit;
     property Count: Integer read GetCount;
     property Item: TLogItem read fItem;
+    property ItemIndex: SizeInt read fLastReadItemIndex;
+    property LastReceivedItemIndex: SizeInt read fLastReceivedItemIndex;
   end;
 
 
@@ -388,6 +393,7 @@ var
   aLen: word;
   indxRec: TIndexRecord;
   notify: boolean;
+  readIndex: Int64;
 begin
   notify := false;
 
@@ -408,6 +414,7 @@ begin
       indxRec.size := aLen;
       fIndexStream.Seek(0, soFromEnd);
       fIndexStream.WriteBuffer(indxRec, sizeOf(TIndexRecord));
+      fLastReceivedItemIndex := fIndexStream.Size div SizeOf(TIndexRecord) - 1;
 
       // write log record, write a record length at start
       // so it can be used to more quickly locate the start of the next
@@ -686,7 +693,7 @@ begin
   if newCount<>fOldCount then begin
 
     // preserve the index
-    fIndexStream.SaveToFile(GetFilename(FILENAME_INDEX));
+    SaveIndexStream;
 
     // flush TFileStream, how?....
     FileFlush(fCacheStream.Handle);
@@ -783,17 +790,19 @@ begin
   aFileCache := GetFilename(FILENAME_CACHE);
   aFileIndex := GetFilename(FILENAME_INDEX);
 
-  if fIndexStream=nil then begin
-    fIndexStream := TMemoryStream.Create;
-    if FileExists(aFileIndex) then
-      fIndexStream.LoadFromFile(aFileIndex);
-  end;
-
   if fCacheStream=nil then begin
     mode := fmOpenReadWrite + fmShareDenyWrite;
     if not FileExists(aFileCache) then
       mode += fmCreate;
     fCacheStream := TFileStream.Create(aFileCache, mode);
+  end;
+
+  if fIndexStream=nil then begin
+    fIndexStream := TMemoryStream.Create;
+    if FileExists(aFileIndex) then
+      fIndexStream.LoadFromFile(aFileIndex)
+    else if fCacheStream.Size>0 then
+      RecoverIndex;
   end;
 
 end;
@@ -822,6 +831,28 @@ begin
   if assigned(fLogEvent) then begin
     fLogEvent(self, thread, event, interrupt);
   end;
+end;
+
+procedure TLogCache.RecoverIndex;
+var
+  w: word;
+  IndxRec: TIndexRecord;
+begin
+  fIndexStream.Clear;
+  fCacheStream.Position := 0;
+  while fCacheStream.Position<fCacheStream.Size do begin
+    IndxRec.offset := fCacheStream.Position;
+    w := fCacheStream.ReadWord;
+    IndxRec.size := w + SizeOf(word);
+    fIndexStream.WriteBuffer(indxRec, sizeOf(TIndexRecord));
+    fCacheStream.Seek(w, soFromCurrent);
+  end;
+  SaveIndexStream;
+end;
+
+procedure TLogCache.SaveIndexStream;
+begin
+  fIndexStream.SaveToFile(GetFilename(FILENAME_INDEX));
 end;
 
 procedure TLogCache.LoadCache;
