@@ -78,7 +78,9 @@ type
     fLastTag: string;
     fLastTagOID: string;
     fLastTagCommits: Integer;
+    fInternalRefList: TStringList;
     function GetErrorLog: RawByteString;
+    function GetInternalRefList: TStringList; overload;
     procedure GitStatusBranch(var head: pchar; tail: pchar);
     procedure GitStatusFiles(var head: pchar; tail: pchar; lstUnstaged, lstStaged: TStrings);
     function  TryGitIn(aPath: string): boolean;
@@ -101,7 +103,7 @@ type
     function Restore(entryArray: TPFileEntryArray; staged: boolean): Integer; overload;
     function Reset(opts: string; out outMsg:RawByteString): Integer;
     function BranchList(list: TStrings; opts:array of string): Integer;
-    function RefList(list: TStrings; pattern:string; fields:array of string): Integer;
+    function FillRefList(list: TStrings; pattern:string; fields:array of string): Integer; overload;
     function Switch(branchName: string): Integer;
     function OpenDir(aDir: string): Integer;
     function Commit(msg, opts: string): Integer;
@@ -111,6 +113,7 @@ type
     function Tag(tagName:string; annotated:boolean; tagMsg:string): Integer;
     function AddToIgnoreFile(aFile:string; justType:boolean; global:boolean): boolean;
     function Describe(opts: string; out cmdOut:RawByteString): Integer;
+    function UpdateRefList: Integer;
 
     property Exe: string read fGitCommand;
     property CommitsAhead: Integer read fCommitsAhead;
@@ -129,6 +132,7 @@ type
     property LastTagOID: string read fLastTagOID;
     property LastTagCommits: Integer read fLastTagCommits;
     property Config: IConfig read fConfig write fConfig;
+    property RefList: TStringList read GetInternalRefList;
   end;
 
   procedure ClearRefList(list: TStrings);
@@ -169,16 +173,18 @@ var
   i: Integer;
   info: PRefInfo;
 begin
-  for i:=0 to list.Count-1 do begin
-    info := PRefInfo(list.Objects[i]);
-    if info^.refered<>nil then begin
-      Finalize(info^.refered^);
-      Dispose(info^.refered);
+  if List<>nil then begin
+    for i:=0 to list.Count-1 do begin
+      info := PRefInfo(list.Objects[i]);
+      if info^.refered<>nil then begin
+        Finalize(info^.refered^);
+        Dispose(info^.refered);
+      end;
+      Finalize(info^);
+      Dispose(info);
     end;
-    Finalize(info^);
-    Dispose(info);
+    list.clear;
   end;
-  list.clear;
 end;
 
 function Sanitize(aPath: RawbyteString; force: boolean): RawbyteString;
@@ -229,6 +235,8 @@ end;
 
 destructor TGit.destroy;
 begin
+  ClearRefList(fInternalRefList);
+  fInternalRefList.Free;
   clear;
   fEntries.Free;
   inherited destroy;
@@ -369,6 +377,13 @@ end;
 function TGit.GetErrorLog: RawByteString;
 begin
   result := cmdLine.ErrorLog;
+end;
+
+function TGit.GetInternalRefList: TStringList;
+begin
+  if fInternalRefList=nil then
+    fInternalRefList := TStringList.Create;
+  result := fInternalRefList;
 end;
 
 procedure TGit.GitStatusFiles(var head: pchar; tail: pchar; lstUnstaged,
@@ -720,7 +735,7 @@ begin
   result := true;
 end;
 
-function TGit.RefList(list: TStrings; pattern: string; fields: array of string): Integer;
+function TGit.FillRefList(list: TStrings; pattern: string; fields: array of string): Integer;
 var
   cmd, field: String;
   M: TMemoryStream;
@@ -897,6 +912,34 @@ begin
       end;
     end;
   end;
+end;
+
+// Update the internal reflist
+function TGit.UpdateRefList: Integer;
+begin
+
+  GetInternalRefList;
+
+  result := FillRefList(
+      fInternalRefList, '', [
+      '%(refname:short)',
+      '%(refname:rstrip=-2)',
+      '%(objecttype)',
+      '%(objectname)',
+      '%(upstream:short)',
+      '%(HEAD)',
+      '%(worktreepath)',
+      '%(contents)',
+      '%(authorname)',
+      '%(authordate)',
+      '%(committerdate)',
+      '%(creatordate)',
+      '%(*objecttype)',
+      '%(*objectname)',
+      '%(*authorname)',
+      '%(*authordate)',
+      '%(*contents)'
+      ]);
 end;
 
 function TGit.GitMerging: boolean;

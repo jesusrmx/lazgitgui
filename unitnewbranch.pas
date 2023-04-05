@@ -49,7 +49,6 @@ type
     lstSource: TListBox;
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure FormCreate(Sender: TObject);
-    procedure FormDestroy(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure lstSourceClick(Sender: TObject);
     procedure tabSourceChange(Sender: TObject);
@@ -57,7 +56,6 @@ type
   private
     fBranchName, fReference: string;
     fGit: TGit;
-    fRefs: TStringList;
     fType: Integer;
     function GetFetch: boolean;
     function GetSwitch: boolean;
@@ -99,38 +97,11 @@ const
 procedure TfrmNewBranch.FormCreate(Sender: TObject);
 begin
   fConfig.ReadWindow(Self, 'newbranchform', SECTION_GEOMETRY);
-  fRefs := TStringList.Create;
-end;
-
-procedure TfrmNewBranch.FormDestroy(Sender: TObject);
-begin
-  ClearRefList(fRefs);
-  fRefs.Free;
 end;
 
 procedure TfrmNewBranch.FormShow(Sender: TObject);
 begin
-
-  if fGit.RefList(fRefs, '', [
-      '%(refname:short)',
-      '%(refname:rstrip=-2)',
-      '%(objecttype)',
-      '%(objectname)',
-      '%(upstream:short)',
-      '%(HEAD)',
-      '%(worktreepath)',
-      '%(contents)',
-      '%(authorname)',
-      '%(authordate)',
-      '%(committerdate)',
-      '%(creatordate)',
-      '%(*objecttype)',
-      '%(*objectname)',
-      '%(*authorname)',
-      '%(*authordate)',
-      '%(*contents)'
-      ])>0
-  then begin
+  if fGit.UpdateRefList>0 then begin
     DebugLn(fGit.ErrorLog);
     ShowMessage('Error while getting list of branches');
     Close;
@@ -171,8 +142,8 @@ begin
 
     lstSource.Clear;
 
-    for i:=0 to fRefs.Count-1 do begin
-      info := PRefInfo(fRefs.Objects[i]);
+    for i:=0 to fGit.RefList.Count-1 do begin
+      info := PRefInfo(fGit.RefList.Objects[i]);
       ok := false;
       case aIndex of
         0: ok := info^.subType=rostLocal;// (info^.objType=rotCommit) and (not info^.isTracking);
@@ -181,7 +152,7 @@ begin
         else exit;
       end;
       if ok then begin
-        j := lstSource.Items.AddObject(fRefs[i], TObject(info));
+        j := lstSource.Items.AddObject(fGit.RefList[i], TObject(info));
         if (aIndex=0) and info^.head then
           lstSource.ItemIndex := j;
       end;
@@ -222,8 +193,8 @@ var
 begin
   result := false;
   aName := lowercase(aName);
-  for i:=0 to fRefs.Count-1 do begin
-    info := PRefInfo(fRefs.Objects[i]);
+  for i:=0 to fGit.RefList.Count-1 do begin
+    info := PRefInfo(fGit.RefList.Objects[i]);
     if (info^.subType=subtype) and (aName=info^.refName) then begin
       result := true;
       break;

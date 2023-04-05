@@ -8,7 +8,6 @@ object frmNewBranch: TfrmNewBranch
   ClientWidth = 640
   OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
-  OnDestroy = FormDestroy
   OnShow = FormShow
   LCLVersion = '2.3.0.0'
   object tabSource: TTabControl
