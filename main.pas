@@ -1305,10 +1305,12 @@ begin
     LOGEVENT_RECORD, LOGEVENT_END:
       begin
         gridLog.RowCount := fLogCache.Count + 1;
+        btnStop.Visible := false;
       end;
 
     LOGEVENT_DONE:
-      btnStop.Visible := false;
+      begin
+      end;
   end;
 end;
 
