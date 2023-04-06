@@ -15,8 +15,8 @@ clonerepos () {
   if [ ! -d gita ]; then
     echo "Cloning sample repositories"
     git clone file://$REPO gita
-    git clone file://$REPO gitb
-    git clone file://$REPO gitc
+    #git clone file://$REPO gitb
+    #git clone file://$REPO gitc
   else
     echo "The reposositories are already created"
   fi
@@ -38,7 +38,7 @@ docommits () {
     MSG=" - now with $FILESIZE bytes"
   fi
 
-  for i in {1..10}; do
+  for i in {1..5}; do
     echo "Line $i$MSG" >> $FILE
     git add $FILE
     git commit -m "$1: added Line $i$MSG"
@@ -49,11 +49,19 @@ docommits () {
 
 }
 
+if [ "$1" == "clean" ]; then
+    echo "cleaning..."
+    rm -rf repo.git
+    rm -rf gita
+    rm -rf gitb
+    rm -rf gitc
+fi
+
 makerepo
 clonerepos
 
 docommits gita
-docommits gitb
-docommits gitc
+#docommits gitb
+#docommits gitc
 
 
