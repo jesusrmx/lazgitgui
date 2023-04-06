@@ -350,8 +350,8 @@ begin
 
   if fCacheStream=nil then begin
 
-    aFileCache := GetFilename(FILENAME_INDEX);
-    aFileIndex := fDir + BASE_FILENAME + '.logindex';
+    aFileCache := GetFilename(FILENAME_CACHE);
+    aFileIndex := GetFilename(FILENAME_INDEX);
 
     if fCacheStream=nil then begin
       mode := fmOpenReadWrite + fmShareDenyWrite;
