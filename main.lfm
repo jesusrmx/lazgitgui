@@ -1,7 +1,7 @@
 object frmMain: TfrmMain
-  Left = 200
+  Left = 69
   Height = 570
-  Top = 90
+  Top = 132
   Width = 924
   Caption = 'frmMain'
   ClientHeight = 570
@@ -1511,11 +1511,12 @@ object frmMain: TfrmMain
       ParentFont = False
     end
     object btnStop: TSpeedButton
-      Left = 832
-      Height = 22
+      Left = 831
+      Height = 21
       Top = 0
-      Width = 23
+      Width = 24
       Anchors = [akTop, akRight]
+      AutoSize = True
       Caption = 'Stp'
       Flat = True
       Visible = False
@@ -1534,6 +1535,17 @@ object frmMain: TfrmMain
       BorderSpacing.Right = 5
       Flat = True
       GroupIndex = 1
+    end
+    object lblInfo: TLabel
+      AnchorSideRight.Control = btnStop
+      Left = 761
+      Height = 17
+      Top = 2
+      Width = 65
+      Anchors = [akTop, akRight]
+      BorderSpacing.Right = 5
+      Caption = 'Working ....'
+      OnClick = lblInfoClick
     end
   end
   object splitterMain: TSplitter

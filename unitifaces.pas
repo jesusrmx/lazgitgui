@@ -23,6 +23,12 @@ type
     procedure WriteInteger(aKey:string; avalue:Integer; section:string=SECTION_DEFAULT);
   end;
 
+  IDbIndex = interface ['{F173FEE3-9521-42F4-9632-C6EF2B84750C}']
+    procedure ThreadStart(aHead: boolean);
+    procedure ThreadDone;
+    procedure ThreadStore(buf: pchar; size: Integer);
+  end;
+
 implementation
 
 end.

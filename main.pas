@@ -31,7 +31,7 @@ uses
   StdCtrls, ExtCtrls, ActnList, synEditTypes, SynEdit, SynHighlighterDiff,
   StrUtils, FileUtil, unitconfig, unitprocess, unitentries, unitgit, Types,
   lclType, Menus, Buttons, Grids, unitnewbranch, unitruncmd, unitansiescapes,
-  unitnewtag, unitlogcache, unitlog, LConvEncoding, fgl;
+  unitnewtag, unitlogcache, unitlog, LConvEncoding, fgl, unitdbindex;
 
 type
   TRefsMap = specialize TFPGMap<string, TRefInfoArray>;
@@ -61,6 +61,7 @@ type
     Label1: TLabel;
     Label2: TLabel;
     Label3: TLabel;
+    lblInfo: TLabel;
     lblTag: TLabel;
     lblMerging: TLabel;
     lblRemote: TLabel;
@@ -115,6 +116,7 @@ type
     procedure lblBranchClick(Sender: TObject);
     procedure lblBranchContextPopup(Sender: TObject; MousePos: TPoint;
       var Handled: Boolean);
+    procedure lblInfoClick(Sender: TObject);
     procedure lstUnstagedContextPopup(Sender: TObject; MousePos: TPoint;
       var Handled: Boolean);
     procedure lstUnstagedDrawItem(Control: TWinControl; Index: Integer;
@@ -283,16 +285,18 @@ var
   arr: TRefInfoArray;
   aBrushColor, aFontColor: TColor;
   r: TRect;
+  db: TDbIndex;
 begin
   if aRow>=gridLog.FixedRows then begin
     aIndex := aRow - gridLog.FixedRows;
-    if fLogCache.LoadIndex(aIndex) then begin
+    db := fLogCache.DbIndex;
+    if db.LoadItem(aIndex) then begin
       x := aRect.Left + 7;
       case gridLog.Columns[aCol].Title.Caption of
         'Subject':
           begin
-            s := fLogCache.Item.Subject;
-            if fSeenRefs.Find(fLogCache.Item.CommitOID, n ) then begin
+            s := db.Item.Subject;
+            if fSeenRefs.Find(db.Item.CommitOID, n ) then begin
               arr := fSeenRefs.Data[n];
 
               for i:=0 to Length(arr)-1 do begin
@@ -336,9 +340,9 @@ begin
 
             end;
           end;
-        'Author': s := fLogCache.Item.Author;
-        'SHA1': s := fLogCache.Item.CommitOID;
-        'Date': s := IntToStr(fLogCache.Item.CommiterDate);
+        'Author': s := db.Item.Author;
+        'SHA1': s := db.Item.CommitOID;
+        'Date': s := IntToStr(db.Item.CommiterDate);
         else  s := '';
       end;
 
@@ -547,6 +551,11 @@ begin
     exit;
 
   UpdateBranchMenu;
+end;
+
+procedure TfrmMain.lblInfoClick(Sender: TObject);
+begin
+  //fLogCache.NotifyMe;
 end;
 
 procedure TfrmMain.lstUnstagedContextPopup(Sender: TObject; MousePos: TPoint;
@@ -1410,13 +1419,18 @@ begin
 
     LOGEVENT_RECORD:
       begin
-        btnStop.Caption := format('Stp - %d',[fLogCache.LastReceivedItemIndex]);
+        //if fLogCache.LogState=lsGetFirst then lblInfo.Font.Color := clGreen
+        //else                                  lblInfo.Font.Color := clRed;
+        lblInfo.Caption := format('%s',[fLogCache.DbIndex.Info]);
+        interrupt := btnStop.Visible and (btnStop.Tag=1);
+        //lblInfo.Refresh;
       end;
 
     LOGEVENT_END:
       begin
+        DebugLn('End event received');
         btnStop.Visible := false;
-        gridLog.RowCount := fLogCache.Count + gridLog.FixedRows;
+        gridLog.RowCount := fLogCache.DbIndex.Count + gridLog.FixedRows;
       end;
 
     LOGEVENT_DONE:

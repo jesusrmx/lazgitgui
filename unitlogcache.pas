@@ -5,7 +5,8 @@ unit unitlogcache;
 
 {.$define Capture}
 {.$define CaptureChunks}
-{$if defined(Debug) or defined(Capture) or defined(CaptureChunks)}
+{$define CaptureHeadTail}
+{$if defined(Debug) or defined(Capture) or defined(CaptureChunks) or defined(CaptureHeadTail)}
   {$define UseCounter}
 {$endif}
 
@@ -13,7 +14,7 @@ unit unitlogcache;
 interface
 
 uses
-  Classes, SysUtils, Math, DateUtils, LazLogger, unitgit, unitprocess, unitruncmd;
+  Classes, SysUtils, Math, DateUtils, LazLogger, unitgit, unitprocess, unitifaces, unitdbindex;
 
 const
 
@@ -30,21 +31,6 @@ type
   TLogThread = class;
 
   TLogThreadEvent = procedure(sender: TObject; thread: TLogThread; event: Integer; var interrupt: boolean) of object;
-
-  TLogItem = record
-    CommiterDate: Int64;
-    ParentOID, CommitOID,
-    Refs,
-    Author,
-    Email,
-    Subject: RawByteString;
-  end;
-
-  PIndexRecord = ^TIndexRecord;
-  TIndexRecord = packed record
-    offset: Int64;
-    size: word;
-  end;
 
   TLogState = (lsInactive, lsStart, lsGetFirst, lsGetLast, lsEnd);
 
@@ -65,18 +51,27 @@ type
   TLogThread = class(TThread)
   private
     fBuffer: PChar;
+    fCacheStream: TFileStream;
+    fCaptureTo: string;
     fCommand: string;
+    fDbIndex: TDbIndex;
     fHaveProgress: boolean;
+    fHead, fCacheUpdate: boolean;
+    fIndexStream: TMemoryStream;
+    fOldIndexSize: Int64;
     fOnOutput: TNotifyInterruptEvent;
     fResult: Integer;
     fErrorLog: string;
     fStartDir: string;
     fCmdLine: ^TCmdLine;
-    fLogSize: Integer;
+    fBufferSize: Integer;
+    fOldIndexOffset: Int64;
     {$IFDEF Capture}
     fCap: TMemoryStream;
     {$ENDIF}
     procedure Notify;
+  protected
+    procedure DoTerminate; override;
   public
     constructor Create;
     destructor Destroy; override;
@@ -86,18 +81,21 @@ type
     property Result: Integer read fResult;
     property ErrorLog: string read fErrorLog;
     property Buffer: PChar read fBuffer;
-    property BufferSize: Integer read fLogSize;
+    property BufferSize: Integer read fBufferSize;
     property OnOutput: TNotifyInterruptEvent read fOnOutput write fOnOutput;
     property HaveProgress: boolean read fHaveProgress write fHaveProgress;
+    property CaptureTo: string read fCaptureTo write fCaptureTo;
+    //
+    property DbIndex: TDbIndex read fDbIndex write fDbIndex;
+    property Head: boolean read fHead write fHead;
   end;
 
   { TLogCache }
 
   TLogCache = class
   private
+    fDbIndex: TDbIndex;
     fGit: TGit;
-    fCacheStream: TFileStream;
-    fIndexStream: TMemoryStream;
     fBuffer: PChar;
     fLastReadItemIndex: SizeInt;
     fLastReceivedItemIndex: SizeInt;
@@ -108,44 +106,25 @@ type
     fNewDate, fOldDate: Int64;
     fOldDateIsStart: boolean;
     flogEvent: TLogThreadEvent;
-    fOldIndexOffset: Int64;
-    fOldCount: Integer;
-    function GetCount: Integer;
+    fInterrupted: boolean;
     procedure OnLogThreadDone(Sender: TObject);
     procedure OnLogThreadOutput(sender: TObject; var interrupt: boolean);
-    procedure GetIndexRecord(var aIndex:SizeInt; out indxRec: TIndexRecord);
-    function ReadLogItem(aIndex:SizeInt): boolean;
-    procedure CacheBufferFromItem(out aBuf: PChar; out len: word);
-    procedure ItemFromCacheBuffer;
-    procedure ItemFromLogBuffer(aBuf: PChar);
     procedure EnterLogState(aState: TLogState);
     procedure DoLogStateStart;
     procedure DoLogStateGetFirst;
     procedure DoLogStateGetLast;
     procedure DoLogStateEnd;
     procedure Run;
-    function  GetFilename(aIndex: Integer): string;
-    procedure ReIndexStream(stream:TMemoryStream; offset: Integer);
-    procedure ReIndex;
-    procedure OpenCache;
-    procedure DumpItem;
     procedure SendEvent(thread: TLogThread; event: Integer; var interrupt:boolean);
-    procedure RecoverIndex;
-    procedure SaveIndexStream;
   public
     constructor create(aLogEvent: TLogThreadEvent);
     destructor Destroy; override;
     procedure LoadCache;
-    function LoadIndex(aIndex: Integer): boolean;
 
     property LogState: TLogState read fLogState;
     property Git: TGit read fGit write fGit;
-    property Count: Integer read GetCount;
-    property Item: TLogItem read fItem;
-    property ItemIndex: SizeInt read fLastReadItemIndex;
-    property LastReceivedItemIndex: SizeInt read fLastReceivedItemIndex;
+    property DbIndex: TDbIndex read fDbIndex write fDbIndex;
   end;
-
 
 implementation
 
@@ -195,9 +174,22 @@ var
   counter: Integer = 0;
 {$endif}
 
+procedure TLogThread.DoTerminate;
+var
+  db: IDbIndex;
+begin
+  db := fDbIndex;
+  db.ThreadDone;
+  inherited DoTerminate;
+end;
+
+var
+  runner: Integer = 0;
+
 procedure TLogThread.Execute;
 var
   outText: string;
+  db: IDbIndex;
 
   procedure CollectOutputDummy(const buffer; size:Longint; var interrupt: boolean);
   begin
@@ -226,7 +218,7 @@ var
     fCap.SaveToFile(format('capture_%.2d_%d',[counter, size]));
     {$ENDIF}
 
-    {$ifdef UseCounter}
+    {$if defined(UseCounter) and not defined(CaptureHeadTail)}
     inc(counter);
     {$endif}
 
@@ -258,14 +250,18 @@ var
         if p^=#10 then inc(p);
 
         fBuffer := p;
-        fLogSize := q-p;
+        fBufferSize := q-p;
+
+        db := fDbIndex;
+        db.ThreadStore(p, q-p);
+
         Synchronize(@Notify);
 
         interrupt := terminated;
         if interrupt then
           break;
 
-        inc(p, fLogSize + 1);
+        inc(p, fBufferSize + 1);
 
       end else begin
         // can't find end of record in this chunk, copy the rest of
@@ -282,9 +278,11 @@ begin
   {$IFDEF DEBUG}
   DebugLnEnter('RunThread START Command=%s', [fCommand]);
   {$ENDIF}
+  DebugLn('TLogThread: Execute: for %s Index: position=%d size=%d',[BoolToStr(fHead,'HEAD','TAIL'), fOldIndexOffset, fOldIndexSize]);
   outText := '';
   //fCmdLine^.WaitOnExit := true;
   fCmdLine^.RedirStdErr := true;
+  fCmdLine^.CaptureFile := CaptureTo;
   fResult := fCmdLine^.RunProcess(fCommand, fStartDir, @CollectOutput);
   if (outText<>'') and (not terminated) then begin
     Synchronize(@Notify);
@@ -298,327 +296,46 @@ end;
 
 { TLogCache }
 
-function TLogCache.ReadLogItem(aIndex: SizeInt): boolean;
-var
-  indxRec: TIndexRecord;
-begin
-  result := (fIndexStream<>nil) and (fIndexStream.Size>0);
-  if result then begin
-
-    GetIndexRecord(aIndex, indxRec);
-
-    result := indxRec.offset + indxRec.size <= fCacheStream.Size ;
-    if result then begin
-
-      if indxRec.size>fMaxBufferSize then begin
-        fMaxBufferSize := indxRec.size * 2;
-        ReallocMem(fBuffer, fMaxBufferSize);
-      end;
-
-      fCacheStream.Position := indxRec.offset;
-      fEntryReadSize := fCacheStream.Read(fBuffer^, indxRec.size);
-
-      ItemFromCacheBuffer;
-
-      fLastReadItemIndex := aIndex;
-    end;
-
-  end;
-end;
-
-procedure TLogCache.CacheBufferFromItem(out aBuf: PChar; out len: word);
-var
-  p: pchar;
-  rlen: word;
-
-  procedure StoreString(s:RawByteString; byteSize:boolean );
-  var
-    b: byte;
-    w: word;
-    l: Integer;
-  begin
-    l := Length(s);
-    if byteSize then begin
-      b := min(l, high(byte));
-      Move(b, p^, sizeof(byte));
-      inc(p, sizeof(byte));
-    end else begin
-      w := min(l, high(word));
-      Move(w, p^, sizeOf(word));
-      inc(p, sizeof(word));
-    end;
-
-    if l>0 then begin
-      Move(s[1], p^, l);
-      inc(p, l);
-    end;
-  end;
-
-begin
-
-  len := SizeOf(Word);
-  len += SizeOf(fItem.CommiterDate);
-  len += Min(Length(fItem.ParentOID), High(Byte)) + 1;
-  len += Min(Length(fItem.CommitOID), High(Byte)) + 1;
-  len += Min(Length(fItem.Author), High(Byte)) + 1;
-  len += Min(Length(fItem.Email), High(Byte)) + 1;
-  len += Min(Length(fItem.Refs), High(word)) + 2;
-  len += Min(Length(fItem.Subject), High(word)) + 2;
-
-  GetMem(aBuf, len);
-  p := aBuf;
-
-  // store record size not including the record size itself
-  rlen := len - SizeOf(word);
-  Move(rlen, p^, SizeOf(word));
-  inc(p, sizeOf(word));
-
-  // store commit date
-  Move(fItem.CommiterDate, p^, SizeOf(fItem.CommiterDate));
-  inc(p, SizeOf(fItem.CommiterDate));
-
-  // store remaining fields
-  StoreString(fItem.ParentOID, true);
-  StoreString(fItem.CommitOID, true);
-  StoreString(fItem.Author, true);
-  StoreString(fItem.Email, true);
-  StoreString(fItem.Refs, false);
-  StoreString(fItem.Subject, false);
-end;
-
 procedure TLogCache.OnLogThreadOutput(sender: TObject; var interrupt: boolean);
 var
   thread: TLogThread absolute sender;
-  aBuffer: PChar;
-  aLen: word;
-  indxRec: TIndexRecord;
-  notify: boolean;
-  readIndex: Int64;
 begin
-  notify := false;
-
-  ItemFromLogBuffer(thread.Buffer);
-
-  case fLogState of
-    lsGetFirst, lsGetLast: begin
-      CacheBufferFromItem(aBuffer, aLen);
-
-      // remember the current index offset, we getting newer records
-      // it would help to identify the re-index starting offset
-      // for getting older records it's not used
-      if fOldIndexOffset<0 then
-        fOldIndexOffset := fIndexStream.Size;
-
-      // Prepare and write the index entry
-      indxRec.offset := fCacheStream.Size;
-      indxRec.size := aLen;
-      fIndexStream.Seek(0, soFromEnd);
-      fIndexStream.WriteBuffer(indxRec, sizeOf(TIndexRecord));
-      fLastReceivedItemIndex := fIndexStream.Size div SizeOf(TIndexRecord) - 1;
-
-      // write log record, write a record length at start
-      // so it can be used to more quickly locate the start of the next
-      // records (mainly to be used in index re-build and recovery tasks)
-      fCacheStream.Seek(0, soFromEnd);
-      fCacheStream.WriteBuffer(aBuffer^, aLen);
-
-      // if this records are the first ever or if we are receiving
-      // older records, notify. If we are receiving newer records
-      // but there are existing records, do not notify as the index
-      // is updated only after all newer records are received
-      notify := (fOldIndexOffset=0) or (fLogState=lsGetLast);
-
-      FreeMem(aBuffer);
-    end;
-  end;
-
-  // check if it has been interrupted
-  if notify then
-    SendEvent(thread, LOGEVENT_RECORD, interrupt);
-
-end;
-
-procedure TLogCache.GetIndexRecord(var aIndex: SizeInt; out indxRec: TIndexRecord);
-var
-  sizeofIndex: Integer;
-  indexOffset: SizeInt;
-begin
-  sizeofIndex := SizeOf(TIndexRecord);
-
-  if aIndex<0 then begin
-    // get the oldest item
-    aIndex := fIndexStream.Size div sizeofIndex - 1;
-  end;
-
-  indexOffset := aIndex * sizeofIndex;
-
-  fIndexStream.Position := indexOffset;
-  fIndexStream.Read(indxRec{%H-}, sizeofIndex);
+  SendEvent(thread, LOGEVENT_RECORD, interrupt);
+  fInterrupted := interrupt;
 end;
 
 procedure TLogCache.OnLogThreadDone(Sender: TObject);
 var
   thread: TLogThread absolute Sender;
   dummy: boolean;
-  aFileCache, aFileIndex: String;
   newState: TLogState;
 begin
 
-  aFileCache := GetFilename(FILENAME_CACHE);
-  aFileIndex := GetFilename(FILENAME_INDEX);
+  newState := lsEnd;
 
   case fLogState of
     lsGetFirst:
       begin
-
-        // some newer records were expected, if needed, update the
-        // index so newer records appear at the top of the 'list'
-        // if fOldIndexOffset=0 no re-index is needed as the received
-        // records are the first ones and the current index is ok
-
-        newState := lsEnd;
-
-        if fOldIndexOffset>0 then begin
-
-          // starting at fOldIndexOffset all next records should be
-          // re-indexed
-          ReIndex;
-
-          if FileExists(aFileCache) then
-            newState := lsGetLast;
-        end;
-
-        if fOldIndexOffset>=0 then begin
-          // got some records and are ready
-          // what record range was modified?
-          dummy := false;
-          SendEvent(thread, LOGEVENT_DONE, dummy);
-        end;
-
-        EnterLogState(newState);
-      end;
-
-    lsGetLast:
-      begin
-
-        // some older records were expected, if there are any
-        // they will be at the end of the 'list', no re-index
-        // is needed
-
-        if fOldIndexOffset>0 then begin
-          // got some records and are ready
-          // what record range was modified?
-          dummy := false;
-          SendEvent(thread, LOGEVENT_DONE, dummy);
-        end;
-
-        EnterLogState(lsEnd);
-
+        if (not fInterrupted) and (fOldDate>0) then
+          newState := lsGetLast;
       end;
   end;
-end;
 
-function TLogCache.GetCount: Integer;
-begin
-  if fIndexStream<>nil then
-    result := fIndexStream.Size div SizeOf(TIndexRecord)
-  else
-    result := 0;
-end;
+  EnterLogState(newState);
 
-procedure TLogCache.ItemFromCacheBuffer;
-var
-  p: pchar;
-
-  function NextByteString: RawByteString;
-  var
-    len: byte;
-  begin
-    len := PByte(p)^;
-    SetLength(result, len);
-    inc(p);
-    Move(p^, result[1], len);
-    inc(p, len);
-  end;
-
-  function NextWordString: RawByteString;
-  var
-    len: LongWord;
-  begin
-    len := PWord(p)^;
-    SetLength(result, len);
-    inc(p, SizeOf(Word));
-    Move(p^, result[1], len);
-    inc(p, len);
-  end;
-
-  function NextInt64: Int64;
-  begin
-    result := PInt64(p)^;
-    inc(p, SizeOf(Int64));
-  end;
-
-begin
-
-  Finalize(fItem);
-
-  p := fBuffer;
-  inc(p, SizeOf(word));
-  fItem.CommiterDate := NextInt64;
-  fItem.ParentOID := NextByteString;
-  fItem.CommitOID := NextByteString;
-  fItem.Author := NextByteString;
-  fItem.Email := NextByteString;
-  fItem.Refs := NextWordString;
-  fItem.Subject := NextWordString;
-end;
-
-procedure TLogCache.ItemFromLogBuffer(aBuf: PChar);
-var
-  p: PChar;
-
-  function NextString: RawbyteString;
-  var
-    q: pchar;
-  begin
-    q := strpos(p, #2);
-    if q<>nil then begin
-      SetString(result, p, q-p);
-      p := q + 1;
-    end else
-      result := p;
-  end;
-
-begin
-
-  Finalize(fItem);
-
-  p := aBuf;
-  fItem.CommiterDate := StrToInt64Def(NextString, 0);
-  fItem.ParentOID := NextString;
-  fItem.CommitOID := NextString;
-  fItem.Author := NextString;
-  fItem.Email := NextString;
-  fItem.Refs := NextString;
-  fItem.Subject := NextString;
-
+  dummy := false;
+  SendEvent(thread, LOGEVENT_DONE, dummy);
 end;
 
 constructor TLogCache.create(aLogEvent: TLogThreadEvent);
 begin
   inherited Create;
-  fMaxBufferSize := 1024 * 4;
-  GetMem(fBuffer, fMaxBufferSize);
   fLogEvent := aLogEvent;
-  fLastReadItemIndex := -1;
 end;
 
 destructor TLogCache.Destroy;
 begin
-  fIndexStream.Free;
-  fCacheStream.Free;
-  Finalize(fItem);
-  FreeMem(fBuffer);
+  fDbIndex.Free;
   inherited Destroy;
 end;
 
@@ -636,68 +353,41 @@ procedure TLogCache.DoLogStateStart;
 begin
   fLogState := lsStart;
 
-  OpenCache;
+  fDbIndex.Open;
 
+  fOldDateIsStart := false;
   fNewDate := 0;
   fOldDate := 0;
-  fOldDateIsStart := false;
-  fOldIndexOffset := -1;
-  fOldCount := fIndexStream.Size div SizeOf(TIndexRecord);
 
-  if fIndexStream<>nil then begin
-    if ReadLogItem(0) then
-      fNewDate := fItem.CommiterDate;
-  end;
+  if fDbIndex.LoadItem(0) then
+    fNewDate := fItem.CommiterDate;
+
+  if fDbIndex.LoadItem(-1) then
+    fOldDate := fItem.CommiterDate;
 
   EnterLogState(lsGetFirst);
 end;
 
 procedure TLogCache.DoLogStateGetFirst;
 begin
-  fOldIndexOffset := -1;
-  fLogState := lsGetFirst;
-  Run;
+  if fOldDate>0 then begin
+    fLogState := lsGetFirst;
+    Run;
+  end else
+    EnterLogState(lsEnd);
 end;
 
 procedure TLogCache.DoLogStateGetLast;
-var
-  aRunFile: String;
 begin
   fLogState := lsGetLast;
-
-  OpenCache;
-
-  // at the end of OpenCache fIndexStream must be ready
-  if fIndexStream<>nil then begin
-
-    // read the last log entry to find its date
-    if ReadLogItem(-1) then
-      fOldDate := fItem.CommiterDate;
-
-    fOldIndexOffset := -1;
-
-    Run;
-  end else
-    // no older records to retrive
-    EnterLogState(lsEnd);
+  Run;
 end;
 
 procedure TLogCache.DoLogStateEnd;
 var
-  newCount: Int64;
   dummyInterrupt: boolean;
 begin
   fLogState := lsEnd;
-
-  newCount := fIndexStream.Size div SizeOf(TIndexRecord);
-  if newCount<>fOldCount then begin
-
-    // preserve the index
-    SaveIndexStream;
-
-    // flush TFileStream, how?....
-    FileFlush(fCacheStream.Handle);
-  end;
 
   dummyInterrupt := false;
   SendEvent(nil, LOGEVENT_END, dummyInterrupt);
@@ -708,6 +398,7 @@ var
   thread: TLogThread;
   cmd: string;
   aRunFile: String;
+  db: IDbIndex;
 begin
 
   // prepare git log command
@@ -728,6 +419,11 @@ begin
 
   end;
 
+  DebugLn('Launching for %s: %s',[BoolToStr(fLogState=lsGetFirst,'HEAD','TAIL'), cmd]);
+
+  db := fDbIndex;
+  db.ThreadStart(fLogState=lsGetFirst);
+
   // launch the log thread
   thread := TLogThread.Create;
   thread.Command := cmd;
@@ -735,138 +431,33 @@ begin
   thread.FreeOnTerminate := true;
   thread.OnOutput := @OnLogThreadOutput;
   thread.OnTerminate := @OnLogThreadDone;
+  thread.DbIndex := fDbIndex;
+  thread.Head := fLogState=lsGetFirst;
+  {$ifdef CaptureHeadTail}
+  repeat
+    Inc(Counter);
+    if thread.Head then aRunFile := format('head_%.2d.bin', [Counter])
+    else                aRunFile := format('tail_%.2d.bin', [Counter]);
+  until not FileExists(aRunFile);
+  thread.CaptureTo := aRunFile;
+  {$endif}
   thread.Start;
-end;
-
-function TLogCache.GetFilename(aIndex: Integer): string;
-begin
-  result := fGit.TopLevelDir + '.git' + PathDelim + 'lazgitgui.';
-  case aIndex of
-    FILENAME_INDEX:     result += 'logindex';
-    FILENAME_CACHE:     result += 'logcache';
-  end;
-end;
-
-procedure TLogCache.ReIndexStream(stream: TMemoryStream; offset: Integer);
-var
-  sizeofIndex, i: Integer;
-  indx: TIndexRecord;
-begin
-  sizeofIndex := SizeOf(TIndexRecord);
-  for i:=1 to stream.Size div sizeofIndex do begin
-    // read existing record
-    stream.Position := (i-1) * sizeofIndex;
-    stream.Read(indx, sizeofIndex);
-    // update with new offset
-    indx.offset += offset;
-    // write back the record
-    stream.Position := (i-1) * sizeofIndex;
-    stream.Write(indx, sizeofIndex);
-  end;
-end;
-
-procedure TLogCache.ReIndex;
-var
-  newSize: Integer;
-  buf, p, q: Pbyte;
-begin
-  newSize := fIndexStream.Size - fOldIndexOffset;
-  GetMem(buf, newSize);
-
-  p := fIndexStream.Memory + fOldIndexOffset;
-  q := fIndexStream.Memory + newSize;
-  Move(p^, buf^, newSize);
-  Move(fIndexStream.Memory^, q^, fIndexStream.Size - newSize);
-  Move(buf^, fIndexStream.Memory^, newSize);
-
-  FreeMem(buf);
-end;
-
-procedure TLogCache.OpenCache;
-var
-  aFileCache, aFileIndex: String;
-  mode: Word;
-begin
-  aFileCache := GetFilename(FILENAME_CACHE);
-  aFileIndex := GetFilename(FILENAME_INDEX);
-
-  if fCacheStream=nil then begin
-    mode := fmOpenReadWrite + fmShareDenyWrite;
-    if not FileExists(aFileCache) then
-      mode += fmCreate;
-    fCacheStream := TFileStream.Create(aFileCache, mode);
-  end;
-
-  if fIndexStream=nil then begin
-    fIndexStream := TMemoryStream.Create;
-    if FileExists(aFileIndex) then
-      fIndexStream.LoadFromFile(aFileIndex)
-    else if fCacheStream.Size>0 then
-      RecoverIndex;
-  end;
-
-end;
-
-procedure TLogCache.DumpItem;
-var
-  indxRec: TIndexRecord;
-begin
-  DebugLn;
-  DebugLn('          Index: %d of %d',[fLastReadItemIndex, fIndexStream.Size div SizeOf(TIndexRecord)]);
-  DebugLn('    Commit Date: %d (%s)',[fItem.CommiterDate, DateTimeToStr(UnixToDateTime(fItem.CommiterDate))]);
-  DebugLn('     Parent OID: %s',[fItem.ParentOID]);
-  DebugLn('     Commit OID: %s',[fItem.CommitOID]);
-  DebugLn('         Author: %s',[fItem.ParentOID]);
-  DebugLn('          Email: %s',[fItem.Email]);
-  DebugLn('           Refs: %s',[fItem.Refs]);
-  DebugLn('        Subject: %s',[fItem.Subject]);
-  GetIndexRecord(fLastReadItemIndex, indxRec);
-  DebugLn('   Cache Offset: %d', [indxRec.offset]);
-  DebugLn('Cache Item Size: %d', [indxRec.size]);
 end;
 
 procedure TLogCache.SendEvent(thread: TLogThread; event: Integer;
   var interrupt: boolean);
 begin
-  if assigned(fLogEvent) then begin
+  if assigned(fLogEvent) then
     fLogEvent(self, thread, event, interrupt);
-  end;
-end;
-
-procedure TLogCache.RecoverIndex;
-var
-  w: word;
-  IndxRec: TIndexRecord;
-begin
-  fIndexStream.Clear;
-  fCacheStream.Position := 0;
-  while fCacheStream.Position<fCacheStream.Size do begin
-    IndxRec.offset := fCacheStream.Position;
-    w := fCacheStream.ReadWord;
-    IndxRec.size := w + SizeOf(word);
-    fIndexStream.WriteBuffer(indxRec, sizeOf(TIndexRecord));
-    fCacheStream.Seek(w, soFromCurrent);
-  end;
-  SaveIndexStream;
-end;
-
-procedure TLogCache.SaveIndexStream;
-begin
-  fIndexStream.SaveToFile(GetFilename(FILENAME_INDEX));
 end;
 
 procedure TLogCache.LoadCache;
 begin
-
+  if fDbIndex=nil then
+    fDbIndex := TDbIndex.Create(fGit.TopLevelDir + '.git' + PathDelim);
   // start cache update anyway
   EnterLogState(lsStart);
 end;
-
-function TLogCache.LoadIndex(aIndex: Integer): boolean;
-begin
-  result := ReadLogItem(aIndex);
-end;
-
 
 end.
 
