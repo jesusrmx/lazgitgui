@@ -96,12 +96,6 @@ type
   private
     fDbIndex: TDbIndex;
     fGit: TGit;
-    fBuffer: PChar;
-    fLastReadItemIndex: SizeInt;
-    fLastReceivedItemIndex: SizeInt;
-    fMaxBufferSize: Integer;
-    fEntryReadSize: Integer;
-    fItem: TLogItem;
     fLogState: TLogState;
     fNewDate, fOldDate: Int64;
     fOldDateIsStart: boolean;
@@ -360,10 +354,10 @@ begin
   fOldDate := 0;
 
   if fDbIndex.LoadItem(0) then
-    fNewDate := fItem.CommiterDate;
+    fNewDate := fDbIndex.Item.CommiterDate;
 
   if fDbIndex.LoadItem(-1) then
-    fOldDate := fItem.CommiterDate;
+    fOldDate := fDbIndex.Item.CommiterDate;
 
   EnterLogState(lsGetFirst);
 end;
