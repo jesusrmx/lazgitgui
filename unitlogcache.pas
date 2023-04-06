@@ -54,7 +54,7 @@ type
     fCacheStream: TFileStream;
     fCaptureTo: string;
     fCommand: string;
-    fDbIndex: TDbIndex;
+    fDbIndex: IDbIndex;
     fHaveProgress: boolean;
     fHead, fCacheUpdate: boolean;
     fIndexStream: TMemoryStream;
@@ -86,7 +86,7 @@ type
     property HaveProgress: boolean read fHaveProgress write fHaveProgress;
     property CaptureTo: string read fCaptureTo write fCaptureTo;
     //
-    property DbIndex: TDbIndex read fDbIndex write fDbIndex;
+    property DbIndex: IDbIndex read fDbIndex write fDbIndex;
     property Head: boolean read fHead write fHead;
   end;
 
@@ -169,11 +169,8 @@ var
 {$endif}
 
 procedure TLogThread.DoTerminate;
-var
-  db: IDbIndex;
 begin
-  db := fDbIndex;
-  db.ThreadDone;
+  fDbIndex.ThreadDone;
   inherited DoTerminate;
 end;
 
@@ -183,7 +180,6 @@ var
 procedure TLogThread.Execute;
 var
   outText: string;
-  db: IDbIndex;
 
   procedure CollectOutputDummy(const buffer; size:Longint; var interrupt: boolean);
   begin
@@ -246,8 +242,7 @@ var
         fBuffer := p;
         fBufferSize := q-p;
 
-        db := fDbIndex;
-        db.ThreadStore(p, q-p);
+        fDbIndex.ThreadStore(p, q-p);
 
         Synchronize(@Notify);
 
