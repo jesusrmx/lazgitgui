@@ -29,9 +29,17 @@ const
 
 type
 
+  { TMyInterfacedObject }
+
+  TMyInterfacedObject = class(TInterfacedObject)
+  protected
+    function _AddRef : longint;{$IFNDEF WINDOWS}cdecl{$ELSE}stdcall{$ENDIF};
+    function _Release : longint;{$IFNDEF WINDOWS}cdecl{$ELSE}stdcall{$ENDIF};
+  end;
+
   { TDbIndex }
 
-  TDbIndex = class(TInterfacedObject, IDbIndex)
+  TDbIndex = class(TMyInterfacedObject, IDbIndex)
   private
     fHead: Boolean;
     fMaxBufferSize: Integer;
@@ -79,6 +87,16 @@ const
   FILENAME_INFO     = 1;
   FILENAME_INDEX    = 2;
   FILENAME_CACHE    = 3;
+
+{ TMyInterfacedObject }
+
+function TMyInterfacedObject._AddRef: longint; {$IFNDEF WINDOWS}cdecl{$ELSE}stdcall{$ENDIF};
+begin
+end;
+
+function TMyInterfacedObject._Release: longint; {$IFNDEF WINDOWS}cdecl{$ELSE}stdcall{$ENDIF};
+begin
+end;
 
 { TDbIndex }
 
@@ -408,7 +426,6 @@ begin
   fCacheStream.Seek(0, soFromEnd);
   fCacheStream.WriteWord(0);
 
-  size := 0;
   field := 0;
   p := buf;
 
