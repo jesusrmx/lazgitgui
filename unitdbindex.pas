@@ -403,10 +403,15 @@ var
   records: Integer;
 begin
   records := (fIndexStream.Size - fOldIndexSize) div SIZEOF_INDEX;
-  if records<>0 then begin
-    // there are changes in the index
-    if fHead then
+  if (records<>0) then begin
+    // there are changes in the index, if they are for 'head' and
+    // arent brand new, re-index
+    if fHead and (fOldIndexSize>0) then
       ReIndex;
+
+    SaveIndexStream;
+
+    FileFlush(fCacheStream.Handle);
   end;
 
   DebugLn('TDbIndex.ThreadDone: for %s there are %d new records',[BoolToStr(fHead, 'HEAD', 'TAIL'), records]);
