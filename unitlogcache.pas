@@ -359,7 +359,7 @@ end;
 
 procedure TLogCache.DoLogStateGetFirst;
 begin
-  if fOldDate>0 then begin
+  if (fOldDate>0) or (fDbIndex.Count=0) then begin
     fLogState := lsGetFirst;
     Run;
   end else
