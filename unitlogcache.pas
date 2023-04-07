@@ -5,7 +5,7 @@ unit unitlogcache;
 
 {.$define Capture}
 {.$define CaptureChunks}
-{$define CaptureHeadTail}
+{.$define CaptureHeadTail}
 {$if defined(Debug) or defined(Capture) or defined(CaptureChunks) or defined(CaptureHeadTail)}
   {$define UseCounter}
 {$endif}
