@@ -6,10 +6,24 @@ uses
   {$IFDEF UNIX}
   cthreads,
   {$ENDIF}
-  SysUtils, Classes, LazLogger, unitLogCache, unitgit, unitifaces, unitprocess, unitentries
+  SysUtils, Classes, LazLogger, unitLogCache, unitdbindex, unitgit, unitifaces, unitprocess, unitentries
   { you can add units after this };
 
 
+const
+  CUT_AT = 80;
+
+function Shorten(s: string): string;
+var
+  len: Integer;
+begin
+  len := Length(s);
+  if len<=CUT_AT then
+    result := s
+  else begin
+    result := copy(s, 1, CUT_AT) + ' 8< ~ ' + IntToStr(len - CUT_AT) + ' more.';
+  end;
+end;
 
 function GetCacheStr(stream: TStream; aOffset: Int64; aSize:Integer; skip:boolean=true):string;
 var
@@ -20,6 +34,15 @@ var
   s: string;
   b: byte;
   w: word;
+
+  procedure Add(title, value: string);
+  begin
+    if result<>'' then
+      result += '|';
+    result += ' ' + title + ': ';
+    result += value;
+  end;
+
 begin
   result := '';
 
@@ -34,7 +57,7 @@ begin
         inc(p, 2); // skip record size
       num := 0;
       date := PInt64(p)^; inc(p, SizeOf(Int64));
-      result += 'Date: ' + IntToStr(date) + ', ';
+      Add('Date', IntToStr(date));
       inc(num);
       while p<t do begin
         case Num of
@@ -42,20 +65,20 @@ begin
             begin
               b := PByte(p)^; inc(p);
               SetString(s, p, b); inc(p, b);
-              //case num of
-              //  1: result += 'Parent OID: ' + s + ', ';
-              //  2: result += 'Commit OID: ' + s + ', ';
-              //  3: result += 'Author: ' + s + ', ';
-              //  4: result += 'E-mail: ' + s + ', ';
-              //end;
+              case num of
+                //1: Add('Parent OID', s);
+                2: Add('Commit OID', s);
+                //3: Add('Author', s);
+                //4: Add('E-mail', s);
+              end;
             end;
           5..6:
             begin
               w := PWord(p)^; inc(p, 2);
               SetString(s, p, w); inc(p, w);
               case num of
-                //5: result += 'Refs: ' + s + ', ';
-                6: result += 'Subject: ' + copy(s, 1, 60) + ', ';
+                //5: Add('Refs', s);
+                6: Add('Subject', Shorten(s));
               end;
             end;
         end;
@@ -149,17 +172,17 @@ begin
     inc(n);
   end;
 
-  DebugLn;
-  DebugLn('Listing directly from cacheBuffer');
-  n := 0;
-  fCacheStream.Position := 0;
-  while fCacheStream.Position<fCacheStream.Size do begin
-    next := fCacheStream.Position;
-    w := fCacheStream.ReadWord;
-    aDir := GetCacheStr(fCacheStream, fCacheStream.Position, w, false);
-    DebugLn('%5d. %8d %4d %s',[n+1, next, w + 2, aDir]);
-    inc(n);
-  end;
+  //DebugLn;
+  //DebugLn('Listing directly from cacheBuffer');
+  //n := 0;
+  //fCacheStream.Position := 0;
+  //while fCacheStream.Position<fCacheStream.Size do begin
+  //  next := fCacheStream.Position;
+  //  w := fCacheStream.ReadWord;
+  //  aDir := GetCacheStr(fCacheStream, fCacheStream.Position, w, false);
+  //  DebugLn('%5d. %8d %4d %s',[n+1, next, w + 2, aDir]);
+  //  inc(n);
+  //end;
 
 
 
