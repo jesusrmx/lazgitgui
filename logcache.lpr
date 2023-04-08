@@ -15,6 +15,19 @@ const
   CUT_AT = 80;
   SEP = '|';
 
+var
+  OIDLen: integer = 40;
+  withHumanDate: boolean = true;
+  withDate: boolean = true;
+  withParentOID: boolean = false;
+  withCommitOID: boolean = true;
+  withAuthor: boolean  = true;
+  withEmail: boolean = true;
+  withRefs: boolean = false;
+  withSubject: boolean = true;
+
+  withIndexInfo: boolean = true;
+
 function Shorten(s: string): string;
 var
   len: Integer;
@@ -28,12 +41,16 @@ begin
 end;
 
 function GetDateStr(date: Int64): string;
+begin
+  result := IntToStr(date);
+end;
+
+function GetHumanDate(date: Int64): string;
 var
   dt: TDateTime;
 begin
-  result := IntToStr(date);
   dt := UnixToDateTime(date, false);
-  result += SEP + FormatDateTime('dd-mmm-yy hh:nn:ss am/pm', dt);
+  result := FormatDateTime('dd-mmm-yy hh:nn:ss am/pm', dt);
 end;
 
 function GetCachedItem(stream: TStream; aOffset: Int64; aSize:Integer; out item: TLogItem; skip:boolean=true): boolean;
@@ -108,13 +125,85 @@ begin
 
   GetCachedItem(stream, aOffset, aSize, item, skip);
 
-  Add('Date', GetDateStr(item.CommiterDate));
-  //Add('Parent OID', item.ParentOID);
-  Add('Commit OID', item.CommitOID);
-  //Add('Author', item.Author);
-  //Add('E-mail', item.Email);
-  //Add('Refs', item.Refs);
-  Add('Subject', shorten(item.Subject));
+  if withIndexInfo then Add('Index', format('%8d %4d',[aOffset, aSize]));
+  if withDate      then Add('Date', GetDateStr(item.CommiterDate));
+  if withHumanDate then Add('Date', GetHumanDate(item.CommiterDate));
+  if withParentOID then Add('Parent OID', copy(item.ParentOID, 1, OIDLen));
+  if withCommitOID then Add('Commit OID', copy(item.CommitOID, 1, OIDLen));
+  if withAuthor    then Add('Author', item.Author);
+  if withEmail     then Add('E-mail', item.Email);
+  if withRefs      then Add('Refs', item.Refs);
+  if withSubject   then Add('Subject', shorten(item.Subject));
+end;
+
+procedure ProcessParameters;
+
+  function GetBool(par:string; def:boolean): boolean;
+  var
+    s: string;
+    i: Integer;
+  begin
+    i := 1;
+    while i<paramcount do begin
+      s := paramstr(i);
+      if (pos('--', s)<>1) then begin
+        if (s[1] in ['-','+']) and SameText(copy(s, 2, length(s)), par) then begin
+          result := s[1]='+';
+          exit;
+        end;
+      end;
+      inc(i);
+    end;
+    result := def;
+  end;
+
+  function GetValue(par:string; def:string): string;
+  var
+    s: string;
+    i, j: Integer;
+  begin
+    i := 1;
+    while i<paramcount do begin
+      s := paramstr(i);
+      if pos('--', s)=1 then begin
+        j := pos('=', s);
+        if j=0 then
+          raise Exception.CreateFmt('Invalid option %s',[s]);
+        if sametext(copy(s, 3, j-3), par) then begin
+          result := Copy(s, j+1, length(s));
+          exit;
+        end;
+      end else if s[1]='-' then begin
+        if SameText(copy(s, 2, Length(s)-1), par) then begin
+          if i>=paramcount-1 then
+            raise Exception.CreateFmt('Option %s needs a value',[par]);
+          inc(i);
+          result := paramStr(i);
+          exit;
+        end;
+      end;
+      inc(i);
+    end;
+    result := def;
+  end;
+
+  function GetIntValue(par:string; def: Integer): Integer;
+  begin
+    result := StrToIntDef(GetValue(par, ''), def);
+  end;
+
+begin
+
+  OIDLen := GetIntValue('OIDLen', OIDLen);
+  withHumanDate := GetBool('hd', withHumanDate);
+  withDate := GetBool('d', withDate);
+  withParentOID := GetBool('p', withParentOID);
+  withCommitOID := GetBool('h', withCommitOID);
+  withAuthor := GetBool('a', withAuthor);
+  withEmail := GetBool('e', withEmail);
+  withRefs := GetBool('r', withRefs);
+  withSubject := GetBool('s', withSubject);
+  withIndexInfo := GetBool('i', withIndexInfo);
 end;
 
 var
@@ -134,7 +223,7 @@ begin
     halt(1);
   end;
 
-  aFile := ExpandFileName(ParamStr(1));
+  aFile := ExpandFileName(ParamStr(ParamCount));
   if FileExists(aFile) then
     aDir := ExtractFilePath(aFile)
   else
@@ -161,9 +250,11 @@ begin
   end;
 
   if not FileExists(aIndexFile) then begin
-    DebugLn('couldnt find the cache file');
-    halt(3);
+    DebugLn('couldnt find the index file');
+    halt(4);
   end;
+
+  ProcessParameters;
 
   fIndexStream := TMemoryStream.Create;
   fIndexStream.LoadFromFile(aIndexFile);
@@ -181,7 +272,7 @@ begin
     fIndexStream.Read(IndxRec, SIZEOF_INDEX);
     if (Next=0) or (fIndexStream.Position=fIndexStream.Size) or (Next<>IndxRec.offset) then begin
       aDir := GetCacheStr(fCacheStream, IndxRec.offset, IndxRec.size);
-      DebugLn('%5d. %8d %4d %s',[n+1, IndxRec.offset, IndxRec.size, aDir]);
+      DebugLn('%8d. %s',[n+1, aDir]);
     end;
     Next := IndxRec.Offset + IndxRec.Size;
     inc(n);
@@ -198,7 +289,7 @@ begin
 
     if (Next=MAXINT) or (fIndexStream.Position=fIndexStream.Size) or (Next<Item.CommiterDate) then begin
       aDir := GetCacheStr(fCacheStream, IndxRec.offset, IndxRec.size);
-      DebugLn('%5d. %8d %4d %s',[n+1, IndxRec.offset, IndxRec.size, aDir]);
+      DebugLn('%8d. %s',[n+1, aDir]);
     end;
     Next := Item.CommiterDate;
     inc(n);
@@ -211,7 +302,7 @@ begin
   while fIndexStream.Position<fIndexStream.Size do begin
     fIndexStream.Read(IndxRec, SIZEOF_INDEX);
     aDir := GetCacheStr(fCacheStream, IndxRec.offset, IndxRec.size);
-    DebugLn('%8d. %8d %4d%s%s',[n+1, IndxRec.offset, IndxRec.size, SEP, aDir]);
+    DebugLn('%8d. %s',[n+1, aDir]);
     inc(n);
   end;
 
