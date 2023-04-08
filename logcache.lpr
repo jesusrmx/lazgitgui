@@ -6,12 +6,14 @@ uses
   {$IFDEF UNIX}
   cthreads,
   {$ENDIF}
-  SysUtils, Classes, LazLogger, unitLogCache, unitdbindex, unitgit, unitifaces, unitprocess, unitentries
+  SysUtils, Classes, DateUtils, LazLogger, unitLogCache, unitdbindex, unitgit,
+  unitifaces, unitprocess, unitentries
   { you can add units after this };
 
 
 const
   CUT_AT = 80;
+  SEP = '|';
 
 function Shorten(s: string): string;
 var
@@ -23,6 +25,15 @@ begin
   else begin
     result := copy(s, 1, CUT_AT) + ' 8< ~ ' + IntToStr(len - CUT_AT) + ' more.';
   end;
+end;
+
+function GetDateStr(date: Int64): string;
+var
+  dt: TDateTime;
+begin
+  result := IntToStr(date);
+  dt := UnixToDateTime(date, false);
+  result += SEP + FormatDateTime('dd-mmm-yy hh:nn:ss am/pm', dt);
 end;
 
 function GetCacheStr(stream: TStream; aOffset: Int64; aSize:Integer; skip:boolean=true):string;
@@ -38,8 +49,8 @@ var
   procedure Add(title, value: string);
   begin
     if result<>'' then
-      result += '|';
-    result += ' ' + title + ': ';
+      result += SEP;
+    //result += ' ' + title + ': ';
     result += value;
   end;
 
@@ -57,7 +68,7 @@ begin
         inc(p, 2); // skip record size
       num := 0;
       date := PInt64(p)^; inc(p, SizeOf(Int64));
-      Add('Date', IntToStr(date));
+      Add('Date', GetDateStr(date));
       inc(num);
       while p<t do begin
         case Num of
@@ -168,7 +179,7 @@ begin
   while fIndexStream.Position<fIndexStream.Size do begin
     fIndexStream.Read(IndxRec, SIZEOF_INDEX);
     aDir := GetCacheStr(fCacheStream, IndxRec.offset, IndxRec.size);
-    DebugLn('%5d. %8d %4d %s',[n+1, IndxRec.offset, IndxRec.size, aDir]);
+    DebugLn('%8d. %8d %4d%s%s',[n+1, IndxRec.offset, IndxRec.size, SEP, aDir]);
     inc(n);
   end;
 
