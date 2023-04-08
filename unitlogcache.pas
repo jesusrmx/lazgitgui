@@ -186,16 +186,19 @@ var
 
   end;
 
-  procedure CollectOutput(const buffer; size:Longint; var interrupt: boolean);
+  procedure CollectOutput(const buffer; size: Longint;
+    var interrupt: boolean);
   var
-    aPos: Integer;
+    aPos, remain: Integer;
     p, q, t: pchar;
+    merged, collected: boolean;
     {$ifdef CaptureChunks}
     M: TMemoryStream;
     {$endif}
   begin
     if terminated or interrupt then
       exit;
+
     {$IFDEF CaptureChunks}
     M := TMemoryStream.Create;
     M.WriteBuffer(buffer, size);
@@ -220,24 +223,32 @@ var
     exit;
     {$endif}
 
-    if outtext='' then
+    remain := Length(outtext);
+    if remain=0 then
       p := @buffer
     else begin
-      aPos := Length(outText);
-      SetLength(outText, aPos + size);
-      Move(Buffer, OutText[aPos+1], size);
+      SetLength(outText, remain + size);
+      Move(Buffer, OutText[remain+1], size);
       p := @outtext[1];
+      remain += size;
+      size := remain;
     end;
+
+    merged := remain>0;
+    collected := false;
+
+    inc(runner);
 
     t := p + size;
     while p<t do begin
 
-      //inc(counter);
-
       q := strpos(p, #3);
-      if q<>nil then begin
+      if (q<>nil) and (q<t) then begin
 
-        if p^=#10 then inc(p);
+        if p^=#10 then begin
+          inc(p);
+          dec(remain);
+        end;
 
         fBuffer := p;
         fBufferSize := q-p;
@@ -251,18 +262,36 @@ var
           break;
 
         inc(p, fBufferSize + 1);
+        dec(remain, fBufferSize + 1);
+
+        collected := true;
 
       end else begin
-        // can't find end of record in this chunk, copy the rest of
-        // buffer in outext
-        SetLength(outText, t-p);
-        Move(p^, outText[1], t-p);
+
+        if not merged then begin
+          // can't find end of record in this chunk, as we dont have
+          // a previous outtext buffer, copy this chunk to outext
+          SetLength(outText, t-p);
+          Move(p^, outText[1], t-p);
+          exit;
+        end;
+
         break;
       end;
 
     end;
 
+    if merged then begin
+      // remove consumed chars from outtext
+      Delete(outtext, 1, size - remain);
+      // if the last operation collected the end of log line and
+      // only remains a lf consume it too.
+      if collected and (remain=1) and (outtext[1]=#10) then
+        outText := '';
+    end;
+
   end;
+
 begin
   {$IFDEF DEBUG}
   DebugLnEnter('RunThread START Command=%s', [fCommand]);
