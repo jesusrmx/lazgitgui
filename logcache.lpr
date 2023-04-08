@@ -36,7 +36,7 @@ begin
   result += SEP + FormatDateTime('dd-mmm-yy hh:nn:ss am/pm', dt);
 end;
 
-function GetCacheStr(stream: TStream; aOffset: Int64; aSize:Integer; skip:boolean=true):string;
+function GetCachedItem(stream: TStream; aOffset: Int64; aSize:Integer; out item: TLogItem; skip:boolean=true): boolean;
 var
   buf: pchar;
   p, q, t: pchar;
@@ -45,19 +45,9 @@ var
   s: string;
   b: byte;
   w: word;
-
-  procedure Add(title, value: string);
-  begin
-    if result<>'' then
-      result += SEP;
-    //result += ' ' + title + ': ';
-    result += value;
-  end;
-
 begin
-  result := '';
+  stream.Position := aOffset;
 
-  stream.position := aOffset;
   GetMem(buf, aSize);
   try
     try
@@ -67,8 +57,7 @@ begin
       if skip then
         inc(p, 2); // skip record size
       num := 0;
-      date := PInt64(p)^; inc(p, SizeOf(Int64));
-      Add('Date', GetDateStr(date));
+      item.CommiterDate := PInt64(p)^; inc(p, SizeOf(Int64));
       inc(num);
       while p<t do begin
         case Num of
@@ -77,10 +66,10 @@ begin
               b := PByte(p)^; inc(p);
               SetString(s, p, b); inc(p, b);
               case num of
-                //1: Add('Parent OID', s);
-                2: Add('Commit OID', s);
-                //3: Add('Author', s);
-                //4: Add('E-mail', s);
+                1: Item.ParentOID := s;
+                2: Item.CommitOID := s;
+                3: Item.Author := s;
+                4: Item.Email := s;
               end;
             end;
           5..6:
@@ -88,8 +77,8 @@ begin
               w := PWord(p)^; inc(p, 2);
               SetString(s, p, w); inc(p, w);
               case num of
-                //5: Add('Refs', s);
-                6: Add('Subject', Shorten(s));
+                5: Item.Refs := s;
+                6: Item.Subject := s;
               end;
             end;
         end;
@@ -102,6 +91,31 @@ begin
   end;
 end;
 
+function GetCacheStr(stream: TStream; aOffset: Int64; aSize:Integer; skip:boolean=true):string;
+var
+  item: TLogItem;
+
+  procedure Add(title, value: RawByteString);
+  begin
+    if result<>'' then
+      result += SEP;
+    //result += ' ' + title + ': ';
+    result += value;
+  end;
+
+begin
+  result := '';
+
+  GetCachedItem(stream, aOffset, aSize, item, skip);
+
+  Add('Date', GetDateStr(item.CommiterDate));
+  //Add('Parent OID', item.ParentOID);
+  Add('Commit OID', item.CommitOID);
+  //Add('Author', item.Author);
+  //Add('E-mail', item.Email);
+  //Add('Refs', item.Refs);
+  Add('Subject', shorten(item.Subject));
+end;
 
 var
   fIndexStream: TMemoryStream;
@@ -113,6 +127,7 @@ var
   n: Integer;
   next: Int64;
   w: word;
+  Item: TLogItem;
 begin
   if ParamCount=0 then begin
     DebugLn('a file or directory of a git repository is needed');
@@ -159,7 +174,7 @@ begin
   DebugLn('Cache file: size=%d',[fCacheStream.Size]);
 
   DebugLn;
-  DebugLn('Summary...');
+  DebugLn('Summary of incremental offsets...');
   next := 0;
   n := 0;
   while fIndexStream.Position<fIndexStream.Size do begin
@@ -169,6 +184,23 @@ begin
       DebugLn('%5d. %8d %4d %s',[n+1, IndxRec.offset, IndxRec.size, aDir]);
     end;
     Next := IndxRec.Offset + IndxRec.Size;
+    inc(n);
+  end;
+
+  DebugLn;
+  DebugLn('Summary of date intervals');
+  next := MAXINT;
+  n := 0;
+  fIndexStream.Position := 0;
+  while fIndexStream.Position<fIndexStream.Size do begin
+    fIndexStream.Read(IndxRec, SIZEOF_INDEX);
+    GetCachedItem(fCacheStream, IndxRec.offset, IndxRec.size, Item);
+
+    if (Next=MAXINT) or (fIndexStream.Position=fIndexStream.Size) or (Next<Item.CommiterDate) then begin
+      aDir := GetCacheStr(fCacheStream, IndxRec.offset, IndxRec.size);
+      DebugLn('%5d. %8d %4d %s',[n+1, IndxRec.offset, IndxRec.size, aDir]);
+    end;
+    Next := Item.CommiterDate;
     inc(n);
   end;
 
