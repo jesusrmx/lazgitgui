@@ -10,6 +10,12 @@ uses
   unitifaces, unitprocess, unitentries
   { you can add units after this };
 
+{
+
+  Generate simple '|' separated list:
+    -d -e -a +p -i --oidlen=10 --sublen=72 -ct -int -inc -hdr -st -inh
+
+}
 
 const
   CUT_AT = 80;
@@ -17,6 +23,7 @@ const
 
 var
   OIDLen: integer = 40;
+  SubjLen: integer = CUT_AT;
   withHumanDate: boolean = true;
   withDate: boolean = true;
   withParentOID: boolean = false;
@@ -25,18 +32,28 @@ var
   withEmail: boolean = true;
   withRefs: boolean = false;
   withSubject: boolean = true;
+  withCutTag: boolean = true;
 
   withIndexInfo: boolean = true;
+  withStats: boolean = true;
+  withRecNum: boolean = true;
+  withHeaders: boolean = true;
+  withIncOffsets: boolean = true;
+  withInheritance: boolean = true;
+  withIntervals: boolean = true;
+
 
 function Shorten(s: string): string;
 var
   len: Integer;
 begin
   len := Length(s);
-  if len<=CUT_AT then
+  if len<=SubjLen then
     result := s
   else begin
-    result := copy(s, 1, CUT_AT) + ' 8< ~ ' + IntToStr(len - CUT_AT) + ' more.';
+    result := copy(s, 1, SubjLen);
+    if withCutTag then
+      result += ' 8< ~ ' + IntToStr(len - SubjLen) + ' more.';
   end;
 end;
 
@@ -195,6 +212,7 @@ procedure ProcessParameters;
 begin
 
   OIDLen := GetIntValue('OIDLen', OIDLen);
+  SubjLen := GetIntValue('SubLen', SubjLen);
   withHumanDate := GetBool('hd', withHumanDate);
   withDate := GetBool('d', withDate);
   withParentOID := GetBool('p', withParentOID);
@@ -204,6 +222,15 @@ begin
   withRefs := GetBool('r', withRefs);
   withSubject := GetBool('s', withSubject);
   withIndexInfo := GetBool('i', withIndexInfo);
+  withCutTag := GetBool('ct', withCutTag);
+
+  withStats  := GetBool('st', withStats);
+  withRecNum := GetBool('rn', withRecNum);
+  withHeaders := GetBool('hdr', withHeaders);
+  withIncOffsets := GetBool('inc', withIncOffsets);
+  withInheritance := GetBool('inh', withInheritance);
+  withIntervals := GetBool('int', withIntervals);
+
 end;
 
 var
@@ -215,6 +242,7 @@ var
   indxRec: TIndexRecord;
   n: Integer;
   next: Int64;
+  nextoid: string;
   w: word;
   Item: TLogItem;
 begin
@@ -261,48 +289,89 @@ begin
 
   fCacheStream := TFileStream.Create(aCacheFile, fmOpenRead + fmShareDenyNone);
 
-  DebugLn('Index file: size=%d indices=%d',[fIndexStream.Size, fIndexStream.Size div SIZEOF_INDEX]);
-  DebugLn('Cache file: size=%d',[fCacheStream.Size]);
-
-  DebugLn;
-  DebugLn('Summary of incremental offsets...');
-  next := 0;
-  n := 0;
-  while fIndexStream.Position<fIndexStream.Size do begin
-    fIndexStream.Read(IndxRec, SIZEOF_INDEX);
-    if (Next=0) or (fIndexStream.Position=fIndexStream.Size) or (Next<>IndxRec.offset) then begin
-      aDir := GetCacheStr(fCacheStream, IndxRec.offset, IndxRec.size);
-      DebugLn('%8d. %s',[n+1, aDir]);
-    end;
-    Next := IndxRec.Offset + IndxRec.Size;
-    inc(n);
+  if withStats then begin
+    DebugLn('Index file: size=%d indices=%d',[fIndexStream.Size, fIndexStream.Size div SIZEOF_INDEX]);
+    DebugLn('Cache file: size=%d',[fCacheStream.Size]);
   end;
 
-  DebugLn;
-  DebugLn('Summary of date intervals');
-  next := MAXINT;
-  n := 0;
-  fIndexStream.Position := 0;
-  while fIndexStream.Position<fIndexStream.Size do begin
-    fIndexStream.Read(IndxRec, SIZEOF_INDEX);
-    GetCachedItem(fCacheStream, IndxRec.offset, IndxRec.size, Item);
-
-    if (Next=MAXINT) or (fIndexStream.Position=fIndexStream.Size) or (Next<Item.CommiterDate) then begin
-      aDir := GetCacheStr(fCacheStream, IndxRec.offset, IndxRec.size);
-      DebugLn('%8d. %s',[n+1, aDir]);
+  if withIncOffsets then begin
+    if withHeaders then begin
+      DebugLn;
+      DebugLn('Summary of incremental offsets...');
     end;
-    Next := Item.CommiterDate;
-    inc(n);
+    next := 0;
+    n := 0;
+    while fIndexStream.Position<fIndexStream.Size do begin
+      fIndexStream.Read(IndxRec, SIZEOF_INDEX);
+      if (Next=0) or (fIndexStream.Position=fIndexStream.Size) or (Next<>IndxRec.offset) then begin
+        aDir := GetCacheStr(fCacheStream, IndxRec.offset, IndxRec.size);
+        if withRecNum then
+          DbgOut('%8d%s',[n+1,SEP]);
+        DebugLn('%s',[aDir]);
+      end;
+      Next := IndxRec.Offset + IndxRec.Size;
+      inc(n);
+    end;
   end;
 
-  DebugLn;
-  DebugLn('Listing in index order');
+  if withIntervals then begin
+    if withHeaders then begin
+      DebugLn;
+      DebugLn('Summary of date intervals');
+    end;
+    next := MAXINT;
+    n := 0;
+    fIndexStream.Position := 0;
+    while fIndexStream.Position<fIndexStream.Size do begin
+      fIndexStream.Read(IndxRec, SIZEOF_INDEX);
+      GetCachedItem(fCacheStream, IndxRec.offset, IndxRec.size, Item);
+
+      if (Next=MAXINT) or (fIndexStream.Position=fIndexStream.Size) or (Next<Item.CommiterDate) then begin
+        aDir := GetCacheStr(fCacheStream, IndxRec.offset, IndxRec.size);
+        if withRecNum then
+          DbgOut('%8d%s',[n+1,SEP]);
+        DebugLn('%s',[aDir]);
+      end;
+      Next := Item.CommiterDate;
+      inc(n);
+    end;
+  end;
+
+  if withInheritance then begin
+    if withHeaders then begin
+      DebugLn;
+      DebugLn('Summary of inheritance');
+    end;
+    nextoid := '';
+    n := 0;
+    fIndexStream.Position := 0;
+    while fIndexStream.Position<fIndexStream.Size do begin
+      fIndexStream.Read(IndxRec, SIZEOF_INDEX);
+      GetCachedItem(fCacheStream, IndxRec.offset, IndxRec.size, Item);
+
+      if (Next=MAXINT) or (fIndexStream.Position=fIndexStream.Size) or (Nextoid<>Item.CommitOID) then begin
+        aDir := GetCacheStr(fCacheStream, IndxRec.offset, IndxRec.size);
+        if withRecNum then
+          DbgOut('%8d%s',[n+1,SEP]);
+        DebugLn('%s',[aDir]);
+      end;
+      nextoid := item.ParentOID;
+      inc(n);
+    end;
+  end;
+
+  if withHeaders then begin
+    DebugLn;
+    DebugLn('Listing in index order');
+  end;
   n := 0;
   fIndexStream.Position := 0;
   while fIndexStream.Position<fIndexStream.Size do begin
     fIndexStream.Read(IndxRec, SIZEOF_INDEX);
     aDir := GetCacheStr(fCacheStream, IndxRec.offset, IndxRec.size);
-    DebugLn('%8d. %s',[n+1, aDir]);
+    if withRecNum then
+      DbgOut('%8d%s',[n+1,SEP]);
+    DebugLn('%s',[aDir]);
     inc(n);
   end;
 
