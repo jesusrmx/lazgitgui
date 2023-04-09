@@ -7,12 +7,22 @@ interface
 uses
   Classes, SysUtils, Math, DateUtils, LazLogger, unitifaces;
 
+const
+  FIELD_DATE        = 0;
+  FIELD_PARENTOID   = 1;
+  FIELD_COMMITOID   = 2;
+  FIELD_AUTHOR      = 3;
+  FIELD_EMAIL       = 4;
+  FIELD_SUBJECT     = 5;
+
+  PGM_VERSION       = $0001;
+  PGM_SIGNATURE     = $1A2A;
+
 type
 
   TLogItem = record
     CommiterDate: Int64;
     ParentOID, CommitOID,
-    Refs,
     Author,
     Email,
     Subject: RawByteString;
@@ -109,7 +119,7 @@ begin
   DebugLn('Recovering Index');
   n := 0;
   fIndexStream.Clear;
-  fCacheStream.Position := 0;
+  fCacheStream.Position := SizeOf(cardinal);
   while fCacheStream.Position<fCacheStream.Size do begin
     IndxRec.offset := fCacheStream.Position;
     w := fCacheStream.ReadWord;
@@ -218,11 +228,10 @@ begin
 
   len := SizeOf(Word);
   len += SizeOf(fItem.CommiterDate);
-  len += Min(Length(fItem.ParentOID), High(Byte)) + 1;
+  len += Min(Length(fItem.ParentOID), High(word)) + 1;
   len += Min(Length(fItem.CommitOID), High(Byte)) + 1;
   len += Min(Length(fItem.Author), High(Byte)) + 1;
   len += Min(Length(fItem.Email), High(Byte)) + 1;
-  len += Min(Length(fItem.Refs), High(word)) + 2;
   len += Min(Length(fItem.Subject), High(word)) + 2;
 
   GetMem(aBuf, len);
@@ -238,11 +247,10 @@ begin
   inc(p, SizeOf(fItem.CommiterDate));
 
   // store remaining fields
-  StoreString(fItem.ParentOID, true);
+  StoreString(fItem.ParentOID, false);
   StoreString(fItem.CommitOID, true);
   StoreString(fItem.Author, true);
   StoreString(fItem.Email, true);
-  StoreString(fItem.Refs, false);
   StoreString(fItem.Subject, false);
 end;
 
@@ -285,11 +293,10 @@ begin
   p := fBuffer;
   inc(p, SizeOf(word));
   fItem.CommiterDate := NextInt64;
-  fItem.ParentOID := NextByteString;
+  fItem.ParentOID := NextWordString;
   fItem.CommitOID := NextByteString;
   fItem.Author := NextByteString;
   fItem.Email := NextByteString;
-  fItem.Refs := NextWordString;
   fItem.Subject := NextWordString;
 end;
 
@@ -319,7 +326,6 @@ begin
   fItem.CommitOID := NextString;
   fItem.Author := NextString;
   fItem.Email := NextString;
-  fItem.Refs := NextString;
   fItem.Subject := NextString;
 
 end;
@@ -335,7 +341,6 @@ begin
   DebugLn('     Commit OID: %s',[fItem.CommitOID]);
   DebugLn('         Author: %s',[fItem.ParentOID]);
   DebugLn('          Email: %s',[fItem.Email]);
-  DebugLn('           Refs: %s',[fItem.Refs]);
   DebugLn('        Subject: %s',[fItem.Subject]);
   GetIndexRecord(fLoadedItemIndex, indxRec);
   DebugLn('   Cache Offset: %d', [indxRec.offset]);
@@ -363,7 +368,8 @@ end;
 procedure TDbIndex.Open;
 var
   aFileCache, aFileIndex: string;
-  mode: word;
+  mode, aVersion: word;
+  sig: cardinal;
 begin
 
   if fCacheStream=nil then begin
@@ -372,17 +378,37 @@ begin
     aFileIndex := GetFilename(FILENAME_INDEX);
 
     if fCacheStream=nil then begin
+
       mode := fmOpenReadWrite + fmShareDenyWrite;
       if not FileExists(aFileCache) then
         mode += fmCreate;
       fCacheStream := TFileStream.Create(aFileCache, mode);
+
+      if mode and fmCreate = fmCreate then begin
+        sig := NToBE((PGM_SIGNATURE shl 16) or PGM_VERSION);
+        fCacheStream.WriteDWord(sig);
+      end
+      else begin
+        sig := BeToN(fCacheStream.ReadDWord);
+        aVersion := sig and $FFFF;
+        sig := sig shr 16;
+        if (sig<>PGM_SIGNATURE) or (aVersion<PGM_VERSION) then begin
+          // this is an old cache file, recreate it
+          DeleteFile(aFileIndex);
+          sig := NToBE((PGM_SIGNATURE shl 16) or PGM_VERSION);
+          fCacheStream.position := 0;
+          fCacheStream.WriteDWord(sig);
+          fCacheStream.Size := fCacheStream.Position;
+        end;
+      end;
+
     end;
 
     if fIndexStream=nil then begin
       fIndexStream := TMemoryStream.Create;
       if FileExists(aFileIndex) then
         fIndexStream.LoadFromFile(aFileIndex)
-      else if fCacheStream.Size>0 then
+      else if fCacheStream.Size>4 then
         RecoverIndex;
     end;
 
@@ -439,20 +465,20 @@ begin
     q := strpos(p, #2);
     if q<>nil then begin
       case field of
-        0:
+        FIELD_DATE:
           begin
             q^ := #0;
             val(p, aDate, cd);
             q^ := #2;
             fCacheStream.WriteQWord(aDate);
           end;
-        1..4:
+        FIELD_COMMITOID, FIELD_AUTHOR, FIELD_EMAIL:
           begin
             b := Min(High(byte), q-p);
             fCacheStream.WriteByte(b);
             fCacheStream.WriteBuffer(p^, b);
           end;
-        5..6:
+        FIELD_PARENTOID, FIELD_SUBJECT:
           begin
             w := Min(High(word), q-p);
             fCacheStream.WriteWord(w);

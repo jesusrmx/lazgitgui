@@ -90,29 +90,28 @@ begin
       t := p + aSize;
       if skip then
         inc(p, 2); // skip record size
-      num := 0;
+      num := FIELD_DATE;
       item.CommiterDate := PInt64(p)^; inc(p, SizeOf(Int64));
       inc(num);
       while p<t do begin
         case Num of
-          1..4:
+          FIELD_COMMITOID, FIELD_AUTHOR, FIELD_EMAIL:
             begin
               b := PByte(p)^; inc(p);
               SetString(s, p, b); inc(p, b);
               case num of
-                1: Item.ParentOID := s;
-                2: Item.CommitOID := s;
-                3: Item.Author := s;
-                4: Item.Email := s;
+                FIELD_COMMITOID: Item.CommitOID := s;
+                FIELD_AUTHOR: Item.Author := s;
+                FIELD_EMAIL: Item.Email := s;
               end;
             end;
-          5..6:
+          FIELD_PARENTOID, FIELD_SUBJECT:
             begin
               w := PWord(p)^; inc(p, 2);
               SetString(s, p, w); inc(p, w);
               case num of
-                5: Item.Refs := s;
-                6: Item.Subject := s;
+                FIELD_PARENTOID: Item.ParentOID := s;
+                FIELD_SUBJECT: Item.Subject := s;
               end;
             end;
         end;
@@ -149,7 +148,6 @@ begin
   if withCommitOID then Add('Commit OID', copy(item.CommitOID, 1, OIDLen));
   if withAuthor    then Add('Author', item.Author);
   if withEmail     then Add('E-mail', item.Email);
-  if withRefs      then Add('Refs', item.Refs);
   if withSubject   then Add('Subject', shorten(item.Subject));
 end;
 
