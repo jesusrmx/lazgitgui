@@ -70,6 +70,18 @@ begin
   result := FormatDateTime('dd-mmm-yy hh:nn:ss am/pm', dt);
 end;
 
+function GetParentOIDList(parentOID:string; OIDLen: Integer): string;
+begin
+  result := '';
+  repeat
+    if (result<>'') and (result=' ') then
+      delete(result, 1, 1);
+    if result<>'' then result += ' ';
+    result += copy(parentOID, 1, OIDLen);
+    delete(parentOID, 1, 40);
+  until result='';
+end;
+
 function GetCachedItem(stream: TStream; aOffset: Int64; aSize:Integer; out item: TLogItem; skip:boolean=true): boolean;
 var
   buf: pchar;
@@ -144,7 +156,7 @@ begin
   if withIndexInfo then Add('Index', format('%8d %4d',[aOffset, aSize]));
   if withDate      then Add('Date', GetDateStr(item.CommiterDate));
   if withHumanDate then Add('Date', GetHumanDate(item.CommiterDate));
-  if withParentOID then Add('Parent OID', copy(item.ParentOID, 1, OIDLen));
+  if withParentOID then Add('Parent OID', GetParentOIDList(item.ParentOID, OIDLen));
   if withCommitOID then Add('Commit OID', copy(item.CommitOID, 1, OIDLen));
   if withAuthor    then Add('Author', item.Author);
   if withEmail     then Add('E-mail', item.Email);
