@@ -16,6 +16,7 @@ uses
     -d -e -a +p -i --oidlen=10 --sublen=72 -ct -int -inc -hdr -st -inh
 
 }
+  {$define UseIndex}
 
 const
   CUT_AT = 80;
@@ -41,6 +42,7 @@ var
   withIncOffsets: boolean = true;
   withInheritance: boolean = true;
   withIntervals: boolean = true;
+  withInOrder: boolean = true;
 
 
 function Shorten(s: string): string;
@@ -71,15 +73,18 @@ begin
 end;
 
 function GetParentOIDList(parentOID:string; OIDLen: Integer): string;
+var
+  L: TStringList;
+  i: Integer;
 begin
   result := '';
-  repeat
-    if (result<>'') and (result=' ') then
-      delete(result, 1, 1);
+  L := TStringList.Create;
+  L.DelimitedText := ParentOID;
+  for i:=0 to L.Count-1 do begin
     if result<>'' then result += ' ';
-    result += copy(parentOID, 1, OIDLen);
-    delete(parentOID, 1, 40);
-  until result='';
+    result += copy(L[i], 1, OIDLen);
+  end;
+  L.Free;
 end;
 
 function GetCachedItem(stream: TStream; aOffset: Int64; aSize:Integer; out item: TLogItem; skip:boolean=true): boolean;
@@ -136,9 +141,27 @@ begin
   end;
 end;
 
-function GetCacheStr(stream: TStream; aOffset: Int64; aSize:Integer; skip:boolean=true):string;
-var
-  item: TLogItem;
+function GetItemStr(item: TLogItem): string;
+  procedure Add(title, value: RawByteString);
+  begin
+    if result<>'' then
+      result += SEP;
+    //result += ' ' + title + ': ';
+    result += value;
+  end;
+begin
+  result := '';
+
+  if withDate      then Add('Date', GetDateStr(item.CommiterDate));
+  if withHumanDate then Add('Date', GetHumanDate(item.CommiterDate));
+  if withParentOID then Add('Parent OID', GetParentOIDList(item.ParentOID, OIDLen));
+  if withCommitOID then Add('Commit OID', copy(item.CommitOID, 1, OIDLen));
+  if withAuthor    then Add('Author', item.Author);
+  if withEmail     then Add('E-mail', item.Email);
+  if withSubject   then Add('Subject', shorten(item.Subject));
+end;
+
+function GetCacheStr(aOffset:Int64; aSize: Integer; item: TLogItem):string;
 
   procedure Add(title, value: RawByteString);
   begin
@@ -151,16 +174,8 @@ var
 begin
   result := '';
 
-  GetCachedItem(stream, aOffset, aSize, item, skip);
-
   if withIndexInfo then Add('Index', format('%8d %4d',[aOffset, aSize]));
-  if withDate      then Add('Date', GetDateStr(item.CommiterDate));
-  if withHumanDate then Add('Date', GetHumanDate(item.CommiterDate));
-  if withParentOID then Add('Parent OID', GetParentOIDList(item.ParentOID, OIDLen));
-  if withCommitOID then Add('Commit OID', copy(item.CommitOID, 1, OIDLen));
-  if withAuthor    then Add('Author', item.Author);
-  if withEmail     then Add('E-mail', item.Email);
-  if withSubject   then Add('Subject', shorten(item.Subject));
+  result += GetItemStr(item);
 end;
 
 procedure ProcessParameters;
@@ -240,21 +255,15 @@ begin
   withIncOffsets := GetBool('inc', withIncOffsets);
   withInheritance := GetBool('inh', withInheritance);
   withIntervals := GetBool('int', withIntervals);
+  withInOrder := GetBool('ord', withInOrder);
 
 end;
 
 var
-  fIndexStream: TMemoryStream;
-  fCacheStream: TFileStream;
-  fGit: TGit;
-  afile, aDir, aIndexFile, aCacheFile: string;
   found: boolean;
-  indxRec: TIndexRecord;
-  n: Integer;
-  next: Int64;
-  nextoid: string;
-  w: word;
-  Item: TLogItem;
+  aFile, aDir: string;
+
+procedure CheckDir;
 begin
   if ParamCount=0 then begin
     DebugLn('a file or directory of a git repository is needed');
@@ -279,7 +288,28 @@ begin
     halt(2);
   end;
 
-  aIndexFile := aDir + '.git' + PathDelim + 'lazgitgui.logindex';
+  aDir := aDir + '.git' + PathDelim
+
+end;
+
+procedure UseDirectAccess;
+var
+  fIndexStream: TMemoryStream;
+  fCacheStream: TFileStream;
+  fGit: TGit;
+  aIndexFile, aCacheFile: string;
+  indxRec: TIndexRecord;
+  n: Integer;
+  next: Int64;
+  nextoid: string;
+  w: word;
+  Item: TLogItem;
+  sig, ver: word;
+begin
+
+  CheckDir;
+
+  aIndexFile := aDir + 'lazgitgui.logindex';
   aCacheFile := ChangeFileExt(aIndexFile, '.logcache');
 
   if not FileExists(aCacheFile) then begin
@@ -298,10 +328,17 @@ begin
   fIndexStream.LoadFromFile(aIndexFile);
 
   fCacheStream := TFileStream.Create(aCacheFile, fmOpenRead + fmShareDenyNone);
+  sig := BeToN(fCacheStream.ReadWord);
+  ver := BeToN(fCacheStream.ReadWord);
+  if sig<>PGM_SIGNATURE then begin
+    DebugLn('Invalid file signature');
+    Halt(5);
+  end;
 
   if withStats then begin
     DebugLn('Index file: size=%d indices=%d',[fIndexStream.Size, fIndexStream.Size div SIZEOF_INDEX]);
     DebugLn('Cache file: size=%d',[fCacheStream.Size]);
+    DebugLn('File Cache Signature=%4x Version=%d',[sig, ver]);
   end;
 
   if withIncOffsets then begin
@@ -313,8 +350,10 @@ begin
     n := 0;
     while fIndexStream.Position<fIndexStream.Size do begin
       fIndexStream.Read(IndxRec, SIZEOF_INDEX);
+      GetCachedItem(fCacheStream, IndxRec.offset, IndxRec.size, Item);
+
       if (Next=0) or (fIndexStream.Position=fIndexStream.Size) or (Next<>IndxRec.offset) then begin
-        aDir := GetCacheStr(fCacheStream, IndxRec.offset, IndxRec.size);
+        aDir := GetCacheStr(IndxRec.offset, IndxRec.size, Item);
         if withRecNum then
           DbgOut('%8d%s',[n+1,SEP]);
         DebugLn('%s',[aDir]);
@@ -337,7 +376,7 @@ begin
       GetCachedItem(fCacheStream, IndxRec.offset, IndxRec.size, Item);
 
       if (Next=MAXINT) or (fIndexStream.Position=fIndexStream.Size) or (Next<Item.CommiterDate) then begin
-        aDir := GetCacheStr(fCacheStream, IndxRec.offset, IndxRec.size);
+        aDir := GetCacheStr(IndxRec.offset, IndxRec.size, Item);
         if withRecNum then
           DbgOut('%8d%s',[n+1,SEP]);
         DebugLn('%s',[aDir]);
@@ -359,8 +398,8 @@ begin
       fIndexStream.Read(IndxRec, SIZEOF_INDEX);
       GetCachedItem(fCacheStream, IndxRec.offset, IndxRec.size, Item);
 
-      if (Next=MAXINT) or (fIndexStream.Position=fIndexStream.Size) or (Nextoid<>Item.CommitOID) then begin
-        aDir := GetCacheStr(fCacheStream, IndxRec.offset, IndxRec.size);
+      if (Next=0) or (fIndexStream.Position=fIndexStream.Size) or (Nextoid<>Item.CommitOID) then begin
+        aDir := GetCacheStr(IndxRec.offset, IndxRec.size, Item);
         if withRecNum then
           DbgOut('%8d%s',[n+1,SEP]);
         DebugLn('%s',[aDir]);
@@ -378,7 +417,8 @@ begin
   fIndexStream.Position := 0;
   while fIndexStream.Position<fIndexStream.Size do begin
     fIndexStream.Read(IndxRec, SIZEOF_INDEX);
-    aDir := GetCacheStr(fCacheStream, IndxRec.offset, IndxRec.size);
+    GetCachedItem(fCacheStream, IndxRec.offset, IndxRec.size, Item);
+    aDir := GetCacheStr(IndxRec.offset, IndxRec.size, Item);
     if withRecNum then
       DbgOut('%8d%s',[n+1,SEP]);
     DebugLn('%s',[aDir]);
@@ -396,8 +436,123 @@ begin
   //  DebugLn('%5d. %8d %4d %s',[n+1, next, w + 2, aDir]);
   //  inc(n);
   //end;
+end;
+
+procedure ProcessDbIndex(db: TDbIndex);
+var
+  i: Integer;
+  next: Int64;
+  nextoid: string;
+begin
+  ProcessParameters;
+
+  if withStats then begin
+    DebugLn('DbIndex has %d log records',[db.Count]);
+  end;
 
 
+  if withIncOffsets then begin
+    if withHeaders then begin
+      DebugLn;
+      DebugLn('Summary of incremental offsets...');
+    end;
 
+    DebugLn('Not available while using dbIndex');
+  end;
+
+  if withIntervals then begin
+    if withHeaders then begin
+      DebugLn;
+      DebugLn('Summary of date intervals');
+    end;
+    next := MAXINT;
+    for i:=0 to db.Count-1 do begin
+      db.LoadItem(i);
+      if (Next=MAXINT) or (i=db.Count-1) or (Next<db.Item.CommiterDate) then begin
+        aDir := GetItemStr(db.Item);
+        if withRecNum then
+          DbgOut('%8d%s',[i+1,SEP]);
+        DebugLn('%s',[aDir]);
+      end;
+      Next := db.Item.CommiterDate;
+    end;
+  end;
+
+  if withInheritance then begin
+    if withHeaders then begin
+      DebugLn;
+      DebugLn('Summary of inheritance');
+    end;
+    nextoid := '';
+    for i:=0 to db.Count-1 do begin
+      db.LoadItem(i);
+      if (i=0) or (i=db.Count-1) or (Nextoid<>db.Item.CommitOID) then begin
+        aDir := GetItemStr(db.Item);
+        if withRecNum then
+          DbgOut('%8d%s',[i+1,SEP]);
+        DebugLn('%s',[aDir]);
+      end;
+      nextoid := db.Item.ParentOID;
+    end;
+  end;
+
+  if withInOrder then begin
+    if withHeaders then begin
+      DebugLn;
+      DebugLn('Listing in index order');
+    end;
+    for i:=0 to db.Count-1 do begin
+      db.LoadItem(i);
+      aDir := GetItemStr(db.Item);
+      if withRecNum then
+        DbgOut('%8d%s',[i+1,SEP]);
+      DebugLn('%s',[aDir]);
+    end;
+  end;
+
+  DebugLn;
+  DebugLn('Filtered listing');
+  db.SetFilter([0, 233, 0]);
+  for i:=0 to db.Count-1 do begin
+    db.LoadItem(i);
+    aDir := GetItemStr(db.Item);
+    if withRecNum then
+      DbgOut('%8d%s',[i+1,SEP]);
+    DebugLn('%s',[aDir]);
+  end;
+
+
+end;
+
+function UseDbIndex: boolean;
+var
+  db: TDbIndex;
+begin
+  result := false;
+  db := TDbIndex.Create(aDir);
+  db.ReadOnly := true;
+  try
+    try
+      db.Open;
+      ProcessDbIndex(db);
+    except
+      on E:Exception do begin
+        DebugLn('Error while loading dbindex: %s',[E.Message]);
+        exit;
+      end;
+    end;
+  finally
+    db.Free;
+  end;
+end;
+
+begin
+  CheckDir;
+
+  {$ifdef UseIndex}
+  UseDbIndex;
+  {$else}
+  UseDirectAccess;
+  {$endif}
 end.
 
