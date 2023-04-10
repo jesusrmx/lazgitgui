@@ -47,7 +47,8 @@ type
     function _Release : longint;{$IFNDEF WINDOWS}cdecl{$ELSE}stdcall{$ENDIF};
   end;
 
-  TIntArray = array of integer;
+  TIntArray = array of Integer;
+  TQWordArray = array of Int64;
 
   { TDbIndex }
 
@@ -596,7 +597,7 @@ type
     constructor Create(aV: Integer);
     destructor Destroy; override;
     procedure AddEdge(v, w: Integer);
-    procedure TopologicalSort;
+    function TopologicalSort: TIntStack;
   end;
 
 { TGraph }
@@ -643,14 +644,14 @@ begin
   fAdj[v].Add(w);
 end;
 
-procedure TGraph.TopologicalSort;
+function TGraph.TopologicalSort: TIntStack;
 var
   stack: TIntStack;
   visited: TBoolArr;
   i: Integer;
 begin
 
-  stack := TIntList.Create;
+  result := TIntList.Create;
   SetLength(visited, fV);
 
   // Mark all the vertices as not visited
@@ -660,18 +661,15 @@ begin
   // starting from all vertices one by one
   for i:=0 to fV-1 do
     if not visited[i] then
-      TopologicalSortUtil(i, visited, stack);
+      TopologicalSortUtil(i, visited, result);
 
-  // Print contents of stack
-  for i:=stack.Count-1 downto 0 do
-    DbgOut('%d ',[stack[i]]);
-
-  stack.Free;
 end;
 
-procedure TDbIndex.TopoSort;
+procedure TestGraph;
 var
   graph: TGraph;
+  stack: TIntStack;
+  i: Integer;
 begin
   graph  := TGraph.create(8);
   graph.addEdge(7, 6);
@@ -683,8 +681,123 @@ begin
   graph.addEdge(3, 1);
   graph.addEdge(2, 1);
   graph.addEdge(1, 0);
-  graph.TopologicalSort;
+  stack := graph.TopologicalSort;
   graph.free;
+
+  // Print contents of stack
+  for i:=stack.Count-1 downto 0 do
+    DbgOut('%d ',[stack[i]]);
+
+  stack.Free;
+end;
+
+function OIDToQWord(oid: string): QWord;
+begin
+  if oid='' then
+    result := 0
+  else
+    result := StrToQWord('$' + copy(oid, 1, 16))
+end;
+
+function OIDToParents(oid: string; oidlen: Integer): TQWordArray;
+var
+  i: Integer;
+begin
+  result := nil;
+  while oid<>'' do begin
+    if oid[1]=' ' then delete(oid, 1, 1);
+    i := Length(result);
+    SetLength(result, i+1);
+    result[i] := OIDToQWord(copy(oid, 1, oidlen));
+    delete(oid, 1, oidlen);
+  end;
+end;
+
+procedure TDbIndex.TopoSort;
+type
+  TLogRec = record
+    n: Integer;
+    parents: TQWordArray;
+    commit: QWord;
+  end;
+var
+  RecList: array of TLogRec;
+
+  procedure CreateList;
+  var
+    i: Integer;
+    Rec: TLogRec;
+  begin
+    SetLength(RecList, Count);
+    for i:=0 to Count-1 do begin
+      LoadItem(i);
+      RecList[i].n := i;
+      RecList[i].commit := OIDToQWord(fItem.CommitOID);
+      RecList[i].parents := OIDToParents(fItem.ParentOID, 40);
+    end;
+  end;
+
+  function FindParentsOf(aIndex: Integer): TIntArray;
+  var
+    p, i, k: Integer;
+    rec: TLogRec;
+  begin
+    rec := RecList[aIndex];
+    if rec.parents=nil then
+      exit(nil);
+    for p:=0 to Length(rec.parents)-1 do
+      for i:=0 to Length(RecList)-1 do begin
+        if rec.n=i then continue;
+        if rec.parents[p]=RecList[i].commit then begin
+          k := Length(result);
+          SetLength(result, k);
+          result[k] := i;
+        end;
+      end;
+  end;
+
+  procedure DisposeList;
+  var
+    i: Integer;
+  begin
+    for i:=0 to Length(RecList)-1 do
+      RecList[i].parents := nil;
+    RecList := nil;
+  end;
+
+var
+  graph: TGraph;
+  i, x: Integer;
+  arr: TIntArray;
+  stack: TIntStack;
+begin
+  //TestGraph
+
+  SetFilter(nil);
+
+  graph := TGraph.Create(Count);
+  try
+    CreateList;
+
+    // fill Graph
+    for i:=0 to Count-1 do begin
+      arr := FindParentsOf(i);
+      for x in arr do
+        graph.AddEdge(x, i);
+    end;
+
+    stack := graph.TopologicalSort;
+    setLength(arr, stack.Count);
+
+    for i:=0 to stack.Count-1 do
+      arr[i] := stack[i];
+
+    SetFilter(arr);
+
+  finally
+    DisposeList;
+    graph.Free;
+  end;
 end;
 
 end.

@@ -523,6 +523,16 @@ begin
 
   db.TopoSort;
 
+  DebugLn;
+  DebugLn('Topological listing');
+  for i:=0 to db.Count-1 do begin
+    db.LoadItem(i);
+    aDir := GetItemStr(db.Item);
+    if withRecNum then
+      DbgOut('%8d%s',[i+1,SEP]);
+    DebugLn('%s',[aDir]);
+  end;
+
 
 end;
 
