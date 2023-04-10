@@ -43,6 +43,7 @@ var
   withInheritance: boolean = true;
   withIntervals: boolean = true;
   withInOrder: boolean = true;
+  withTopo: boolean = true;
 
 
 function Shorten(s: string): string;
@@ -256,6 +257,7 @@ begin
   withInheritance := GetBool('inh', withInheritance);
   withIntervals := GetBool('int', withIntervals);
   withInOrder := GetBool('ord', withInOrder);
+  withTopo := GetBool('topo', withTopo);
 
 end;
 
@@ -509,30 +511,32 @@ begin
       DebugLn('%s',[aDir]);
     end;
   end;
+                b
+  //DebugLn;
+  //DebugLn('Filtered listing');
+  //db.SetFilter([0, 233, 0]);
+  //for i:=0 to db.Count-1 do begin
+  //  db.LoadItem(i);
+  //  aDir := GetItemStr(db.Item);
+  //  if withRecNum then
+  //    DbgOut('%8d%s',[i+1,SEP]);
+  //  DebugLn('%s',[aDir]);
+  //end;
 
-  DebugLn;
-  DebugLn('Filtered listing');
-  db.SetFilter([0, 233, 0]);
-  for i:=0 to db.Count-1 do begin
-    db.LoadItem(i);
-    aDir := GetItemStr(db.Item);
-    if withRecNum then
-      DbgOut('%8d%s',[i+1,SEP]);
-    DebugLn('%s',[aDir]);
+  if withTopo then begin
+    db.TopoSort;
+    if withHeaders then begin
+      DebugLn;
+      DebugLn('Topological listing');
+    end;
+    for i:=0 to db.Count-1 do begin
+      db.LoadItem(i);
+      aDir := GetItemStr(db.Item);
+      if withRecNum then
+        DbgOut('%8d%s',[i+1,SEP]);
+      DebugLn('%s',[aDir]);
+    end;
   end;
-
-  db.TopoSort;
-
-  DebugLn;
-  DebugLn('Topological listing');
-  for i:=0 to db.Count-1 do begin
-    db.LoadItem(i);
-    aDir := GetItemStr(db.Item);
-    if withRecNum then
-      DbgOut('%8d%s',[i+1,SEP]);
-    DebugLn('%s',[aDir]);
-  end;
-
 
 end;
 
