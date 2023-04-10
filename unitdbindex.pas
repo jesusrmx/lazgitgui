@@ -750,7 +750,7 @@ var
         if rec.n=i then continue;
         if rec.parents[p]=RecList[i].commit then begin
           k := Length(result);
-          SetLength(result, k);
+          SetLength(result, k+1);
           result[k] := i;
         end;
       end;
