@@ -65,6 +65,7 @@ type
     fOldIndexOffset: Int64;
     fLoadedItemIndex: Integer;
     fItem: TLogItem;
+    fReadOnly: boolean;
     function GetCount: Integer;
     function GetInfo: string;
     procedure RecoverIndex;
@@ -88,6 +89,7 @@ type
     property Item: TLogItem read fItem;
     property Count: Integer read GetCount;
     property Info: string read GetInfo;
+    property ReadOnly: boolean read fReadOnly write fReadOnly;
   end;
 
 implementation
@@ -380,8 +382,11 @@ begin
     if fCacheStream=nil then begin
 
       mode := fmOpenReadWrite + fmShareDenyWrite;
-      if not FileExists(aFileCache) then
+      if not FileExists(aFileCache) then begin
+        if fReadOnly then
+          raise Exception.CreateFmt('Cache file %s do not exists',[aFileCache]);
         mode += fmCreate;
+      end;
       fCacheStream := TFileStream.Create(aFileCache, mode);
 
       if mode and fmCreate = fmCreate then begin
@@ -399,7 +404,9 @@ begin
           fCacheStream.position := 0;
           fCacheStream.WriteDWord(sig);
           fCacheStream.Size := fCacheStream.Position;
-        end;
+        end else
+        if fReadOnly then
+          raise Exception.CreateFmt('Invalid cache file %s',[aFileCache]);
       end;
 
     end;
@@ -408,6 +415,8 @@ begin
       fIndexStream := TMemoryStream.Create;
       if FileExists(aFileIndex) then
         fIndexStream.LoadFromFile(aFileIndex)
+      else if fReadOnly then
+        raise Exception.CreateFmt('Index file %s do not exists',[aFileIndex])
       else if fCacheStream.Size>4 then
         RecoverIndex;
     end;
