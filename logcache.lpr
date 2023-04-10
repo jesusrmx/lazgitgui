@@ -521,6 +521,8 @@ begin
     DebugLn('%s',[aDir]);
   end;
 
+  db.TopoSort;
+
 
 end;
 
