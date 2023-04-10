@@ -47,6 +47,8 @@ type
     function _Release : longint;{$IFNDEF WINDOWS}cdecl{$ELSE}stdcall{$ENDIF};
   end;
 
+  TIntArray = array of integer;
+
   { TDbIndex }
 
   TDbIndex = class(TMyInterfacedObject, IDbIndex)
@@ -66,6 +68,7 @@ type
     fLoadedItemIndex: Integer;
     fItem: TLogItem;
     fReadOnly: boolean;
+    fFilter: TIntArray;
     function GetCount: Integer;
     function GetInfo: string;
     procedure RecoverIndex;
@@ -85,6 +88,7 @@ type
 
     procedure Open;
     function LoadItem(aIndex: Integer): boolean;
+    procedure SetFilter(arr: TIntArray);
 
     property Item: TLogItem read fItem;
     property Count: Integer read GetCount;
@@ -137,9 +141,12 @@ end;
 
 function TDbIndex.GetCount: Integer;
 begin
-  if fIndexStream<>nil then
-    result := fIndexStream.Size div SIZEOF_INDEX
-  else
+  if fIndexStream<>nil then begin
+    if fFilter<>nil then
+      result := Length(fFilter)
+    else
+      result := fIndexStream.Size div SIZEOF_INDEX
+  end else
     result := 0;
 end;
 
@@ -184,15 +191,22 @@ procedure TDbIndex.GetIndexRecord(var aIndex: Integer; out indxRec: TIndexRecord
 var
   sizeofIndex: Integer;
   indexOffset: SizeInt;
+  theIndex: Integer;
 begin
   sizeofIndex := SIZEOF_INDEX;
 
-  if aIndex<0 then begin
-    // get the oldest item
-    aIndex := fIndexStream.Size div sizeofIndex - 1;
+  if fFilter<>nil then begin
+    if (aIndex<0) or (aIndex>Length(fFilter)-1) then
+      aIndex := Length(fFilter)-1;
+    theIndex := fFilter[aIndex];
+  end else begin
+    if aIndex<0 then
+      // get the oldest item
+      aIndex := fIndexStream.Size div sizeofIndex - 1;
+    theIndex := aIndex;
   end;
 
-  indexOffset := aIndex * sizeofIndex;
+  indexOffset := theIndex * sizeofIndex;
 
   fIndexStream.Position := indexOffset;
   fIndexStream.Read(indxRec{%H-}, sizeofIndex);
@@ -398,15 +412,15 @@ begin
         aVersion := sig and $FFFF;
         sig := sig shr 16;
         if (sig<>PGM_SIGNATURE) or (aVersion<PGM_VERSION) then begin
+          if fReadOnly then
+            raise Exception.CreateFmt('Invalid cache file %s',[aFileCache]);
           // this is an old cache file, recreate it
           DeleteFile(aFileIndex);
           sig := NToBE((PGM_SIGNATURE shl 16) or PGM_VERSION);
           fCacheStream.position := 0;
           fCacheStream.WriteDWord(sig);
           fCacheStream.Size := fCacheStream.Position;
-        end else
-        if fReadOnly then
-          raise Exception.CreateFmt('Invalid cache file %s',[aFileCache]);
+        end;
       end;
 
     end;
@@ -540,6 +554,26 @@ begin
       fLoadedItemIndex := aIndex;
     end;
 
+  end;
+end;
+
+procedure TDbIndex.SetFilter(arr: TIntArray);
+var
+  maxIndex, i: Integer;
+begin
+  if arr=nil then
+    fFilter := nil
+  else begin
+    if (fIndexStream=nil) or (fIndexStream.Size=0) then
+      raise Exception.Create('Trying to set a filter while the db is not initialized');
+    maxIndex := fIndexStream.Size div SIZEOF_INDEX - 1;
+    // check that indices are within the range of the index
+    for i:=0 to Length(arr)-1 do
+      if (arr[i]<0) or (arr[i]>maxIndex) then
+        raise Exception.CreateFmt('The filter has an invalid entry at %d',[i]);
+    // copy filter indices
+    SetLength(fFilter, Length(arr));
+    Move(arr[0], fFilter[0], Length(arr)*SizeOf(Integer));
   end;
 end;
 
