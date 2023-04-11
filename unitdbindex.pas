@@ -48,6 +48,7 @@ type
     index: Integer;
     parents: TIntArray;
     column: Integer;
+    lines: TIntArray;
   end;
   TItemIndexArray = array of TItemIndex;
 
@@ -173,7 +174,13 @@ end;
 function GetItemIndexes(db: TDbIndex): TItemIndexArray;
 var
   parArray: TParentsArray;
-  i, j, n, p, column: Integer;
+  i, j, k, n, p, column: Integer;
+  s: string;
+  columns: array of
+    record
+      first: Integer;
+      last: Integer;
+    end;
 begin
   parArray := GetParentsArray(db);
   //DebugLn('PARENTS');
@@ -188,25 +195,38 @@ begin
   for i:=0 to Length(parArray)-1 do begin
     result[i].index := i;
     result[i].parents := FindParentsOf(parArray, i);
-    result[i].column := 0;
+    result[i].column := -1;
+    result[i].lines := nil;
     //DebugLn('For index %d found %d parents',[i, length(result[i].parents)]);
   end;
 
-  column := 1;
+  column := -1;
+
   n := Length(result);
   while n>0 do begin
+
+    inc(Column);
+    SetLength(Columns, column + 1);
+    Columns[column].first := -1;
+    Columns[column].last := -1;
 
     // find the first index with no assigned column
     i := 0;
     while i<Length(result) do begin
-      if result[i].column=0 then break;
+      if result[i].column<0 then break;
       inc(i);
     end;
     if i=length(result) then
       break; // we are done
 
     repeat
+
       result[i].column := column;
+
+      if Columns[column].first<0 then
+        Columns[column].first := i;
+      Columns[column].last := i;
+
       dec(n);
       if n=0 then
         break;
@@ -217,7 +237,7 @@ begin
       j := 0;
       while j<Length(result[i].parents) do begin
         p := result[i].parents[j];
-        if result[p].column=0 then
+        if result[p].column=-1 then
             break; // found
         inc(j);
       end;
@@ -228,7 +248,42 @@ begin
 
     until false;
 
-    inc(column);
+  end;
+
+  // assign columns to every index's lines. In other words
+  // for each index find what will draw at each column
+  // it will always draw a node at the .column position
+  // and will draw a line at each .lines[k] column
+  if Length(Columns)>1 then
+    for i:=0 to Length(result)-1 do begin
+      for j:=0 to Length(columns)-1 do begin
+        // is the index i within the range of column j?
+        if (i>=columns[j].first) and (i<=columns[j].last) then begin
+          // yes
+          if result[i].column=j then
+            continue; // but it's the same column, ignore it as it will always draw a node
+          // no, it have to draw a line at this column
+          k := Length(result[i].lines);
+          SetLength(result[i].lines, k+1);
+          result[i].lines[k] := j;
+        end;
+      end;
+    end;
+
+  // report of columns
+  DebugLn('Report of %d columns:',[Length(Columns)]);
+  for i:=0 to Length(Columns)-1 do
+    with columns[i] do begin
+      DebugLn('Column %d: first=%d last=%d',[i, first, last]);
+    end;
+
+  SetLength(s, Length(columns));
+  // now the result
+  for i:=0 to Length(result)-1 do begin
+    for j := 0 to Length(columns)-1 do s[j+1] := ' ';
+    for j := 0 to Length(result[i].lines)-1 do s[result[i].lines[j]+1] := '|';
+    s[result[i].column+1] := '*';
+    DebugLn('%s : Index %d', [s, i]);
   end;
 
 end;
