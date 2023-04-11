@@ -894,7 +894,7 @@ begin
 
   SetFilter(nil);
 
-  indxArr := GetItemIndexes(self, false, dummy);
+  indxArr := GetItemIndexes(self, true, dummy);
 
   // this listing clearly shows list of indices and parent indices each index
   // it have

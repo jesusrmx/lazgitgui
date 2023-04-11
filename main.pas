@@ -227,12 +227,18 @@ const
   GRAPH_LEFT_PADDING          = 12;
   GRAPH_RIGHT_PADDING         = 12;
   GRAPH_LINE_WIDTH            = 2;
-  GRAPH_NODE_RADIUS           = 5;
-  GRAPH_COLUMN_SEPARATOR      = 12;
+  GRAPH_NODE_RADIUS           = 4;
+  GRAPH_COLUMN_SEPARATOR      = 18;
 
 
   VIEWER_BUFSIZE      = 1024*4;
   BIN_BUFSIZE         = 1024;
+
+
+const
+  GRAPH_MAX_COLORS = 5;
+  GraphColumnsColors:array[0..GRAPH_MAX_COLORS-1] of TColor =
+    (clBlue, clFuchsia, clMaroon, clRed, clGreen);
 
 function AddPopItem(pop: TPopupMenu; caption:string; onClick:TNotifyEvent; tag: Integer): TMenuItem;
 begin
@@ -303,17 +309,18 @@ begin
 
       with fItemIndices[aIndex] do begin
         gridLog.canvas.Pen.Width := GRAPH_LINE_WIDTH;
-        gridLog.Canvas.Pen.Color := clBlack;
         w := aRect.Left + GRAPH_LEFT_PADDING;
         for i:=0 to Length(lines)-1 do begin
-          gridlog.Canvas.Line(x, aRect.Top, x, aRect.Bottom);
+          gridLog.Canvas.Pen.Color := GraphColumnsColors[lines[i] mod GRAPH_MAX_COLORS];
           x := w + lines[i] * GRAPH_COLUMN_SEPARATOR;
+          gridlog.Canvas.Line(x, aRect.Top, x, aRect.Bottom);
         end;
         x := w + Column * GRAPH_COLUMN_SEPARATOR;
+        gridLog.Canvas.Pen.Color := GraphColumnsColors[Column mod GRAPH_MAX_COLORS];
         gridlog.Canvas.Line(x, aRect.Top, x, aRect.Bottom);
 
         y := aRect.Top + (aRect.Bottom - aRect.Top) div 2;
-        gridLog.Canvas.Brush.Color := clBlue;
+        gridLog.Canvas.Brush.Color := GraphColumnsColors[Column mod GRAPH_MAX_COLORS];
         gridLog.Canvas.Brush.Style := bsSolid;
         gridLog.canvas.Pen.Width :=0;
         gridLog.canvas.EllipseC(x, y, GRAPH_NODE_RADIUS, GRAPH_NODE_RADIUS);
@@ -1143,7 +1150,7 @@ begin
   fItemIndices := GetItemIndexes(fLogCache.DbIndex, true, fGraphColumns);
   col := gridLog.Columns.ColumnByTitle('');
   i := gridLog.Columns.IndexOf(col);
-  gridLog.Columns[i].Width := GRAPH_LEFT_PADDING + fGraphColumns*GRAPH_COLUMN_SEPARATOR + GRAPH_RIGHT_PADDING;
+  gridLog.Columns[i].Width := GRAPH_LEFT_PADDING + (fGraphColumns-1)*GRAPH_COLUMN_SEPARATOR + GRAPH_RIGHT_PADDING;
 end;
 
 function OwnerDrawStateToStr(State: TOwnerDrawState): string;
