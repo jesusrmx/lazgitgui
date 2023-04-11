@@ -135,6 +135,7 @@ type
     fLastDescribedTag: string;
     fDescribed: boolean;
     fSeenRefs: TRefsMap;
+    fGraphColumns: Integer;
     procedure DelayedShowMenu(Data: PtrInt);
     procedure DoGitDiff(Data: PtrInt);
     procedure DoItemAction(Data: PtrInt);
@@ -175,6 +176,7 @@ type
     procedure CheckMenuDivisorInLastPosition(pop:TPopupMenu);
     procedure CacheRefs;
     procedure FindParents;
+    procedure UpdateGridRows;
   public
 
   end;
@@ -219,8 +221,14 @@ const
   MENU_LIST_STAGE_SELECTION   = 20;
   MENU_LIST_UNSTAGE_SELECTION = 21;
 
-  LIST_TAG_ALL_SELECTED           = -1;
-  LIST_TAG_ALL_CHANGED            = -2;
+  LIST_TAG_ALL_SELECTED       = -1;
+  LIST_TAG_ALL_CHANGED        = -2;
+
+  GRAPH_LEFT_PADDING          = 12;
+  GRAPH_RIGHT_PADDING         = 12;
+  GRAPH_LINE_WIDTH            = 2;
+  GRAPH_NODE_RADIUS           = 5;
+  GRAPH_COLUMN_SEPARATOR      = 12;
 
 
   VIEWER_BUFSIZE      = 1024*4;
@@ -282,7 +290,7 @@ end;
 procedure TfrmMain.gridLogDrawCell(Sender: TObject; aCol, aRow: Integer;
   aRect: TRect; aState: TGridDrawState);
 var
-  aIndex, x, i, w, n: Integer;
+  aIndex, x, y, i, w, n: Integer;
   s: RawByteString;
   arr: TRefInfoArray;
   aBrushColor, aFontColor: TColor;
@@ -291,8 +299,27 @@ var
 begin
   if aRow>=gridLog.FixedRows then begin
     aIndex := aRow - gridLog.FixedRows;
-    if aCol=0 then begin
-      //exit;
+    if (aCol=0) and (Length(fItemIndices)>0) and (aIndex<Length(fItemIndices)) then begin
+
+      with fItemIndices[aIndex] do begin
+        gridLog.canvas.Pen.Width := GRAPH_LINE_WIDTH;
+        gridLog.Canvas.Pen.Color := clBlack;
+        w := aRect.Left + GRAPH_LEFT_PADDING;
+        for i:=0 to Length(lines)-1 do begin
+          gridlog.Canvas.Line(x, aRect.Top, x, aRect.Bottom);
+          x := w + lines[i] * GRAPH_COLUMN_SEPARATOR;
+        end;
+        x := w + Column * GRAPH_COLUMN_SEPARATOR;
+        gridlog.Canvas.Line(x, aRect.Top, x, aRect.Bottom);
+
+        y := aRect.Top + (aRect.Bottom - aRect.Top) div 2;
+        gridLog.Canvas.Brush.Color := clBlue;
+        gridLog.Canvas.Brush.Style := bsSolid;
+        gridLog.canvas.Pen.Width :=0;
+        gridLog.canvas.EllipseC(x, y, GRAPH_NODE_RADIUS, GRAPH_NODE_RADIUS);
+        gridLog.Canvas.Pen.Width := 1;
+      end;
+      exit;
     end;
 
     db := fLogCache.DbIndex;
@@ -1107,6 +1134,18 @@ begin
 
 end;
 
+procedure TfrmMain.UpdateGridRows;
+var
+  col: TGridColumn;
+  i: Integer;
+begin
+  gridLog.RowCount := fLogCache.DbIndex.Count + gridLog.FixedRows;
+  fItemIndices := GetItemIndexes(fLogCache.DbIndex, true, fGraphColumns);
+  col := gridLog.Columns.ColumnByTitle('');
+  i := gridLog.Columns.IndexOf(col);
+  gridLog.Columns[i].Width := GRAPH_LEFT_PADDING + fGraphColumns*GRAPH_COLUMN_SEPARATOR + GRAPH_RIGHT_PADDING;
+end;
+
 function OwnerDrawStateToStr(State: TOwnerDrawState): string;
   procedure Add(st: string);
   begin
@@ -1451,8 +1490,7 @@ begin
         DebugLn('End event received');
         btnStop.Visible := false;
         lblInfo.Visible := false;
-        gridLog.RowCount := fLogCache.DbIndex.Count + gridLog.FixedRows;
-        fItemIndices := GetItemIndexes(fLogCache.DbIndex);
+        UpdateGridRows;
       end;
 
     LOGEVENT_DONE:

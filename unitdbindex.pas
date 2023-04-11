@@ -116,7 +116,7 @@ type
   function GetParentsArray(db: TDbIndex): TParentsArray;
   procedure ClearParentsArray(var aList: TParentsArray);
   function FindParentsOf(parArray: TParentsArray; aIndex: Integer): TIntArray;
-  function GetItemIndexes(db: TDbIndex): TItemIndexArray;
+  function GetItemIndexes(db: TDbIndex; withColumns:boolean; out maxColumns:Integer): TItemIndexArray;
 
 implementation
 
@@ -171,7 +171,8 @@ begin
     end;
 end;
 
-function GetItemIndexes(db: TDbIndex): TItemIndexArray;
+function GetItemIndexes(db: TDbIndex; withColumns: boolean; out
+  maxColumns: Integer): TItemIndexArray;
 var
   parArray: TParentsArray;
   i, j, k, n, p, column: Integer;
@@ -199,6 +200,10 @@ begin
     result[i].lines := nil;
     //DebugLn('For index %d found %d parents',[i, length(result[i].parents)]);
   end;
+
+  maxColumns := 0;
+  if not withColumns then
+    exit;
 
   column := -1;
   columns := nil;
@@ -270,6 +275,8 @@ begin
         end;
       end;
     end;
+
+  maxColumns := Length(Columns);
 
   // report of columns
   //DebugLn('Report of %d columns:',[Length(Columns)]);
@@ -878,7 +885,7 @@ procedure TDbIndex.TopoSort;
 var
   graph: TGraph;
   parArray: TParentsArray;
-  i, j, x: Integer;
+  i, j, x, dummy: Integer;
   arr: TIntArray;
   stack: TIntStack;
   indxArr: TItemIndexArray;
@@ -887,7 +894,7 @@ begin
 
   SetFilter(nil);
 
-  indxArr := GetItemIndexes(self);
+  indxArr := GetItemIndexes(self, false, dummy);
 
   // this listing clearly shows list of indices and parent indices each index
   // it have
