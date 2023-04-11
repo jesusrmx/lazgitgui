@@ -440,6 +440,97 @@ begin
   //end;
 end;
 
+procedure DoIntervals(db: TDbIndex);
+var
+  i: Integer;
+  next: Int64;
+begin
+  if withIntervals then begin
+    if withHeaders then begin
+      DebugLn;
+      DebugLn('Summary of date intervals');
+    end;
+    next := MAXINT;
+    for i:=0 to db.Count-1 do begin
+      db.LoadItem(i);
+      if (Next=MAXINT) or (i=db.Count-1) or (Next<db.Item.CommiterDate) then begin
+        aDir := GetItemStr(db.Item);
+        if withRecNum then
+          DbgOut('%8d%s',[i+1,SEP]);
+        DebugLn('%s',[aDir]);
+      end;
+      Next := db.Item.CommiterDate;
+    end;
+  end;
+end;
+
+procedure DoInheritance(db: TDbIndex);
+var
+  i: Integer;
+  nextoid, aDir: string;
+begin
+  if withInheritance then begin
+    if withHeaders then begin
+      DebugLn;
+      DebugLn('Summary of inheritance');
+    end;
+    nextoid := '';
+    for i:=0 to db.Count-1 do begin
+      db.LoadItem(i);
+      if (i=0) or (i=db.Count-1) or (Nextoid<>db.Item.CommitOID) then begin
+        aDir := GetItemStr(db.Item);
+        if withRecNum then
+          DbgOut('%8d%s',[i+1,SEP]);
+        DebugLn('%s',[aDir]);
+      end;
+      nextoid := db.Item.ParentOID;
+    end;
+  end;
+end;
+
+procedure DoInOrder(db: TDbIndex);
+var
+  i: Integer;
+  aDir: string;
+begin
+  if withInOrder then begin
+    if withHeaders then begin
+      DebugLn;
+      DebugLn('Listing in index order');
+    end;
+    for i:=0 to db.Count-1 do begin
+      db.LoadItem(i);
+      aDir := GetItemStr(db.Item);
+      if withRecNum then
+        DbgOut('%8d%s',[i+1,SEP]);
+      DebugLn('%s',[aDir]);
+    end;
+  end;
+end;
+
+procedure DoTopo(db: TDbIndex);
+var
+  i: Integer;
+  aDir: string;
+begin
+  if withTopo then begin
+    db.TopoSort;
+    //if withHeaders then begin
+    //  DebugLn;
+    //  DebugLn('Topological listing');
+    //end;
+    //for i:=0 to db.Count-1 do begin
+    //  db.LoadItem(i);
+    //  aDir := GetItemStr(db.Item);
+    //  if withRecNum then
+    //    DbgOut('%8d%s',[i+1,SEP]);
+    //  DebugLn('%s',[aDir]);
+    //end;
+    //
+    //DoInheritance(db);
+  end;
+end;
+
 procedure ProcessDbIndex(db: TDbIndex);
 var
   i: Integer;
@@ -458,60 +549,13 @@ begin
       DebugLn;
       DebugLn('Summary of incremental offsets...');
     end;
-
     DebugLn('Not available while using dbIndex');
   end;
 
-  if withIntervals then begin
-    if withHeaders then begin
-      DebugLn;
-      DebugLn('Summary of date intervals');
-    end;
-    next := MAXINT;
-    for i:=0 to db.Count-1 do begin
-      db.LoadItem(i);
-      if (Next=MAXINT) or (i=db.Count-1) or (Next<db.Item.CommiterDate) then begin
-        aDir := GetItemStr(db.Item);
-        if withRecNum then
-          DbgOut('%8d%s',[i+1,SEP]);
-        DebugLn('%s',[aDir]);
-      end;
-      Next := db.Item.CommiterDate;
-    end;
-  end;
+  DoIntervals(db);
+  DoInheritance(db);
+  DoInOrder(db);
 
-  if withInheritance then begin
-    if withHeaders then begin
-      DebugLn;
-      DebugLn('Summary of inheritance');
-    end;
-    nextoid := '';
-    for i:=0 to db.Count-1 do begin
-      db.LoadItem(i);
-      if (i=0) or (i=db.Count-1) or (Nextoid<>db.Item.CommitOID) then begin
-        aDir := GetItemStr(db.Item);
-        if withRecNum then
-          DbgOut('%8d%s',[i+1,SEP]);
-        DebugLn('%s',[aDir]);
-      end;
-      nextoid := db.Item.ParentOID;
-    end;
-  end;
-
-  if withInOrder then begin
-    if withHeaders then begin
-      DebugLn;
-      DebugLn('Listing in index order');
-    end;
-    for i:=0 to db.Count-1 do begin
-      db.LoadItem(i);
-      aDir := GetItemStr(db.Item);
-      if withRecNum then
-        DbgOut('%8d%s',[i+1,SEP]);
-      DebugLn('%s',[aDir]);
-    end;
-  end;
-                b
   //DebugLn;
   //DebugLn('Filtered listing');
   //db.SetFilter([0, 233, 0]);
@@ -522,22 +566,7 @@ begin
   //    DbgOut('%8d%s',[i+1,SEP]);
   //  DebugLn('%s',[aDir]);
   //end;
-
-  if withTopo then begin
-    db.TopoSort;
-    if withHeaders then begin
-      DebugLn;
-      DebugLn('Topological listing');
-    end;
-    for i:=0 to db.Count-1 do begin
-      db.LoadItem(i);
-      aDir := GetItemStr(db.Item);
-      if withRecNum then
-        DbgOut('%8d%s',[i+1,SEP]);
-      DebugLn('%s',[aDir]);
-    end;
-  end;
-
+  DoTopo(db);
 end;
 
 function UseDbIndex: boolean;

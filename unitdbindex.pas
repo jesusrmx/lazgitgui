@@ -5,7 +5,7 @@ unit unitdbindex;
 interface
 
 uses
-  Classes, SysUtils, Math, DateUtils, LazLogger, unitifaces, fgl;
+  Classes, SysUtils, Math, DateUtils, LazLogger, unitifaces, fgl, unitgitutils;
 
 const
   FIELD_DATE        = 0;
@@ -35,7 +35,6 @@ type
   end;
 
   TIntArray = array of Integer;
-  TQWordArray = array of QWord;
 
   TParentsItem = record
     n: Integer;
@@ -44,6 +43,13 @@ type
   end;
 
   TParentsArray = array of TParentsItem;
+
+  TItemIndex = record
+    index: Integer;
+    parents: TIntArray;
+    column: Integer;
+  end;
+  TItemIndexArray = array of TItemIndex;
 
 const
   SIZEOF_INDEX = sizeof(TIndexRecord);
@@ -109,6 +115,7 @@ type
   function GetParentsArray(db: TDbIndex): TParentsArray;
   procedure ClearParentsArray(var aList: TParentsArray);
   function FindParentsOf(parArray: TParentsArray; aIndex: Integer): TIntArray;
+  function GetItemIndexes(db: TDbIndex): TItemIndexArray;
 
 implementation
 
@@ -117,28 +124,6 @@ const
   FILENAME_INFO     = 1;
   FILENAME_INDEX    = 2;
   FILENAME_CACHE    = 3;
-
-function OIDToQWord(oid: string): QWord;
-begin
-  if oid='' then
-    result := 0
-  else
-    result := StrToQWord('$' + copy(oid, 1, 16))
-end;
-
-function OIDToParents(oid: string; oidlen: Integer): TQWordArray;
-var
-  i: Integer;
-begin
-  result := nil;
-  while oid<>'' do begin
-    if oid[1]=' ' then delete(oid, 1, 1);
-    i := Length(result);
-    SetLength(result, i+1);
-    result[i] := OIDToQWord(copy(oid, 1, oidlen));
-    delete(oid, 1, oidlen);
-  end;
-end;
 
 function GetParentsArray(db: TDbIndex): TParentsArray;
 var
@@ -170,9 +155,10 @@ var
   p, i, k: Integer;
   item: TParentsItem;
 begin
+  result := nil;
   item := parArray[aIndex];
   if item.parents=nil then
-    exit(nil);
+    exit;
   for p:=0 to Length(item.parents)-1 do
     for i:=0 to Length(parArray)-1 do begin
       if item.n=i then continue;
@@ -182,6 +168,69 @@ begin
         result[k] := i;
       end;
     end;
+end;
+
+function GetItemIndexes(db: TDbIndex): TItemIndexArray;
+var
+  parArray: TParentsArray;
+  i, j, n, p, column: Integer;
+begin
+  parArray := GetParentsArray(db);
+  //DebugLn('PARENTS');
+  //for i:=0 to Length(parArray)-1 do begin
+  //  DbgOut('%3d: %.16x => ',[parArray[i].n+1, parArray[i].commit]);
+  //  for j:=0 to Length(parArray[i].parents)-1 do
+  //    DbgOut('%.16x ',[parArray[i].parents[j]]);
+  //  DebugLn;
+  //end;
+
+  SetLength(result, Length(parArray));
+  for i:=0 to Length(parArray)-1 do begin
+    result[i].index := i;
+    result[i].parents := FindParentsOf(parArray, i);
+    result[i].column := 0;
+    //DebugLn('For index %d found %d parents',[i, length(result[i].parents)]);
+  end;
+
+  column := 1;
+  n := Length(result);
+  while n>0 do begin
+
+    // find the first index with no assigned column
+    i := 0;
+    while i<Length(result) do begin
+      if result[i].column=0 then break;
+      inc(i);
+    end;
+    if i=length(result) then
+      break; // we are done
+
+    repeat
+      result[i].column := column;
+      dec(n);
+      if n=0 then
+        break;
+
+      // now starting with 'i' descend through the first
+      // parent that has no column assigned
+      // find the first parent with no column assigned
+      j := 0;
+      while j<Length(result[i].parents) do begin
+        p := result[i].parents[j];
+        if result[p].column=0 then
+            break; // found
+        inc(j);
+      end;
+      if j=Length(result[i].parents) then
+        break;  // not found
+
+      i := p;
+
+    until false;
+
+    inc(column);
+  end;
+
 end;
 
 { TMyInterfacedObject }
@@ -232,7 +281,7 @@ end;
 
 function TDbIndex.GetInfo: string;
 begin
-
+  result := format('%d',[fIndexStream.Size div SIZEOF_INDEX]);
 end;
 
 procedure TDbIndex.ReIndex;
@@ -773,32 +822,59 @@ procedure TDbIndex.TopoSort;
 var
   graph: TGraph;
   parArray: TParentsArray;
-  i, x: Integer;
+  i, j, x: Integer;
   arr: TIntArray;
   stack: TIntStack;
+  indxArr: TItemIndexArray;
 begin
   //TestGraph
 
   SetFilter(nil);
 
+  indxArr := GetItemIndexes(self);
+
+  // this listing clearly shows list of indices and parent indices each index
+  // it have
+  //for i:=0 to Length(indxArr)-1 do begin
+  //  DbgOut('%3d (%d): ',[i, length(indxArr[i].parents)]);
+  //  for j:=0 to Length(indxArr[i].parents)-1 do
+  //    DbgOut('%3d ',[indxArr[i].parents[j]]);
+  //  DebugLn;
+  //end;
+
+  //for external tests...
+  //DebugLn('graph := TGraph.Create(%d);',[Length(indxArr)]);
+  //for i:=0 to Length(indxArr)-1 do begin
+  //  with indxArr[i] do begin
+  //    for x in parents do
+  //      DebugLn('graph.AddEdge(%d, %d);',[x, index]);
+  //  end;
+  //end;
+
+
   graph := TGraph.Create(Count);
   try
-    parArray := GetParentsArray(self);
 
-    // fill Graph
-    for i:=0 to Count-1 do begin
-      arr := FindParentsOf(parArray, i);
-      for x in arr do
-        graph.AddEdge(x, i);
-    end;
+    for i:=0 to Length(indxArr)-1 do
+      with indxArr[i] do begin
+        for x in parents do
+          graph.AddEdge(x, index)
+      end;
 
     stack := graph.TopologicalSort;
     setLength(arr, stack.Count);
 
-    for i:=0 to stack.Count-1 do
-      arr[i] := stack[i];
+    // This tests demonstrates that the data is already ordered
+    // topologically.
+    //DebugLn;
+    //x := 0;
+    //for i:=stack.Count-1 downto 0 do begin
+    //  DbgOut('%3d ',[stack[i]]);
+    //  if (x+1) mod 20 = 0 then DebugLn;
+    //  inc(x);
+    //end;
 
-    SetFilter(arr);
+    //SetFilter(arr);
 
   finally
     ClearParentsArray(parArray);

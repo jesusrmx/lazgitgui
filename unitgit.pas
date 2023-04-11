@@ -29,7 +29,7 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, DateUtils, lazlogger, unitifaces, unitprocess,
-  unitentries;
+  unitentries, unitgitutils;
 
 const
   SECTION_GIT = 'lazgitgui.cfg';
@@ -44,6 +44,7 @@ type
     refName: string;
     objType: TRefObjectType;
     objName: string;
+    objNameInt: QWord;
     upstream: string;
     push: string;
     head: boolean;
@@ -695,7 +696,11 @@ begin
             end;
           end;
         'objecttype': info^.objType := StrToRefObjType(value);
-        'objectname': info^.objName := value;
+        'objectname':
+          begin
+            info^.objName := value;
+            info^.objNameInt := OIDToQWord(value);
+          end;
         'upstream': info^.upstream := value;
         'push': info^.push := value;
         'HEAD': info^.head := value='*';
