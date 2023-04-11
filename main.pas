@@ -127,6 +127,7 @@ type
     fGit: TGit;
     fClickedIndex: Integer;
     fDir: string;
+    fItemIndices: TItemIndexArray;
     fLogCache: TLogCache;
     fLogHandler: TLogHandler;
     fPopPoint: TPoint;
@@ -173,6 +174,7 @@ type
     procedure NewTag;
     procedure CheckMenuDivisorInLastPosition(pop:TPopupMenu);
     procedure CacheRefs;
+    procedure FindParents;
   public
 
   end;
@@ -289,6 +291,10 @@ var
 begin
   if aRow>=gridLog.FixedRows then begin
     aIndex := aRow - gridLog.FixedRows;
+    if aCol=0 then begin
+      //exit;
+    end;
+
     db := fLogCache.DbIndex;
     if db.LoadItem(aIndex) then begin
       x := aRect.Left + 7;
@@ -1094,6 +1100,13 @@ begin
   //end;
 end;
 
+procedure TfrmMain.FindParents;
+var
+  parents: TParentsArray;
+begin
+
+end;
+
 function OwnerDrawStateToStr(State: TOwnerDrawState): string;
   procedure Add(st: string);
   begin
@@ -1356,6 +1369,8 @@ begin
     btnStop.Visible := true;
     btnStop.Tag := 0;
 
+    gridLog.RowCount := (gridLog.Height div gridLog.DefaultRowHeight) *  2;
+
     CacheRefs;
 
     fLogCache.LoadCache;
@@ -1419,18 +1434,25 @@ begin
 
     LOGEVENT_RECORD:
       begin
-        //if fLogCache.LogState=lsGetFirst then lblInfo.Font.Color := clGreen
-        //else                                  lblInfo.Font.Color := clRed;
+        if fLogCache.LogState=lsGetFirst then lblInfo.Font.Color := clGreen
+        else                                  lblInfo.Font.Color := clRed;
         lblInfo.Caption := format('%s',[fLogCache.DbIndex.Info]);
+        lblInfo.Visible := true;
         interrupt := btnStop.Visible and (btnStop.Tag=1);
-        //lblInfo.Refresh;
+
+        if fLogCache.DbIndex.Count<gridLog.height div gridLog.DefaultRowHeight then begin
+          if fLogCache.DbIndex.Count mod 3 = 0 then
+            gridLog.Invalidate;
+        end;
       end;
 
     LOGEVENT_END:
       begin
         DebugLn('End event received');
         btnStop.Visible := false;
+        lblInfo.Visible := false;
         gridLog.RowCount := fLogCache.DbIndex.Count + gridLog.FixedRows;
+        fItemIndices := GetItemIndexes(fLogCache.DbIndex);
       end;
 
     LOGEVENT_DONE:
