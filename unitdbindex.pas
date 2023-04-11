@@ -201,6 +201,7 @@ begin
   end;
 
   column := -1;
+  columns := nil;
 
   n := Length(result);
   while n>0 do begin
@@ -271,20 +272,20 @@ begin
     end;
 
   // report of columns
-  DebugLn('Report of %d columns:',[Length(Columns)]);
-  for i:=0 to Length(Columns)-1 do
-    with columns[i] do begin
-      DebugLn('Column %d: first=%d last=%d',[i, first, last]);
-    end;
+  //DebugLn('Report of %d columns:',[Length(Columns)]);
+  //for i:=0 to Length(Columns)-1 do
+  //  with columns[i] do begin
+  //    DebugLn('Column %d: first=%d last=%d',[i, first, last]);
+  //  end;
 
-  SetLength(s, Length(columns));
-  // now the result
-  for i:=0 to Length(result)-1 do begin
-    for j := 0 to Length(columns)-1 do s[j+1] := ' ';
-    for j := 0 to Length(result[i].lines)-1 do s[result[i].lines[j]+1] := '|';
-    s[result[i].column+1] := '*';
-    DebugLn('%s : Index %d', [s, i]);
-  end;
+  //// now the result
+  //SetLength(s, Length(columns));
+  //for i:=0 to Length(result)-1 do begin
+  //  for j := 0 to Length(columns)-1 do s[j+1] := ' ';
+  //  for j := 0 to Length(result[i].lines)-1 do s[result[i].lines[j]+1] := '|';
+  //  s[result[i].column+1] := '*';
+  //  DebugLn('%s : Index %d', [s, i]);
+  //end;
 
 end;
 
