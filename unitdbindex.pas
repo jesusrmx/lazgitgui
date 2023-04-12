@@ -49,6 +49,8 @@ type
     parents: TIntArray;
     column: Integer;
     lines: TIntArray;
+    first: boolean;
+    last: boolean;
   end;
   TItemIndexArray = array of TItemIndex;
 
@@ -198,6 +200,8 @@ begin
     result[i].parents := FindParentsOf(parArray, i);
     result[i].column := -1;
     result[i].lines := nil;
+    result[i].first := false;
+    result[i].last := false;
     //DebugLn('For index %d found %d parents',[i, length(result[i].parents)]);
   end;
 
@@ -266,8 +270,11 @@ begin
         // is the index i within the range of column j?
         if (i>=columns[j].first) and (i<=columns[j].last) then begin
           // yes
-          if result[i].column=j then
+          if result[i].column=j then begin
+            if i=columns[j].first then result[i].first := true;
+            if i=columns[j].last  then result[i].last := true;
             continue; // but it's the same column, ignore it as it will always draw a node
+          end;
           // no, it have to draw a line at this column
           k := Length(result[i].lines);
           SetLength(result[i].lines, k+1);

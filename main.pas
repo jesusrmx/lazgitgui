@@ -296,7 +296,7 @@ end;
 procedure TfrmMain.gridLogDrawCell(Sender: TObject; aCol, aRow: Integer;
   aRect: TRect; aState: TGridDrawState);
 var
-  aIndex, x, y, i, w, n: Integer;
+  aIndex, x, y, y1, y2, i, w, n: Integer;
   s: RawByteString;
   arr: TRefInfoArray;
   aBrushColor, aFontColor: TColor;
@@ -316,10 +316,15 @@ begin
           gridlog.Canvas.Line(x, aRect.Top, x, aRect.Bottom);
         end;
         x := w + Column * GRAPH_COLUMN_SEPARATOR;
-        gridLog.Canvas.Pen.Color := GraphColumnsColors[Column mod GRAPH_MAX_COLORS];
-        gridlog.Canvas.Line(x, aRect.Top, x, aRect.Bottom);
-
         y := aRect.Top + (aRect.Bottom - aRect.Top) div 2;
+
+        y1 := aRect.Top; y2 := aRect.Bottom;
+        if first then y1 := y;
+        if last  then y2 := y;
+
+        gridLog.Canvas.Pen.Color := GraphColumnsColors[Column mod GRAPH_MAX_COLORS];
+        gridlog.Canvas.Line(x, y1, x, y2);
+
         gridLog.Canvas.Brush.Color := GraphColumnsColors[Column mod GRAPH_MAX_COLORS];
         gridLog.Canvas.Brush.Style := bsSolid;
         gridLog.canvas.Pen.Width :=0;
