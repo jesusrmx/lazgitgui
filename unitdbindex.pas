@@ -86,7 +86,7 @@ type
   private
     fDir: string;
     fCacheStream: TFileStream;
-    fIndexStream: TMemoryStream;
+    fIndexStream: TFileStream;
     fOldCount: Integer;
     fOldIndexSize: SizeInt;
     fCacheUpdate: boolean;
@@ -97,9 +97,8 @@ type
     fFilter: TIntArray;
     function GetCount: Integer;
     function GetInfo: string;
-    procedure RecoverIndex;
+    //procedure RecoverIndex;
     procedure ReIndex;
-    procedure SaveIndexStream;
     procedure GetIndexRecord(var aIndex:Integer; out indxRec: TIndexRecord);
     procedure CacheBufferFromItem(out aBuf: PChar; out len: word);
     procedure ItemFromCacheBuffer;
@@ -135,6 +134,7 @@ const
   FILENAME_INFO     = 1;
   FILENAME_INDEX    = 2;
   FILENAME_CACHE    = 3;
+  FILENAME_INDEXTMP = 4;
 
 function GetParentsArray(db: TDbIndex): TParentsArray;
 var
@@ -347,11 +347,11 @@ begin
   maxColumns := Length(Columns);
 
   // report of columns
-  //DebugLn('Report of %d columns:',[Length(Columns)]);
-  //for i:=0 to Length(Columns)-1 do
-  //  with columns[i] do begin
-  //    DebugLn('Column %d: first=%d last=%d',[i, first, last]);
-  //  end;
+  DebugLn('Report of %d columns:',[Length(Columns)]);
+  for i:=0 to Length(Columns)-1 do
+    with columns[i] do begin
+      DebugLn('Column %d: first=%d last=%d',[i, first, last]);
+    end;
 
   //// now the result
   //SetLength(s, Length(columns));
@@ -376,28 +376,28 @@ end;
 
 { TDbIndex }
 
-procedure TDbIndex.RecoverIndex;
-var
-  w: word;
-  IndxRec: TIndexRecord;
-  n: Integer;
-begin
-  DebugLn('Recovering Index');
-  n := 0;
-  fIndexStream.Clear;
-  fCacheStream.Position := SizeOf(cardinal);
-  while fCacheStream.Position<fCacheStream.Size do begin
-    IndxRec.offset := fCacheStream.Position;
-    w := fCacheStream.ReadWord;
-    IndxRec.size := w + SizeOf(word);
-    fIndexStream.WriteBuffer(indxRec, SIZEOF_INDEX);
-    inc(n);
-    fCacheStream.Seek(w, soFromCurrent);
-  end;
-  DebugLn('Recovered %d records vs %d',[fIndexStream.Size div SIZEOF_INDEX, n]);
-  DebugLn('Cache: Size=%d Position=%d',[fCacheStream.Size, fCacheStream.Position]);
-  SaveIndexStream;
-end;
+//procedure TDbIndex.RecoverIndex;
+//var
+//  w: word;
+//  IndxRec: TIndexRecord;
+//  n: Integer;
+//begin
+//  DebugLn('Recovering Index');
+//  n := 0;
+//  fIndexStream.Clear;
+//  fCacheStream.Position := SizeOf(cardinal);
+//  while fCacheStream.Position<fCacheStream.Size do begin
+//    IndxRec.offset := fCacheStream.Position;
+//    w := fCacheStream.ReadWord;
+//    IndxRec.size := w + SizeOf(word);
+//    fIndexStream.WriteBuffer(indxRec, SIZEOF_INDEX);
+//    inc(n);
+//    fCacheStream.Seek(w, soFromCurrent);
+//  end;
+//  DebugLn('Recovered %d records vs %d',[fIndexStream.Size div SIZEOF_INDEX, n]);
+//  DebugLn('Cache: Size=%d Position=%d',[fCacheStream.Size, fCacheStream.Position]);
+//  SaveIndexStream;
+//end;
 
 function TDbIndex.GetCount: Integer;
 begin
@@ -419,22 +419,29 @@ procedure TDbIndex.ReIndex;
 var
   newSize: Integer;
   buf, p, q: Pbyte;
+  M: TMemoryStream;
 begin
+  M := TMemoryStream.Create;
+  // copy the new part at the start
   newSize := fIndexStream.Size - fOldIndexOffset;
-  GetMem(buf, newSize);
+  fIndexStream.Position := fOldIndexOffset;
+  M.CopyFrom(fIndexStream, newSize);
 
-  p := fIndexStream.Memory + fOldIndexOffset;
-  q := fIndexStream.Memory + newSize;
-  Move(p^, buf^, newSize);
-  Move(fIndexStream.Memory^, q^, fIndexStream.Size - newSize);
-  Move(buf^, fIndexStream.Memory^, newSize);
+  // now copy the old data
+  fIndexStream.Position := 0;
+  M.CopyFrom(fIndexStream, fOldIndexOffset);
 
-  FreeMem(buf);
-end;
+  // the re-indexed stream is now ready, swap streams pointers for a moment
+  InterlockedExchange(pointer(fIndexStream), pointer(M));
 
-procedure TDbIndex.SaveIndexStream;
-begin
-  fIndexStream.SaveToFile(GetFilename(FILENAME_INDEX));
+  M.SetSize(0);
+  fIndexStream.Position := 0;
+  M.CopyFrom(fIndexStream, fIndexStream.Size);
+
+  // the re-indexed stream is now ready, swap streams pointers for a moment
+  InterlockedExchange(pointer(fIndexStream), pointer(M));
+
+  M.Free;
 end;
 
 function TDbIndex.GetFileName(aIndex: Integer): string;
@@ -443,6 +450,7 @@ begin
   case aIndex of
     FILENAME_INDEX: result += '.logindex';
     FILENAME_CACHE: result += '.logcache';
+    FILENAME_INDEXTMP: result += '.logindextmp';
   end;
 end;
 
@@ -686,13 +694,13 @@ begin
     end;
 
     if fIndexStream=nil then begin
-      fIndexStream := TMemoryStream.Create;
-      if FileExists(aFileIndex) then
-        fIndexStream.LoadFromFile(aFileIndex)
-      else if fReadOnly then
-        raise Exception.CreateFmt('Index file %s do not exists',[aFileIndex])
-      else if fCacheStream.Size>4 then
-        RecoverIndex;
+      mode := fmOpenReadWrite + fmShareDenyWrite;
+      if not FileExists(aFileIndex) then begin
+        if fReadOnly then
+          raise Exception.CreateFmt('Index file %s do not exists',[aFileIndex]);
+        mode += fmCreate;
+      end;
+      fIndexStream := TFileStream.Create(aFileIndex, mode);
     end;
 
   end;
@@ -718,8 +726,7 @@ begin
     if fHead and (fOldIndexSize>0) then
       ReIndex;
 
-    SaveIndexStream;
-
+    FileFlush(fIndexStream.Handle);
     FileFlush(fCacheStream.Handle);
   end;
 
@@ -817,7 +824,7 @@ begin
         // the next time the log is requested.
         fCacheStream.Size := indxRec.offset;
         fIndexStream.Size := fIndexStream.Position - SIZEOF_INDEX;
-        SaveIndexStream;
+        FileFlush(fIndexStream.Handle);
         FileFlush(fCacheStream.Handle);
 
         raise Exception.CreateFmt('Inconsistent data at index %d, expected %d found %d',[aIndex, indxRec.Size-2, w]);
