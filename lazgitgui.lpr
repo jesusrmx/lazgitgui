@@ -39,7 +39,7 @@ uses
 
 {$R *.res}
 
-{$define drafts}
+{.$define drafts}
 
 begin
 
