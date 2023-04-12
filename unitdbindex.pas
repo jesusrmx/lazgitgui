@@ -311,6 +311,37 @@ begin
       end;
     end;
 
+    // finally find merges if there are any ..
+    // this would process only the first index in a column
+    // TODO: merges neeed to be checked for every index in a column except the last...
+    for j := 0 to Length(Columns)-1 do begin
+
+      k := Columns[j].first;
+      // Am I someone's parent?
+      for i := k-1 downto 0 do begin
+        p :=-1;
+        for n:=0 to length(result[i].parents)-1 do begin
+          if result[i].parents[n]=k then begin
+            // yep..
+            p := i;
+            break;
+          end;
+        end;
+        if p>=0 then
+          break;
+      end;
+
+      // now queue lines coloured by whatever the child column is coloured
+      if p>=0 then
+        for i:= p to k-1 do begin
+          n := Length(result[i].lines);
+          SetLength(result[i].lines, n+1);
+          result[i].lines[n].column := j;
+          result[i].lines[n].source := p;
+        end;
+    end;
+
+
   end;
 
   maxColumns := Length(Columns);
