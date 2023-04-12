@@ -18,6 +18,8 @@ const
   PGM_VERSION       = $0001;
   PGM_SIGNATURE     = $1A2A;
 
+  LINE_SOURCE_COLUMN  = -1;
+
 type
 
   TLogItem = record
@@ -44,11 +46,17 @@ type
 
   TParentsArray = array of TParentsItem;
 
+  TLineItem = record
+    column: Integer;
+    source: Integer;
+  end;
+  TLinesArray = array of TLineItem;
+
   TItemIndex = record
     index: Integer;
     parents: TIntArray;
     column: Integer;
-    lines: TIntArray;
+    lines: TLinesArray;
     first: boolean;
     last: boolean;
   end;
@@ -264,7 +272,7 @@ begin
   // for each index find what will draw at each column
   // it will always draw a node at the .column position
   // and will draw a line at each .lines[k] column
-  if Length(Columns)>1 then
+  if Length(Columns)>1 then begin
     for i:=0 to Length(result)-1 do begin
       for j:=0 to Length(columns)-1 do begin
         // is the index i within the range of column j?
@@ -278,10 +286,32 @@ begin
           // no, it have to draw a line at this column
           k := Length(result[i].lines);
           SetLength(result[i].lines, k+1);
-          result[i].lines[k] := j;
+          result[i].lines[k].column := j;
+          result[i].lines[k].source := LINE_SOURCE_COLUMN;
         end;
       end;
     end;
+
+    // try to find the parent index of columns last index
+    for j := 0 to Length(Columns)-1 do begin
+      // Theory: the last index of a column couldnt be multiparent
+      k := Columns[j].last;
+      if result[k].parents=nil then
+        continue; // this is the last index as it has no parents
+      if length(result[k].parents)>1 then
+        continue; // houston we have a problem and we don't know how to handle....
+      // so k is the last index and our parent is ...
+      p := result[k].parents[0];
+      // now queue lines coloured by whatever the parent column is coloured
+      for i:= k+1 to p do begin
+        n := Length(result[i].lines);
+        SetLength(result[i].lines, n+1);
+        result[i].lines[n].column := j;
+        result[i].lines[n].source := p;
+      end;
+    end;
+
+  end;
 
   maxColumns := Length(Columns);
 

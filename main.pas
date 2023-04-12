@@ -311,8 +311,11 @@ begin
         gridLog.canvas.Pen.Width := GRAPH_LINE_WIDTH;
         w := aRect.Left + GRAPH_LEFT_PADDING;
         for i:=0 to Length(lines)-1 do begin
-          gridLog.Canvas.Pen.Color := GraphColumnsColors[lines[i] mod GRAPH_MAX_COLORS];
-          x := w + lines[i] * GRAPH_COLUMN_SEPARATOR;
+          if lines[i].source=LINE_SOURCE_COLUMN then
+            gridLog.Canvas.Pen.Color := GraphColumnsColors[lines[i].column mod GRAPH_MAX_COLORS]
+          else
+            gridLog.Canvas.Pen.Color := GraphColumnsColors[fItemIndices[lines[i].source].column mod GRAPH_MAX_COLORS];
+          x := w + lines[i].column * GRAPH_COLUMN_SEPARATOR;
           gridlog.Canvas.Line(x, aRect.Top, x, aRect.Bottom);
         end;
         x := w + Column * GRAPH_COLUMN_SEPARATOR;
@@ -320,7 +323,7 @@ begin
 
         y1 := aRect.Top; y2 := aRect.Bottom;
         if first then y1 := y;
-        if last  then y2 := y;
+        if last and (parents=nil) then y2 := y;
 
         gridLog.Canvas.Pen.Color := GraphColumnsColors[Column mod GRAPH_MAX_COLORS];
         gridlog.Canvas.Line(x, y1, x, y2);
