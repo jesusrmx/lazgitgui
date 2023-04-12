@@ -792,6 +792,7 @@ end;
 function TDbIndex.LoadItem(aIndex: Integer): boolean;
 var
   indxRec: TIndexRecord;
+  w: word;
 begin
   result := (fIndexStream<>nil) and (fIndexStream.Size>0);
   if result then begin
@@ -808,6 +809,19 @@ begin
 
       fCacheStream.Position := indxRec.offset;
       fCacheStream.Read(fBuffer^, indxRec.size);
+
+      w := PWord(fBuffer)^;
+      if indxRec.Size-2<>w then begin
+
+        // the cache files are corrupt save what seems right, it will be fixed
+        // the next time the log is requested.
+        fCacheStream.Size := indxRec.offset;
+        fIndexStream.Size := fIndexStream.Position - SIZEOF_INDEX;
+        SaveIndexStream;
+        FileFlush(fCacheStream.Handle);
+
+        raise Exception.CreateFmt('Inconsistent data at index %d, expected %d found %d',[aIndex, indxRec.Size-2, w]);
+      end;
 
       ItemFromCacheBuffer;
 
