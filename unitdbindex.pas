@@ -46,9 +46,11 @@ type
 
   TParentsArray = array of TParentsItem;
 
+  TLineItemFlags = set of (lifInternal, lifToMerge, lifMerge, lifToBorn, lifBorn);
   TLineItem = record
     column: Integer;
     source: Integer;
+    Flags:  TLineItemFlags;
   end;
   TLinesArray = array of TLineItem;
 
@@ -293,6 +295,7 @@ begin
           SetLength(result[i].lines, k+1);
           result[i].lines[k].column := j;
           result[i].lines[k].source := LINE_SOURCE_COLUMN;
+          result[i].lines[k].Flags := [lifInternal];
         end;
       end;
       if Length(result[i].lines)>MaxColumns then
@@ -315,6 +318,8 @@ begin
         SetLength(result[i].lines, n+1);
         result[i].lines[n].column := j;
         result[i].lines[n].source := p;
+        Include(result[i].lines[n].Flags, lifToBorn);
+        if i=p then Include(result[i].lines[n].Flags, lifBorn);
         if n+1>MaxColumns then
           MaxColumns := n+1;
       end;
@@ -347,6 +352,8 @@ begin
           SetLength(result[i].lines, n+1);
           result[i].lines[n].column := j;
           result[i].lines[n].source := p;
+          Include(result[i].lines[n].Flags, lifToMerge);
+          if i=p then Include(result[i].lines[n].Flags, lifMerge);
           if n+1>MaxColumns then
             MaxColumns := n+1;
         end;

@@ -316,19 +316,38 @@ begin
               gridLog.canvas.Pen.Width := GRAPH_LINE_WIDTH;
               w := aRect.Left + GRAPH_LEFT_PADDING;
 
+              y1 := aRect.Top;
+              y2 := aRect.Bottom;
+              y := y1 + (y2-y1) div 2;
+
               for i:=0 to Length(lines)-1 do begin
-                if lines[i].source=LINE_SOURCE_COLUMN then
-                  gridLog.Canvas.Pen.Color := GraphColumnsColors[lines[i].column mod GRAPH_MAX_COLORS]
-                else
-                  gridLog.Canvas.Pen.Color := GraphColumnsColors[fItemIndices[lines[i].source].column mod GRAPH_MAX_COLORS];
+                if lines[i].source=LINE_SOURCE_COLUMN then begin
+                  n := lines[i].column;
+                  gridLog.Canvas.Pen.Style := psSolid;
+                end else begin
+                  n := lines[i].column; //fItemIndices[lines[i].source].column;
+                  gridLog.Canvas.Pen.Style := psDash;
+                end;
+                gridLog.Canvas.Pen.Color := GraphColumnsColors[ n mod GRAPH_MAX_COLORS];
                 x := w + lines[i].column * GRAPH_COLUMN_SEPARATOR;
-                gridlog.Canvas.Line(x, aRect.Top, x, aRect.Bottom);
+
+                if lifMerge in lines[i].Flags then begin
+                  // draw a merge line with origin at source and dest at this point
+                  gridLog.Canvas.Line(x, y, x, y2);
+                  x1 := w + fItemIndices[lines[i].source].column * GRAPH_COLUMN_SEPARATOR;
+                  gridLog.Canvas.Line(x1, y, x, y);
+                end else
+                if lifBorn in lines[i].Flags then begin
+                  // draw a new born line with origin at source and dest at this point
+                  gridLog.Canvas.Line(x, y1, x, y);
+                  x1 := w + fItemIndices[lines[i].source].column * GRAPH_COLUMN_SEPARATOR;
+                  gridLog.Canvas.Line(x1, y, x, y);
+                end else
+                  gridlog.Canvas.Line(x, y1, x, y2);
               end;
 
               x := w + Column * GRAPH_COLUMN_SEPARATOR;
-              y := aRect.Top + (aRect.Bottom - aRect.Top) div 2;
 
-              y1 := aRect.Top; y2 := aRect.Bottom;
               if first then y1 := y;
               if last and (parents=nil) then y2 := y;
 
