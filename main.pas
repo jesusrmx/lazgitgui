@@ -309,6 +309,8 @@ begin
     if db.LoadItem(aIndex) then begin
       x := aRect.Left + 7;
       case gridLog.Columns[aCol].Title.Caption of
+        'RecNo':
+          s := IntToStr(aRow);
         'Graph':
           if (Length(fItemIndices)>0) and (aIndex<Length(fItemIndices)) then begin
 
@@ -321,13 +323,13 @@ begin
               y := y1 + (y2-y1) div 2;
 
               for i:=0 to Length(lines)-1 do begin
-                if lines[i].source=LINE_SOURCE_COLUMN then begin
+                //if lines[i].source=LINE_SOURCE_COLUMN then begin
                   n := lines[i].column;
                   gridLog.Canvas.Pen.Style := psSolid;
-                end else begin
-                  n := lines[i].column; //fItemIndices[lines[i].source].column;
-                  gridLog.Canvas.Pen.Style := psDash;
-                end;
+                //end else begin
+                //  n := lines[i].column; //fItemIndices[lines[i].source].column;
+                //  gridLog.Canvas.Pen.Style := psDash;
+                //end;
                 gridLog.Canvas.Pen.Color := GraphColumnsColors[ n mod GRAPH_MAX_COLORS];
                 x := w + lines[i].column * GRAPH_COLUMN_SEPARATOR;
 
