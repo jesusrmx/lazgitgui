@@ -56,7 +56,7 @@ type
 
   TItemIndex = record
     index: Integer;
-    parents: TIntArray;
+    parents, childs: TIntArray;
     column: Integer;
     lines: TLinesArray;
     first: boolean;
@@ -130,7 +130,7 @@ type
 
   function GetParentsArray(db: TDbIndex): TParentsArray;
   procedure ClearParentsArray(var aList: TParentsArray);
-  function FindParentsOf(parArray: TParentsArray; aIndex: Integer): TIntArray;
+  procedure FindRelatives(var items: TItemIndexArray; parArray: TParentsArray);
   function GetItemIndexes(db: TDbIndex; withColumns:boolean; out maxColumns:Integer): TItemIndexArray;
 
 implementation
@@ -167,24 +167,31 @@ begin
   aList := nil;
 end;
 
-function FindParentsOf(parArray: TParentsArray; aIndex: Integer): TIntArray;
+procedure FindRelatives(var items: TItemIndexArray; parArray: TParentsArray);
 var
-  p, i, k: Integer;
-  item: TParentsItem;
+  i, j, k, p: Integer;
 begin
-  result := nil;
-  item := parArray[aIndex];
-  if item.parents=nil then
-    exit;
-  for p:=0 to Length(item.parents)-1 do
-    for i:=0 to Length(parArray)-1 do begin
-      if item.n=i then continue;
-      if item.parents[p]=parArray[i].commit then begin
-        k := Length(result);
-        SetLength(result, k+1);
-        result[k] := i;
+  SetLength(items, Length(parArray));
+
+  for i:=0 to Length(items)-1 do begin
+    items[i].index := i;
+    items[i].column := -1;
+    for p:=0 to Length(parArray[i].parents)-1 do
+      for j:=0 to Length(parArray)-1 do begin
+        if j=i then continue;
+        if parArray[i].parents[p]=parArray[j].commit then begin
+          // found a parent of index i at index j
+          k := Length(items[i].parents);
+          SetLength(items[i].parents, k+1);
+          items[i].parents[k] := j;
+          // this means i is a child of j
+          k := Length(items[j].childs);
+          SetLength(items[j].childs, k+1);
+          items[j].childs[k] := i;
+        end;
+
       end;
-    end;
+  end;
 end;
 
 function GetItemIndexes(db: TDbIndex; withColumns: boolean; out
@@ -208,16 +215,19 @@ begin
   //  DebugLn;
   //end;
 
-  SetLength(result, Length(parArray));
-  for i:=0 to Length(parArray)-1 do begin
-    result[i].index := i;
-    result[i].parents := FindParentsOf(parArray, i);
-    result[i].column := -1;
-    result[i].lines := nil;
-    result[i].first := false;
-    result[i].last := false;
-    //DebugLn('For index %d found %d parents',[i, length(result[i].parents)]);
-  end;
+  result := nil;
+  FindRelatives(result, parArray);
+
+  //DebugLn('ItemIndexArray: %d',[Length(result)]);
+  //for i:=0 to Length(result)-1 do begin
+  //  DbgOut('%3d. P(%d): ',[i, Length(result[i].parents)]);
+  //  for j:=0 to Length(result[i].parents)-1 do
+  //    dbgOut('%.3d ',[result[i].parents[j]]);
+  //  DbgOut(' C(%d)',[Length(result[i].childs)]);
+  //  for j:=0 to Length(result[i].childs)-1 do
+  //    dbgOut('%.3d ',[result[i].childs[j]]);
+  //  DebugLn;
+  //end;
 
   maxColumns := 0;
   if not withColumns then
@@ -331,6 +341,9 @@ begin
     for j := 0 to Length(Columns)-1 do begin
 
       k := Columns[j].first;
+      //for i:=0 to Length(result[k].childs)-1 do begin
+      //
+      //end;
       // Am I someone's parent?
       for i := k-1 downto 0 do begin
         p :=-1;
