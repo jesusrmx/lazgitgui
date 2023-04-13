@@ -438,29 +438,29 @@ procedure TDbIndex.ReIndex;
 var
   newSize: Integer;
   buf, p, q: Pbyte;
-  M: TMemoryStream;
+  tmp, x: TStream;
 begin
-  M := TMemoryStream.Create;
+  tmp := TMemoryStream.Create;
   // copy the new part at the start
   newSize := fIndexStream.Size - fOldIndexOffset;
   fIndexStream.Position := fOldIndexOffset;
-  M.CopyFrom(fIndexStream, newSize);
+  tmp.CopyFrom(fIndexStream, newSize);
 
   // now copy the old data
   fIndexStream.Position := 0;
-  M.CopyFrom(fIndexStream, fOldIndexOffset);
+  tmp.CopyFrom(fIndexStream, fOldIndexOffset);
 
   // the re-indexed stream is now ready, swap streams pointers for a moment
-  InterlockedExchange(pointer(fIndexStream), pointer(M));
+  x := tmp; tmp := fIndexStream; TStream(fIndexStream) := x;
 
-  M.SetSize(0);
+  tmp.Size := 0;
   fIndexStream.Position := 0;
-  M.CopyFrom(fIndexStream, fIndexStream.Size);
+  tmp.CopyFrom(fIndexStream, fIndexStream.Size);
 
-  // the re-indexed stream is now ready, swap streams pointers for a moment
-  InterlockedExchange(pointer(fIndexStream), pointer(M));
+  // the re-indexed stream is now ready, finally swap streams pointers
+  x := tmp; tmp := fIndexStream; TStream(fIndexStream) := x;
 
-  M.Free;
+  tmp.Free;
 end;
 
 function TDbIndex.GetFileName(aIndex: Integer): string;
