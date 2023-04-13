@@ -87,6 +87,7 @@ type
     fDir: string;
     fCacheStream: TFileStream;
     fIndexStream: TFileStream;
+    fMaxRecords: Integer;
     fOldCount: Integer;
     fOldIndexSize: SizeInt;
     fCacheUpdate: boolean;
@@ -95,6 +96,7 @@ type
     fItem: TLogItem;
     fReadOnly: boolean;
     fFilter: TIntArray;
+    function GetAcceptingNewRecords: boolean;
     function GetCount: Integer;
     function GetInfo: string;
     //procedure RecoverIndex;
@@ -120,6 +122,8 @@ type
     property Count: Integer read GetCount;
     property Info: string read GetInfo;
     property ReadOnly: boolean read fReadOnly write fReadOnly;
+    property AcceptingNewRecords: boolean read GetAcceptingNewRecords;
+    property MaxRecords: Integer read fMaxRecords write fMaxRecords;
   end;
 
   function GetParentsArray(db: TDbIndex): TParentsArray;
@@ -256,7 +260,7 @@ begin
       while j<Length(result[i].parents) do begin
         p := result[i].parents[j];
         if result[p].column=-1 then
-            break; // found
+          break; // found
         inc(j);
       end;
       if j=Length(result[i].parents) then
@@ -272,6 +276,7 @@ begin
   // for each index find what will draw at each column
   // it will always draw a node at the .column position
   // and will draw a line at each .lines[k] column
+  MaxColumns := 1;
   if Length(Columns)>1 then begin
     for i:=0 to Length(result)-1 do begin
       for j:=0 to Length(columns)-1 do begin
@@ -290,6 +295,8 @@ begin
           result[i].lines[k].source := LINE_SOURCE_COLUMN;
         end;
       end;
+      if Length(result[i].lines)>MaxColumns then
+        MaxColumns := Length(result[i].lines);
     end;
 
     // try to find the parent index of columns last index
@@ -308,6 +315,8 @@ begin
         SetLength(result[i].lines, n+1);
         result[i].lines[n].column := j;
         result[i].lines[n].source := p;
+        if n+1>MaxColumns then
+          MaxColumns := n+1;
       end;
     end;
 
@@ -338,6 +347,8 @@ begin
           SetLength(result[i].lines, n+1);
           result[i].lines[n].column := j;
           result[i].lines[n].source := p;
+          if n+1>MaxColumns then
+            MaxColumns := n+1;
         end;
     end;
 
@@ -408,11 +419,19 @@ begin
       result := fIndexStream.Size div SIZEOF_INDEX
   end else
     result := 0;
+
+  if (fMaxRecords>0) and (result>fMaxRecords) then
+    result := fMaxRecords;
+end;
+
+function TDbIndex.GetAcceptingNewRecords: boolean;
+begin
+  result := (fMaxRecords=0) or (Count<fMaxRecords);
 end;
 
 function TDbIndex.GetInfo: string;
 begin
-  result := format('%d',[fIndexStream.Size div SIZEOF_INDEX]);
+  result := format('%d',[Count]);
 end;
 
 procedure TDbIndex.ReIndex;
@@ -470,7 +489,7 @@ begin
   end else begin
     if aIndex<0 then
       // get the oldest item
-      aIndex := fIndexStream.Size div sizeofIndex - 1;
+      aIndex := Count - 1;
     theIndex := aIndex;
   end;
 
@@ -847,7 +866,7 @@ begin
   else begin
     if (fIndexStream=nil) or (fIndexStream.Size=0) then
       raise Exception.Create('Trying to set a filter while the db is not initialized');
-    maxIndex := fIndexStream.Size div SIZEOF_INDEX - 1;
+    maxIndex := Count - 1;
     // check that indices are within the range of the index
     for i:=0 to Length(arr)-1 do
       if (arr[i]<0) or (arr[i]>maxIndex) then

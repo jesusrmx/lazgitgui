@@ -94,6 +94,7 @@ type
 
   TLogCache = class
   private
+    fConfig: IConfig;
     fDbIndex: TDbIndex;
     fGit: TGit;
     fLogState: TLogState;
@@ -118,6 +119,8 @@ type
     property LogState: TLogState read fLogState;
     property Git: TGit read fGit write fGit;
     property DbIndex: TDbIndex read fDbIndex write fDbIndex;
+    property Config: IConfig read fConfig write fConfig;
+
   end;
 
 implementation
@@ -389,16 +392,21 @@ end;
 procedure TLogCache.DoLogStateGetFirst;
 begin
   if (fOldDate>0) or (fDbIndex.Count=0) then begin
-    fLogState := lsGetFirst;
-    Run;
-  end else
-    EnterLogState(lsEnd);
+    if fDbIndex.AcceptingNewRecords then begin
+      fLogState := lsGetFirst;
+      Run;
+      exit;
+    end;
+  end;
+  EnterLogState(lsEnd);
 end;
 
 procedure TLogCache.DoLogStateGetLast;
 begin
-  fLogState := lsGetLast;
-  Run;
+  if fDbIndex.AcceptingNewRecords then begin
+    fLogState := lsGetLast;
+    Run;
+  end;
 end;
 
 procedure TLogCache.DoLogStateEnd;
@@ -471,8 +479,10 @@ end;
 
 procedure TLogCache.LoadCache;
 begin
-  if fDbIndex=nil then
+  if fDbIndex=nil then begin
     fDbIndex := TDbIndex.Create(fGit.TopLevelDir + '.git' + PathDelim);
+    fDbIndex.MaxRecords := Config.ReadInteger('MaxLogRecords', 1000);
+  end;
   // start cache update anyway
   EnterLogState(lsStart);
 end;

@@ -296,7 +296,7 @@ end;
 procedure TfrmMain.gridLogDrawCell(Sender: TObject; aCol, aRow: Integer;
   aRect: TRect; aState: TGridDrawState);
 var
-  aIndex, x, y, y1, y2, i, w, n: Integer;
+  aIndex, x, x1, x2, y, y1, y2, i, w, n: Integer;
   s: RawByteString;
   arr: TRefInfoArray;
   aBrushColor, aFontColor: TColor;
@@ -305,42 +305,44 @@ var
 begin
   if aRow>=gridLog.FixedRows then begin
     aIndex := aRow - gridLog.FixedRows;
-    if (aCol=0) and (Length(fItemIndices)>0) and (aIndex<Length(fItemIndices)) then begin
-
-      with fItemIndices[aIndex] do begin
-        gridLog.canvas.Pen.Width := GRAPH_LINE_WIDTH;
-        w := aRect.Left + GRAPH_LEFT_PADDING;
-        for i:=0 to Length(lines)-1 do begin
-          if lines[i].source=LINE_SOURCE_COLUMN then
-            gridLog.Canvas.Pen.Color := GraphColumnsColors[lines[i].column mod GRAPH_MAX_COLORS]
-          else
-            gridLog.Canvas.Pen.Color := GraphColumnsColors[fItemIndices[lines[i].source].column mod GRAPH_MAX_COLORS];
-          x := w + lines[i].column * GRAPH_COLUMN_SEPARATOR;
-          gridlog.Canvas.Line(x, aRect.Top, x, aRect.Bottom);
-        end;
-        x := w + Column * GRAPH_COLUMN_SEPARATOR;
-        y := aRect.Top + (aRect.Bottom - aRect.Top) div 2;
-
-        y1 := aRect.Top; y2 := aRect.Bottom;
-        if first then y1 := y;
-        if last and (parents=nil) then y2 := y;
-
-        gridLog.Canvas.Pen.Color := GraphColumnsColors[Column mod GRAPH_MAX_COLORS];
-        gridlog.Canvas.Line(x, y1, x, y2);
-
-        gridLog.Canvas.Brush.Color := GraphColumnsColors[Column mod GRAPH_MAX_COLORS];
-        gridLog.Canvas.Brush.Style := bsSolid;
-        gridLog.canvas.Pen.Width :=0;
-        gridLog.canvas.EllipseC(x, y, GRAPH_NODE_RADIUS, GRAPH_NODE_RADIUS);
-        gridLog.Canvas.Pen.Width := 1;
-      end;
-      exit;
-    end;
-
     db := fLogCache.DbIndex;
     if db.LoadItem(aIndex) then begin
       x := aRect.Left + 7;
       case gridLog.Columns[aCol].Title.Caption of
+        'Graph':
+          if (Length(fItemIndices)>0) and (aIndex<Length(fItemIndices)) then begin
+
+            with fItemIndices[aIndex] do begin
+              gridLog.canvas.Pen.Width := GRAPH_LINE_WIDTH;
+              w := aRect.Left + GRAPH_LEFT_PADDING;
+
+              for i:=0 to Length(lines)-1 do begin
+                if lines[i].source=LINE_SOURCE_COLUMN then
+                  gridLog.Canvas.Pen.Color := GraphColumnsColors[lines[i].column mod GRAPH_MAX_COLORS]
+                else
+                  gridLog.Canvas.Pen.Color := GraphColumnsColors[fItemIndices[lines[i].source].column mod GRAPH_MAX_COLORS];
+                x := w + lines[i].column * GRAPH_COLUMN_SEPARATOR;
+                gridlog.Canvas.Line(x, aRect.Top, x, aRect.Bottom);
+              end;
+
+              x := w + Column * GRAPH_COLUMN_SEPARATOR;
+              y := aRect.Top + (aRect.Bottom - aRect.Top) div 2;
+
+              y1 := aRect.Top; y2 := aRect.Bottom;
+              if first then y1 := y;
+              if last and (parents=nil) then y2 := y;
+
+              gridLog.Canvas.Pen.Color := GraphColumnsColors[Column mod GRAPH_MAX_COLORS];
+              gridlog.Canvas.Line(x, y1, x, y2);
+
+              gridLog.Canvas.Brush.Color := GraphColumnsColors[Column mod GRAPH_MAX_COLORS];
+              gridLog.Canvas.Brush.Style := bsSolid;
+              gridLog.canvas.Pen.Width :=0;
+              gridLog.canvas.EllipseC(x, y, GRAPH_NODE_RADIUS, GRAPH_NODE_RADIUS);
+              gridLog.Canvas.Pen.Width := 1;
+            end;
+          end;
+
         'Subject':
           begin
             s := db.Item.Subject;
@@ -1156,7 +1158,7 @@ var
 begin
   gridLog.RowCount := fLogCache.DbIndex.Count + gridLog.FixedRows;
   fItemIndices := GetItemIndexes(fLogCache.DbIndex, true, fGraphColumns);
-  col := gridLog.Columns.ColumnByTitle('');
+  col := gridLog.Columns.ColumnByTitle('Graph');
   i := gridLog.Columns.IndexOf(col);
   gridLog.Columns[i].Width := GRAPH_LEFT_PADDING + (fGraphColumns-1)*GRAPH_COLUMN_SEPARATOR + GRAPH_RIGHT_PADDING;
 end;
@@ -1281,6 +1283,7 @@ begin
 
   fLogCache := TLogCache.Create(@OnLogCacheEvent);
   fLogCache.Git := fGit;
+  fLogCache.Config := fConfig;
   fLogHandler := TLogHandler.Create(txtLog, @OnLogEvent);
   fLogHandler.Git := fGit;
 
