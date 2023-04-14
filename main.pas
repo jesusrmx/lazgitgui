@@ -296,7 +296,7 @@ end;
 procedure TfrmMain.gridLogDrawCell(Sender: TObject; aCol, aRow: Integer;
   aRect: TRect; aState: TGridDrawState);
 var
-  aIndex, x, x1, x2, y, y1, y2, i, w, n: Integer;
+  aIndex, x, x1, x2, y, y1, y2, i, j, w, n: Integer;
   s: RawByteString;
   arr: TRefInfoArray;
   aBrushColor, aFontColor: TColor;
@@ -327,33 +327,37 @@ begin
               y2 := aRect.Bottom;
               y := y1 + (y2-y1) div 2;
 
+              j := column;
               for i:=0 to Length(lines)-1 do begin
                 //if lines[i].source=LINE_SOURCE_COLUMN then begin
                   n := lines[i].column;
                   gridLog.Canvas.Pen.Style := psSolid;
+                  if column=n then j := i;
                 //end else begin
                 //  n := lines[i].column; //fItemIndices[lines[i].source].column;
                 //  gridLog.Canvas.Pen.Style := psDash;
                 //end;
                 gridLog.Canvas.Pen.Color := GraphColumnsColors[ n mod GRAPH_MAX_COLORS];
-                x := w + lines[i].column * GRAPH_COLUMN_SEPARATOR;
+                x := w + i * GRAPH_COLUMN_SEPARATOR;
 
                 if lifMerge in lines[i].Flags then begin
                   // draw a merge line with origin at source and dest at this point
                   gridLog.Canvas.Line(x, y, x, y2);
-                  x1 := w + fItemIndices[lines[i].source].column * GRAPH_COLUMN_SEPARATOR;
-                  gridLog.Canvas.Line(x1, y, x, y);
+                  gridLog.Canvas.Line(x-GRAPH_NODE_RADIUS-1, y, x, y);
+                  //x1 := w + fItemIndices[lines[i].source].column * GRAPH_COLUMN_SEPARATOR;
+                  //gridLog.Canvas.Line(x1, y, x, y);
                 end else
                 if lifBorn in lines[i].Flags then begin
                   // draw a new born line with origin at source and dest at this point
                   gridLog.Canvas.Line(x, y1, x, y);
-                  x1 := w + fItemIndices[lines[i].source].column * GRAPH_COLUMN_SEPARATOR;
-                  gridLog.Canvas.Line(x1, y, x, y);
+                  gridLog.Canvas.Line(x-GRAPH_NODE_RADIUS-1, y, x, y);
+                  //x1 := w + fItemIndices[lines[i].source].column * GRAPH_COLUMN_SEPARATOR;
+                  //gridLog.Canvas.Line(x1, y, x, y);
                 end else
                   gridlog.Canvas.Line(x, y1, x, y2);
               end;
 
-              x := w + Column * GRAPH_COLUMN_SEPARATOR;
+              x := w + j * GRAPH_COLUMN_SEPARATOR;
 
               if first and (childs=nil) then y1 := y;
               if last and (parents=nil) then y2 := y;
