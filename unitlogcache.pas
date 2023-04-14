@@ -412,8 +412,18 @@ end;
 procedure TLogCache.DoLogStateEnd;
 var
   dummyInterrupt: boolean;
+  i, rStart, rEnd: Integer;
+  arr: TIntArray;
 begin
   fLogState := lsEnd;
+
+  rStart := Config.ReadInteger('RangeStart', -1);
+  rEnd   := Config.ReadInteger('RangeEnd', -1);
+  if (rStart>0) and (rEnd<fDbIndex.Count) and (rEnd>rStart) then begin
+    SetLength(Arr, rEnd-rStart+1);
+    for i:=0 to Length(arr)-1 do Arr[i] := i + rStart;
+    fDbIndex.SetFilter(arr);
+  end;
 
   dummyInterrupt := false;
   SendEvent(nil, LOGEVENT_END, dummyInterrupt);
@@ -478,10 +488,16 @@ begin
 end;
 
 procedure TLogCache.LoadCache;
+var
+  rEnd: Integer;
 begin
   if fDbIndex=nil then begin
     fDbIndex := TDbIndex.Create(fGit.TopLevelDir + '.git' + PathDelim);
-    fDbIndex.MaxRecords := Config.ReadInteger('MaxLogRecords', 1000);
+    rEnd := Config.ReadInteger('RangeEnd', -1);
+    if rEnd>0 then
+      fDbIndex.MaxRecords := rEnd + 1
+    else
+      fDbIndex.MaxRecords := Config.ReadInteger('MaxLogRecords', 1000);
   end;
   // start cache update anyway
   EnterLogState(lsStart);
