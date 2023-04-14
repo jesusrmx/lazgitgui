@@ -213,13 +213,13 @@ var
     end;
 begin
   parArray := GetParentsArray(db);
-  //DebugLn('PARENTS');
-  //for i:=0 to Length(parArray)-1 do begin
-  //  DbgOut('%3d: %.16x => ',[parArray[i].n+1, parArray[i].commit]);
-  //  for j:=0 to Length(parArray[i].parents)-1 do
-  //    DbgOut('%.16x ',[parArray[i].parents[j]]);
-  //  DebugLn;
-  //end;
+  DebugLn('PARENTS');
+  for i:=0 to Length(parArray)-1 do begin
+    DbgOut('%3d: %.16x => ',[parArray[i].n, parArray[i].commit]);
+    for j:=0 to Length(parArray[i].parents)-1 do
+      DbgOut('%.16x ',[parArray[i].parents[j]]);
+    DebugLn;
+  end;
 
   result := nil;
   FindRelatives(result, parArray);
@@ -389,7 +389,12 @@ begin
   //SetLength(s, Length(columns));
   //for i:=0 to Length(result)-1 do begin
   //  for j := 0 to Length(columns)-1 do s[j+1] := ' ';
-  //  for j := 0 to Length(result[i].lines)-1 do s[result[i].lines[j]+1] := '|';
+  //  for j := 0 to Length(result[i].lines)-1 do begin
+  //    k := result[i].lines[j].column+1;
+  //    if lifMerge in result[i].lines[j].Flags then      s[k] := '-'
+  //    else if lifBorn in result[i].lines[j].Flags then  s[k] := '^'
+  //    else                                              s[k] := '|';
+  //  end;
   //  s[result[i].column+1] := '*';
   //  DebugLn('%s : Index %d', [s, i]);
   //end;
