@@ -102,6 +102,8 @@ type
     fOldDateIsStart: boolean;
     flogEvent: TLogThreadEvent;
     fInterrupted: boolean;
+    fRangeEnd: Integer;
+    fRangeStart: Integer;
     procedure OnLogThreadDone(Sender: TObject);
     procedure OnLogThreadOutput(sender: TObject; var interrupt: boolean);
     procedure EnterLogState(aState: TLogState);
@@ -121,6 +123,8 @@ type
     property Git: TGit read fGit write fGit;
     property DbIndex: TDbIndex read fDbIndex write fDbIndex;
     property Config: IConfig read fConfig write fConfig;
+    property RangeStart: Integer read fRangeStart;
+    property RangeEnd: Integer read fRangeEnd;
 
   end;
 
@@ -413,16 +417,16 @@ end;
 procedure TLogCache.DoLogStateEnd;
 var
   dummyInterrupt: boolean;
-  i, rStart, rEnd: Integer;
+  i: Integer;
   arr: TIntArray;
 begin
   fLogState := lsEnd;
 
-  rStart := Config.ReadInteger('RangeStart', -1);
-  rEnd   := Config.ReadInteger('RangeEnd', -1);
-  if (rStart>0) and (rEnd<fDbIndex.Count) and (rEnd>rStart) then begin
-    SetLength(Arr, rEnd-rStart+1);
-    for i:=0 to Length(arr)-1 do Arr[i] := i + rStart;
+  fRangeStart := Config.ReadInteger('RangeStart', -1);
+  fRangeEnd   := Config.ReadInteger('RangeEnd', -1);
+  if (fRangeStart>0) and (fRangeEnd<fDbIndex.Count) and (fRangeEnd>fRangeStart) then begin
+    SetLength(Arr, fRangeEnd-fRangeStart+1);
+    for i:=0 to Length(arr)-1 do Arr[i] := i + fRangeStart;
     fDbIndex.SetFilter(arr);
   end;
 

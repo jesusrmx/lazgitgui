@@ -310,7 +310,12 @@ begin
       x := aRect.Left + 7;
       case gridLog.Columns[aCol].Title.Caption of
         'RecNo':
-          s := IntToStr(aRow-1);
+          begin
+            if fLogCache.RangeStart>=0 then
+              s := format('%4d %4d',[aRow-1, aRow+fLogCache.RangeStart-1])
+            else
+              s := IntToStr(aRow-1);
+          end;
         'Graph':
           if (Length(fItemIndices)>0) and (aIndex<Length(fItemIndices)) then begin
 
