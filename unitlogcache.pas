@@ -111,6 +111,7 @@ type
     procedure DoLogStateEnd;
     procedure Run;
     procedure SendEvent(thread: TLogThread; event: Integer; var interrupt:boolean);
+    function  Restricted: boolean;
   public
     constructor create(aLogEvent: TLogThreadEvent);
     destructor Destroy; override;
@@ -392,7 +393,7 @@ end;
 procedure TLogCache.DoLogStateGetFirst;
 begin
   if (fOldDate>0) or (fDbIndex.Count=0) then begin
-    if fDbIndex.AcceptingNewRecords then begin
+    if fDbIndex.AcceptingNewRecords and not Restricted then begin
       fLogState := lsGetFirst;
       Run;
       exit;
@@ -403,7 +404,7 @@ end;
 
 procedure TLogCache.DoLogStateGetLast;
 begin
-  if fDbIndex.AcceptingNewRecords then begin
+  if fDbIndex.AcceptingNewRecords and not Restricted then begin
     fLogState := lsGetLast;
     Run;
   end;
@@ -485,6 +486,17 @@ procedure TLogCache.SendEvent(thread: TLogThread; event: Integer;
 begin
   if assigned(fLogEvent) then
     fLogEvent(self, thread, event, interrupt);
+end;
+
+function TLogCache.Restricted: boolean;
+var
+  rStart, rEnd, maxRecords: Integer;
+begin
+  rStart := Config.ReadInteger('RangeStart', -1);
+  rEnd := Config.ReadInteger('RangeEnd', -1);
+  maxRecords := Config.ReadInteger('MaxLogRecords', 0);
+  result := (maxRecords>0) or
+            ((rStart>0) and (rEnd<fDbIndex.Count) and (rEnd>rStart));
 end;
 
 procedure TLogCache.LoadCache;
