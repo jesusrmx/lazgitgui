@@ -176,6 +176,12 @@ begin
   for i:=0 to Length(items)-1 do begin
     items[i].index := i;
     items[i].column := -1;
+    items[i].parents := nil;
+    items[i].childs := nil;
+    items[i].lines := nil;
+  end;
+
+  for i:=0 to Length(items)-1 do begin
     for p:=0 to Length(parArray[i].parents)-1 do
       for j:=0 to Length(parArray)-1 do begin
         if j=i then continue;
@@ -198,7 +204,7 @@ function GetItemIndexes(db: TDbIndex; withColumns: boolean; out
   maxColumns: Integer): TItemIndexArray;
 var
   parArray: TParentsArray;
-  i, j, k, n, p, column: Integer;
+  i, j, k, n, p, c, column: Integer;
   s: string;
   columns: array of
     record
@@ -218,16 +224,16 @@ begin
   result := nil;
   FindRelatives(result, parArray);
 
-  //DebugLn('ItemIndexArray: %d',[Length(result)]);
-  //for i:=0 to Length(result)-1 do begin
-  //  DbgOut('%3d. P(%d): ',[i, Length(result[i].parents)]);
-  //  for j:=0 to Length(result[i].parents)-1 do
-  //    dbgOut('%.3d ',[result[i].parents[j]]);
-  //  DbgOut(' C(%d)',[Length(result[i].childs)]);
-  //  for j:=0 to Length(result[i].childs)-1 do
-  //    dbgOut('%.3d ',[result[i].childs[j]]);
-  //  DebugLn;
-  //end;
+  DebugLn('ItemIndexArray: %d',[Length(result)]);
+  for i:=0 to Length(result)-1 do begin
+    DbgOut('%3d. P(%d): ',[i, Length(result[i].parents)]);
+    for j:=0 to Length(result[i].parents)-1 do
+      dbgOut('%.3d ',[result[i].parents[j]]);
+    DbgOut(' C(%d)',[Length(result[i].childs)]);
+    for j:=0 to Length(result[i].childs)-1 do
+      dbgOut('%.3d ',[result[i].childs[j]]);
+    DebugLn;
+  end;
 
   maxColumns := 0;
   if not withColumns then
@@ -253,6 +259,7 @@ begin
     if i=length(result) then
       break; // we are done
 
+    // using 'i' index as a grand child, track down the first parent.
     repeat
 
       result[i].column := column;
@@ -265,9 +272,8 @@ begin
       if n=0 then
         break;
 
-      // now starting with 'i' descend through the first
-      // parent that has no column assigned
-      // find the first parent with no column assigned
+      // now starting with 'i' descend down until we find
+      // the first parent that has no column assigned
       j := 0;
       while j<Length(result[i].parents) do begin
         p := result[i].parents[j];
@@ -278,6 +284,7 @@ begin
       if j=Length(result[i].parents) then
         break;  // not found
 
+      // the found parent is now the next index to process...
       i := p;
 
     until false;
@@ -296,11 +303,13 @@ begin
         if (i>=columns[j].first) and (i<=columns[j].last) then begin
           // yes
           if result[i].column=j then begin
+            // ... but it's the same column, will always draw a node there
             if i=columns[j].first then result[i].first := true;
             if i=columns[j].last  then result[i].last := true;
-            continue; // but it's the same column, ignore it as it will always draw a node
+            continue;
           end;
-          // no, it have to draw a line at this column
+          // no, it have to draw a line at this column, it is within the
+          // first and last, so it will be an internal line.
           k := Length(result[i].lines);
           SetLength(result[i].lines, k+1);
           result[i].lines[k].column := j;
@@ -335,41 +344,33 @@ begin
       end;
     end;
 
-    // finally find merges if there are any ..
-    // this would process only the first index in a column
-    // TODO: merges neeed to be checked for every index in a column except the last...
-    for j := 0 to Length(Columns)-1 do begin
-
-      k := Columns[j].first;
-      //for i:=0 to Length(result[k].childs)-1 do begin
-      //
-      //end;
-      // Am I someone's parent?
-      for i := k-1 downto 0 do begin
-        p :=-1;
-        for n:=0 to length(result[i].parents)-1 do begin
-          if result[i].parents[n]=k then begin
-            // yep..
-            p := i;
+    // finally find merges if there is any ..
+    for j := 1 to Length(Columns)-1 do begin
+      // start find merges at index 'last'-1 descending down until index 'first',
+      // a mergeable index is a child index with a column less than the current
+      //k := Columns[j].last - 1;
+      k := Columns[j].first + 1;
+      while k>=Columns[j].first do begin
+        for n in result[k].childs do begin
+          if result[n].column<j then begin
+            // index 'k' will merge at index 'n'.
+            // Add 'merge' lines from 'n' to 'k-1' at the column 'j'
+            for i:=n to k-1 do begin
+              p := Length(result[i].lines);
+              SetLength(result[i].lines, p+1);
+              result[i].lines[p].column := j;
+              result[i].lines[p].source := n;
+              Include(result[i].lines[p].Flags, lifToMerge);
+              if i=n then Include(result[i].lines[p].Flags, lifMerge);
+              if p+1>MaxColumns then
+                MaxColumns := p+1;
+            end;
+            // is now merged, can we merge to more than one branch?
             break;
           end;
         end;
-        if p>=0 then
-          break;
+        dec(k);
       end;
-
-      // now queue lines coloured by whatever the child column is coloured
-      if p>=0 then
-        for i:= p to k-1 do begin
-          n := Length(result[i].lines);
-          SetLength(result[i].lines, n+1);
-          result[i].lines[n].column := j;
-          result[i].lines[n].source := p;
-          Include(result[i].lines[n].Flags, lifToMerge);
-          if i=p then Include(result[i].lines[n].Flags, lifMerge);
-          if n+1>MaxColumns then
-            MaxColumns := n+1;
-        end;
     end;
 
 
