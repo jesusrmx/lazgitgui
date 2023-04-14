@@ -2,6 +2,8 @@ unit unitdbindex;
 
 {$mode ObjFPC}{$H+}
 
+{.$define Debug}
+
 interface
 
 uses
@@ -213,6 +215,8 @@ var
     end;
 begin
   parArray := GetParentsArray(db);
+  {$IFDEF DEBUG}
+  DebugLn;
   DebugLn('PARENTS');
   for i:=0 to Length(parArray)-1 do begin
     DbgOut('%3d: %.16x => ',[parArray[i].n, parArray[i].commit]);
@@ -220,20 +224,10 @@ begin
       DbgOut('%.16x ',[parArray[i].parents[j]]);
     DebugLn;
   end;
+  {$ENDIF}
 
   result := nil;
   FindRelatives(result, parArray);
-
-  DebugLn('ItemIndexArray: %d',[Length(result)]);
-  for i:=0 to Length(result)-1 do begin
-    DbgOut('%3d. P(%d): ',[i, Length(result[i].parents)]);
-    for j:=0 to Length(result[i].parents)-1 do
-      dbgOut('%.3d ',[result[i].parents[j]]);
-    DbgOut(' C(%d)',[Length(result[i].childs)]);
-    for j:=0 to Length(result[i].childs)-1 do
-      dbgOut('%.3d ',[result[i].childs[j]]);
-    DebugLn;
-  end;
 
   maxColumns := 0;
   if not withColumns then
@@ -346,58 +340,83 @@ begin
 
     // finally find merges if there is any ..
     for j := 1 to Length(Columns)-1 do begin
-      // start find merges at index 'last'-1 descending down until index 'first',
+      // start find merges at index 'last' descending down until index 'first',
       // a mergeable index is a child index with a column less than the current
-      //k := Columns[j].last - 1;
-      k := Columns[j].first + 1;
+      k := Columns[j].last;
       while k>=Columns[j].first do begin
-        for n in result[k].childs do begin
-          if result[n].column<j then begin
-            // index 'k' will merge at index 'n'.
-            // Add 'merge' lines from 'n' to 'k-1' at the column 'j'
-            for i:=n to k-1 do begin
-              p := Length(result[i].lines);
-              SetLength(result[i].lines, p+1);
-              result[i].lines[p].column := j;
-              result[i].lines[p].source := n;
-              Include(result[i].lines[p].Flags, lifToMerge);
-              if i=n then Include(result[i].lines[p].Flags, lifMerge);
-              if p+1>MaxColumns then
-                MaxColumns := p+1;
+        if result[k].column=j then
+          for n in result[k].childs do begin
+            if result[n].column<j then begin
+              // index 'k' will merge at index 'n'.
+              // Add 'merge' lines from 'n' to 'k-1' at the column 'j'
+              for i:=n to k-1 do begin
+                p := Length(result[i].lines);
+                SetLength(result[i].lines, p+1);
+                result[i].lines[p].column := j;
+                result[i].lines[p].source := n;
+                Include(result[i].lines[p].Flags, lifToMerge);
+                if i=n then Include(result[i].lines[p].Flags, lifMerge);
+                if p+1>MaxColumns then
+                  MaxColumns := p+1;
+              end;
+              // is now merged, can we merge to more than one branch?
+              break;
             end;
-            // is now merged, can we merge to more than one branch?
-            break;
           end;
-        end;
         dec(k);
       end;
     end;
-
 
   end;
 
   maxColumns := Length(Columns);
 
+  {$IFDEF DEBUG}
   // report of columns
+  DebugLn;
   DebugLn('Report of %d columns:',[Length(Columns)]);
   for i:=0 to Length(Columns)-1 do
     with columns[i] do begin
       DebugLn('Column %d: first=%d last=%d',[i, first, last]);
     end;
 
+  DebugLn;
+  DebugLn('ItemIndexArray: %d',[Length(result)]);
+
+  p := 0; n:= 0;
+  for i:=0 to Length(result)-1 do begin
+    if Length(result[i].parents)>p then
+      p:=Length(result[i].parents);
+  end;
+  p := p * 4;
+
+  for i:=0 to Length(result)-1 do begin
+    DbgOut('%3d. |%2d| P(%d): ',[i, result[i].column, Length(result[i].parents)]);
+    k := Length(result[i].parents);
+    s := ''; for j:=0 to k-1 do s += format('%3d ',[result[i].parents[j]]);
+    DbgOut('%'+IntToStr(p)+'s',[s]);
+    DbgOut(' C(%d)',[Length(result[i].childs)]);
+    for j:=0 to Length(result[i].childs)-1 do dbgOut('%3d ',[result[i].childs[j]]);
+    DebugLn;
+  end;
+
+
   //// now the result
-  //SetLength(s, Length(columns));
-  //for i:=0 to Length(result)-1 do begin
-  //  for j := 0 to Length(columns)-1 do s[j+1] := ' ';
-  //  for j := 0 to Length(result[i].lines)-1 do begin
-  //    k := result[i].lines[j].column+1;
-  //    if lifMerge in result[i].lines[j].Flags then      s[k] := '-'
-  //    else if lifBorn in result[i].lines[j].Flags then  s[k] := '^'
-  //    else                                              s[k] := '|';
-  //  end;
-  //  s[result[i].column+1] := '*';
-  //  DebugLn('%s : Index %d', [s, i]);
-  //end;
+  DebugLn;
+  DebugLn('The Result');
+  SetLength(s, Length(columns));
+  for i:=0 to Length(result)-1 do begin
+    for j := 0 to Length(columns)-1 do s[j+1] := ' ';
+    for j := 0 to Length(result[i].lines)-1 do begin
+      k := result[i].lines[j].column+1;
+      if lifMerge in result[i].lines[j].Flags then      s[k] := '-'
+      else if lifBorn in result[i].lines[j].Flags then  s[k] := '^'
+      else                                              s[k] := '|';
+    end;
+    s[result[i].column+1] := '*';
+    DebugLn('%s : Index %d', [s, i]);
+  end;
+  {$ENDIF}
 
 end;
 
