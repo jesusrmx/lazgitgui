@@ -350,7 +350,7 @@ begin
 
               x := w + Column * GRAPH_COLUMN_SEPARATOR;
 
-              if first then y1 := y;
+              if first and (childs=nil) then y1 := y;
               if last and (parents=nil) then y2 := y;
 
               gridLog.Canvas.Pen.Color := GraphColumnsColors[Column mod GRAPH_MAX_COLORS];
@@ -359,7 +359,10 @@ begin
               gridLog.Canvas.Brush.Color := GraphColumnsColors[Column mod GRAPH_MAX_COLORS];
               gridLog.Canvas.Brush.Style := bsSolid;
               gridLog.canvas.Pen.Width :=0;
-              gridLog.canvas.EllipseC(x, y, GRAPH_NODE_RADIUS, GRAPH_NODE_RADIUS);
+              if (Length(childs)>1) or (Length(parents)>1) then
+                gridLog.Canvas.FillRect(x-GRAPH_NODE_RADIUS, y-GRAPH_NODE_RADIUS, x+GRAPH_NODE_RADIUS, y+GRAPH_NODE_RADIUS)
+              else
+                gridLog.canvas.EllipseC(x, y, GRAPH_NODE_RADIUS, GRAPH_NODE_RADIUS);
               gridLog.Canvas.Pen.Width := 1;
             end;
           end;
@@ -367,7 +370,7 @@ begin
         'Subject':
           begin
             s := db.Item.Subject;
-            if fSeenRefs.Find(db.Item.CommitOID, n ) then begin
+            if (fSeenRefs<>nil) and fSeenRefs.Find(db.Item.CommitOID, n ) then begin
               arr := fSeenRefs.Data[n];
 
               for i:=0 to Length(arr)-1 do begin
