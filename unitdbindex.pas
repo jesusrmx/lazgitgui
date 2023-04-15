@@ -174,8 +174,8 @@ procedure SortColumns(var columns: TColumnArray);
 
   function CompareColumns(a, b: Integer): Integer;
   begin
-    // first compare columns element size
-    result := columns[a].count - columns[b].count;
+    // first compare columns element size (in descending order)
+    result := columns[b].count - columns[a].count;
     if result=0 then
       result := columns[a].index - columns[b].index;
   end;
@@ -224,7 +224,7 @@ procedure SortColumns(var columns: TColumnArray);
   end;
 
 begin
-
+  QuickSort(0, Length(Columns)-1);
 end;
 
 function GetParentsArray(db: TDbIndex): TParentsArray;
@@ -432,6 +432,7 @@ begin
 
   {$IFDEF DEBUG}
   ReportTicks('GetParentsArray');
+  {$ifdef DumpParents}
   DebugLn;
   DebugLn('PARENTS');
   {$ifdef UseMap}
@@ -455,6 +456,7 @@ begin
   end;
   {$endif}
   ReportTicks('Reporting ParentsArray');
+  {$endif}
   {$ENDIF}
 
   result := nil;
@@ -572,11 +574,12 @@ begin
   ReportTicks('ReportingAssigningHeadsAndTails');
   {$ENDIF}
 
-  //SortColumns(columns);
-  //
-  //{$IFDEF DEBUG}
-  //ReportColumns('After sorting', columns);
-  //{$ENDIF}
+  SortColumns(columns);
+
+  {$IFDEF DEBUG}
+  ReportTicks('SortColumns');
+  ReportColumns('After sorting', columns);
+  {$ENDIF}
 
 
   exit;
