@@ -2,7 +2,7 @@ unit unitdbindex;
 
 {$mode ObjFPC}{$H+}
 
-{.$define Debug}
+{$define Debug}
 
 interface
 
@@ -144,6 +144,33 @@ const
   FILENAME_CACHE    = 3;
   FILENAME_INDEXTMP = 4;
 
+type
+  TColumn = record
+    first, tip: Integer;
+    last, tail: Integer;
+  end;
+  TColumnArray = array of TColumn;
+
+{$IFDEF DEBUG}
+procedure ReportColumns(msg:string; columns: TColumnArray);
+var
+  col: Integer;
+begin
+  // all columns have now their real extensions, report them
+  DebugLn;
+  DebugLn('''%s'', report of %d columns:',[msg, Length(Columns)]);
+  for col:=0 to Length(Columns)-1 do
+    with columns[col] do begin
+      DebugLn('Column %2d: tip=%3d first=%3d last=%3d tail=%3d',[col, tip, first, last, tail]);
+    end;
+end;
+{$ENDIF}
+
+procedure SortColumns(var columns: TColumnArray);
+begin
+
+end;
+
 function GetParentsArray(db: TDbIndex): TParentsArray;
 var
   i: Integer;
@@ -208,22 +235,19 @@ var
   parArray: TParentsArray;
   i, j, k, n, p, c, column: Integer;
   s: string;
-  columns: array of
-    record
-      first: Integer;
-      last: Integer;
-    end;
+  columns: TColumnArray;
+
 begin
   parArray := GetParentsArray(db);
   {$IFDEF DEBUG}
-  DebugLn;
-  DebugLn('PARENTS');
-  for i:=0 to Length(parArray)-1 do begin
-    DbgOut('%3d: %.16x => ',[parArray[i].n, parArray[i].commit]);
-    for j:=0 to Length(parArray[i].parents)-1 do
-      DbgOut('%.16x ',[parArray[i].parents[j]]);
-    DebugLn;
-  end;
+  //DebugLn;
+  //DebugLn('PARENTS');
+  //for i:=0 to Length(parArray)-1 do begin
+  //  DbgOut('%3d: %.16x => ',[parArray[i].n, parArray[i].commit]);
+  //  for j:=0 to Length(parArray[i].parents)-1 do
+  //    DbgOut('%.16x ',[parArray[i].parents[j]]);
+  //  DebugLn;
+  //end;
   {$ENDIF}
 
   result := nil;
@@ -258,8 +282,11 @@ begin
 
       result[i].column := column;
 
-      if Columns[column].first<0 then
+      if Columns[column].first<0 then begin
         Columns[column].first := i;
+        Columns[column].tip := -1;
+        Columns[column].tail := -1;
+      end;
       Columns[column].last := i;
 
       dec(n);
@@ -284,6 +311,42 @@ begin
     until false;
 
   end;
+
+  {$IFDEF DEBUG}
+  ReportColumns('After columns indexing', columns);
+  {$ENDIF}
+
+
+  // all indexes are now assigned columns, find tips and tails
+  for j:=1 to Length(columns)-1 do begin
+    k := columns[j].first;
+    for p in result[k].childs do begin
+      if result[p].column<j then begin
+        columns[j].tip := p;
+        break;
+      end;
+    end;
+    k := Columns[j].last;
+    for p in result[k].parents do begin
+      if result[p].column<j then begin
+        columns[j].tail := p;
+        break;
+      end;
+    end;
+  end;
+
+  {$IFDEF DEBUG}
+  ReportColumns('After assigning tips and tails', columns);
+  {$ENDIF}
+
+  SortColumns(columns);
+
+  {$IFDEF DEBUG}
+  ReportColumns('After sorting', columns);
+  {$ENDIF}
+
+
+  exit;
 
   // assign columns to every index's lines. In other words
   // for each index find what will draw at each column
@@ -369,6 +432,9 @@ begin
 
   end;
 
+  {$IFDEF DEBUG}
+  DebugLn('Max concurrent columns: %d',[MaxColumns]);
+  {$ENDIF}
   maxColumns := Length(Columns);
 
   {$IFDEF DEBUG}
