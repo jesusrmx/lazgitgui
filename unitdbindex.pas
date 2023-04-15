@@ -258,7 +258,6 @@ var
   pmi, found: PParentsMapItem;
   elements: TParentElementArray;
   lost: TIntArray;
-  commit: QWord;
 begin
   lost := nil;
   result := TParentsMap.Create;
@@ -306,6 +305,7 @@ begin
           if result.Find(pmi^.parents[k].commit, aIndex) then begin
             found := result.Data[aIndex];
             pmi^.parents[k].n := found^.n;
+            DebugLn('At %d found missing parent %d (%.16x)',[lost[i], k, pmi^.parents[k].commit]);
           end;
         end;
     end;
@@ -361,7 +361,7 @@ end;
 
 procedure FindRelativesMap(var items: TItemIndexArray; parMap: TParentsMap);
 var
-  i, j, k, m, p: Integer;
+  i, j, k, m, p, q: Integer;
   pmi: PParentsMapItem;
 begin
   SetLength(items, parMap.Count);
@@ -377,15 +377,19 @@ begin
   for m:=0 to parMap.Count-1 do begin
     pmi := parMap.Data[m];
     i := pmi^.n;
-    SetLength(items[i].parents, Length(pmi^.parents));
-    for p := 0 to Length(pmi^.parents)-1 do begin
-      j := pmi^.parents[p].n;
-      items[i].parents[p] := j;
-      // this means i is a child of j
-      k := Length(items[j].childs);
-      SetLength(items[j].childs, k+1);
-      items[j].childs[k] := i;
-    end;
+    //SetLength(items[i].parents, Length(pmi^.parents));
+    for p := 0 to Length(pmi^.parents)-1 do
+      if pmi^.parents[p].n>=0 then begin
+        q := Length(items[i].parents);
+        SetLength(items[i].parents, q+1);
+        j := pmi^.parents[p].n;
+        // found a parent of index i at index j
+        items[i].parents[q] := j;
+        // this means i is a child of j
+        k := Length(items[j].childs);
+        SetLength(items[j].childs, k+1);
+        items[j].childs[k] := i;
+      end;
   end;
 
 end;
