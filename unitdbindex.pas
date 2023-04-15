@@ -48,6 +48,8 @@ type
 
   TParentsArray = array of TParentsItem;
 
+  TParentsMap = specialize TFPGMap<QWord, PParentsMapItem>;
+
   TLineItemFlags = set of (lifInternal, lifToMerge, lifMerge, lifToBorn, lifBorn);
   TLineItem = record
     column: Integer;
@@ -146,8 +148,10 @@ const
 
 type
   TColumn = record
-    first, tip: Integer;
+    index: Integer;
+    first, head: Integer;
     last, tail: Integer;
+    count: Integer;
   end;
   TColumnArray = array of TColumn;
 
@@ -161,12 +165,64 @@ begin
   DebugLn('''%s'', report of %d columns:',[msg, Length(Columns)]);
   for col:=0 to Length(Columns)-1 do
     with columns[col] do begin
-      DebugLn('Column %2d: tip=%3d first=%3d last=%3d tail=%3d',[col, tip, first, last, tail]);
+      DebugLn('Column %2d: tip=%3d first=%3d last=%3d tail=%3d -> count=%3d',[col, head, first, last, tail, count]);
     end;
 end;
 {$ENDIF}
 
 procedure SortColumns(var columns: TColumnArray);
+
+  function CompareColumns(a, b: Integer): Integer;
+  begin
+    // first compare columns element size
+    result := columns[a].count - columns[b].count;
+    if result=0 then
+      result := columns[a].index - columns[b].index;
+  end;
+
+  procedure ExchangeColumns(i, j: Integer);
+  var
+    Q: TColumn;
+  begin
+    Q := columns[I];
+    columns[I] := columns[J];
+    columns[J] := Q;
+  end;
+
+  procedure QuickSort(L,R: Integer);
+  var
+    I,J: Integer;
+    P,Q: Integer;
+  begin
+    repeat
+      I:=L;
+      J:=R;
+      P:=(L+R) div 2;
+      repeat
+        while CompareColumns(P, I)>0 do I:=I+1;
+        while CompareColumns(P, J)<0 do J:=J-1;
+        if I<=J then begin
+
+          if I<>J then
+            ExchangeColumns(I, J);
+
+          if P=I then
+            P:=J
+          else if P=J then
+            P:=I;
+
+          I:=I+1;
+          J:=J-1;
+        end;
+      until I>J;
+
+      if L<J then
+        QuickSort(L,J);
+
+      L:=I;
+    until I>=R;
+  end;
+
 begin
 
 end;
@@ -194,6 +250,80 @@ begin
   for i:=0 to Length(aList)-1 do
     aList[i].parents := nil;
   aList := nil;
+end;
+
+function GetParentsMap(db: TDbIndex): TParentsMap;
+var
+  i, j, k, aIndex: Integer;
+  pmi, found: PParentsMapItem;
+  elements: TParentElementArray;
+  lost: TIntArray;
+  commit: QWord;
+begin
+  lost := nil;
+  result := TParentsMap.Create;
+  result.Sorted := true;
+  for i:=db.Count-1 downto 0 do begin
+    db.LoadItem(i);
+    with db.Item do begin
+      new(pmi);
+      pmi^.n := i;
+      pmi^.parents := nil;
+      result.Add(OIDToQWord(CommitOID), pmi);
+      //
+      elements := OIDToParentElements(parentOID, Length(CommitOID));
+      SetLength(pmi^.parents, Length(elements));
+      k := 0;
+      for j:=0 to Length(elements)-1 do begin
+        if result.Find(elements[j].commit, aIndex) then begin
+          found := result.Data[aIndex];
+          pmi^.parents[k].n := found^.n;
+          pmi^.parents[k].commit := elements[j].commit;
+          inc(k);
+        end else begin
+          DebugLn('At %d parent %d (%.16x) is missing',[i, j, elements[j].commit]);
+          pmi^.parents[k].n := -1;
+          pmi^.parents[k].commit := elements[j].commit;
+        end;
+      end;
+      if Length(pmi^.parents)<>k then begin
+        aIndex := Length(lost);
+        SetLength(lost, aIndex+1);
+        lost[aIndex] := i;
+      end;
+    end;
+  end;
+
+  // try to find lost parents
+  for i := 0 to Length(Lost)-1 do begin
+    db.LoadItem(lost[i]);
+    with db.Item do begin
+      if not result.Find(OIDToQWord(CommitOID), j) then
+        continue; // should not happen
+      pmi := result.Data[j];
+      for k:=0 to Length(pmi^.parents)-1 do
+        if pmi^.parents[k].n<0 then begin
+          if result.Find(pmi^.parents[k].commit, aIndex) then begin
+            found := result.Data[aIndex];
+            pmi^.parents[k].n := found^.n;
+          end;
+        end;
+    end;
+  end;
+
+end;
+
+procedure ClearParentsMap(map: TParentsMap);
+var
+  pmi: PParentsMapItem;
+  i: Integer;
+begin
+  for i:=0 to map.Count-1 do begin
+    pmi := map.Data[i];
+    pmi^.parents := nil;
+    dispose(pmi);
+  end;
+  map.free;
 end;
 
 procedure FindRelatives(var items: TItemIndexArray; parArray: TParentsArray);
@@ -229,29 +359,117 @@ begin
   end;
 end;
 
+procedure FindRelativesMap(var items: TItemIndexArray; parMap: TParentsMap);
+var
+  i, j, k, m, p: Integer;
+  pmi: PParentsMapItem;
+begin
+  SetLength(items, parMap.Count);
+
+  for i:=0 to Length(items)-1 do begin
+    items[i].index := i;
+    items[i].column := -1;
+    items[i].parents := nil;
+    items[i].childs := nil;
+    items[i].lines := nil;
+  end;
+
+  for m:=0 to parMap.Count-1 do begin
+    pmi := parMap.Data[m];
+    i := pmi^.n;
+    SetLength(items[i].parents, Length(pmi^.parents));
+    for p := 0 to Length(pmi^.parents)-1 do begin
+      j := pmi^.parents[p].n;
+      items[i].parents[p] := j;
+      // this means i is a child of j
+      k := Length(items[j].childs);
+      SetLength(items[j].childs, k+1);
+      items[j].childs[k] := i;
+    end;
+  end;
+
+end;
+
+{$define UseMap}
+
+{$ifdef UseMap}
+
+function ComparePMIs(const a, b: PParentsMapItem): Integer;
+begin
+  result := a^.n - b^.n;
+end;
+{$endif}
+
 function GetItemIndexes(db: TDbIndex; withColumns: boolean; out
   maxColumns: Integer): TItemIndexArray;
 var
+  {$IFDEF UseMap}
+  parMap: TParentsMap;
+  pmi, pi: PParentsMapItem;
+  mind: TIntArray;
+  {$ELSE}
   parArray: TParentsArray;
+  {$ENDIF}
   i, j, k, n, p, c, column: Integer;
   s: string;
   columns: TColumnArray;
-
 begin
-  parArray := GetParentsArray(db);
   {$IFDEF DEBUG}
-  //DebugLn;
-  //DebugLn('PARENTS');
-  //for i:=0 to Length(parArray)-1 do begin
-  //  DbgOut('%3d: %.16x => ',[parArray[i].n, parArray[i].commit]);
-  //  for j:=0 to Length(parArray[i].parents)-1 do
-  //    DbgOut('%.16x ',[parArray[i].parents[j]]);
-  //  DebugLn;
-  //end;
+  resetTicks;
+  {$ENDIF}
+
+  {$IFDEF USEMAP}
+  parMap := GetParentsMap(db);
+  parMap.OnDataCompare := @ComparePMIs;
+  SetLength(mind, parMap.Count);
+  {$ELSE}
+  parArray := GetParentsArray(db);
+  {$ENDIF}
+
+  {$IFDEF DEBUG}
+  ReportTicks('GetParentsArray');
+  DebugLn;
+  DebugLn('PARENTS');
+  {$ifdef UseMap}
+  for i:=0 to parMap.Count-1 do begin
+    pmi := parMap.Data[i];
+    mind[pmi^.n] := i;
+  end;
+  for i:=0 to Length(mind)-1 do begin
+    pmi := parMap.Data[mind[i]];
+    DbgOut('%3d: %.16x => ',[pmi^.n, parMap.Keys[mind[i]]]);
+    for j:=0 to Length(pmi^.parents)-1 do
+      DbgOut('%.16x ',[pmi^.parents[j].commit]);
+    DebugLn;
+  end;
+  {$else}
+  for i:=0 to Length(parArray)-1 do begin
+    DbgOut('%3d: %.16x => ',[parArray[i].n, parArray[i].commit]);
+    for j:=0 to Length(parArray[i].parents)-1 do
+      DbgOut('%.16x ',[parArray[i].parents[j]]);
+    DebugLn;
+  end;
+  {$endif}
+  ReportTicks('Reporting ParentsArray');
   {$ENDIF}
 
   result := nil;
+  {$IFDEF USEMAP}
+  FindRelativesMap(result, parMap);
+  {$ELSE}
   FindRelatives(result, parArray);
+  {$ENDIF}
+
+  {$IFDEF DEBUG}
+  ReportTicks('FindingRelatives');
+  {$ENDIF}
+
+  {$IFDEF USEMAP}
+  ClearParentsMap(parMap);
+  {$IFDEF DEBUG}
+  ReportTicks('ClearingMap');
+  {$ENDIF}
+  {$ENDIF}
 
   maxColumns := 0;
   if not withColumns then
@@ -265,6 +483,7 @@ begin
 
     inc(Column);
     SetLength(Columns, column + 1);
+    Columns[column].index := column;
     Columns[column].first := -1;
     Columns[column].last := -1;
 
@@ -284,8 +503,9 @@ begin
 
       if Columns[column].first<0 then begin
         Columns[column].first := i;
-        Columns[column].tip := -1;
+        Columns[column].head := -1;
         Columns[column].tail := -1;
+        Columns[column].count := 0;
       end;
       Columns[column].last := i;
 
@@ -313,19 +533,23 @@ begin
   end;
 
   {$IFDEF DEBUG}
+  ReportTicks('ColumnsIdexing');
   ReportColumns('After columns indexing', columns);
+  ReportTicks('ReportingColumnsIdexing');
   {$ENDIF}
 
 
-  // all indexes are now assigned columns, find tips and tails
-  for j:=1 to Length(columns)-1 do begin
+  // all indexes are now assigned columns, find heads and tails
+  for j:=0 to Length(columns)-1 do begin
     k := columns[j].first;
     for p in result[k].childs do begin
       if result[p].column<j then begin
-        columns[j].tip := p;
+        columns[j].head := p;
         break;
       end;
     end;
+    if columns[j].head<0 then columns[j].head := k;
+
     k := Columns[j].last;
     for p in result[k].parents do begin
       if result[p].column<j then begin
@@ -333,17 +557,22 @@ begin
         break;
       end;
     end;
+    if columns[j].tail<0 then columns[j].tail := k;
+
+    Columns[j].count := columns[j].tail - columns[j].head + 1;
   end;
 
   {$IFDEF DEBUG}
-  ReportColumns('After assigning tips and tails', columns);
+  ReportTicks('AssigningHeadsAndTails');
+  ReportColumns('After assigning Heads and tails', columns);
+  ReportTicks('ReportingAssigningHeadsAndTails');
   {$ENDIF}
 
-  SortColumns(columns);
-
-  {$IFDEF DEBUG}
-  ReportColumns('After sorting', columns);
-  {$ENDIF}
+  //SortColumns(columns);
+  //
+  //{$IFDEF DEBUG}
+  //ReportColumns('After sorting', columns);
+  //{$ENDIF}
 
 
   exit;
@@ -358,6 +587,7 @@ begin
       for j:=0 to Length(columns)-1 do begin
         // is the index i within the range of column j?
         if (i>=columns[j].first) and (i<=columns[j].last) then begin
+
           // yes
           if result[i].column=j then begin
             // ... but it's the same column, will always draw a node there
@@ -431,6 +661,93 @@ begin
     end;
 
   end;
+
+  {
+  // assign columns to every index's lines. In other words
+  // for each index find what will draw at each column
+  // it will always draw a node at the .column position
+  // and will draw a line at each .lines[k] column
+  MaxColumns := 1;
+  if Length(Columns)>1 then begin
+    for i:=0 to Length(result)-1 do begin
+      for j:=0 to Length(columns)-1 do begin
+        // is the index i within the range of column j?
+        if (i>=columns[j].first) and (i<=columns[j].last) then begin
+
+          // yes
+          if result[i].column=j then begin
+            // ... but it's the same column, will always draw a node there
+            if i=columns[j].first then result[i].first := true;
+            if i=columns[j].last  then result[i].last := true;
+            continue;
+          end;
+          // no, it have to draw a line at this column, it is within the
+          // first and last, so it will be an internal line.
+          k := Length(result[i].lines);
+          SetLength(result[i].lines, k+1);
+          result[i].lines[k].column := j;
+          result[i].lines[k].source := LINE_SOURCE_COLUMN;
+          result[i].lines[k].Flags := [lifInternal];
+        end;
+      end;
+      if Length(result[i].lines)>MaxColumns then
+        MaxColumns := Length(result[i].lines);
+    end;
+
+    // try to find the parent index of columns last index
+    for j := 0 to Length(Columns)-1 do begin
+      // Theory: the last index of a column couldnt be multiparent
+      k := Columns[j].last;
+      if result[k].parents=nil then
+        continue; // this is the last index as it has no parents
+      if length(result[k].parents)>1 then
+        continue; // houston we have a problem and we don't know how to handle....
+      // so k is the last index and our parent is ...
+      p := result[k].parents[0];
+      // now queue lines coloured by whatever the parent column is coloured
+      for i:= k+1 to p do begin
+        n := Length(result[i].lines);
+        SetLength(result[i].lines, n+1);
+        result[i].lines[n].column := j;
+        result[i].lines[n].source := p;
+        Include(result[i].lines[n].Flags, lifToBorn);
+        if i=p then Include(result[i].lines[n].Flags, lifBorn);
+        if n+1>MaxColumns then
+          MaxColumns := n+1;
+      end;
+    end;
+
+    // finally find merges if there is any ..
+    for j := 1 to Length(Columns)-1 do begin
+      // start find merges at index 'last' descending down until index 'first',
+      // a mergeable index is a child index with a column less than the current
+      k := Columns[j].last;
+      while k>=Columns[j].first do begin
+        if result[k].column=j then
+          for n in result[k].childs do begin
+            if result[n].column<j then begin
+              // index 'k' will merge at index 'n'.
+              // Add 'merge' lines from 'n' to 'k-1' at the column 'j'
+              for i:=n to k-1 do begin
+                p := Length(result[i].lines);
+                SetLength(result[i].lines, p+1);
+                result[i].lines[p].column := j;
+                result[i].lines[p].source := n;
+                Include(result[i].lines[p].Flags, lifToMerge);
+                if i=n then Include(result[i].lines[p].Flags, lifMerge);
+                if p+1>MaxColumns then
+                  MaxColumns := p+1;
+              end;
+              // is now merged, can we merge to more than one branch?
+              break;
+            end;
+          end;
+        dec(k);
+      end;
+    end;
+
+  end;
+  }
 
   {$IFDEF DEBUG}
   DebugLn('Max concurrent columns: %d',[MaxColumns]);
