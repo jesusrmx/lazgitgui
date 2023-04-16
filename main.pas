@@ -316,65 +316,65 @@ begin
             else
               s := IntToStr(aRow-1);
           end;
-        'Graph':
-          if (Length(fItemIndices)>0) and (aIndex<Length(fItemIndices)) then begin
-
-            with fItemIndices[aIndex] do begin
-              gridLog.canvas.Pen.Width := GRAPH_LINE_WIDTH;
-              w := aRect.Left + GRAPH_LEFT_PADDING;
-
-              y1 := aRect.Top;
-              y2 := aRect.Bottom;
-              y := y1 + (y2-y1) div 2;
-
-              j := column;
-              for i:=0 to Length(lines)-1 do begin
-                //if lines[i].source=LINE_SOURCE_COLUMN then begin
-                  n := lines[i].column;
-                  gridLog.Canvas.Pen.Style := psSolid;
-                  if column=n then j := i;
-                //end else begin
-                //  n := lines[i].column; //fItemIndices[lines[i].source].column;
-                //  gridLog.Canvas.Pen.Style := psDash;
-                //end;
-                gridLog.Canvas.Pen.Color := GraphColumnsColors[ n mod GRAPH_MAX_COLORS];
-                x := w + i * GRAPH_COLUMN_SEPARATOR;
-
-                if lifMerge in lines[i].Flags then begin
-                  // draw a merge line with origin at source and dest at this point
-                  gridLog.Canvas.Line(x, y, x, y2);
-                  gridLog.Canvas.Line(x-GRAPH_NODE_RADIUS-1, y, x, y);
-                  //x1 := w + fItemIndices[lines[i].source].column * GRAPH_COLUMN_SEPARATOR;
-                  //gridLog.Canvas.Line(x1, y, x, y);
-                end else
-                if lifBorn in lines[i].Flags then begin
-                  // draw a new born line with origin at source and dest at this point
-                  gridLog.Canvas.Line(x, y1, x, y);
-                  gridLog.Canvas.Line(x-GRAPH_NODE_RADIUS-1, y, x, y);
-                  //x1 := w + fItemIndices[lines[i].source].column * GRAPH_COLUMN_SEPARATOR;
-                  //gridLog.Canvas.Line(x1, y, x, y);
-                end else
-                  gridlog.Canvas.Line(x, y1, x, y2);
-              end;
-
-              x := w + j * GRAPH_COLUMN_SEPARATOR;
-
-              if first and (childs=nil) then y1 := y;
-              if last and (parents=nil) then y2 := y;
-
-              gridLog.Canvas.Pen.Color := GraphColumnsColors[Column mod GRAPH_MAX_COLORS];
-              gridlog.Canvas.Line(x, y1, x, y2);
-
-              gridLog.Canvas.Brush.Color := GraphColumnsColors[Column mod GRAPH_MAX_COLORS];
-              gridLog.Canvas.Brush.Style := bsSolid;
-              gridLog.canvas.Pen.Width :=0;
-              if (Length(childs)>1) or (Length(parents)>1) then
-                gridLog.Canvas.FillRect(x-GRAPH_NODE_RADIUS, y-GRAPH_NODE_RADIUS, x+GRAPH_NODE_RADIUS, y+GRAPH_NODE_RADIUS)
-              else
-                gridLog.canvas.EllipseC(x, y, GRAPH_NODE_RADIUS, GRAPH_NODE_RADIUS);
-              gridLog.Canvas.Pen.Width := 1;
-            end;
-          end;
+        //'Graph':
+        //  if (Length(fItemIndices)>0) and (aIndex<Length(fItemIndices)) then begin
+        //
+        //    with fItemIndices[aIndex] do begin
+        //      gridLog.canvas.Pen.Width := GRAPH_LINE_WIDTH;
+        //      w := aRect.Left + GRAPH_LEFT_PADDING;
+        //
+        //      y1 := aRect.Top;
+        //      y2 := aRect.Bottom;
+        //      y := y1 + (y2-y1) div 2;
+        //
+        //      j := column;
+        //      for i:=0 to Length(lines)-1 do begin
+        //        //if lines[i].source=LINE_SOURCE_COLUMN then begin
+        //          n := lines[i].column;
+        //          gridLog.Canvas.Pen.Style := psSolid;
+        //          if column=n then j := i;
+        //        //end else begin
+        //        //  n := lines[i].column; //fItemIndices[lines[i].source].column;
+        //        //  gridLog.Canvas.Pen.Style := psDash;
+        //        //end;
+        //        gridLog.Canvas.Pen.Color := GraphColumnsColors[ n mod GRAPH_MAX_COLORS];
+        //        x := w + i * GRAPH_COLUMN_SEPARATOR;
+        //
+        //        if lifMerge in lines[i].Flags then begin
+        //          // draw a merge line with origin at source and dest at this point
+        //          gridLog.Canvas.Line(x, y, x, y2);
+        //          gridLog.Canvas.Line(x-GRAPH_NODE_RADIUS-1, y, x, y);
+        //          //x1 := w + fItemIndices[lines[i].source].column * GRAPH_COLUMN_SEPARATOR;
+        //          //gridLog.Canvas.Line(x1, y, x, y);
+        //        end else
+        //        if lifBorn in lines[i].Flags then begin
+        //          // draw a new born line with origin at source and dest at this point
+        //          gridLog.Canvas.Line(x, y1, x, y);
+        //          gridLog.Canvas.Line(x-GRAPH_NODE_RADIUS-1, y, x, y);
+        //          //x1 := w + fItemIndices[lines[i].source].column * GRAPH_COLUMN_SEPARATOR;
+        //          //gridLog.Canvas.Line(x1, y, x, y);
+        //        end else
+        //          gridlog.Canvas.Line(x, y1, x, y2);
+        //      end;
+        //
+        //      x := w + j * GRAPH_COLUMN_SEPARATOR;
+        //
+        //      if first and (childs=nil) then y1 := y;
+        //      if last and (parents=nil) then y2 := y;
+        //
+        //      gridLog.Canvas.Pen.Color := GraphColumnsColors[Column mod GRAPH_MAX_COLORS];
+        //      gridlog.Canvas.Line(x, y1, x, y2);
+        //
+        //      gridLog.Canvas.Brush.Color := GraphColumnsColors[Column mod GRAPH_MAX_COLORS];
+        //      gridLog.Canvas.Brush.Style := bsSolid;
+        //      gridLog.canvas.Pen.Width :=0;
+        //      if (Length(childs)>1) or (Length(parents)>1) then
+        //        gridLog.Canvas.FillRect(x-GRAPH_NODE_RADIUS, y-GRAPH_NODE_RADIUS, x+GRAPH_NODE_RADIUS, y+GRAPH_NODE_RADIUS)
+        //      else
+        //        gridLog.canvas.EllipseC(x, y, GRAPH_NODE_RADIUS, GRAPH_NODE_RADIUS);
+        //      gridLog.Canvas.Pen.Width := 1;
+        //    end;
+        //  end;
 
         'Subject':
           begin

@@ -50,9 +50,9 @@ type
 
   TParentsMap = specialize TFPGMap<QWord, PParentsMapItem>;
 
-  TLineItemFlags = set of (lifInternal, lifToMerge, lifMerge, lifToBorn, lifBorn);
+  TLineItemFlags = set of (lifNode, lifToMerge, lifMerge, lifFirst, lifInternal, lifLast,  lifToBorn, lifBorn);
   TLineItem = record
-    column: Integer;
+    column, columnIndex: Integer;
     source: Integer;
     Flags:  TLineItemFlags;
   end;
@@ -63,8 +63,8 @@ type
     parents, childs: TIntArray;
     column: Integer;
     lines: TLinesArray;
-    first: boolean;
-    last: boolean;
+    //first: boolean;
+    //last: boolean;
   end;
   TItemIndexArray = array of TItemIndex;
 
@@ -394,6 +394,23 @@ begin
 
 end;
 
+function FindSourceColumn(items: TItemIndexArray; ref:Integer; inChilds:boolean): Integer;
+var
+  arr: TIntArray;
+  i, j: Integer;
+begin
+  result := LINE_SOURCE_COLUMN;
+  if inChilds then arr := items[ref].childs
+  else             arr := items[ref].parents;
+  for i:=0 to Length(arr)-1 do begin
+    j := arr[i];
+    if items[j].column<items[ref].column then begin
+      result := j;
+      break;
+    end;
+  end;
+end;
+
 {$define UseMap}
 
 {$ifdef UseMap}
@@ -417,6 +434,7 @@ var
   i, j, k, n, p, c, column: Integer;
   s: string;
   columns: TColumnArray;
+  flags: TLineItemFlags;
 begin
   {$IFDEF DEBUG}
   resetTicks;
@@ -574,100 +592,56 @@ begin
   ReportTicks('ReportingAssigningHeadsAndTails');
   {$ENDIF}
 
-  SortColumns(columns);
+  //SortColumns(columns);
 
   {$IFDEF DEBUG}
-  ReportTicks('SortColumns');
-  ReportColumns('After sorting', columns);
+  //ReportTicks('SortColumns');
+  //ReportColumns('After sorting', columns);
   {$ENDIF}
-
-
-  exit;
 
   // assign columns to every index's lines. In other words
   // for each index find what will draw at each column
   // it will always draw a node at the .column position
   // and will draw a line at each .lines[k] column
   MaxColumns := 1;
-  if Length(Columns)>1 then begin
+  if Length(Columns)>1 then
     for i:=0 to Length(result)-1 do begin
-      for j:=0 to Length(columns)-1 do begin
-        // is the index i within the range of column j?
-        if (i>=columns[j].first) and (i<=columns[j].last) then begin
-
-          // yes
-          if result[i].column=j then begin
-            // ... but it's the same column, will always draw a node there
-            if i=columns[j].first then result[i].first := true;
-            if i=columns[j].last  then result[i].last := true;
+      for j:=0 to Length(columns)-1 do
+        with columns[j] do begin
+          // is the index i within the range of column j?
+          if (i<first) or (i>last) then
             continue;
-          end;
-          // no, it have to draw a line at this column, it is within the
-          // first and last, so it will be an internal line.
+
           k := Length(result[i].lines);
           SetLength(result[i].lines, k+1);
+          if k+1>MaxColumns then
+            MaxColumns := k+1;
+
           result[i].lines[k].column := j;
-          result[i].lines[k].source := LINE_SOURCE_COLUMN;
-          result[i].lines[k].Flags := [lifInternal];
-        end;
-      end;
-      if Length(result[i].lines)>MaxColumns then
-        MaxColumns := Length(result[i].lines);
-    end;
+          result[i].lines[k].columnIndex := k;
 
-    // try to find the parent index of columns last index
-    for j := 0 to Length(Columns)-1 do begin
-      // Theory: the last index of a column couldnt be multiparent
-      k := Columns[j].last;
-      if result[k].parents=nil then
-        continue; // this is the last index as it has no parents
-      if length(result[k].parents)>1 then
-        continue; // houston we have a problem and we don't know how to handle....
-      // so k is the last index and our parent is ...
-      p := result[k].parents[0];
-      // now queue lines coloured by whatever the parent column is coloured
-      for i:= k+1 to p do begin
-        n := Length(result[i].lines);
-        SetLength(result[i].lines, n+1);
-        result[i].lines[n].column := j;
-        result[i].lines[n].source := p;
-        Include(result[i].lines[n].Flags, lifToBorn);
-        if i=p then Include(result[i].lines[n].Flags, lifBorn);
-        if n+1>MaxColumns then
-          MaxColumns := n+1;
-      end;
-    end;
-
-    // finally find merges if there is any ..
-    for j := 1 to Length(Columns)-1 do begin
-      // start find merges at index 'last' descending down until index 'first',
-      // a mergeable index is a child index with a column less than the current
-      k := Columns[j].last;
-      while k>=Columns[j].first do begin
-        if result[k].column=j then
-          for n in result[k].childs do begin
-            if result[n].column<j then begin
-              // index 'k' will merge at index 'n'.
-              // Add 'merge' lines from 'n' to 'k-1' at the column 'j'
-              for i:=n to k-1 do begin
-                p := Length(result[i].lines);
-                SetLength(result[i].lines, p+1);
-                result[i].lines[p].column := j;
-                result[i].lines[p].source := n;
-                Include(result[i].lines[p].Flags, lifToMerge);
-                if i=n then Include(result[i].lines[p].Flags, lifMerge);
-                if p+1>MaxColumns then
-                  MaxColumns := p+1;
-              end;
-              // is now merged, can we merge to more than one branch?
-              break;
-            end;
+          flags := [];
+          if result[i].column=j then begin
+            Include(flags, lifNode);
+            if (i=first) then Include(flags, lifFirst) else
+            if (i=last)  then Include(flags, lifLast)
+          end else
+          if i<first then begin
+            result[i].lines[k].source := FindSourceColumn(result, first, true);
+            if result[i].Lines[k].source<>LINE_SOURCE_COLUMN then Include(flags, lifToMerge)
+            else                                                  Include(flags, lifMerge);
+          end else
+          if (i>last) then begin
+            result[i].lines[k].source := FindSourceColumn(result, last, false);
+            if result[i].Lines[k].source<>LINE_SOURCE_COLUMN then Include(flags, lifToBorn)
+            else                                                  Include(flags, lifBorn);
+          end else begin
+            Include(flags, lifInternal);
+            result[i].lines[k].source := LINE_SOURCE_COLUMN;
           end;
-        dec(k);
+          result[i].lines[k].Flags := flags;
       end;
     end;
-
-  end;
 
   {
   // assign columns to every index's lines. In other words
@@ -762,14 +736,6 @@ begin
   maxColumns := Length(Columns);
 
   {$IFDEF DEBUG}
-  // report of columns
-  DebugLn;
-  DebugLn('Report of %d columns:',[Length(Columns)]);
-  for i:=0 to Length(Columns)-1 do
-    with columns[i] do begin
-      DebugLn('Column %d: first=%d last=%d',[i, first, last]);
-    end;
-
   DebugLn;
   DebugLn('ItemIndexArray: %d',[Length(result)]);
 
@@ -799,12 +765,12 @@ begin
     for j := 0 to Length(columns)-1 do s[j+1] := ' ';
     for j := 0 to Length(result[i].lines)-1 do begin
       k := result[i].lines[j].column+1;
-      if lifMerge in result[i].lines[j].Flags then      s[k] := '-'
+      if lifNode in result[i].lines[j].Flags then       s[k] := '*'
+      else if lifMerge in result[i].lines[j].Flags then s[k] := '-'
       else if lifBorn in result[i].lines[j].Flags then  s[k] := '^'
       else                                              s[k] := '|';
     end;
-    s[result[i].column+1] := '*';
-    DebugLn('%s : Index %d', [s, i]);
+    DebugLn('%.6d] %s', [i, s]);
   end;
   {$ENDIF}
 
