@@ -650,53 +650,56 @@ begin
   //ReportColumns('After sorting', columns);
   {$ENDIF}
 
-  // assign columns to every index's lines. In other words
-  // for each index find what will draw at each column
-  // it will always draw a node at the .column position
-  // and will draw a line at each .lines[k] column
   MaxColumns := 1;
   if Length(Columns)>1 then
-    for i:=0 to Length(result)-1 do begin
-      for j:=0 to Length(columns)-1 do
-        with columns[j] do begin
-          // is the index i within the range of column j?
-          if (i<head) or (i>tail) then
-            continue;
+    for j:=0 to Length(columns)-1 do
+    with columns[j] do begin
 
-          k := Length(result[i].lines);
-          SetLength(result[i].lines, k+1);
-          if k+1>MaxColumns then
-            MaxColumns := k+1;
+      // distribute nodes and lines
+      for i:= head to tail do begin
 
-          result[i].lines[k].column := j;
-          result[i].lines[k].columnIndex := k;
+        k := Length(result[i].lines);
+        SetLength(result[i].lines, k+1);
+        if k+1>MaxColumns then
+          MaxColumns := k+1;
+        result[i].lines[k].column := j;
+        result[i].lines[k].columnIndex := k;
 
-          flags := [];
-          if result[i].column=j then begin
-            Include(flags, lifNode);
-            if (i=first) then Include(flags, lifFirst) else
-            if (i=last)  then Include(flags, lifLast)
-          end else begin
-
-            if (i>first) or (i<last) then begin
-              result[i].lines[k].source := LINE_SOURCE_COLUMN;
-              Include(flags, lifInternal);
-            end;
-
-            if (i>last) then begin
-              result[i].lines[k].source := FindSourceColumn(result, last, false);
-              if i=tail then Include(flags, lifBorn)
-              else           Include(flags, lifToBorn);
-            end else
-            if i<first then begin
-              result[i].lines[k].source := FindSourceColumn(result, first, false);
-              if i=head then Include(flags, lifMerge)
-              else           Include(flags, lifToMerge);
-            end;
-
+        flags := [];
+        if result[i].column=j then begin
+          // a node should be drawn here
+          Include(flags, lifNode);
+          // what about the tip?
+          if (i=first) then Include(flags, lifFirst) else
+          if (i=last)  then Include(flags, lifLast)
+          else begin
+            //// is not the first nor the last it should be an internal node
+            //// is this a merging node? what is the merging dest?
+            //n := FindSourceColumn(result, i, true);
+            //if n>first then begin
+            //  // yes, and 'n' is the merging destination. do it.
+            //  MarkMerges(result, n, i, j);
+            //end;
           end;
+        end else
+        // a line should be drawn here, what kind of line?
+        if (i>=head) and (i<first) then begin
+          result[i].lines[k].source := FindSourceColumn(result, first, true);
+          if i=head then Include(flags, lifMerge)
+          else           Include(flags, lifToMerge);
+        end else
+        if (i>first) and (i<=last) then begin
+          result[i].lines[k].source := LINE_SOURCE_COLUMN;
+          Include(flags, lifInternal);
+        end else
+        if (i>last) and (i<=tail) then begin
+          result[i].lines[k].source := FindSourceColumn(result, last, false);
+          if i=tail then Include(flags, lifBorn)
+          else           Include(flags, lifToBorn);
+        end;
 
-          result[i].lines[k].Flags := flags;
+        result[i].lines[k].Flags := flags;
+
       end;
     end;
 
