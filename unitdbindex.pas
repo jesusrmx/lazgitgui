@@ -54,7 +54,7 @@ type
   TLineItemFlags = set of TLineItemFlag;
   TLineItem = record
     column, columnIndex: Integer;
-    source: Integer;
+    target, source: Integer;
     Flags:  TLineItemFlags;
   end;
   TLinesArray = array of TLineItem;
@@ -205,7 +205,7 @@ begin
       else if lifMerge in items[i].lines[j].Flags then s[k] := '-'
       else if lifBorn in items[i].lines[j].Flags then  s[k] := '^'
       else                                             s[k] := '|';
-      l += Format(' %d: [%s]',[j, dbgs(items[i].lines[j].Flags)]);
+      l += Format(' %d: [%d:%s]',[j, items[i].lines[j].target, dbgs(items[i].lines[j].Flags)]);
     end;
     DebugLn('%.6d] %s [%s', [i, s, l]);
   end;
@@ -462,12 +462,14 @@ function FindInternalMerges(items: TItemIndexArray; i: Integer; var columns: TCo
 var
   a, dest, cur: Integer;
 begin
+  result := LINE_SOURCE_COLUMN;
   with columns[j] do begin
     // is not the first nor the last it should be an internal node
     // is this a merging node? what is the merging dest?
     dest := FindSourceColumn(items, i, true);
     if dest>first then begin
       // yes, tag from 'dest' to 'i'
+      result := dest;
       cur := dest;
       while cur<>i do begin
         for a := 0 to Length(items[cur].lines)-1 do begin
@@ -475,7 +477,7 @@ begin
             // found the right line
             if cur=dest then Include(items[cur].lines[a].flags, lifMerge)
             else             Include(items[cur].lines[a].flags, lifToMerge);
-            items[cur].lines[a].source := dest;
+            items[cur].lines[a].target := dest;
           end;
         end;
         inc(cur);
@@ -687,6 +689,8 @@ begin
           MaxColumns := k+1;
         result[i].lines[k].column := j;
         result[i].lines[k].columnIndex := k;
+        result[i].lines[k].target := LINE_SOURCE_COLUMN;
+        result[i].lines[k].source := LINE_SOURCE_COLUMN;
 
         flags := [];
         if result[i].column=j then begin
@@ -694,17 +698,23 @@ begin
           Include(flags, lifNode);
           // what about the tip?
           if (i=first) then Include(flags, lifFirst) else
-          if (i=last)  then Include(flags, lifLast) else
-          if j>0 then       FindInternalMerges(result, i, columns, j, k)
+          if (i=last)  then Include(flags, lifLast);
+          if (j>0) then begin
+            // search for merge target
+            result[i].lines[k].target := FindInternalMerges(result, i, columns, j, k);
+            //result[i].lines[k].target := FindSourceColumn(result, i, true);
+            // search for birth source
+            if i=last then
+              result[i].lines[k].source := FindSourceColumn(result, i, false);
+          end;
         end else
         // a line should be drawn here, what kind of line?
         if (i>=head) and (i<first) then begin
-          result[i].lines[k].source := FindSourceColumn(result, first, true);
+          result[i].lines[k].target := FindSourceColumn(result, first, true);
           if i=head then Include(flags, lifMerge)
           else           Include(flags, lifToMerge);
         end else
         if (i>first) and (i<=last) then begin
-          result[i].lines[k].source := LINE_SOURCE_COLUMN;
           Include(flags, lifInternal);
         end else
         if (i>last) and (i<=tail) then begin

@@ -43,6 +43,7 @@ object frmMain: TfrmMain
       PopupMenu = popLists
       Style = lbOwnerDrawFixed
       TabOrder = 0
+      TopIndex = -1
     end
     object splitterStaged: TSplitter
       Cursor = crVSplit
@@ -111,6 +112,7 @@ object frmMain: TfrmMain
         PopupMenu = popLists
         Style = lbOwnerDrawFixed
         TabOrder = 1
+        TopIndex = -1
       end
     end
   end
@@ -181,7 +183,7 @@ object frmMain: TfrmMain
         FixedCols = 0
         Flat = True
         MouseWheelOption = mwGrid
-        Options = [goVertLine, goColSizing, goSmoothScroll, goRowHighlight]
+        Options = [goVertLine, goColSizing, goRowHighlight]
         ParentFont = False
         RowCount = 1
         TabOrder = 0
@@ -755,7 +757,7 @@ object frmMain: TfrmMain
           TabOrder = 0
           object btnRescan: TButton
             Left = 5
-            Height = 25
+            Height = 27
             Top = 5
             Width = 125
             Action = actRescan
@@ -763,41 +765,41 @@ object frmMain: TfrmMain
           end
           object btnStageChanged: TButton
             Left = 5
-            Height = 25
-            Top = 35
+            Height = 27
+            Top = 37
             Width = 125
             Action = actFetch
             TabOrder = 1
           end
           object btnSignOff: TButton
             Left = 5
-            Height = 25
-            Top = 65
+            Height = 27
+            Top = 69
             Width = 125
             Action = actPull
             TabOrder = 2
           end
           object btnCommit: TButton
             Left = 5
-            Height = 25
-            Top = 95
+            Height = 27
+            Top = 101
             Width = 125
             Action = actCommit
             TabOrder = 3
           end
           object panPush: TPanel
             Left = 5
-            Height = 25
-            Top = 125
+            Height = 27
+            Top = 133
             Width = 125
             AutoSize = True
             BevelOuter = bvNone
-            ClientHeight = 25
+            ClientHeight = 27
             ClientWidth = 125
             TabOrder = 4
             object btnPush: TButton
               Left = 0
-              Height = 25
+              Height = 27
               Top = 0
               Width = 56
               Action = actPush
@@ -806,7 +808,7 @@ object frmMain: TfrmMain
             end
             object btnPushDlg: TButton
               Left = 61
-              Height = 25
+              Height = 27
               Top = 0
               Width = 64
               Action = actPushDialog
@@ -862,7 +864,7 @@ object frmMain: TfrmMain
         ParentFont = False
         TabOrder = 2
         Gutter.Visible = False
-        Gutter.Width = 50
+        Gutter.Width = 53
         Gutter.MouseActions = <>
         RightGutter.Width = 0
         RightGutter.MouseActions = <>
@@ -1341,7 +1343,7 @@ object frmMain: TfrmMain
             MouseActions = <>
           end
           object SynGutterLineNumber1: TSynGutterLineNumber
-            Width = 11
+            Width = 13
             MouseActions = <>
             MarkupInfo.Background = clBtnFace
             MarkupInfo.Foreground = clNone
@@ -1363,7 +1365,6 @@ object frmMain: TfrmMain
             MarkupInfo.Foreground = clGray
           end
           object SynGutterCodeFolding1: TSynGutterCodeFolding
-            Width = 9
             MouseActions = <>
             MarkupInfo.Background = clNone
             MarkupInfo.Foreground = clGray
@@ -1399,9 +1400,9 @@ object frmMain: TfrmMain
       AnchorSideTop.Control = panBranch
       AnchorSideTop.Side = asrCenter
       Left = 10
-      Height = 15
-      Top = 6
-      Width = 40
+      Height = 17
+      Top = 5
+      Width = 43
       BorderSpacing.Left = 10
       Caption = 'Branch:'
       ParentFont = False
@@ -1411,10 +1412,10 @@ object frmMain: TfrmMain
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = Label1
       Cursor = crHandPoint
-      Left = 60
-      Height = 15
-      Top = 6
-      Width = 27
+      Left = 63
+      Height = 17
+      Top = 5
+      Width = 31
       BorderSpacing.Left = 10
       Caption = 'main'
       Font.Color = clFuchsia
@@ -1429,10 +1430,10 @@ object frmMain: TfrmMain
       AnchorSideLeft.Control = lblMerging
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = Label1
-      Left = 181
-      Height = 15
-      Top = 6
-      Width = 214
+      Left = 191
+      Height = 17
+      Top = 5
+      Width = 231
       BorderSpacing.Left = 20
       BorderSpacing.Right = 20
       Caption = '0 commits ahead, 0 commits behind of'
@@ -1441,10 +1442,10 @@ object frmMain: TfrmMain
       AnchorSideLeft.Control = lblAheadBehind
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = Label1
-      Left = 415
-      Height = 15
-      Top = 6
-      Width = 54
+      Left = 442
+      Height = 17
+      Top = 5
+      Width = 59
       Caption = 'Upstream:'
       ParentFont = False
     end
@@ -1452,10 +1453,10 @@ object frmMain: TfrmMain
       AnchorSideLeft.Control = Label2
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = Label1
-      Left = 479
-      Height = 15
-      Top = 6
-      Width = 74
+      Left = 511
+      Height = 17
+      Top = 5
+      Width = 79
       BorderSpacing.Left = 10
       Caption = 'remote/main'
       Font.Color = clBlue
@@ -1466,10 +1467,10 @@ object frmMain: TfrmMain
       AnchorSideLeft.Control = lblBranch
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = Label1
-      Left = 97
-      Height = 15
-      Top = 6
-      Width = 64
+      Left = 104
+      Height = 17
+      Top = 5
+      Width = 67
       BorderSpacing.Left = 10
       Caption = '(MERGING)'
       Font.Color = clRed
@@ -1495,10 +1496,10 @@ object frmMain: TfrmMain
       AnchorSideLeft.Control = lblRemote
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = Label1
-      Left = 563
-      Height = 15
-      Top = 6
-      Width = 21
+      Left = 600
+      Height = 17
+      Top = 5
+      Width = 23
       BorderSpacing.Left = 10
       Caption = 'Tag:'
       ParentFont = False
@@ -1507,10 +1508,10 @@ object frmMain: TfrmMain
       AnchorSideLeft.Control = Label3
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = Label1
-      Left = 594
-      Height = 15
-      Top = 6
-      Width = 82
+      Left = 633
+      Height = 17
+      Top = 5
+      Width = 84
       BorderSpacing.Left = 10
       Caption = '<create a tag>'
       Font.Color = clOlive
@@ -1518,10 +1519,10 @@ object frmMain: TfrmMain
       ParentFont = False
     end
     object btnStop: TSpeedButton
-      Left = 832
-      Height = 19
+      Left = 831
+      Height = 21
       Top = 0
-      Width = 23
+      Width = 24
       Anchors = [akTop, akRight]
       AutoSize = True
       Caption = 'Stp'
@@ -1545,10 +1546,10 @@ object frmMain: TfrmMain
     end
     object lblInfo: TLabel
       AnchorSideRight.Control = btnStop
-      Left = 764
-      Height = 15
+      Left = 761
+      Height = 17
       Top = 2
-      Width = 63
+      Width = 65
       Anchors = [akTop, akRight]
       BorderSpacing.Right = 5
       Caption = 'Working ....'

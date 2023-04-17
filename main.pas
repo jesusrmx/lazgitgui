@@ -36,6 +36,24 @@ uses
 type
   TRefsMap = specialize TFPGMap<string, TRefInfoArray>;
 
+{.$define OfflineGraph}
+
+{$ifdef OfflineGraph}
+
+  { TDrawGrid }
+
+  TDrawGrid = class(grids.TDrawGrid)
+  private
+    fItemIndices: TItemIndexArray;
+  protected
+    procedure DrawAllRows; override;
+    procedure DrawGraph(ax, ay: Integer; startRow, endRow: Integer);
+    procedure GridMouseWheel(shift: TShiftState; Delta: Integer); override;
+  public
+    property ItemIndices: TItemIndexArray read fItemIndices write fItemIndices;
+  end;
+{$endif}
+
   { TfrmMain }
 
   TfrmMain = class(TForm)
@@ -286,6 +304,178 @@ begin
   result := (n>0) and (n=lb.SelCount);
 end;
 
+{$ifdef OfflineGraph}
+
+{ TDrawGrid }
+
+procedure TDrawGrid.DrawAllRows;
+var
+  aRect: TRect;
+  aIndex, acol, ax, ay, dummy: Integer;
+begin
+  inherited DrawAllRows;
+  with GCache.VisibleGrid do begin
+    aIndex := bottom-FixedRows;
+    if (fItemIndices<>nil) and (aIndex<Length(fItemIndices)) then begin
+      aCol := Columns.ColumnByTitle('Graph').Index;
+      ColRowToOffSet(true, True, aCol, aRect.Left, aRect.Right);
+      ColRowToOffSet(false, True, Top, aRect.Top, dummy);
+      ColRowToOffSet(false, True, Bottom, dummy, aRect.Bottom);
+      // TODO: set cliprect to the graph column excluding titles.
+      //Canvas.Brush.Color := clMoneyGreen;
+      //Canvas.FillRect(aRect);
+      DrawGraph(aRect.Left, aRect.Top, top, bottom);
+    end;
+  end;
+end;
+
+procedure TDrawGrid.DrawGraph(ax, ay: Integer; startRow, endRow: Integer);
+var
+  n, w, x, x1, y, y1, y2, yp: Integer;
+  aRow, aIndex, i, j: Integer;
+  flags: TLineItemFlags;
+  aColor: TColor;
+  queue: array of record
+    atype: (qtRoundNode, qtSquareNode, qtLine);
+    x1, y1, x2, y2: Integer;
+    color: TColor;
+  end;
+
+  procedure AddLine(xs,ys,xe,ye: Integer; c: TColor);
+  var
+    k: Integer;
+  begin
+    k := Length(queue);
+    SetLength(queue, k+1);
+    queue[k].atype := qtLine;
+    queue[k].color := c;
+    queue[k].x1 := xs;
+    queue[k].y1 := ys;
+    queue[k].x2 := xe;
+    queue[k].y2 := ye;
+  end;
+
+  procedure AddNode(xc, yc, ys, ye: Integer; c: TColor; square: boolean);
+  var
+    k: Integer;
+  begin
+    k := Length(queue);
+    SetLength(queue, k+1);
+    queue[k].color := c;
+    queue[k].x1 := xc;
+    queue[k].y1 := yc;
+    queue[k].x2 := ys;
+    queue[k].y2 := ye;
+    if square then queue[k].atype := qtSquareNode
+    else           queue[k].atype := qtRoundNode;
+  end;
+
+begin
+  // aRect holds the dimensions of the current top-most cell
+  n := 0;
+  canvas.Pen.Width := GRAPH_LINE_WIDTH;
+  w := ax + GRAPH_LEFT_PADDING;
+  x := w + n * GRAPH_COLUMN_SEPARATOR;
+
+
+  // collect nodes, merges and births
+  queue := nil;
+  for aRow := startRow to endRow do begin
+    aIndex := aRow - FixedRows;
+    with fItemIndices[aIndex] do begin
+      for i:=Length(lines)-1 downto 0 do begin
+        y1 := ay + (aRow - startRow) * DefaultRowHeight;
+        y2 := y1 + DefaultRowHeight;
+        y  := y1 + (y2 - y1) div 2;
+        flags := lines[i].Flags;
+        n := lines[i].column;
+        aColor := GraphColumnsColors[ n mod GRAPH_MAX_COLORS];
+        x := w + n * GRAPH_COLUMN_SEPARATOR;
+
+        if lifNode in flags then begin
+          if (lifFirst in flags) then y1 := y;
+          if (lifLast  in flags) then y2 := y;
+
+          if (Length(childs)>1) or (Length(parents)>1) then AddNode(x, y, y1, y2, aColor, true)
+          else                                              AddNode(x, y, y1, y2, aColor, false);
+
+          if (childs<>nil) and (lines[i].target<>LINE_SOURCE_COLUMN) then begin
+            x1 := w + fItemIndices[lines[i].target].column * GRAPH_COLUMN_SEPARATOR;
+            yp := y - (aIndex - lines[i].target) * DefaultRowHeight;
+            AddLine(x, y, x1, yp, aColor);
+          end;
+
+          if lifLast in flags then begin
+            if (parents<>nil) and (lines[i].source<>LINE_SOURCE_COLUMN) then begin
+              x1 := w + fItemIndices[lines[i].source].column * GRAPH_COLUMN_SEPARATOR;
+              yp := y + (lines[i].source - aIndex) * DefaultRowHeight;
+              AddLine(x, y, x1, yp, aColor);
+            end;
+          end;
+
+        end;
+      end;
+    end;
+  end;
+
+  // draw merges and births
+  Canvas.Pen.Style := psSolid;
+  for i:=0 to Length(queue)-1 do
+    with queue[i] do begin
+      if atype=qtLine then begin
+        Canvas.Pen.Color := clYellow;//color;
+        //Canvas.Line(x1, y1, x2, y2);
+        Canvas.Line(x1, y1, x1, y2);
+        Canvas.Line(x1, y2, x2, y2);
+      end;
+    end;
+
+  // draw vertical lines (TODO: collect them too)
+  for aRow := startRow to endRow do begin
+    aIndex := aRow - FixedRows;
+    with fItemIndices[aIndex] do begin
+
+      for i:=Length(lines)-1 downto 0 do begin
+        y1 := ay + (aRow - startRow) * DefaultRowHeight;
+        y2 := y1 + DefaultRowHeight;
+        y  := y1 + (y2 - y1) div 2;
+        flags := lines[i].Flags;
+        n := lines[i].column;
+        Canvas.Pen.Color := GraphColumnsColors[ n mod GRAPH_MAX_COLORS];
+        x := w + n * GRAPH_COLUMN_SEPARATOR;
+
+        if lifInternal in flags then
+          Canvas.Line(x, y1, x, y2);
+      end;
+    end;
+
+    // finally draw nodes
+    for i:=0 to Length(queue)-1 do
+      with queue[i] do begin
+        Canvas.Pen.Color := color;
+        Canvas.Pen.Style := psSolid;
+        Canvas.Line(x1, x2, x1, y2);
+
+        Canvas.Brush.Color := color;
+        Canvas.Pen.Style := psClear;
+        case atype of
+          qtRoundNode: canvas.EllipseC(x1, y1, GRAPH_NODE_RADIUS, GRAPH_NODE_RADIUS);
+          qtSquareNode: Canvas.FillRect(x1-GRAPH_NODE_RADIUS, y1-GRAPH_NODE_RADIUS, x1+GRAPH_NODE_RADIUS, y1+GRAPH_NODE_RADIUS);
+        end;
+      end;
+    Canvas.Pen.Style := psSolid;
+
+  end;
+end;
+
+procedure TDrawGrid.GridMouseWheel(shift: TShiftState; Delta: Integer);
+begin
+  inherited GridMouseWheel(shift, Delta);
+  InvalidateCol(1);
+end;
+
+{$endif}
+
 { TfrmMain }
 
 procedure TfrmMain.FormShow(Sender: TObject);
@@ -317,6 +507,7 @@ begin
             else
               s := IntToStr(aRow-1);
           end;
+        {$ifndef OfflineGraph}
         'Graph':
           if (Length(fItemIndices)>0) and (aIndex<Length(fItemIndices)) then begin
 
@@ -362,15 +553,15 @@ begin
                   if lifMerge in flags then begin
                     // draw a merge line with origin at source and dest at this point
                     gridLog.Canvas.Line(x, y, x, y2);
-                    gridLog.Canvas.Line(x-GRAPH_NODE_RADIUS-1, y, x, y);
-                    x1 := w + fItemIndices[lines[i].source].column * GRAPH_COLUMN_SEPARATOR;
+                    //gridLog.Canvas.Line(x-GRAPH_NODE_RADIUS-1, y, x, y);
+                    x1 := w + fItemIndices[lines[i].target].column * GRAPH_COLUMN_SEPARATOR;
                     gridLog.Canvas.Line(x1, y, x, y);
                   end;
 
                   if lifBorn in flags then begin
                     // draw a new born line with origin at source and dest at this point
                     gridLog.Canvas.Line(x, y1, x, y);
-                    gridLog.Canvas.Line(x-GRAPH_NODE_RADIUS-1, y, x, y);
+                    //gridLog.Canvas.Line(x-GRAPH_NODE_RADIUS-1, y, x, y);
                     x1 := w + fItemIndices[lines[i].source].column * GRAPH_COLUMN_SEPARATOR;
                     gridLog.Canvas.Line(x1, y, x, y);
                   end;
@@ -379,6 +570,7 @@ begin
               gridLog.Canvas.Pen.Width := 1;
             end;
           end;
+        {$endif}
 
         'Subject':
           begin
@@ -1193,11 +1385,16 @@ var
   col: TGridColumn;
   i: Integer;
 begin
-  gridLog.RowCount := fLogCache.DbIndex.Count + gridLog.FixedRows;
   fItemIndices := GetItemIndexes(fLogCache.DbIndex, true, fGraphColumns);
+  {$IFDEF OfflineGraph}
+  gridLog.ItemIndices := fItemIndices;
+  {$ENDIF}
+  gridLog.RowCount := fLogCache.DbIndex.Count + gridLog.FixedRows;
+
   col := gridLog.Columns.ColumnByTitle('Graph');
   i := gridLog.Columns.IndexOf(col);
   gridLog.Columns[i].Width := GRAPH_LEFT_PADDING + (fGraphColumns-1)*GRAPH_COLUMN_SEPARATOR + GRAPH_RIGHT_PADDING;
+
 end;
 
 function OwnerDrawStateToStr(State: TOwnerDrawState): string;
