@@ -324,12 +324,11 @@ begin
               gridLog.canvas.Pen.Width := GRAPH_LINE_WIDTH;
               w := aRect.Left + GRAPH_LEFT_PADDING;
 
-              y1 := aRect.Top;
-              y2 := aRect.Bottom;
-              y := y1 + (y2-y1) div 2;
-
               j := column;
-              for i:=0 to Length(lines)-1 do begin
+              for i:=Length(lines)-1 downto 0 do begin
+                y1 := aRect.Top;
+                y2 := aRect.Bottom;
+                y := y1 + (y2-y1) div 2;
                 flags := lines[i].Flags;
                 //if lines[i].source=LINE_SOURCE_COLUMN then begin
                   n := lines[i].column;
@@ -344,8 +343,8 @@ begin
                 x := w + n * GRAPH_COLUMN_SEPARATOR;
 
                 if lifNode in flags then begin
-                  if lifFirst in flags then y1 := y;
-                  if lifLast  in flags then y2 := y;
+                  if (lifFirst in flags) and (childs=nil) then y1 := y;
+                  if (lifLast  in flags) and (parents=nil) then y2 := y;
 
                   gridlog.Canvas.Line(x, y1, x, y2);
                   gridLog.Canvas.Brush.Style := bsSolid;
@@ -356,21 +355,25 @@ begin
                     gridLog.canvas.EllipseC(x, y, GRAPH_NODE_RADIUS, GRAPH_NODE_RADIUS);
                   gridLog.canvas.Pen.Style := psSolid;
                 end else begin
+
+                  if [lifInternal, lifToMerge, lifToBorn] * flags <> [] then
+                    gridlog.Canvas.Line(x, y1, x, y2);
+
                   if lifMerge in flags then begin
                     // draw a merge line with origin at source and dest at this point
                     gridLog.Canvas.Line(x, y, x, y2);
                     gridLog.Canvas.Line(x-GRAPH_NODE_RADIUS-1, y, x, y);
                     x1 := w + fItemIndices[lines[i].source].column * GRAPH_COLUMN_SEPARATOR;
                     gridLog.Canvas.Line(x1, y, x, y);
-                  end else
+                  end;
+
                   if lifBorn in flags then begin
                     // draw a new born line with origin at source and dest at this point
                     gridLog.Canvas.Line(x, y1, x, y);
                     gridLog.Canvas.Line(x-GRAPH_NODE_RADIUS-1, y, x, y);
                     x1 := w + fItemIndices[lines[i].source].column * GRAPH_COLUMN_SEPARATOR;
                     gridLog.Canvas.Line(x1, y, x, y);
-                  end else
-                    gridlog.Canvas.Line(x, y1, x, y2);
+                  end;
                 end;
               end;
               gridLog.Canvas.Pen.Width := 1;

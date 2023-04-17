@@ -2,7 +2,7 @@ unit unitdbindex;
 
 {$mode ObjFPC}{$H+}
 
-{$define Debug}
+{.$define Debug}
 
 interface
 
@@ -454,11 +454,30 @@ begin
   end;
 end;
 
-function FindMergeSource(items: TItemIndexArray; ref: Integer; columns: TColumnArray; column: Integer): Integer;
+function FindInternalMerges(items: TItemIndexArray; i: Integer; var columns: TColumnArray; j, k: Integer): Integer;
+var
+  a, dest, cur: Integer;
 begin
-  result := LINE_SOURCE_COLUMN;
-  // in the column 'column', the node previous to 'ref' has any childs?
-
+  with columns[j] do begin
+    // is not the first nor the last it should be an internal node
+    // is this a merging node? what is the merging dest?
+    dest := FindSourceColumn(items, i, true);
+    if dest>first then begin
+      // yes, tag from 'dest' to 'i'
+      cur := dest;
+      while cur<>i do begin
+        for a := 0 to Length(items[cur].lines)-1 do begin
+          if items[cur].lines[a].column=j then begin
+            // found the right line
+            if cur=dest then Include(items[cur].lines[a].flags, lifMerge)
+            else             Include(items[cur].lines[a].flags, lifToMerge);
+            items[cur].lines[a].source := dest;
+          end;
+        end;
+        inc(cur);
+      end;
+    end;
+  end;
 end;
 
 {$define UseMap}
@@ -671,16 +690,8 @@ begin
           Include(flags, lifNode);
           // what about the tip?
           if (i=first) then Include(flags, lifFirst) else
-          if (i=last)  then Include(flags, lifLast)
-          else begin
-            //// is not the first nor the last it should be an internal node
-            //// is this a merging node? what is the merging dest?
-            //n := FindSourceColumn(result, i, true);
-            //if n>first then begin
-            //  // yes, and 'n' is the merging destination. do it.
-            //  MarkMerges(result, n, i, j);
-            //end;
-          end;
+          if (i=last)  then Include(flags, lifLast) else
+          if j>0 then       FindInternalMerges(result, i, columns, j, k)
         end else
         // a line should be drawn here, what kind of line?
         if (i>=head) and (i<first) then begin
