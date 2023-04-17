@@ -323,7 +323,9 @@ begin
           pmi^.parents[k].commit := elements[j].commit;
           inc(k);
         end else begin
+          {$IFDEF DEBUG}
           DebugLn('At %d parent %d (%.16x) is missing',[i, j, elements[j].commit]);
+          {$ENDIF}
           pmi^.parents[k].n := -1;
           pmi^.parents[k].commit := elements[j].commit;
         end;
@@ -348,7 +350,9 @@ begin
           if result.Find(pmi^.parents[k].commit, aIndex) then begin
             found := result.Data[aIndex];
             pmi^.parents[k].n := found^.n;
+            {$IFDEF DEBUG}
             DebugLn('At %d found missing parent %d (%.16x)',[lost[i], k, pmi^.parents[k].commit]);
+            {$ENDIF}
           end;
         end;
     end;
