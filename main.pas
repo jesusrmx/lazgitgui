@@ -1515,7 +1515,7 @@ begin
       if res<>mrYes then
         exit;
 
-      cmd := 'push --progress --set-upstream '+L[0]+' '+fGit.Branch;
+      cmd := ' push --progress --set-upstream '+L[0]+' '+fGit.Branch;
 
     finally
       L.Free;
