@@ -90,6 +90,31 @@ type
     property Head: boolean read fHead write fHead;
   end;
 
+  { TCacheLimits }
+
+  TCacheLimits = class
+  private
+    fConfig: IConfig;
+    fDb: TDbIndex;
+    fRangeStart: Integer;
+    fRangeEnd: Integer;
+    fShaStart: string[41];
+    fShaEnd: string[41];
+    fMaxCount: Integer;
+    function GetIsFiltered: boolean;
+  public
+    constructor create;
+    function IsRestricted: boolean;
+    procedure Setup;
+    procedure Filter;
+
+    property Db: TDbIndex read fDb write fDb;
+    property Config: IConfig read fConfig write fConfig;
+    property IsFiltered: boolean read GetIsFiltered;
+    property RangeStart: Integer read fRangeStart;
+    property RangeEnd: Integer read fRangeEnd;
+  end;
+
   { TLogCache }
 
   TLogCache = class
@@ -102,8 +127,9 @@ type
     fOldDateIsStart: boolean;
     flogEvent: TLogThreadEvent;
     fInterrupted: boolean;
-    fRangeEnd: Integer;
-    fRangeStart: Integer;
+    fLimits: TCacheLimits;
+    function GetRangeEnd: Integer;
+    function GetRangeStart: Integer;
     procedure OnLogThreadDone(Sender: TObject);
     procedure OnLogThreadOutput(sender: TObject; var interrupt: boolean);
     procedure EnterLogState(aState: TLogState);
@@ -113,7 +139,6 @@ type
     procedure DoLogStateEnd;
     procedure Run;
     procedure SendEvent(thread: TLogThread; event: Integer; var interrupt:boolean);
-    function  Restricted: boolean;
   public
     constructor create(aLogEvent: TLogThreadEvent);
     destructor Destroy; override;
@@ -123,8 +148,8 @@ type
     property Git: TGit read fGit write fGit;
     property DbIndex: TDbIndex read fDbIndex write fDbIndex;
     property Config: IConfig read fConfig write fConfig;
-    property RangeStart: Integer read fRangeStart;
-    property RangeEnd: Integer read fRangeEnd;
+    property RangeStart: Integer read GetRangeStart;
+    property RangeEnd: Integer read GetRangeEnd;
 
   end;
 
@@ -132,6 +157,63 @@ implementation
 
 const
   LOG_CMD = '--pretty="format:%ct'#2'%P'#2'%H'#2'%an'#2'%ae'#2'%s'#2#3'" --all';
+
+{ TCacheLimits }
+
+function TCacheLimits.GetIsFiltered: boolean;
+begin
+  result := (fRangeStart>0) and (fRangeEnd>0) and (fRangeEnd>=fRangeStart);
+end;
+
+constructor TCacheLimits.create;
+begin
+  fRangeStart := -1;
+  fRangeEnd := -1;
+  fShaStart := '';
+  fShaEnd := '';
+  fMaxCount := 0;
+end;
+
+function TCacheLimits.IsRestricted: boolean;
+begin
+  result := (fDb=nil) or (fMaxCount>0) or
+            ((fRangeStart>0) and (fRangeEnd<fDb.Count) and (fRangeEnd>fRangeStart));
+end;
+
+procedure TCacheLimits.Setup;
+begin
+
+  if fDb=nil then
+    raise Exception.Create('Apply restruction on closed db');
+
+  fShaStart := fConfig.ReadString('CommitStart', '');
+  fShaEnd := fConfig.ReadString('CommitEnd', '');
+  if (fShaStart<>'') and (fShaEnd<>'') then begin
+    // find the corresponding indexes
+    fRangeStart := fDb.FindCommitSha(fShaStart);
+    if fRangeStart>=0 then
+      fRangeEnd := fDb.FindCommitSha(fShaEnd, fRangeStart);
+  end else begin
+    fRangeStart := fConfig.ReadInteger('RangeStart', -1);
+    fRangeEnd := fConfig.ReadInteger('RangeEnd', -1);
+  end;
+  if (fRangeStart>=0) and (fRangeEnd>=0) and (fRangeEnd>=fRangeStart) then begin
+    fDb.MaxRecords := fRangeEnd + 1;
+  end else
+    fDb.MaxRecords := fConfig.ReadInteger('MaxLogRecords', 5000);
+end;
+
+procedure TCacheLimits.Filter;
+var
+  arr: TIntArray;
+  i: Integer;
+begin
+  if (fDb<>nil) and (fRangeStart>0) and (fRangeEnd<fDb.Count) and (fRangeEnd>fRangeStart) then begin
+    SetLength(Arr, fRangeEnd-fRangeStart+1);
+    for i:=0 to Length(arr)-1 do Arr[i] := i + fRangeStart;
+    fDb.SetFilter(arr);
+  end;
+end;
 
 { TLogThread }
 
@@ -353,14 +435,26 @@ begin
   SendEvent(thread, LOGEVENT_DONE, dummy);
 end;
 
+function TLogCache.GetRangeEnd: Integer;
+begin
+  result := fLimits.RangeEnd;
+end;
+
+function TLogCache.GetRangeStart: Integer;
+begin
+  result := fLimits.RangeStart;
+end;
+
 constructor TLogCache.create(aLogEvent: TLogThreadEvent);
 begin
   inherited Create;
   fLogEvent := aLogEvent;
+  fLimits := TCacheLimits.Create;
 end;
 
 destructor TLogCache.Destroy;
 begin
+  fLimits.Free;
   fDbIndex.Free;
   inherited Destroy;
 end;
@@ -391,13 +485,15 @@ begin
   if fDbIndex.LoadItem(-1) then
     fOldDate := fDbIndex.Item.CommiterDate;
 
+  fLimits.Setup;
+
   EnterLogState(lsGetFirst);
 end;
 
 procedure TLogCache.DoLogStateGetFirst;
 begin
   if (fOldDate>0) or (fDbIndex.Count=0) then begin
-    if fDbIndex.AcceptingNewRecords and not Restricted then begin
+    if fDbIndex.AcceptingNewRecords and not fLimits.IsRestricted then begin
       fLogState := lsGetFirst;
       Run;
       exit;
@@ -408,7 +504,7 @@ end;
 
 procedure TLogCache.DoLogStateGetLast;
 begin
-  if fDbIndex.AcceptingNewRecords and not Restricted then begin
+  if fDbIndex.AcceptingNewRecords and not fLimits.IsRestricted then begin
     fLogState := lsGetLast;
     Run;
   end;
@@ -422,13 +518,7 @@ var
 begin
   fLogState := lsEnd;
 
-  fRangeStart := Config.ReadInteger('RangeStart', -1);
-  fRangeEnd   := Config.ReadInteger('RangeEnd', -1);
-  if (fRangeStart>0) and (fRangeEnd<fDbIndex.Count) and (fRangeEnd>fRangeStart) then begin
-    SetLength(Arr, fRangeEnd-fRangeStart+1);
-    for i:=0 to Length(arr)-1 do Arr[i] := i + fRangeStart;
-    fDbIndex.SetFilter(arr);
-  end;
+  fLimits.Filter;
 
   dummyInterrupt := false;
   SendEvent(nil, LOGEVENT_END, dummyInterrupt);
@@ -492,28 +582,12 @@ begin
     fLogEvent(self, thread, event, interrupt);
 end;
 
-function TLogCache.Restricted: boolean;
-var
-  rStart, rEnd, maxRecords: Integer;
-begin
-  rStart := Config.ReadInteger('RangeStart', -1);
-  rEnd := Config.ReadInteger('RangeEnd', -1);
-  maxRecords := Config.ReadInteger('MaxLogRecords', 0);
-  result := (maxRecords>0) or
-            ((rStart>0) and (rEnd<fDbIndex.Count) and (rEnd>rStart));
-end;
-
 procedure TLogCache.LoadCache;
-var
-  rEnd: Integer;
 begin
   if fDbIndex=nil then begin
     fDbIndex := TDbIndex.Create(fGit.TopLevelDir + '.git' + PathDelim);
-    rEnd := Config.ReadInteger('RangeEnd', -1);
-    if rEnd>0 then
-      fDbIndex.MaxRecords := rEnd + 1
-    else
-      fDbIndex.MaxRecords := Config.ReadInteger('MaxLogRecords', 1000);
+    fLimits.Db := fDbIndex;
+    fLimits.Config := Config;
   end;
   // start cache update anyway
   EnterLogState(lsStart);

@@ -108,7 +108,7 @@ type
     function GetInfo: string;
     //procedure RecoverIndex;
     procedure ReIndex;
-    procedure GetIndexRecord(var aIndex:Integer; out indxRec: TIndexRecord);
+    procedure GetIndexRecord(var aIndex:Integer; out indxRec: TIndexRecord; unfiltered:boolean);
     procedure CacheBufferFromItem(out aBuf: PChar; out len: word);
     procedure ItemFromCacheBuffer;
     procedure ItemFromLogBuffer(aBuf: PChar);
@@ -116,6 +116,7 @@ type
     procedure ThreadStart(aHead: boolean);
     procedure ThreadDone;
     procedure ThreadStore(buf: pchar; size: Integer);
+    function GetCachedItem(aIndex: Integer; unfiltered, tryToFix:boolean): boolean;
   public
     constructor Create(dir: string);
     destructor Destroy; override;
@@ -124,6 +125,7 @@ type
     function LoadItem(aIndex: Integer): boolean;
     procedure SetFilter(arr: TIntArray);
     procedure TopoSort;
+    function FindCommitSha(sha: string; startAt:Integer=-1): Integer;
 
     property Item: TLogItem read fItem;
     property Count: Integer read GetCount;
@@ -849,15 +851,18 @@ begin
   end;
 end;
 
-procedure TDbIndex.GetIndexRecord(var aIndex: Integer; out indxRec: TIndexRecord
-  );
+procedure TDbIndex.GetIndexRecord(var aIndex: Integer; out
+  indxRec: TIndexRecord; unfiltered: boolean);
 var
-  sizeofIndex: Integer;
   indexOffset: SizeInt;
   theIndex: Integer;
 begin
-  sizeofIndex := SIZEOF_INDEX;
 
+  if unfiltered then begin
+    if aIndex<0 then
+      aIndex := (fIndexStream.Size div SIZEOF_INDEX)-1;
+    theIndex := aIndex;
+  end else
   if fFilter<>nil then begin
     if (aIndex<0) or (aIndex>Length(fFilter)-1) then
       aIndex := Length(fFilter)-1;
@@ -869,10 +874,10 @@ begin
     theIndex := aIndex;
   end;
 
-  indexOffset := theIndex * sizeofIndex;
+  indexOffset := theIndex * SIZEOF_INDEX;
 
   fIndexStream.Position := indexOffset;
-  fIndexStream.Read(indxRec{%H-}, sizeofIndex);
+  fIndexStream.Read(indxRec{%H-}, SIZEOF_INDEX);
 end;
 
 procedure TDbIndex.CacheBufferFromItem(out aBuf: PChar; out len: word);
@@ -1021,7 +1026,7 @@ begin
   DebugLn('         Author: %s',[fItem.ParentOID]);
   DebugLn('          Email: %s',[fItem.Email]);
   DebugLn('        Subject: %s',[fItem.Subject]);
-  GetIndexRecord(fLoadedItemIndex, indxRec);
+  GetIndexRecord(fLoadedItemIndex, indxRec, false);
   DebugLn('   Cache Offset: %d', [indxRec.offset]);
   DebugLn('Cache Item Size: %d', [indxRec.size]);
 end;
@@ -1191,7 +1196,7 @@ begin
 
 end;
 
-function TDbIndex.LoadItem(aIndex: Integer): boolean;
+function TDbIndex.GetCachedItem(aIndex: Integer; unfiltered, tryToFix: boolean): boolean;
 var
   indxRec: TIndexRecord;
   w: word;
@@ -1199,7 +1204,7 @@ begin
   result := (fIndexStream<>nil) and (fIndexStream.Size>0);
   if result then begin
 
-    GetIndexRecord(aIndex, indxRec);
+    GetIndexRecord(aIndex, indxRec, unfiltered);
 
     result := indxRec.offset + indxRec.size <= fCacheStream.Size ;
     if result then begin
@@ -1212,24 +1217,33 @@ begin
       fCacheStream.Position := indxRec.offset;
       fCacheStream.Read(fBuffer^, indxRec.size);
 
+
       w := PWord(fBuffer)^;
       if indxRec.Size-2<>w then begin
 
-        // the cache files are corrupt save what seems right, it will be fixed
-        // the next time the log is requested.
-        fCacheStream.Size := indxRec.offset;
-        fIndexStream.Size := fIndexStream.Position - SIZEOF_INDEX;
-        FileFlush(fIndexStream.Handle);
-        FileFlush(fCacheStream.Handle);
+        if tryToFix then begin
+          // the cache files are corrupt save what seems right, it will be fixed
+          // the next time the log is requested.
+          fCacheStream.Size := indxRec.offset;
+          fIndexStream.Size := fIndexStream.Position - SIZEOF_INDEX;
+          FileFlush(fIndexStream.Handle);
+          FileFlush(fCacheStream.Handle);
+        end;
 
         raise Exception.CreateFmt('Inconsistent data at index %d, expected %d found %d',[aIndex, indxRec.Size-2, w]);
       end;
 
-      ItemFromCacheBuffer;
-
-      fLoadedItemIndex := aIndex;
     end;
 
+  end;
+end;
+
+function TDbIndex.LoadItem(aIndex: Integer): boolean;
+begin
+  result := GetCachedItem(aIndex, false, true);
+  if result then begin
+    ItemFromCacheBuffer;
+    fLoadedItemIndex := aIndex;
   end;
 end;
 
@@ -1426,6 +1440,48 @@ begin
   finally
     ClearParentsArray(parArray);
     graph.Free;
+  end;
+end;
+
+function TDbIndex.FindCommitSha(sha: string; startAt: Integer): Integer;
+var
+  i, n, nailLen: Integer;
+  indexOffset: Int64;
+  indxRec: TIndexRecord;
+  b: byte;
+  w: word;
+  p, nail: pchar;
+begin
+  // find directly in the database the asked sha
+  result := -1;
+  if sha='' then
+    exit;         // a commit cannot be empty
+  sha := lowercase(sha);
+
+  if (fIndexStream<>nil) and (fCacheStream<>nil) then begin
+    nail := @sha[1];
+    nailLen := Length(sha);
+    if startAt<0 then startAt := 0;
+    for i:=startAt to (FIndexStream.Size div SIZEOF_INDEX)-1 do begin
+
+      if not GetCachedItem(i, true, false) then
+        exit;
+
+      p := fBuffer;           // points to the record data
+      inc(p, 2);              // skip record size
+      inc(p, SizeOf(Int64));  // skip date
+      w := PWord(p)^;         // read parents length
+      inc(p, 2+w);            // skip parents
+      b := PByte(p)^;         // read commit length
+      inc(p);
+
+      n := strlcomp(p, nail, Min(b, nailLen));
+      if n=0 then begin
+        result := i;
+        exit;
+      end;
+
+    end;
   end;
 end;
 
