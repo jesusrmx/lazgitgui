@@ -116,6 +116,7 @@ type
     function AddToIgnoreFile(aFile:string; justType:boolean; global:boolean): boolean;
     function Describe(opts: string; out cmdOut:RawByteString): Integer;
     function UpdateRefList: Integer;
+    function RemotesList: TStringList;
 
     property Exe: string read fGitCommand;
     property CommitsAhead: Integer read fCommitsAhead;
@@ -946,6 +947,15 @@ begin
       '%(*authordate)',
       '%(*contents)'
       ]);
+end;
+
+function TGit.RemotesList: TStringList;
+var
+  cmdOut: RawByteString;
+begin
+  result := TStringList.Create;
+  if cmdLine.RunProcess(fGitCommand + ' remote', fTopLevelDir, cmdOut)<=0 then
+    result.Text := cmdOut;
 end;
 
 function TGit.GitMerging: boolean;

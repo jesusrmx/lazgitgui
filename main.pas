@@ -1479,6 +1479,8 @@ end;
 procedure TfrmMain.DoPush;
 var
   res: TModalResult;
+  L: TStringList;
+  cmd: string;
 begin
   //if fConfig.ReadBoolean('FetchBeforePush', false) then
   //  doFetch;
@@ -1489,7 +1491,40 @@ begin
       exit;
   end;
 
-  RunInteractive(fGit.Exe + ' push --progress', fGit.TopLevelDir, 'Pushing to remote: ', 'Push');
+  if (fGit.Upstream='') then begin
+    L := fGit.RemotesList;
+    try
+      if L.Count=0 then begin
+        ShowMessage('This repository has no remotes defined'^M+
+                    'I''m not yet prepared to handle this');
+        exit;
+      end;
+      if L.Count>1 then begin
+        ShowMessage(fGit.Branch + ' has no tracking and there are '^M+
+                    IntToStr(l.Count)+' remotes ('+L.CommaText+')'^M+
+                    'I''m not yet prepared to handle this');
+       exit;
+      end;
+
+      res := QuestionDlg(
+        'Pushing branch without tracking information',
+        'Do you want to push "'+fGit.Branch+'" to "'+L[0]+'"'+LineEnding+
+        'And setup tracking information? I will do:'^M+LineEnding+LineEnding+
+        'git push --set-upstream '+L[0]+' '+fGit.Branch, mtConfirmation,
+        [mrYes, 'yes, do it', mrCancel, 'Cancel'], 0 );
+      if res<>mrYes then
+        exit;
+
+      cmd := 'push --progress --set-upstream '+L[0]+' '+fGit.Branch;
+
+    finally
+      L.Free;
+    end;
+
+  end else
+    cmd := ' push --progress';
+
+  RunInteractive(fGit.Exe + cmd, fGit.TopLevelDir, 'Pushing to remote: ', 'Push');
   UpdateStatus;
 end;
 
