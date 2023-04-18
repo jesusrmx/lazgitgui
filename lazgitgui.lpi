@@ -117,6 +117,12 @@
         <Filename Value="unitdrafts.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit>
+      <Unit>
+        <Filename Value="unitframelog.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="frameLog"/>
+        <ResourceBaseClass Value="Frame"/>
+      </Unit>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
