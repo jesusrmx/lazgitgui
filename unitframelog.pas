@@ -5,7 +5,9 @@ unit unitframelog;
 interface
 
 uses
-  Classes, SysUtils, fgl, LazLogger, Graphics, Forms, Controls, Grids, Types,
+  Classes, SysUtils, dateUtils, fgl,
+  LazLogger, SynEdit, Graphics, Forms, Dialogs, Controls, Grids,
+  ExtCtrls, ComCtrls, Menus, Types, Clipbrd,
   unitlogcache, unitdbindex, unitgit, unitifaces;
 
 const
@@ -23,19 +25,36 @@ type
 
   TframeLog = class(TFrame)
     gridLog: TDrawGrid;
+    MenuItem1: TMenuItem;
+    MenuItem2: TMenuItem;
+    MenuItem3: TMenuItem;
+    panBrowser: TPanel;
+    panLogTools: TPanel;
+    panFiles: TPanel;
+    popLog: TPopupMenu;
+    Splitter1: TSplitter;
+    Splitter2: TSplitter;
+    TreeView1: TTreeView;
+    txtViewer: TSynEdit;
+    procedure gridLogContextPopup(Sender: TObject; MousePos: TPoint;
+      var Handled: Boolean);
     procedure gridLogDrawCell(Sender: TObject; aCol, aRow: Integer;
       aRect: TRect; aState: TGridDrawState);
+    procedure MenuItem2Click(Sender: TObject);
+    procedure MenuItem3Click(Sender: TObject);
   private
     fConfig: IConfig;
     fGit: TGit;
     fItemIndices: TItemIndexArray;
     fLogCache: TLogCache;
     fOnLogCacheEvent: TLogThreadEvent;
+    fPopupMousePos: TPoint;
     fSeenRefs: TRefsMap;
     fGraphColumns: Integer;
     procedure CacheRefs;
-    procedure OnLogEvent(sender: TObject; thread: TLogThread; event: Integer;
-      var interrupt: boolean);
+    procedure OnLogEvent(sender: TObject; thread: TLogThread; event: Integer; var interrupt: boolean);
+    procedure CopyToClipboard(what: Integer; aRow: Integer);
+    function GetPopMenuRow: Integer;
   public
     procedure Start;
     procedure Clear;
@@ -56,6 +75,19 @@ const
   GRAPH_MAX_COLORS = 5;
   GraphColumnsColors:array[0..GRAPH_MAX_COLORS-1] of TColor =
     (clBlue, clFuchsia, clMaroon, clRed, clGreen);
+
+const
+  COPY_ALL_INFO     = 1;
+  COPY_SHA          = 2;
+
+  ALL_INFO_TEMPLATE =
+    'parents: %s' + LineEnding +
+    'commit: %s' + LineEnding +
+    'references: %s' + LineEnding +
+    'Author: %s <%s>' + LineEnding +
+    'Commit Date: %s' + LineEnding +
+    'Message: ' + LineEnding+LineEnding+
+    '%s';
 
 { TframeLog }
 
@@ -204,6 +236,22 @@ begin
   end;
 end;
 
+procedure TframeLog.gridLogContextPopup(Sender: TObject; MousePos: TPoint;
+  var Handled: Boolean);
+begin
+  fPopupMousePos := MousePos;
+end;
+
+procedure TframeLog.MenuItem2Click(Sender: TObject);
+begin
+  CopyToClipboard(COPY_ALL_INFO, GetPopMenuRow);
+end;
+
+procedure TframeLog.MenuItem3Click(Sender: TObject);
+begin
+  CopyToClipboard(COPY_SHA, GetPopMenuRow)
+end;
+
 procedure TframeLog.CacheRefs;
 var
   i, j, aIndex: Integer;
@@ -279,6 +327,60 @@ begin
       begin
       end;
   end;
+end;
+
+procedure TframeLog.CopyToClipboard(what: Integer; aRow: Integer);
+var
+  aIndex, n: Integer;
+  s: String;
+  dt: TDateTime;
+  arr: TRefInfoArray;
+  ref: PRefInfo;
+begin
+  aIndex := aRow - gridLog.FixedRows;
+  if (aIndex>=0) and (aIndex<fLogCache.DbIndex.Count) then begin
+    if not fLogCache.DbIndex.LoadItem(aIndex) then  begin
+      ShowMessage('Unable to locate the log record');
+      exit;
+    end;
+
+    s := '';
+    with fLogCache.DbIndex.Item do
+      case what of
+        COPY_ALL_INFO:
+          begin
+            s := '';
+            if (fSeenRefs<>nil) and fSeenRefs.Find(CommitOID, n ) then begin
+              arr := fSeenRefs.Data[n];
+              for ref in arr do begin
+                if s<>'' then s+=', ';
+                if ref^.subType=rostTag then
+                  s += 'tag: ';
+                s += ref^.refName
+              end;
+            end;
+            dt := UnixToDateTime(CommiterDate, false);
+            s := format(ALL_INFO_TEMPLATE, [
+              ParentOID, CommitOID, s,
+              Author, Email,
+              format('%s (%d)',[DateTimeToStr(dt), CommiterDate]),
+              Subject]);
+          end;
+        COPY_SHA:
+          s := CommitOID;
+      end;
+
+    if s<>'' then
+      clipboard.AsText := s;
+  end;
+end;
+
+function TframeLog.GetPopMenuRow: Integer;
+var
+  p: TPoint;
+begin
+  p := gridLog.MouseToCell(fPopupMousePos);
+  result := p.y;
 end;
 
 procedure TframeLog.Start;
