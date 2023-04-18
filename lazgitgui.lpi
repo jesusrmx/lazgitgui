@@ -121,6 +121,7 @@
         <Filename Value="unitframelog.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="frameLog"/>
+        <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
       </Unit>
     </Units>

@@ -1056,54 +1056,50 @@ var
   sig: cardinal;
 begin
 
-  if fCacheStream=nil then begin
+  if fCacheStream<>nil then
+    exit;
 
-    aFileCache := GetFilename(FILENAME_CACHE);
-    aFileIndex := GetFilename(FILENAME_INDEX);
+  aFileCache := GetFilename(FILENAME_CACHE);
+  aFileIndex := GetFilename(FILENAME_INDEX);
 
-    if fCacheStream=nil then begin
-
-      mode := fmOpenReadWrite + fmShareDenyWrite;
-      if not FileExists(aFileCache) then begin
-        if fReadOnly then
-          raise Exception.CreateFmt('Cache file %s do not exists',[aFileCache]);
-        mode += fmCreate;
-      end;
-      fCacheStream := TFileStream.Create(aFileCache, mode);
-
-      if mode and fmCreate = fmCreate then begin
-        sig := NToBE((PGM_SIGNATURE shl 16) or PGM_VERSION);
-        fCacheStream.WriteDWord(sig);
-      end
-      else begin
-        sig := BeToN(fCacheStream.ReadDWord);
-        aVersion := sig and $FFFF;
-        sig := sig shr 16;
-        if (sig<>PGM_SIGNATURE) or (aVersion<PGM_VERSION) then begin
-          if fReadOnly then
-            raise Exception.CreateFmt('Invalid cache file %s',[aFileCache]);
-          // this is an old cache file, recreate it
-          DeleteFile(aFileIndex);
-          sig := NToBE((PGM_SIGNATURE shl 16) or PGM_VERSION);
-          fCacheStream.position := 0;
-          fCacheStream.WriteDWord(sig);
-          fCacheStream.Size := fCacheStream.Position;
-        end;
-      end;
-
-    end;
-
-    if fIndexStream=nil then begin
-      mode := fmOpenReadWrite + fmShareDenyWrite;
-      if not FileExists(aFileIndex) then begin
-        if fReadOnly then
-          raise Exception.CreateFmt('Index file %s do not exists',[aFileIndex]);
-        mode += fmCreate;
-      end;
-      fIndexStream := TFileStream.Create(aFileIndex, mode);
-    end;
-
+  mode := fmOpenReadWrite + fmShareDenyWrite;
+  if not FileExists(aFileCache) then begin
+    if fReadOnly then
+      raise Exception.CreateFmt('Cache file %s do not exists',[aFileCache]);
+    mode += fmCreate;
   end;
+  fCacheStream := TFileStream.Create(aFileCache, mode);
+
+  if mode and fmCreate = fmCreate then begin
+    sig := NToBE((PGM_SIGNATURE shl 16) or PGM_VERSION);
+    fCacheStream.WriteDWord(sig);
+  end
+  else begin
+    sig := BeToN(fCacheStream.ReadDWord);
+    aVersion := sig and $FFFF;
+    sig := sig shr 16;
+    if (sig<>PGM_SIGNATURE) or (aVersion<PGM_VERSION) then begin
+      if fReadOnly then
+        raise Exception.CreateFmt('Invalid cache file %s',[aFileCache]);
+      // this is an old cache file, recreate it
+      DeleteFile(aFileIndex);
+      sig := NToBE((PGM_SIGNATURE shl 16) or PGM_VERSION);
+      fCacheStream.position := 0;
+      fCacheStream.WriteDWord(sig);
+      fCacheStream.Size := fCacheStream.Position;
+    end;
+  end;
+
+  if fIndexStream=nil then begin
+    mode := fmOpenReadWrite + fmShareDenyWrite;
+    if not FileExists(aFileIndex) then begin
+      if fReadOnly then
+        raise Exception.CreateFmt('Index file %s do not exists',[aFileIndex]);
+      mode += fmCreate;
+    end;
+    fIndexStream := TFileStream.Create(aFileIndex, mode);
+  end;
+
 end;
 
 procedure TDbIndex.ThreadStart(aHead: boolean);
