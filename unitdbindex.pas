@@ -176,7 +176,7 @@ begin
     DebugLn('Column %2d: Sections: %d',[col, Length(columns[col].sections)]);
     for sec:=0 to Length(columns[col].Sections)-1 do
       with columns[col].sections[sec] do
-        DebugLn('  Section %d: head=%3d first=%3d last=%3d tail=%3d -> count=%3d',[sec, col, head, first, last, tail, count]);
+        DebugLn('  Section %d: tip=%3d first=%3d last=%3d tail=%3d -> count=%3d',[sec, col, head, first, last, tail, count]);
   end;
 end;
 
@@ -601,6 +601,7 @@ begin
   while n>0 do begin
 
     // if starting from the top, create a new column
+    // if i<>0 we are trying to find more sections in this column
     if i=0 then begin
       inc(Column);
       SetLength(Columns, column + 1);
@@ -651,7 +652,7 @@ begin
 
       // now starting with 'i' descend down until we find
       // the first parent that has no assigned column
-      j := 0;
+      j := 0;  p := -1;
       while j<Length(result[i].parents) do begin
         p := result[i].parents[j];
         if result[p].column=-1 then
@@ -659,16 +660,19 @@ begin
         inc(j);
       end;
       if j=Length(result[i].parents) then begin
-        // have no parents or all parents are have column
+        // have no parents or all parents have a column
+        // so we are at the end of a section, and 'i' is 'last'
+        // TODO: NOTE: if 'p' is valid, then it's the 'tail'
+        //             so the section should include it.
 
-        // if we are not yet at the end of the result[]
-        // start again at the next index
-        if i<Length(result)-1 then
-          i := i + 1
+        // at what index 'i' should continue?
+        // it should be past the assigned 'p's parent
+        if (p>=0) and (p+1<Length(result)-1) then
+          i := p + 1
         else
-          // yes we are, try from start with another column
           i := 0;
-        break;  // not found
+
+        break;
       end;
 
       // the found parent is now the next index to process...
