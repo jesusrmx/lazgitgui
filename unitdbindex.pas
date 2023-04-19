@@ -1071,7 +1071,7 @@ begin
 
   if gblInvalidateCache then begin
     DeleteFile(aFileCache);
-    DeleteFile(aIndexFile);
+    DeleteFile(aFileIndex);
     gblInvalidateCache := false;
   end;
 
