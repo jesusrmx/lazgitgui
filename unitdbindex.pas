@@ -135,9 +135,6 @@ type
     property MaxRecords: Integer read fMaxRecords write fMaxRecords;
   end;
 
-  function GetParentsArray(db: TDbIndex): TParentsArray;
-  procedure ClearParentsArray(var aList: TParentsArray);
-  procedure FindRelatives(var items: TItemIndexArray; parArray: TParentsArray);
   function GetItemIndexes(db: TDbIndex; withColumns:boolean; out maxColumns:Integer): TItemIndexArray;
 
 implementation
@@ -280,31 +277,6 @@ end;
 //  QuickSort(0, Length(Columns)-1);
 //end;
 
-function GetParentsArray(db: TDbIndex): TParentsArray;
-var
-  i: Integer;
-begin
-  SetLength(result, db.Count);
-  for i:=0 to db.Count-1 do begin
-    db.LoadItem(i);
-    with db.Item do begin
-      Result[i].n := i;
-      Result[i].commit := OIDToQWord(CommitOID);
-      Result[i].parents := OIDToParents(ParentOID, Length(CommitOID));
-    end;
-  end;
-end;
-
-// is this necessary?
-procedure ClearParentsArray(var aList: TParentsArray);
-var
-  i: Integer;
-begin
-  for i:=0 to Length(aList)-1 do
-    aList[i].parents := nil;
-  aList := nil;
-end;
-
 function GetParentsMap(db: TDbIndex): TParentsMap;
 var
   i, j, k, aIndex: Integer;
@@ -381,39 +353,6 @@ begin
     dispose(pmi);
   end;
   map.free;
-end;
-
-procedure FindRelatives(var items: TItemIndexArray; parArray: TParentsArray);
-var
-  i, j, k, p: Integer;
-begin
-  SetLength(items, Length(parArray));
-
-  for i:=0 to Length(items)-1 do begin
-    items[i].index := i;
-    items[i].column := -1;
-    items[i].parents := nil;
-    items[i].childs := nil;
-    items[i].lines := nil;
-  end;
-
-  for i:=0 to Length(items)-1 do begin
-    for p:=0 to Length(parArray[i].parents)-1 do
-      for j:=0 to Length(parArray)-1 do begin
-        if j=i then continue;
-        if parArray[i].parents[p]=parArray[j].commit then begin
-          // found a parent of index i at index j
-          k := Length(items[i].parents);
-          SetLength(items[i].parents, k+1);
-          items[i].parents[k] := j;
-          // this means i is a child of j
-          k := Length(items[j].childs);
-          SetLength(items[j].childs, k+1);
-          items[j].childs[k] := i;
-        end;
-
-      end;
-  end;
 end;
 
 procedure FindRelativesMap(var items: TItemIndexArray; parMap: TParentsMap);
@@ -503,27 +442,19 @@ begin
   end;
 end;
 
-{$define UseMap}
-{$define DumpParents}
-
-{$ifdef UseMap}
+{.$define DumpParents}
 
 function ComparePMIs(const a, b: PParentsMapItem): Integer;
 begin
   result := a^.n - b^.n;
 end;
-{$endif}
 
 function GetItemIndexes(db: TDbIndex; withColumns: boolean; out
   maxColumns: Integer): TItemIndexArray;
 var
-  {$IFDEF UseMap}
   parMap: TParentsMap;
   pmi, pi: PParentsMapItem;
   mind: TIntArray;
-  {$ELSE}
-  parArray: TParentsArray;
-  {$ENDIF}
   i, j, k, n, p, c, column, section: Integer;
   s: string;
   columns: TColumnArray;
@@ -533,20 +464,15 @@ begin
   resetTicks;
   {$ENDIF}
 
-  {$IFDEF USEMAP}
   parMap := GetParentsMap(db);
   parMap.OnDataCompare := @ComparePMIs;
   SetLength(mind, parMap.Count);
-  {$ELSE}
-  parArray := GetParentsArray(db);
-  {$ENDIF}
 
   {$IFDEF DEBUG}
   ReportTicks('GetParentsArray');
   {$ifdef DumpParents}
   DebugLn;
   DebugLn('PARENTS');
-  {$ifdef UseMap}
   for i:=0 to parMap.Count-1 do begin
     pmi := parMap.Data[i];
     mind[pmi^.n] := i;
@@ -558,34 +484,20 @@ begin
       DbgOut('%.16x ',[pmi^.parents[j].commit]);
     DebugLn;
   end;
-  {$else}
-  for i:=0 to Length(parArray)-1 do begin
-    DbgOut('%3d: %.16x => ',[parArray[i].n, parArray[i].commit]);
-    for j:=0 to Length(parArray[i].parents)-1 do
-      DbgOut('%.16x ',[parArray[i].parents[j]]);
-    DebugLn;
-  end;
-  {$endif}
   ReportTicks('Reporting ParentsArray');
   {$endif}
   {$ENDIF}
 
   result := nil;
-  {$IFDEF USEMAP}
   FindRelativesMap(result, parMap);
-  {$ELSE}
-  FindRelatives(result, parArray);
-  {$ENDIF}
 
   {$IFDEF DEBUG}
   ReportTicks('FindingRelatives');
   {$ENDIF}
 
-  {$IFDEF USEMAP}
   ClearParentsMap(parMap);
   {$IFDEF DEBUG}
   ReportTicks('ClearingMap');
-  {$ENDIF}
   {$ENDIF}
 
   maxColumns := 0;
@@ -1490,7 +1402,6 @@ begin
     //SetFilter(arr);
 
   finally
-    ClearParentsArray(parArray);
     graph.Free;
   end;
 end;
