@@ -271,7 +271,7 @@ begin
     info := PRefInfo(fGit.RefList.Objects[i]);
     exists := fSeenRefs.Find(info^.objName, aIndex);
     if exists then
-      arr := fSeenRefs.KeyData[info^.objName]
+      arr := fSeenRefs.Data[aIndex]
     else
       arr := nil;
 
