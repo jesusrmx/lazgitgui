@@ -28,7 +28,7 @@ unit unitgit;
 interface
 
 uses
-  Classes, SysUtils, FileUtil, DateUtils, lazlogger, unitifaces, unitprocess,
+  Classes, SysUtils, FileUtil, DateUtils, fgl, lazlogger, unitifaces, unitprocess,
   unitentries, unitgitutils;
 
 const
@@ -60,6 +60,8 @@ type
   end;
   TRefInfoArray = array of PRefInfo;
 
+  TRefsMap = specialize TFPGMap<string, TRefInfoArray>;
+
   { TGit }
 
   TGit = class
@@ -81,6 +83,7 @@ type
     fLastTagOID: string;
     fLastTagCommits: Integer;
     fInternalRefList: TStringList;
+    fRefsMap: TRefsMap;
     function GetErrorLog: RawByteString;
     function GetInternalRefList: TStringList; overload;
     procedure GitStatusBranch(var head: pchar; tail: pchar);
@@ -91,6 +94,7 @@ type
     function AtLeastVersion(aVer: string): boolean;
     function RefListEnabledField(aField: string): boolean;
     procedure SetupExe(aExeFile, aVersion: string);
+    procedure UpdateRefsMap;
   public
     constructor create;
     destructor destroy; override;
@@ -136,6 +140,7 @@ type
     property LastTagCommits: Integer read fLastTagCommits;
     property Config: IConfig read fConfig write fConfig;
     property RefList: TStringList read GetInternalRefList;
+    property RefsMap: TRefsMap read fRefsMap;
   end;
 
   procedure ClearRefList(list: TStrings);
@@ -238,6 +243,8 @@ end;
 
 destructor TGit.destroy;
 begin
+  fRefsMap.Clear;
+  fRefsMap.Free;
   ClearRefList(fInternalRefList);
   fInternalRefList.Free;
   clear;
@@ -299,6 +306,51 @@ begin
       exit;
     fVersion := aVersion;
   end;
+end;
+
+procedure TGit.UpdateRefsMap;
+var
+  i, j, aIndex: Integer;
+  info: PRefInfo;
+  arr: TRefInfoArray;
+  exists: boolean;
+begin
+  if fRefsMap=nil then begin
+    fRefsMap := TRefsMap.Create;
+    fRefsMap.Sorted := true;
+  end else
+    fRefsMap.Clear;
+
+  for i:= 0 to RefList.Count-1 do begin
+    info := PRefInfo(RefList.Objects[i]);
+    exists := fRefsMap.Find(info^.objName, aIndex);
+    if exists then
+      arr := fRefsMap.Data[aIndex]
+    else
+      arr := nil;
+
+    j := Length(arr);
+    SetLength(arr, j+1);
+    arr[j] := info;
+
+    if not exists then
+      fRefsMap.Add(info^.objName, arr)
+    else
+      fRefsMap[info^.objName] := arr;
+  end;
+
+  //DebugLn;
+  //for i:=0 to RefList.Count-1 do begin
+  //  info := PRefInfo(RefList.Objects[i]);
+  //  DebugLn('%2d. %s %s',[i, info^.objName, info^.refName]);
+  //end;
+  //DebugLn;
+  //for i:=0 to fRefsMap.Count-1 do begin
+  //  arr := fRefsMap.Data[i];
+  //  DebugLn('%d. %s : %d refs', [i, fRefsMap.Keys[i], Length(arr)]);
+  //  for j:=0 to Length(Arr)-1 do
+  //    DebugLn('   %s',[arr[j]^.refName]);
+  //end;
 end;
 
 procedure TGit.Clear;
@@ -947,6 +999,8 @@ begin
       '%(*authordate)',
       '%(*contents)'
       ]);
+
+  UpdateRefsMap;
 end;
 
 function TGit.RemotesList: TStringList;

@@ -49,9 +49,7 @@ type
     fLogCache: TLogCache;
     fOnLogCacheEvent: TLogThreadEvent;
     fPopupMousePos: TPoint;
-    fSeenRefs: TRefsMap;
     fGraphColumns: Integer;
-    procedure CacheRefs;
     procedure OnLogEvent(sender: TObject; thread: TLogThread; event: Integer; var interrupt: boolean);
     procedure CopyToClipboard(what: Integer; aRow: Integer);
     function GetPopMenuRow: Integer;
@@ -181,8 +179,8 @@ begin
         'Subject':
           begin
             s := db.Item.Subject;
-            if (fSeenRefs<>nil) and fSeenRefs.Find(db.Item.CommitOID, n ) then begin
-              arr := fSeenRefs.Data[n];
+            if (fGit.RefsMap<>nil) and fGit.RefsMap.Find(db.Item.CommitOID, n ) then begin
+              arr := fGit.RefsMap.Data[n];
 
               for i:=0 to Length(arr)-1 do begin
                 w := gridLog.Canvas.TextWidth(arr[i]^.refName) + 6;
@@ -252,53 +250,6 @@ begin
   CopyToClipboard(COPY_SHA, GetPopMenuRow)
 end;
 
-procedure TframeLog.CacheRefs;
-var
-  i, j, aIndex: Integer;
-  info: PRefInfo;
-  arr: TRefInfoArray;
-  exists: boolean;
-begin
-  fGit.UpdateRefList;
-
-  if fSeenRefs=nil then begin
-    fSeenRefs := TRefsMap.Create;
-    fSeenRefs.Sorted := true;
-  end else
-    fSeenRefs.Clear;
-
-  for i:= 0 to fGit.RefList.Count-1 do begin
-    info := PRefInfo(fGit.RefList.Objects[i]);
-    exists := fSeenRefs.Find(info^.objName, aIndex);
-    if exists then
-      arr := fSeenRefs.Data[aIndex]
-    else
-      arr := nil;
-
-    j := Length(arr);
-    SetLength(arr, j+1);
-    arr[j] := info;
-
-    if not exists then
-      fSeenRefs.Add(info^.objName, arr)
-    else
-      fSeenRefs[info^.objName] := arr;
-  end;
-
-  //DebugLn;
-  //for i:=0 to fGit.RefList.Count-1 do begin
-  //  info := PRefInfo(fGit.RefList.Objects[i]);
-  //  DebugLn('%2d. %s %s',[i, info^.objName, info^.refName]);
-  //end;
-  //DebugLn;
-  //for i:=0 to fSeenRefs.Count-1 do begin
-  //  arr := fSeenRefs.Data[i];
-  //  DebugLn('%d. %s : %d refs', [i, fSeenRefs.Keys[i], Length(arr)]);
-  //  for j:=0 to Length(Arr)-1 do
-  //    DebugLn('   %s',[arr[j]^.refName]);
-  //end;
-end;
-
 procedure TframeLog.OnLogEvent(sender: TObject; thread: TLogThread;
   event: Integer; var interrupt: boolean);
 var
@@ -350,8 +301,8 @@ begin
         COPY_ALL_INFO:
           begin
             s := '';
-            if (fSeenRefs<>nil) and fSeenRefs.Find(CommitOID, n ) then begin
-              arr := fSeenRefs.Data[n];
+            if (fGit.RefsMap<>nil) and fGit.RefsMap.Find(CommitOID, n ) then begin
+              arr := fGit.RefsMap.Data[n];
               for ref in arr do begin
                 if s<>'' then s+=', ';
                 if ref^.subType=rostTag then
@@ -393,7 +344,7 @@ begin
 
   gridLog.RowCount := (gridLog.Height div gridLog.DefaultRowHeight) *  2;
 
-  CacheRefs;
+  fGit.UpdateRefList;
 
   fLogCache.LoadCache;
 
@@ -402,8 +353,6 @@ end;
 procedure TframeLog.Clear;
 begin
   FreeAndNil(fLogCache);
-  fSeenRefs.Clear;
-  FreeAndNil(fSeenRefs);
 end;
 
 procedure TframeLog.UpdateGridRows;
