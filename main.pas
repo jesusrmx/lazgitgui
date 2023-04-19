@@ -339,8 +339,8 @@ begin
   else begin
     fDescribed := false;
     UpdateStatus;
-    InvalidateBranchMenu;
   end;
+  InvalidateBranchMenu;
 end;
 
 procedure TfrmMain.OnIgnoreFileClick(Sender: TObject);
