@@ -444,11 +444,6 @@ end;
 
 {.$define DumpParents}
 
-function ComparePMIs(const a, b: PParentsMapItem): Integer;
-begin
-  result := a^.n - b^.n;
-end;
-
 function GetItemIndexes(db: TDbIndex; withColumns: boolean; out
   maxColumns: Integer): TItemIndexArray;
 var
@@ -465,7 +460,6 @@ begin
   {$ENDIF}
 
   parMap := GetParentsMap(db);
-  parMap.OnDataCompare := @ComparePMIs;
   SetLength(mind, parMap.Count);
 
   {$IFDEF DEBUG}
