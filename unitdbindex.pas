@@ -177,6 +177,28 @@ begin
   end;
 end;
 
+procedure ReportParents(parMap: TParentsMap);
+var
+  pmi: PParentsMapItem;
+  mind: TIntArray;
+  i, j: Integer;
+begin
+  SetLength(mind, parMap.Count);
+  DebugLn;
+  DebugLn('PARENTS');
+  for i:=0 to parMap.Count-1 do begin
+    pmi := parMap.Data[i];
+    mind[pmi^.n] := i;
+  end;
+  for i:=0 to Length(mind)-1 do begin
+    pmi := parMap.Data[mind[i]];
+    DbgOut('%3d: %.16x => ',[pmi^.n, parMap.Keys[mind[i]]]);
+    for j:=0 to Length(pmi^.parents)-1 do
+      DbgOut('%.16x ',[pmi^.parents[j].commit]);
+    DebugLn;
+  end;
+end;
+
 function dbgs(lif: TLineItemFlags): string; overload;
   procedure Add(s:string);
   begin
@@ -407,7 +429,7 @@ begin
   end;
 end;
 
-function FindInternalMerges(items: TItemIndexArray; i: Integer; var columns: TColumnArray; j, k: Integer): Integer;
+function FindInternalMerges(items: TItemIndexArray; i: Integer; var columns: TColumnArray; j: Integer): Integer;
 var
   a, dest, cur: Integer;
   Section: TColumnSection;
@@ -442,14 +464,12 @@ begin
   end;
 end;
 
-{.$define DumpParents}
+{$define DumpParents}
 
 function GetItemIndexes(db: TDbIndex; withColumns: boolean; out
   maxColumns: Integer): TItemIndexArray;
 var
   parMap: TParentsMap;
-  pmi, pi: PParentsMapItem;
-  mind: TIntArray;
   i, j, k, n, p, c, column, section: Integer;
   s: string;
   columns: TColumnArray;
@@ -460,25 +480,12 @@ begin
   {$ENDIF}
 
   parMap := GetParentsMap(db);
-  SetLength(mind, parMap.Count);
 
   {$IFDEF DEBUG}
-  ReportTicks('GetParentsArray');
+  ReportTicks('GetParentsMap');
   {$ifdef DumpParents}
-  DebugLn;
-  DebugLn('PARENTS');
-  for i:=0 to parMap.Count-1 do begin
-    pmi := parMap.Data[i];
-    mind[pmi^.n] := i;
-  end;
-  for i:=0 to Length(mind)-1 do begin
-    pmi := parMap.Data[mind[i]];
-    DbgOut('%3d: %.16x => ',[pmi^.n, parMap.Keys[mind[i]]]);
-    for j:=0 to Length(pmi^.parents)-1 do
-      DbgOut('%.16x ',[pmi^.parents[j].commit]);
-    DebugLn;
-  end;
-  ReportTicks('Reporting ParentsArray');
+  ReportParents(parMap);
+  ReportTicks('Reporting Parents');
   {$endif}
   {$ENDIF}
 
@@ -659,7 +666,7 @@ begin
               // what about the tip?
               if (i=first) then Include(flags, lifFirst) else
               if (i=last)  then Include(flags, lifLast) else
-              if j>0 then       FindInternalMerges(result, i, columns, j, k)
+              if j>0 then       FindInternalMerges(result, i, columns, j)
             end else
             // a line should be drawn here, what kind of line?
             if (i>=head) and (i<first) then begin
