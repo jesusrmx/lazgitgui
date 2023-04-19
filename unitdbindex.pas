@@ -2,7 +2,7 @@ unit unitdbindex;
 
 {$mode ObjFPC}{$H+}
 
-{.$define Debug}
+{$define Debug}
 
 interface
 
@@ -62,7 +62,7 @@ type
   TItemIndex = record
     index: Integer;
     parents, childs: TIntArray;
-    column: Integer;
+    column, section: Integer;
     lines: TLinesArray;
     //first: boolean;
     //last: boolean;
@@ -150,26 +150,34 @@ const
   FILENAME_INDEXTMP = 4;
 
 type
-  TColumn = record
-    index: Integer;
+  TColumnSection = record
+    index, column: Integer;
     first, head: Integer;
     last, tail: Integer;
     count: Integer;
+  end;
+  TColumnSectionArray = array of TColumnSection;
+
+  TColumn = record
+    index: Integer;
+    Sections: TColumnSectionArray;
   end;
   TColumnArray = array of TColumn;
 
 {$IFDEF DEBUG}
 procedure ReportColumns(msg:string; columns: TColumnArray);
 var
-  col: Integer;
+  col, sec: Integer;
 begin
   // all columns have now their real extensions, report them
   DebugLn;
   DebugLn('''%s'', report of %d columns:',[msg, Length(Columns)]);
-  for col:=0 to Length(Columns)-1 do
-    with columns[col] do begin
-      DebugLn('Column %2d: tip=%3d first=%3d last=%3d tail=%3d -> count=%3d',[col, head, first, last, tail, count]);
-    end;
+  for col:=0 to Length(Columns)-1 do begin
+    DebugLn('Column %2d: Sections: %d',[col, Length(columns[col].sections)]);
+    for sec:=0 to Length(columns[col].Sections)-1 do
+      with columns[col].sections[sec] do
+        DebugLn('  Section %d: tip=%3d first=%3d last=%3d tail=%3d -> count=%3d',[sec, col, head, first, last, tail, count]);
+  end;
 end;
 
 function dbgs(lif: TLineItemFlags): string; overload;
@@ -215,62 +223,62 @@ end;
 
 {$ENDIF}
 
-procedure SortColumns(var columns: TColumnArray);
-
-  function CompareColumns(a, b: Integer): Integer;
-  begin
-    // first compare columns element size (in descending order)
-    result := columns[b].count - columns[a].count;
-    if result=0 then
-      result := columns[a].index - columns[b].index;
-  end;
-
-  procedure ExchangeColumns(i, j: Integer);
-  var
-    Q: TColumn;
-  begin
-    Q := columns[I];
-    columns[I] := columns[J];
-    columns[J] := Q;
-  end;
-
-  procedure QuickSort(L,R: Integer);
-  var
-    I,J: Integer;
-    P,Q: Integer;
-  begin
-    repeat
-      I:=L;
-      J:=R;
-      P:=(L+R) div 2;
-      repeat
-        while CompareColumns(P, I)>0 do I:=I+1;
-        while CompareColumns(P, J)<0 do J:=J-1;
-        if I<=J then begin
-
-          if I<>J then
-            ExchangeColumns(I, J);
-
-          if P=I then
-            P:=J
-          else if P=J then
-            P:=I;
-
-          I:=I+1;
-          J:=J-1;
-        end;
-      until I>J;
-
-      if L<J then
-        QuickSort(L,J);
-
-      L:=I;
-    until I>=R;
-  end;
-
-begin
-  QuickSort(0, Length(Columns)-1);
-end;
+//procedure SortColumns(var columns: TColumnArray);
+//
+//  function CompareColumns(a, b: Integer): Integer;
+//  begin
+//    // first compare columns element size (in descending order)
+//    result := columns[b].count - columns[a].count;
+//    if result=0 then
+//      result := columns[a].index - columns[b].index;
+//  end;
+//
+//  procedure ExchangeColumns(i, j: Integer);
+//  var
+//    Q: TColumn;
+//  begin
+//    Q := columns[I];
+//    columns[I] := columns[J];
+//    columns[J] := Q;
+//  end;
+//
+//  procedure QuickSort(L,R: Integer);
+//  var
+//    I,J: Integer;
+//    P,Q: Integer;
+//  begin
+//    repeat
+//      I:=L;
+//      J:=R;
+//      P:=(L+R) div 2;
+//      repeat
+//        while CompareColumns(P, I)>0 do I:=I+1;
+//        while CompareColumns(P, J)<0 do J:=J-1;
+//        if I<=J then begin
+//
+//          if I<>J then
+//            ExchangeColumns(I, J);
+//
+//          if P=I then
+//            P:=J
+//          else if P=J then
+//            P:=I;
+//
+//          I:=I+1;
+//          J:=J-1;
+//        end;
+//      until I>J;
+//
+//      if L<J then
+//        QuickSort(L,J);
+//
+//      L:=I;
+//    until I>=R;
+//  end;
+//
+//begin
+//  QuickSort(0, Length(Columns)-1);
+//end;
 
 function GetParentsArray(db: TDbIndex): TParentsArray;
 var
@@ -443,7 +451,7 @@ begin
 
 end;
 
-function FindSourceColumn(items: TItemIndexArray; ref:Integer; inChilds:boolean): Integer;
+function FindSource(items: TItemIndexArray; ref:Integer; inChilds:boolean): Integer;
 var
   arr: TIntArray;
   i, j: Integer;
@@ -463,26 +471,35 @@ end;
 function FindInternalMerges(items: TItemIndexArray; i: Integer; var columns: TColumnArray; j, k: Integer): Integer;
 var
   a, dest, cur: Integer;
+  Section: TColumnSection;
 begin
   with columns[j] do begin
     // is not the first nor the last it should be an internal node
     // is this a merging node? what is the merging dest?
-    dest := FindSourceColumn(items, i, true);
-    if dest>first then begin
-      // yes, tag from 'dest' to 'i'
-      cur := dest;
-      while cur<>i do begin
-        for a := 0 to Length(items[cur].lines)-1 do begin
-          if items[cur].lines[a].column=j then begin
-            // found the right line
-            if cur=dest then Include(items[cur].lines[a].flags, lifMerge)
-            else             Include(items[cur].lines[a].flags, lifToMerge);
-            items[cur].lines[a].source := dest;
+    dest := FindSource(items, i, true);
+    for Section in Sections do
+      with Section do begin
+        // does it belongs to this section?
+        if (dest<first) or (dest>last) then
+          continue; // no
+
+        if dest>first then begin
+          // yes, tag from 'dest' to 'i'
+          cur := dest;
+          while cur<>i do begin
+            for a := 0 to Length(items[cur].lines)-1 do begin
+              if items[cur].lines[a].column=j then begin
+                // found the right line
+                if cur=dest then Include(items[cur].lines[a].flags, lifMerge)
+                else             Include(items[cur].lines[a].flags, lifToMerge);
+                items[cur].lines[a].source := dest;
+              end;
+            end;
+            inc(cur);
           end;
         end;
-        inc(cur);
+
       end;
-    end;
   end;
 end;
 
@@ -507,7 +524,7 @@ var
   {$ELSE}
   parArray: TParentsArray;
   {$ENDIF}
-  i, j, k, n, p, c, column: Integer;
+  i, j, k, n, p, c, column, section: Integer;
   s: string;
   columns: TColumnArray;
   flags: TLineItemFlags;
@@ -578,17 +595,19 @@ begin
   column := -1;
   columns := nil;
 
+  i := 0;
+
   n := Length(result);
   while n>0 do begin
 
-    inc(Column);
-    SetLength(Columns, column + 1);
-    Columns[column].index := column;
-    Columns[column].first := -1;
-    Columns[column].last := -1;
+    // if starting from the top, create a new column
+    if i=0 then begin
+      inc(Column);
+      SetLength(Columns, column + 1);
+      Columns[column].index := column;
+    end;
 
     // find the first index with no assigned column
-    i := 0;
     while i<Length(result) do begin
       if result[i].column<0 then break;
       inc(i);
@@ -596,25 +615,35 @@ begin
     if i=length(result) then
       break; // we are done
 
+    // start a new section
+    section := Length(Columns[column].Sections);
+    SetLength(Columns[column].Sections, section + 1);
+
+    Columns[column].Sections[section].index := section;
+    Columns[column].Sections[section].column := column;
+    Columns[column].Sections[section].first := -1;
+    Columns[column].Sections[section].last := -1;
+
     // using 'i' index as a grand child, track down the first parent.
     repeat
 
       result[i].column := column;
+      result[i].section := section;
 
-      if Columns[column].first<0 then begin
-        Columns[column].first := i;
-        Columns[column].head := -1;
-        Columns[column].tail := -1;
-        Columns[column].count := 0;
+      if Columns[column].Sections[section].first<0 then begin
+        Columns[column].Sections[section].first := i;
+        Columns[column].Sections[section].head := -1;
+        Columns[column].Sections[section].tail := -1;
+        Columns[column].Sections[section].count := 0;
       end;
-      Columns[column].last := i;
+      Columns[column].Sections[section].last := i;
 
       dec(n);
       if n=0 then
         break;
 
       // now starting with 'i' descend down until we find
-      // the first parent that has no column assigned
+      // the first parent that has no assigned column
       j := 0;
       while j<Length(result[i].parents) do begin
         p := result[i].parents[j];
@@ -622,8 +651,18 @@ begin
           break; // found
         inc(j);
       end;
-      if j=Length(result[i].parents) then
+      if j=Length(result[i].parents) then begin
+        // have no parents or all parents are have column
+
+        // if we are not yet at the end of the result[]
+        // start again at the next index
+        if i<Length(result)-1 then
+          i := i + 1
+        else
+          // yes we are, try from start with another column
+          i := 0;
         break;  // not found
+      end;
 
       // the found parent is now the next index to process...
       i := p;
@@ -639,27 +678,32 @@ begin
   {$ENDIF}
 
 
-  // all indexes are now assigned columns, find heads and tails
+  // all indexes have now assigned columns, find heads and tails
   for j:=0 to Length(columns)-1 do begin
-    k := columns[j].first;
-    for p in result[k].childs do begin
-      if result[p].column<j then begin
-        columns[j].head := p;
-        break;
-      end;
-    end;
-    if columns[j].head<0 then columns[j].head := k;
 
-    k := Columns[j].last;
-    for p in result[k].parents do begin
-      if result[p].column<j then begin
-        columns[j].tail := p;
-        break;
+    for section := 0 to Length(columns[j].Sections)-1 do begin
+      k := columns[j].Sections[section].first;
+      for p in result[k].childs do begin
+        if result[p].column<j then begin
+          columns[j].Sections[section].head := p;
+          break;
+        end;
       end;
-    end;
-    if columns[j].tail<0 then columns[j].tail := k;
+      if columns[j].Sections[section].head<0 then
+        columns[j].Sections[section].head := k;
 
-    Columns[j].count := columns[j].tail - columns[j].head + 1;
+      k := columns[j].Sections[section].last;
+      for p in result[k].parents do begin
+        if result[p].column<j then begin
+          columns[j].Sections[section].tail := p;
+          break;
+        end;
+      end;
+      if columns[j].Sections[section].tail<0 then
+        columns[j].Sections[section].tail := k;
+
+      columns[j].Sections[section].count := columns[j].Sections[section].tail - columns[j].Sections[section].head + 1;
+    end;
   end;
 
   {$IFDEF DEBUG}
@@ -678,47 +722,48 @@ begin
   MaxColumns := 1;
   if Length(Columns)>1 then
     for j:=0 to Length(columns)-1 do
-    with columns[j] do begin
+      for section := 0 to Length(columns[j].Sections)-1 do
+        with columns[j].Sections[section] do begin
 
-      // distribute nodes and lines
-      for i:= head to tail do begin
+          // distribute nodes and lines
+          for i:= head to tail do begin
 
-        k := Length(result[i].lines);
-        SetLength(result[i].lines, k+1);
-        if k+1>MaxColumns then
-          MaxColumns := k+1;
-        result[i].lines[k].column := j;
-        result[i].lines[k].columnIndex := k;
+            k := Length(result[i].lines);
+            SetLength(result[i].lines, k+1);
+            if k+1>MaxColumns then
+              MaxColumns := k+1;
+            result[i].lines[k].column := j;
+            result[i].lines[k].columnIndex := k;
 
-        flags := [];
-        if result[i].column=j then begin
-          // a node should be drawn here
-          Include(flags, lifNode);
-          // what about the tip?
-          if (i=first) then Include(flags, lifFirst) else
-          if (i=last)  then Include(flags, lifLast) else
-          if j>0 then       FindInternalMerges(result, i, columns, j, k)
-        end else
-        // a line should be drawn here, what kind of line?
-        if (i>=head) and (i<first) then begin
-          result[i].lines[k].source := FindSourceColumn(result, first, true);
-          if i=head then Include(flags, lifMerge)
-          else           Include(flags, lifToMerge);
-        end else
-        if (i>first) and (i<=last) then begin
-          result[i].lines[k].source := LINE_SOURCE_COLUMN;
-          Include(flags, lifInternal);
-        end else
-        if (i>last) and (i<=tail) then begin
-          result[i].lines[k].source := FindSourceColumn(result, last, false);
-          if i=tail then Include(flags, lifBorn)
-          else           Include(flags, lifToBorn);
+            flags := [];
+            if result[i].column=j then begin
+              // a node should be drawn here
+              Include(flags, lifNode);
+              // what about the tip?
+              if (i=first) then Include(flags, lifFirst) else
+              if (i=last)  then Include(flags, lifLast) else
+              if j>0 then       FindInternalMerges(result, i, columns, j, k)
+            end else
+            // a line should be drawn here, what kind of line?
+            if (i>=head) and (i<first) then begin
+              result[i].lines[k].source := FindSource(result, first, true);
+              if i=head then Include(flags, lifMerge)
+              else           Include(flags, lifToMerge);
+            end else
+            if (i>first) and (i<=last) then begin
+              result[i].lines[k].source := LINE_SOURCE_COLUMN;
+              Include(flags, lifInternal);
+            end else
+            if (i>last) and (i<=tail) then begin
+              result[i].lines[k].source := FindSource(result, last, false);
+              if i=tail then Include(flags, lifBorn)
+              else           Include(flags, lifToBorn);
+            end;
+
+            result[i].lines[k].Flags := flags;
+
+          end;
         end;
-
-        result[i].lines[k].Flags := flags;
-
-      end;
-    end;
 
   {$IFDEF DEBUG}
   DebugLn('Max concurrent columns: %d',[MaxColumns]);
