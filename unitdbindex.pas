@@ -176,7 +176,7 @@ begin
     DebugLn('Column %2d: Sections: %d',[col, Length(columns[col].sections)]);
     for sec:=0 to Length(columns[col].Sections)-1 do
       with columns[col].sections[sec] do
-        DebugLn('  Section %d: tip=%3d first=%3d last=%3d tail=%3d -> count=%3d',[sec, col, head, first, last, tail, count]);
+        DebugLn('  Section %d: head=%3d first=%3d last=%3d tail=%3d -> count=%3d',[sec, col, head, first, last, tail, count]);
   end;
 end;
 
@@ -612,8 +612,15 @@ begin
       if result[i].column<0 then break;
       inc(i);
     end;
-    if i=length(result) then
+    if i=length(result) then begin
+      // finished this column, check if all indexes were processed
+      if n>0 then begin
+        // not yet, continue with another column
+        i := 0;
+        continue;
+      end;
       break; // we are done
+    end;
 
     // start a new section
     section := Length(Columns[column].Sections);
