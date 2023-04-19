@@ -1116,6 +1116,8 @@ begin
   end;
 
   fConfig.CloseConfig;
+
+  gblInvalidateCache := Application.HasOption('ClearCache');
 end;
 
 procedure TfrmMain.FormCloseQuery(Sender: TObject; var CanClose: Boolean);

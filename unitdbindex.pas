@@ -141,6 +141,9 @@ type
   procedure FindRelatives(var items: TItemIndexArray; parArray: TParentsArray);
   function GetItemIndexes(db: TDbIndex; withColumns:boolean; out maxColumns:Integer): TItemIndexArray;
 
+var
+  gblInvalidateCache: boolean = false;
+
 implementation
 
 const
@@ -1065,6 +1068,12 @@ begin
 
   aFileCache := GetFilename(FILENAME_CACHE);
   aFileIndex := GetFilename(FILENAME_INDEX);
+
+  if gblInvalidateCache then begin
+    DeleteFile(aFileCache);
+    DeleteFile(aIndexFile);
+    gblInvalidateCache := false;
+  end;
 
   mode := fmOpenReadWrite + fmShareDenyWrite;
   if not FileExists(aFileCache) then begin
