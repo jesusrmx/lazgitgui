@@ -61,6 +61,7 @@ type
 
   TItemIndex = record
     index: Integer;
+    commit: QWord;
     parents, childs: TIntArray;
     column: Integer;
     lines: TLinesArray;
@@ -390,7 +391,8 @@ begin
   end;
 
   for i:=0 to Length(items)-1 do begin
-    for p:=0 to Length(parArray[i].parents)-1 do
+    items[i].commit := parArray[i].commit;
+    for p:=0 to Length(parArray[i].parents)-1 do begin
       for j:=0 to Length(parArray)-1 do begin
         if j=i then continue;
         if parArray[i].parents[p]=parArray[j].commit then begin
@@ -405,6 +407,7 @@ begin
         end;
 
       end;
+    end;
   end;
 end;
 
@@ -426,6 +429,7 @@ begin
   for m:=0 to parMap.Count-1 do begin
     pmi := parMap.Data[m];
     i := pmi^.n;
+    items[i].commit := parMap.Keys[m];
     //SetLength(items[i].parents, Length(pmi^.parents));
     for p := 0 to Length(pmi^.parents)-1 do
       if pmi^.parents[p].n>=0 then begin

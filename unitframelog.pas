@@ -8,7 +8,7 @@ uses
   Classes, SysUtils, dateUtils, fgl,
   LazLogger, SynEdit, Graphics, Forms, Dialogs, Controls, Grids,
   ExtCtrls, ComCtrls, Menus, Types, Clipbrd,
-  unitlogcache, unitdbindex, unitgit, unitifaces;
+  unitlogcache, unitdbindex, unitgitutils, unitgit, unitifaces;
 
 const
   GRAPH_LEFT_PADDING          = 12;
@@ -53,6 +53,7 @@ type
     procedure OnLogEvent(sender: TObject; thread: TLogThread; event: Integer; var interrupt: boolean);
     procedure CopyToClipboard(what: Integer; aRow: Integer);
     function GetPopMenuRow: Integer;
+    procedure LocateHead;
   public
     procedure Start;
     procedure Clear;
@@ -272,6 +273,7 @@ begin
     LOGEVENT_END:
       begin
         UpdateGridRows;
+        LocateHead;
       end;
 
     LOGEVENT_DONE:
@@ -332,6 +334,20 @@ var
 begin
   p := gridLog.MouseToCell(fPopupMousePos);
   result := p.y;
+end;
+
+procedure TframeLog.LocateHead;
+var
+  commit: QWord;
+  i: Integer;
+begin
+  commit := OIDToQWord(fGit.BranchOID);
+  for i:=0 to Length(fItemIndices)-1 do begin
+    if commit=fItemIndices[i].commit then begin
+      gridLog.Row :=  gridLog.FixedRows + i;
+      break;
+    end;
+  end;
 end;
 
 procedure TframeLog.Start;
