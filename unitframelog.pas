@@ -47,6 +47,9 @@ const
   GRAPH_NODE_RADIUS           = 4;
   GRAPH_COLUMN_SEPARATOR      = 18;
 
+  ARROWLEN_X                  = GRAPH_NODE_RADIUS;
+  ARROWLEN_Y                  = GRAPH_NODE_RADIUS;
+
 type
 
   TRefsMap = specialize TFPGMap<string, TRefInfoArray>;
@@ -92,6 +95,7 @@ type
     fOnLogCacheEvent: TLogThreadEvent;
     fGraphColumns: Integer;
     fRefItems: array of TRefItem;
+    fWithArrows: boolean;
     procedure OnContextPopLogClick(Sender: TObject);
     procedure OnLogEvent(sender: TObject; thread: TLogThread; event: Integer; var interrupt: boolean);
     procedure CopyToClipboard(what: Integer);
@@ -132,6 +136,29 @@ const
     'Commit Date: %s' + LineEnding +
     'Message: ' + LineEnding+LineEnding+
     '%s';
+
+procedure DrawLine(canvas: TCanvas; x1, y1, x2, y2: Integer; withArrow:boolean);
+var
+  x, y, o: Integer;
+begin
+  canvas.Line(x1, y1, x2, y2);
+  if withArrow then begin
+    o := canvas.pen.width;
+    canvas.pen.width := 1;
+    x := x2;
+    y := y2;
+    if x2<x1 then begin
+      x := x + GRAPH_NODE_RADIUS;
+      canvas.Line(x, y - GRAPH_LINE_WIDTH, x + ARROWLEN_X, y - ARROWLEN_Y - GRAPH_LINE_WIDTH - 1);
+      canvas.Line(x, y, x + ARROWLEN_X, y + ARROWLEN_Y + 1);
+    end else begin
+      x := x - GRAPH_LINE_WIDTH;
+      canvas.Line(x, y - GRAPH_LINE_WIDTH, x - ARROWLEN_X, y - ARROWLEN_Y - GRAPH_LINE_WIDTH - 1);
+      canvas.Line(x, y, x - ARROWLEN_X, y + ARROWLEN_Y + 1);
+    end;
+    canvas.pen.width := o;
+  end;
+end;
 
 { TframeLog }
 
@@ -202,19 +229,17 @@ begin
                     gridlog.Canvas.Line(x, y1, x, y2);
 
                   if lifMerge in flags then begin
-                    // draw a merge line with origin at source and dest at this point
+                    // draw a merge line
                     gridLog.Canvas.Line(x, y, x, y2);
-                    gridLog.Canvas.Line(x-GRAPH_NODE_RADIUS-1, y, x, y);
                     x1 := w + fItemIndices[lines[i].source].column * GRAPH_COLUMN_SEPARATOR;
-                    gridLog.Canvas.Line(x1, y, x, y);
+                    DrawLine(gridLog.Canvas, x, y, x1, y, fWithArrows);
                   end;
 
                   if lifBorn in flags then begin
                     // draw a new born line with origin at source and dest at this point
                     gridLog.Canvas.Line(x, y1, x, y);
-                    gridLog.Canvas.Line(x-GRAPH_NODE_RADIUS-1, y, x, y);
                     x1 := w + fItemIndices[lines[i].source].column * GRAPH_COLUMN_SEPARATOR;
-                    gridLog.Canvas.Line(x1, y, x, y);
+                    DrawLine(gridLog.Canvas, x1, y, x, y, fWithArrows);
                   end;
                 end;
               end;
@@ -492,6 +517,8 @@ begin
     fLogCache.Git := fGit;
     fLogCache.Config := fConfig;
   end;
+
+  fWithArrows := fConfig.ReadBoolean('DrawArrows', true);
 
   gridLog.RowCount := (gridLog.Height div gridLog.DefaultRowHeight) *  2;
 
