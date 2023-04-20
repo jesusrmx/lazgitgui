@@ -2,6 +2,36 @@ unit unitframelog;
 
 {$mode ObjFPC}{$H+}
 
+{
+
+Intersting lazarus ranges for checking the graph ...
+
+// merges in two consecutive log entries
+// the second (the oldest) do not show merge line
+88242f81521e6b90341743a3670c61276d7a38c9
+2766af494532fac2dca258ea1ae90d6a2ebc4315
+
+a05cbeffee39cc4f96e995c5ed271725ab07d31e
+69682be8b0aeecc2cc408da08c046b2d74a01610
+
+506d7ccf857bd38ef6f38d5f63e164f65bb95c9f
+1440736e76de55d5e57e0eff1faa20d32017a4d9
+
+87bcd888adeb9b108f8ad3d802f6f6a1ea3ffc03
+89a9d84d34e72b4e360abb4f87bdff18a946547b
+
+3d6bf3c2c1b9c3cd52d917261e09f151a2ac9d38
+e2ad6b3d8d778da2fd37cab79e12896dc33d537f
+
+
+b36000fc26b024eb8e4930f75d7373660210cf9d
+bbac02ab05eaf9dae6fc5fd86a5766637dad2f45
+
+6422aaa213f024bd7772109b3a17dfee45c5c364
+c4109375a599264d818df2d265dab104ff8271a4
+
+}
+
 interface
 
 uses
