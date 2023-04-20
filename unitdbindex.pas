@@ -660,7 +660,7 @@ var
   flags: TLineItemFlags;
 begin
   MaxColumns := 1;
-  if Length(Columns)>1 then
+  if Length(Columns)>=1 then
     for j:=0 to Length(columns)-1 do
       for section := 0 to Length(columns[j].Sections)-1 do
         with columns[j].Sections[section] do begin
