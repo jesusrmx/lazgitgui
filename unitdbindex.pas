@@ -4,6 +4,10 @@ unit unitdbindex;
 
 {$define Debug}
 
+{$ifdef Debug}
+{.$define DumpCommitsAndParents}
+{$endif}
+
 interface
 
 uses
@@ -161,7 +165,7 @@ type
   end;
   TColumnArray = array of TColumn;
 
-{$IFDEF DEBUG}
+{$IFDEF Debug}
 procedure ReportColumns(msg:string; columns: TColumnArray);
 var
   col, sec: Integer;
@@ -177,7 +181,8 @@ begin
   end;
 end;
 
-procedure ReportParents(parMap: TParentsMap);
+{$ifdef DumpCommitsAndParents}
+procedure ReportCommitsAndParents(parMap: TParentsMap);
 var
   pmi: PParentsMapItem;
   mind: TIntArray;
@@ -197,7 +202,10 @@ begin
       DbgOut('%.16x ',[pmi^.parents[j].commit]);
     DebugLn;
   end;
+
+  ReportTicks('Reporting Parents OID');
 end;
+{$endif}
 
 function dbgs(lif: TLineItemFlags): string; overload;
   procedure Add(s:string);
@@ -215,6 +223,32 @@ begin
     Add(s);
   end;
   //(lifNode, lifToMerge, lifMerge, lifFirst, lifInternal, lifLast,  lifToBorn, lifBorn);
+end;
+
+procedure ReportItemIndexArray(result: TItemIndexArray);
+var
+  i, j, k, n, p: Integer;
+  s: string;
+begin
+  DebugLn;
+  DebugLn('ItemIndexArray: %d',[Length(result)]);
+
+  p := 0; n:= 0;
+  for i:=0 to Length(result)-1 do begin
+    if Length(result[i].parents)>p then
+      p:=Length(result[i].parents);
+  end;
+  p := p * 4;
+
+  for i:=0 to Length(result)-1 do begin
+    DbgOut('%3d. |%2d| P(%d): ',[i, result[i].column, Length(result[i].parents)]);
+    k := Length(result[i].parents);
+    s := ''; for j:=0 to k-1 do s += format('%3d ',[result[i].parents[j]]);
+    DbgOut('%'+IntToStr(p)+'s',[s]);
+    DbgOut(' C(%d)',[Length(result[i].childs)]);
+    for j:=0 to Length(result[i].childs)-1 do dbgOut('%3d ',[result[i].childs[j]]);
+    DebugLn;
+  end;
 end;
 
 procedure ReportResult(items: TItemIndexArray; columns: TColumnArray);
@@ -327,7 +361,7 @@ begin
           pmi^.parents[k].commit := elements[j].commit;
           inc(k);
         end else begin
-          {$IFDEF DEBUG}
+          {$IFDEF Debug}
           DebugLn('At %d parent %d (%.16x) is missing',[i, j, elements[j].commit]);
           {$ENDIF}
           pmi^.parents[k].n := -1;
@@ -354,7 +388,7 @@ begin
           if result.Find(pmi^.parents[k].commit, aIndex) then begin
             found := result.Data[aIndex];
             pmi^.parents[k].n := found^.n;
-            {$IFDEF DEBUG}
+            {$IFDEF Debug}
             DebugLn('At %d found missing parent %d (%.16x)',[lost[i], k, pmi^.parents[k].commit]);
             {$ENDIF}
           end;
@@ -362,6 +396,12 @@ begin
     end;
   end;
 
+  {$ifdef Debug}
+  ReportTicks('GetParentsMap');
+  {$ifdef DumpCommitsAndParents}
+  ReportCommitsAndParents(result);
+  {$endif}
+  {$endif}
 end;
 
 procedure ClearParentsMap(map: TParentsMap);
@@ -375,41 +415,47 @@ begin
     dispose(pmi);
   end;
   map.free;
+  {$IFDEF Debug}
+  ReportTicks('ClearingMap');
+  {$ENDIF}
 end;
 
-procedure FindRelativesMap(var items: TItemIndexArray; parMap: TParentsMap);
+procedure FindRelativesMap(var result: TItemIndexArray; parMap: TParentsMap);
 var
   i, j, k, m, p, q: Integer;
   pmi: PParentsMapItem;
 begin
-  SetLength(items, parMap.Count);
+  SetLength(result, parMap.Count);
 
-  for i:=0 to Length(items)-1 do begin
-    items[i].index := i;
-    items[i].column := -1;
-    items[i].parents := nil;
-    items[i].childs := nil;
-    items[i].lines := nil;
+  for i:=0 to Length(result)-1 do begin
+    result[i].index := i;
+    result[i].column := -1;
+    result[i].parents := nil;
+    result[i].childs := nil;
+    result[i].lines := nil;
   end;
 
   for m:=0 to parMap.Count-1 do begin
     pmi := parMap.Data[m];
     i := pmi^.n;
-    //SetLength(items[i].parents, Length(pmi^.parents));
+    //SetLength(result[i].parents, Length(pmi^.parents));
     for p := 0 to Length(pmi^.parents)-1 do
       if pmi^.parents[p].n>=0 then begin
-        q := Length(items[i].parents);
-        SetLength(items[i].parents, q+1);
+        q := Length(result[i].parents);
+        SetLength(result[i].parents, q+1);
         j := pmi^.parents[p].n;
         // found a parent of index i at index j
-        items[i].parents[q] := j;
+        result[i].parents[q] := j;
         // this means i is a child of j
-        k := Length(items[j].childs);
-        SetLength(items[j].childs, k+1);
-        items[j].childs[k] := i;
+        k := Length(result[j].childs);
+        SetLength(result[j].childs, k+1);
+        result[j].childs[k] := i;
       end;
   end;
 
+  {$IFDEF Debug}
+  ReportTicks('FindingRelatives');
+  {$ENDIF}
 end;
 
 function FindSource(items: TItemIndexArray; ref:Integer; inChilds:boolean): Integer;
@@ -429,7 +475,7 @@ begin
   end;
 end;
 
-function FindInternalMerges(items: TItemIndexArray; i: Integer; var columns: TColumnArray; j: Integer): Integer;
+procedure FindInternalMerges(items: TItemIndexArray; i: Integer; var columns: TColumnArray; j: Integer);
 var
   a, dest, cur: Integer;
   Section: TColumnSection;
@@ -464,50 +510,12 @@ begin
   end;
 end;
 
-{$define DumpParents}
-
-function GetItemIndexes(db: TDbIndex; withColumns: boolean; out
-  maxColumns: Integer): TItemIndexArray;
+procedure AssignColumns(var result: TItemIndexArray; var columns: TColumnArray);
 var
-  parMap: TParentsMap;
-  i, j, k, n, p, c, column, section: Integer;
-  s: string;
-  columns: TColumnArray;
-  flags: TLineItemFlags;
+  i, j, n, p, column, section: Integer;
 begin
-  {$IFDEF DEBUG}
-  resetTicks;
-  {$ENDIF}
-
-  parMap := GetParentsMap(db);
-
-  {$IFDEF DEBUG}
-  ReportTicks('GetParentsMap');
-  {$ifdef DumpParents}
-  ReportParents(parMap);
-  ReportTicks('Reporting Parents');
-  {$endif}
-  {$ENDIF}
-
-  result := nil;
-  FindRelativesMap(result, parMap);
-
-  {$IFDEF DEBUG}
-  ReportTicks('FindingRelatives');
-  {$ENDIF}
-
-  ClearParentsMap(parMap);
-  {$IFDEF DEBUG}
-  ReportTicks('ClearingMap');
-  {$ENDIF}
-
-  maxColumns := 0;
-  if not withColumns then
-    exit;
 
   column := -1;
-  columns := nil;
-
   i := 0;
 
   n := Length(result);
@@ -595,13 +603,17 @@ begin
 
   end;
 
-  {$IFDEF DEBUG}
+  {$IFDEF Debug}
   ReportTicks('ColumnsIdexing');
   ReportColumns('After columns indexing', columns);
   ReportTicks('ReportingColumnsIdexing');
   {$ENDIF}
+end;
 
-
+procedure FindHeadsAndTails(var result: TItemIndexArray; var columns: TColumnArray);
+var
+  j, k, p, section: Integer;
+begin
   // all indexes have now assigned columns, find heads and tails
   for j:=0 to Length(columns)-1 do begin
 
@@ -630,19 +642,18 @@ begin
     end;
   end;
 
-  {$IFDEF DEBUG}
-  ReportTicks('AssigningHeadsAndTails');
-  ReportColumns('After assigning Heads and tails', columns);
-  ReportTicks('ReportingAssigningHeadsAndTails');
+  {$IFDEF Debug}
+  ReportTicks('FindHeadsAndTails');
+  ReportColumns('After FindHeadsAndTails', columns);
+  ReportTicks('Reporting Columns after FindHeadsAndTails');
   {$ENDIF}
+end;
 
-  //SortColumns(columns);
-
-  {$IFDEF DEBUG}
-  //ReportTicks('SortColumns');
-  //ReportColumns('After sorting', columns);
-  {$ENDIF}
-
+procedure MapLinesAndColumns(var result: TItemIndexArray; var columns: TColumnArray; out maxColumns: Integer);
+var
+  i, j, k, section: Integer;
+  flags: TLineItemFlags;
+begin
   MaxColumns := 1;
   if Length(Columns)>1 then
     for j:=0 to Length(columns)-1 do
@@ -689,32 +700,52 @@ begin
           end;
         end;
 
-  {$IFDEF DEBUG}
+  {$IFDEF Debug}
+  ReportTicks('MapLinesAndColumns');
   DebugLn('Max concurrent columns: %d',[MaxColumns]);
   {$ENDIF}
+end;
+
+function GetItemIndexes(db: TDbIndex; withColumns: boolean; out
+  maxColumns: Integer): TItemIndexArray;
+var
+  parMap: TParentsMap;
+  columns: TColumnArray;
+begin
+  {$IFDEF Debug}
+  resetTicks;
+  {$ENDIF}
+
+  parMap := GetParentsMap(db);
+
+  result := nil;
+  FindRelativesMap(result, parMap);
+
+  // parMap is not needed anymore
+  ClearParentsMap(parMap);
+
+  maxColumns := 0;
+  if not withColumns then
+    exit;
+
+  columns := nil;
+  AssignColumns(result, columns);
+
+  FindHeadsAndTails(result, columns);
+
+  //SortColumns(columns);
+
+  {$IFDEF Debug}
+  //ReportTicks('SortColumns');
+  //ReportColumns('After sorting', columns);
+  {$ENDIF}
+
+  MapLinesAndColumns(result, columns, maxColumns);
+
   maxColumns := Length(Columns);
 
-  {$IFDEF DEBUG}
-  DebugLn;
-  DebugLn('ItemIndexArray: %d',[Length(result)]);
-
-  p := 0; n:= 0;
-  for i:=0 to Length(result)-1 do begin
-    if Length(result[i].parents)>p then
-      p:=Length(result[i].parents);
-  end;
-  p := p * 4;
-
-  for i:=0 to Length(result)-1 do begin
-    DbgOut('%3d. |%2d| P(%d): ',[i, result[i].column, Length(result[i].parents)]);
-    k := Length(result[i].parents);
-    s := ''; for j:=0 to k-1 do s += format('%3d ',[result[i].parents[j]]);
-    DbgOut('%'+IntToStr(p)+'s',[s]);
-    DbgOut(' C(%d)',[Length(result[i].childs)]);
-    for j:=0 to Length(result[i].childs)-1 do dbgOut('%3d ',[result[i].childs[j]]);
-    DebugLn;
-  end;
-
+  {$IFDEF Debug}
+  ReportItemIndexArray(result);
 
   //// now the result
   ReportResult(result, columns);
