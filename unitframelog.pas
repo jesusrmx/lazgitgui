@@ -275,7 +275,9 @@ begin
         else  s := '';
       end;
 
+      gridLog.Canvas.Brush.Style := bsClear;
       gridLog.Canvas.TextOut(x, aRect.Top, s);
+      gridLog.Canvas.Brush.Style := bsSolid;
     end;
   end;
 end;
