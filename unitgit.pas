@@ -243,7 +243,8 @@ end;
 
 destructor TGit.destroy;
 begin
-  fRefsMap.Clear;
+  if fRefsMap<>nil then
+    fRefsMap.Clear;
   fRefsMap.Free;
   ClearRefList(fInternalRefList);
   fInternalRefList.Free;
