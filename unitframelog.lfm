@@ -625,6 +625,15 @@ object frameLog: TframeLog
   object popLog: TPopupMenu
     Left = 173
     Top = 92
+    object mnuGotoHead: TMenuItem
+      Action = actGotoHead
+    end
+    object mnuSeparatorFirst: TMenuItem
+      Caption = '-'
+    end
+    object mnuSeparatorLast: TMenuItem
+      Caption = '-'
+    end
     object MenuItem1: TMenuItem
       Caption = 'Copy'
       object MenuItem2: TMenuItem
@@ -635,6 +644,18 @@ object frameLog: TframeLog
         Caption = 'Sha'
         OnClick = MenuItem3Click
       end
+    end
+  end
+  object actLstLog: TActionList
+    Left = 264
+    Top = 92
+    object actGotoHead: TAction
+      Caption = 'Go to head'
+      OnExecute = actGotoHeadExecute
+    end
+    object actShowChanges: TAction
+      Caption = 'Show Changes'
+      OnExecute = actShowChangesExecute
     end
   end
 end

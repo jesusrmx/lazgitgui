@@ -7,8 +7,8 @@ interface
 uses
   Classes, SysUtils, dateUtils, fgl,
   LazLogger, SynEdit, Graphics, Forms, Dialogs, Controls, Grids,
-  ExtCtrls, ComCtrls, Menus, Types, Clipbrd,
-  unitlogcache, unitdbindex, unitgitutils, unitgit, unitifaces;
+  ExtCtrls, ComCtrls, Menus, Types, Clipbrd, ActnList,
+  unitlogcache, unitdbindex, unitgitutils, unitgit, unitifaces, unitruncmd;
 
 const
   GRAPH_LEFT_PADDING          = 12;
@@ -20,22 +20,34 @@ const
 type
 
   TRefsMap = specialize TFPGMap<string, TRefInfoArray>;
+  TRefItem = record
+    mapIndex: Integer;
+    arrIndex: Integer;
+  end;
 
   { TframeLog }
 
   TframeLog = class(TFrame)
+    actGotoHead: TAction;
+    actShowChanges: TAction;
+    actLstLog: TActionList;
     gridLog: TDrawGrid;
     MenuItem1: TMenuItem;
     MenuItem2: TMenuItem;
     MenuItem3: TMenuItem;
+    mnuGotoHead: TMenuItem;
     panBrowser: TPanel;
     panLogTools: TPanel;
     panFiles: TPanel;
     popLog: TPopupMenu;
+    mnuSeparatorLast: TMenuItem;
+    mnuSeparatorFirst: TMenuItem;
     Splitter1: TSplitter;
     Splitter2: TSplitter;
     TreeView1: TTreeView;
     txtViewer: TSynEdit;
+    procedure actGotoHeadExecute(Sender: TObject);
+    procedure actShowChangesExecute(Sender: TObject);
     procedure gridLogContextPopup(Sender: TObject; MousePos: TPoint;
       var Handled: Boolean);
     procedure gridLogDrawCell(Sender: TObject; aCol, aRow: Integer;
@@ -48,12 +60,15 @@ type
     fItemIndices: TItemIndexArray;
     fLogCache: TLogCache;
     fOnLogCacheEvent: TLogThreadEvent;
-    fPopupMousePos: TPoint;
     fGraphColumns: Integer;
+    fRefItems: array of TRefItem;
+    procedure OnContextPopLogClick(Sender: TObject);
     procedure OnLogEvent(sender: TObject; thread: TLogThread; event: Integer; var interrupt: boolean);
-    procedure CopyToClipboard(what: Integer; aRow: Integer);
-    function GetPopMenuRow: Integer;
+    procedure CopyToClipboard(what: Integer);
     procedure LocateHead;
+    function LocateItemIndex(aIndex: Integer): boolean;
+    procedure AddMergeBranchMenu;
+    procedure OnMergeBranchClick(Sender: TObject);
   public
     procedure Start;
     procedure Clear;
@@ -237,18 +252,53 @@ end;
 
 procedure TframeLog.gridLogContextPopup(Sender: TObject; MousePos: TPoint;
   var Handled: Boolean);
+var
+  p: TPoint;
+  aRow, aIndex, mIndex: Integer;
+  mi: TMenuItem;
 begin
-  fPopupMousePos := MousePos;
+  // check if triggered by keyboard
+  if (MousePos.x=-1) and (MousePos.y=-1) then aRow := gridLog.Row
+  else                                        aRow := gridLog.MouseToCell(MousePos).y;
+  aIndex := aRow - gridLog.FixedRows;
+
+  // do not show the context popup if the grid is invalid
+  Handled := (gridLog.RowCount=gridLog.FixedRows) or (aIndex<0) or not LocateItemIndex(aIndex);
+
+  if not Handled then begin
+    aIndex := mnuSeparatorFirst.Tag + 1;
+    mnuSeparatorFirst.Tag := aIndex;
+    // all is ok, cleanup
+    mIndex := mnuSeparatorFirst.MenuIndex+1;
+    while mIndex<>mnuSeparatorLast.MenuIndex do
+      popLog.Items.Delete(mIndex);
+    // add sample menus just for testing
+    mi := TMenuItem.Create(Self.Owner);
+    mi.Action := actShowChanges;
+    popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
+
+    AddMergeBranchMenu;
+  end;
+end;
+
+procedure TframeLog.actGotoHeadExecute(Sender: TObject);
+begin
+  LocateHead;
+end;
+
+procedure TframeLog.actShowChangesExecute(Sender: TObject);
+begin
+  ShowMessage('Showing Changes');
 end;
 
 procedure TframeLog.MenuItem2Click(Sender: TObject);
 begin
-  CopyToClipboard(COPY_ALL_INFO, GetPopMenuRow);
+  CopyToClipboard(COPY_ALL_INFO);
 end;
 
 procedure TframeLog.MenuItem3Click(Sender: TObject);
 begin
-  CopyToClipboard(COPY_SHA, GetPopMenuRow)
+  CopyToClipboard(COPY_SHA)
 end;
 
 procedure TframeLog.OnLogEvent(sender: TObject; thread: TLogThread;
@@ -282,20 +332,21 @@ begin
   end;
 end;
 
-procedure TframeLog.CopyToClipboard(what: Integer; aRow: Integer);
+procedure TframeLog.OnContextPopLogClick(Sender: TObject);
 var
-  aIndex, n: Integer;
+  mi: TMenuItem absolute Sender;
+begin
+  ShowMessage(format('You really got me: %s',[mi.Caption]));
+end;
+
+procedure TframeLog.CopyToClipboard(what: Integer);
+var
+  n: Integer;
   s: String;
   dt: TDateTime;
   arr: TRefInfoArray;
   ref: PRefInfo;
 begin
-  aIndex := aRow - gridLog.FixedRows;
-  if (aIndex>=0) and (aIndex<fLogCache.DbIndex.Count) then begin
-    if not fLogCache.DbIndex.LoadItem(aIndex) then  begin
-      ShowMessage('Unable to locate the log record');
-      exit;
-    end;
 
     s := '';
     with fLogCache.DbIndex.Item do
@@ -325,15 +376,6 @@ begin
 
     if s<>'' then
       clipboard.AsText := s;
-  end;
-end;
-
-function TframeLog.GetPopMenuRow: Integer;
-var
-  p: TPoint;
-begin
-  p := gridLog.MouseToCell(fPopupMousePos);
-  result := p.y;
 end;
 
 procedure TframeLog.LocateHead;
@@ -346,6 +388,67 @@ begin
     if commit=fItemIndices[i].commit then begin
       gridLog.Row :=  gridLog.FixedRows + i;
       break;
+    end;
+  end;
+end;
+
+function TframeLog.LocateItemIndex(aIndex: Integer): boolean;
+begin
+  result := (aIndex>=0) and (aIndex<fLogCache.DbIndex.Count);
+  result := result and fLogCache.DbIndex.LoadItem(aIndex);
+end;
+
+procedure TframeLog.AddMergeBranchMenu;
+var
+  headCommit, curCommit: QWord;
+  mi: TMenuItem;
+  n, i, j: Integer;
+  arr: TRefInfoArray;
+begin
+  headcommit := OIDToQWord(fGit.BranchOID);
+  curCommit := OIDToQWord(fLogCache.DbIndex.Item.CommitOID);
+  if (headCommit=curCommit) or (fGit.RefsMap=nil) then
+    exit;
+  if fGit.RefsMap.Find(fLogCache.DbIndex.Item.CommitOID, n ) then begin
+    arr := fGit.RefsMap.Data[n];
+    fRefItems := nil;
+    for i:=0 to Length(arr)-1 do begin
+      if arr[i]^.subType=rostLocal then begin
+        if arr[i]^.head then continue;
+
+        j := Length(fRefItems);
+        SetLength(fRefItems, j+1);
+        fRefItems[j].mapIndex := n;
+        fRefItems[j].arrIndex := i;
+
+        mi := TMenuItem.Create(Self.Owner);
+        mi.Caption := format('Merge %s to %s',[QuotedStr(arr[i]^.refName), QuotedStr(fGit.Branch)]);
+        mi.OnClick := @OnMergeBranchClick;
+        mi.Tag := j;
+        popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
+      end;
+    end;
+  end;
+end;
+
+procedure TframeLog.OnMergeBranchClick(Sender: TObject);
+var
+  mi: TMenuItem absolute Sender;
+  j: Integer;
+  arr: TRefInfoArray;
+  s: string;
+begin
+  j := mi.Tag;
+  if (j>=0) and (j<Length(fRefItems)) then begin
+    arr := fGit.RefsMap.Data[ fRefItems[j].mapIndex ];
+    j := fRefItems[j].arrIndex;
+    s := 'git merge '+ arr[j]^.refName;
+    if RunInteractive(fGit.Exe + ' merge '+ arr[j]^.refName, fGit.TopLevelDir, 'Merging branches', s)>0 then begin
+      // an error occurred
+    end else begin
+      // queue update status
+      // update refs
+      // update graph (reload the log)
     end;
   end;
 end;
