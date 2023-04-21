@@ -1,12 +1,23 @@
 #!/bin/bash
 
-REPO=$HOME/temporal/repo.git
-MAXCOMMITS=5
-DRY=1
+#REPO=$HOME/temporal/repo.git
+REPO=$(pwd)/repo.git
+MAXCOMMITS=2
+DRY=
 
 GIT () {
   if [ "$DRY" == "" ]; then
-    git $1 $2 $3 $4 $5 $6 $7 $8
+    case "$#" in
+      1)
+      git "$1"
+      ;;
+      2)
+      git "$1" "$2"
+      ;;
+      3)
+      git "$1" "$2" "$3"
+      ;;
+    esac
   else
     echo "git $1 $2 $3 $4 $5 $6 $7 $8"
   fi
@@ -62,7 +73,7 @@ docommits () {
     MSG=" - now with $FILESIZE bytes"
   fi
 
-  for i in {1..$MAXCOMMITS}; do
+  for i in $(seq 1 $MAXCOMMITS); do
     echo "Line $i$MSG" >> $FILE
     GIT add $FILE
     GIT commit -m "$1-$BRANCH: added Line $i$MSG"
