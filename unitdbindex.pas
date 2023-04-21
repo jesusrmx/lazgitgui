@@ -79,14 +79,6 @@ const
 
 type
 
-  { TMyInterfacedObject }
-
-  TMyInterfacedObject = class(TInterfacedObject)
-  protected
-    function _AddRef : longint;{$IFNDEF WINDOWS}cdecl{$ELSE}stdcall{$ENDIF};
-    function _Release : longint;{$IFNDEF WINDOWS}cdecl{$ELSE}stdcall{$ENDIF};
-  end;
-
   { TDbIndex }
 
   TDbIndex = class(TMyInterfacedObject, IDbIndex)
@@ -756,16 +748,6 @@ begin
   ReportResult(result, columns);
   {$ENDIF}
 
-end;
-
-{ TMyInterfacedObject }
-
-function TMyInterfacedObject._AddRef: longint; {$IFNDEF WINDOWS}cdecl{$ELSE}stdcall{$ENDIF};
-begin
-end;
-
-function TMyInterfacedObject._Release: longint; {$IFNDEF WINDOWS}cdecl{$ELSE}stdcall{$ENDIF};
-begin
 end;
 
 { TDbIndex }

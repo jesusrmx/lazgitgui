@@ -64,7 +64,7 @@ type
 
   { TGit }
 
-  TGit = class
+  TGit = class(TMyInterfacedObject, IGit)
   private
     fBranch: String;
     fBranchOID: string;
@@ -146,8 +146,6 @@ type
   procedure ClearRefList(list: TStrings);
   function GitDateToDateTime(s: string): TDateTime;
   function DateTimeToGitFmt(d: TDateTime): string;
-  function MakePathList(entryArray: TPFileEntryArray; sanitizeItems:boolean=true): string;
-  function Sanitize(aPath: RawbyteString; force:boolean=true): RawbyteString;
 
 implementation
 
@@ -193,42 +191,6 @@ begin
     end;
     list.clear;
   end;
-end;
-
-function Sanitize(aPath: RawbyteString; force: boolean): RawbyteString;
-begin
-  if force or (pos(' ', aPath)>0) then begin
-    {$ifdef MsWindows}
-    result := '"' + aPath + '"';
-    {$else}
-    result := StringReplace(aPath, ' ', '\ ', [rfReplaceAll]);
-    {$endif}
-  end else
-    result := aPath;
-end;
-
-function QuoteMsg(msg: string): string;
-begin
-  result := StringReplace(msg, '"', '\"', [rfReplaceAll]);
-  result := '"' + result + '"';
-end;
-
-function MakePathList(entryArray: TPFileEntryArray; sanitizeItems: boolean
-  ): string;
-var
-  entry: PFileEntry;
-  procedure Add(aPath:string);
-  begin
-    if result<>'' then result += ' ';
-    if sanitizeItems then
-      result += Sanitize(aPath)
-    else
-      result += aPath;
-  end;
-begin
-  result := '';
-  for entry in entryArray do
-    Add(entry^.path);
 end;
 
 { TGit }

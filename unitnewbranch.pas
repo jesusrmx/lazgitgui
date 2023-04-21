@@ -28,7 +28,7 @@ interface
 
 uses
   Classes, SysUtils, LazLogger, Forms, Controls, Graphics, Dialogs, StdCtrls, ComCtrls,
-  ButtonPanel, ExtCtrls, unitconfig, unitprocess, unitgit;
+  ButtonPanel, ExtCtrls, unitconfig, unitifaces, unitprocess, unitgitutils;
 
 type
 
@@ -55,7 +55,7 @@ type
     procedure txtNameChange(Sender: TObject);
   private
     fBranchName, fReference: string;
-    fGit: TGit;
+    fGit: IGit;
     fType: Integer;
     function GetFetch: boolean;
     function GetSwitch: boolean;
@@ -67,7 +67,7 @@ type
   public
     function GetBranchCommandOptions: string;
     property BranchName: string read fBranchName;
-    property Git: TGit read fGit write fGit;
+    property Git: IGit read fGit write fGit;
     property Switch: boolean read GetSwitch;
     property Fetch: boolean read GetFetch;
   end;
