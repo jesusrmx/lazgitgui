@@ -28,13 +28,14 @@ interface
 
 uses
   Classes, SysUtils, LazLogger, Forms, Controls, Graphics, Dialogs, StdCtrls, ComCtrls,
-  ButtonPanel, ExtCtrls, unitconfig, unitifaces, unitprocess, unitgitutils;
+  ButtonPanel, ExtCtrls, unitconfig, unitgittypes, unitifaces, unitprocess, unitgitutils,
+  unitgitmgr;
 
 type
 
   { TfrmNewBranch }
 
-  TfrmNewBranch = class(TForm)
+  TfrmNewBranch = class(TForm, IObserver)
     ButtonPanel1: TButtonPanel;
     chkFetch: TCheckBox;
     chkSwitchTo: TCheckBox;
@@ -55,19 +56,21 @@ type
     procedure txtNameChange(Sender: TObject);
   private
     fBranchName, fReference: string;
+    fGitMgr: TGitMgr;
     fGit: IGit;
     fType: Integer;
     function GetFetch: boolean;
     function GetSwitch: boolean;
+    procedure SetGitMgr(AValue: TGitMgr);
     procedure ShowTabIndex(aIndex: Integer);
     procedure CheckOkButton;
-    function AlreadyExists(aName: string; subType: TRefObjectSubType): boolean;
     procedure EvaluateOutcome;
     procedure ShowInfo;
+    procedure ObservedChanged(Sender:TObject; what: Integer; data: PtrInt);
   public
     function GetBranchCommandOptions: string;
     property BranchName: string read fBranchName;
-    property Git: IGit read fGit write fGit;
+    property GitMgr: TGitMgr read fGitMgr write SetGitMgr;
     property Switch: boolean read GetSwitch;
     property Fetch: boolean read GetFetch;
   end;
@@ -101,14 +104,7 @@ end;
 
 procedure TfrmNewBranch.FormShow(Sender: TObject);
 begin
-  if fGit.UpdateRefList>0 then begin
-    DebugLn(fGit.ErrorLog);
-    ShowMessage('Error while getting list of branches');
-    Close;
-    exit;
-  end;
-
-  ShowTabIndex(0);
+  fGitMgr.UpdateRefList;
 end;
 
 procedure TfrmNewBranch.lstSourceClick(Sender: TObject);
@@ -142,8 +138,8 @@ begin
 
     lstSource.Clear;
 
-    for i:=0 to fGit.RefList.Count-1 do begin
-      info := PRefInfo(fGit.RefList.Objects[i]);
+    for i:=0 to fGitMgr.RefList.Count-1 do begin
+      info := PRefInfo(fGitMgr.RefList.Objects[i]);
       ok := false;
       case aIndex of
         0: ok := info^.subType=rostLocal;// (info^.objType=rotCommit) and (not info^.isTracking);
@@ -152,7 +148,7 @@ begin
         else exit;
       end;
       if ok then begin
-        j := lstSource.Items.AddObject(fGit.RefList[i], TObject(info));
+        j := lstSource.Items.AddObject(fGitMgr.RefList[i], TObject(info));
         if (aIndex=0) and info^.head then
           lstSource.ItemIndex := j;
       end;
@@ -171,6 +167,14 @@ begin
   result := chkSwitchTo.Checked;
 end;
 
+procedure TfrmNewBranch.SetGitMgr(AValue: TGitMgr);
+begin
+  if fGitMgr = AValue then Exit;
+  fGitMgr := AValue;
+  fGit := fGitMgr.Git;
+  fGitMgr.AddObserver(Self);
+end;
+
 function TfrmNewBranch.GetFetch: boolean;
 begin
   result := chkFetch.Checked;
@@ -183,23 +187,6 @@ begin
     (fType=BT_NEWLOCAL_BRANCH) or
     (fType=BT_NEWLOCAL_TRACKING) or
     (fType=BT_NEWLOCAL_TAG);
-end;
-
-function TfrmNewBranch.AlreadyExists(aName: string; subType: TRefObjectSubType
-  ): boolean;
-var
-  i: Integer;
-  info: PRefInfo;
-begin
-  result := false;
-  aName := lowercase(aName);
-  for i:=0 to fGit.RefList.Count-1 do begin
-    info := PRefInfo(fGit.RefList.Objects[i]);
-    if (info^.subType=subtype) and (aName=info^.refName) then begin
-      result := true;
-      break;
-    end;
-  end;
 end;
 
 procedure TfrmNewBranch.EvaluateOutcome;
@@ -232,7 +219,7 @@ begin
     0: // branch based on a existing local branch tab
       begin
         if fBranchName<>'' then begin
-          if AlreadyExists(fBranchName, rostLocal) then begin
+          if fGitMgr.IndexOfLocalBranch(fBranchName)>=0 then begin
             AlreadyExisting;
             exit;
           end;
@@ -329,6 +316,24 @@ begin
     txtInfo.Lines.EndUpdate;
   end;
 
+end;
+
+procedure TfrmNewBranch.ObservedChanged(Sender: TObject; what: Integer;
+  data: PtrInt);
+begin
+  case what of
+    GITMGR_EVENT_REFLISTCHANGED:
+      begin
+        if Data>0 then begin
+          //DebugLn(fGit.ErrorLog);
+          ShowMessage('Error while getting list of branches');
+          Close;
+          exit;
+        end;
+
+        ShowTabIndex(0);
+      end;
+  end;
 end;
 
 function TfrmNewBranch.GetBranchCommandOptions: string;

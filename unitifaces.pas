@@ -5,7 +5,7 @@ unit unitifaces;
 interface
 
 uses
-  Classes, SysUtils, unitentries;
+  Classes, SysUtils, unitgittypes, unitentries;
 
 const
   SECTION_DEFAULT = 'options';
