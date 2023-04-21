@@ -1250,7 +1250,7 @@ begin
     btnStop.Visible := true;
     btnStop.Tag := 0;
 
-    frmLog.Start;
+    frmLog.Active := true;
 
   end else begin
     panLog.Visible := false;
