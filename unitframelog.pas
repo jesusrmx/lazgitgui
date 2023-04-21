@@ -520,9 +520,8 @@ end;
 procedure TframeLog.SetActive(AValue: boolean);
 begin
   if fActive = AValue then Exit;
-  fActive := AValue;
 
-  if fActive then begin
+  if not fActive then begin
 
     if fLogCache=nil then begin
       fLogCache := TLogCache.Create(@OnLogEvent);
@@ -534,9 +533,12 @@ begin
 
     gridLog.RowCount := (gridLog.Height div gridLog.DefaultRowHeight) *  2;
 
-    fGitMgr.UpdateRefList;
   end;
 
+  if AValue then
+    fGitMgr.UpdateRefList;
+
+  fActive := AValue;
 end;
 
 procedure TframeLog.SetGitMgr(AValue: TGitMgr);
