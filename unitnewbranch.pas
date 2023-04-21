@@ -125,7 +125,7 @@ end;
 
 procedure TfrmNewBranch.ShowTabIndex(aIndex: Integer);
 var
-  branchLine: TStringList;
+  refList: TStringList;
   i, j: Integer;
   info: PRefInfo;
   ok: boolean;
@@ -138,8 +138,10 @@ begin
 
     lstSource.Clear;
 
-    for i:=0 to fGitMgr.RefList.Count-1 do begin
-      info := PRefInfo(fGitMgr.RefList.Objects[i]);
+    refList := fGit.RefList;
+
+    for i:=0 to refList.Count-1 do begin
+      info := PRefInfo(refList.Objects[i]);
       ok := false;
       case aIndex of
         0: ok := info^.subType=rostLocal;// (info^.objType=rotCommit) and (not info^.isTracking);
@@ -148,7 +150,7 @@ begin
         else exit;
       end;
       if ok then begin
-        j := lstSource.Items.AddObject(fGitMgr.RefList[i], TObject(info));
+        j := lstSource.Items.AddObject(refList[i], TObject(info));
         if (aIndex=0) and info^.head then
           lstSource.ItemIndex := j;
       end;
@@ -170,9 +172,16 @@ end;
 procedure TfrmNewBranch.SetGitMgr(AValue: TGitMgr);
 begin
   if fGitMgr = AValue then Exit;
+
+  if fGitMgr<>nil then
+    fGitMgr.RemoveObserver(Self);
+
   fGitMgr := AValue;
-  fGit := fGitMgr.Git;
-  fGitMgr.AddObserver(Self);
+
+  if fGitMgr<>nil then begin
+    fGitMgr.AddObserver(Self);
+    fGit := fGitMgr.Git;
+  end;
 end;
 
 function TfrmNewBranch.GetFetch: boolean;
@@ -248,7 +257,7 @@ begin
           p := pos('/', fReference);
           fBranchName := copy(fReference, p+1, MaxInt);
         end;
-        if AlreadyExists(fBranchName, rostLocal) then begin
+        if fGitMgr.IndexOfLocalBranch(fBranchName)>=0 then begin
           AlreadyExisting;
           exit;
         end;
@@ -258,7 +267,7 @@ begin
     2:  // branch based on a tag tab
       begin
         if fBranchName<>'' then begin
-          if AlreadyExists(fBranchName, rostLocal) then begin
+          if fGitMgr.IndexOfLocalBranch(fBranchName)>=0 then begin
             AlreadyExisting;
             exit;
           end;
@@ -357,6 +366,8 @@ end;
 procedure TfrmNewBranch.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
 begin
   fConfig.WriteWindow(Self, 'newbranchform', SECTION_GEOMETRY);
+  if fGitMgr<>nil then
+    fGitMgr.RemoveObserver(Self);
 end;
 
 end.

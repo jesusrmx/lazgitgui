@@ -38,7 +38,7 @@ type
     fLastDescribedTag: string;
     fUnstagedList, fStagedList: TStringList;
     fObserverMgr: TObserverMgr;
-    function GetRefList: TStringList;
+    function GetGit: IGit;
     procedure SetConfig(AValue: IConfig);
   public
     constructor create;
@@ -51,12 +51,13 @@ type
     procedure RemoveObserver(who: IObserver);
     function IndexOfLocalBranch(aName: string): Integer;
 
-    property Git: TGit read fGit write fGit;
+    property Git: IGit read GetGit;
     property Config: IConfig read fConfig write SetConfig;
     property ShowTags: boolean read fShowTags write fShowTags;
     property ViewIgnoredFiles: boolean read fViewIgnoredFiles write fViewIgnoredFiles;
     property ViewUntrackedFiles: boolean read fViewUntrackedFiles write fViewUntrackedFiles;
-    property RefList: TStringList read GetRefList;
+    property UnstagedList: TStringList read fUnstagedList;
+    property StagedList: TStringList read fStagedList;
   end;
 
 implementation
@@ -112,9 +113,9 @@ begin
   fGit.Config := fConfig;
 end;
 
-function TGitMgr.GetRefList: TStringList;
+function TGitMgr.GetGit: IGit;
 begin
-  result := fGit.RefList;
+  result := fGit;
 end;
 
 constructor TGitMgr.create;

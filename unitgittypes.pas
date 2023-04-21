@@ -5,7 +5,7 @@ unit unitgittypes;
 interface
 
 uses
-  Classes, SysUtils;
+  Classes, SysUtils, fgl;
 
 type
   TRefObjectType = (rotBlob, rotTree, rotCommit, rotTag);
@@ -31,6 +31,8 @@ type
     refered: PRefInfo;
   end;
   TRefInfoArray = array of PRefInfo;
+
+  TRefsMap = specialize TFPGMap<string, TRefInfoArray>;
 
 implementation
 

@@ -14,7 +14,8 @@ unit unitlogcache;
 interface
 
 uses
-  Classes, SysUtils, Math, DateUtils, LazLogger, unitgit, unitprocess, unitifaces, unitdbindex;
+  Classes, SysUtils, Math, DateUtils, LazLogger,
+  unitgit, unitprocess, unitifaces, unitdbindex, unitgitmgr;
 
 const
 
@@ -121,7 +122,8 @@ type
   private
     fConfig: IConfig;
     fDbIndex: TDbIndex;
-    fGit: TGit;
+    fGitMgr: TGitMgr;
+    fGit: IGit;
     fLogState: TLogState;
     fNewDate, fOldDate: Int64;
     fOldDateIsStart: boolean;
@@ -139,13 +141,14 @@ type
     procedure DoLogStateEnd;
     procedure Run;
     procedure SendEvent(thread: TLogThread; event: Integer; var interrupt:boolean);
+    procedure SetGitMgr(AValue: TGitMgr);
   public
     constructor create(aLogEvent: TLogThreadEvent);
     destructor Destroy; override;
     procedure LoadCache;
 
     property LogState: TLogState read fLogState;
-    property Git: TGit read fGit write fGit;
+    property GitMgr: TGitMgr read fGitMgr write SetGitMgr;
     property DbIndex: TDbIndex read fDbIndex write fDbIndex;
     property Config: IConfig read fConfig write fConfig;
     property RangeStart: Integer read GetRangeStart;
@@ -533,7 +536,7 @@ var
 begin
 
   // prepare git log command
-  cmd := fGit.Exe + ' log ' + LOG_CMD;
+  cmd := fGitMgr.git.Exe + ' log ' + LOG_CMD;
 
   case fLogState of
     lsGetFirst:
@@ -580,6 +583,13 @@ procedure TLogCache.SendEvent(thread: TLogThread; event: Integer;
 begin
   if assigned(fLogEvent) then
     fLogEvent(self, thread, event, interrupt);
+end;
+
+procedure TLogCache.SetGitMgr(AValue: TGitMgr);
+begin
+  if fGitMgr = AValue then Exit;
+  fGitMgr := AValue;
+  fGit := fGitMgr.Git;
 end;
 
 procedure TLogCache.LoadCache;

@@ -28,7 +28,7 @@ unit unitgit;
 interface
 
 uses
-  Classes, SysUtils, FileUtil, DateUtils, fgl, lazlogger, unitgittypes,
+  Classes, SysUtils, FileUtil, DateUtils, lazlogger, unitgittypes,
   unitifaces, unitprocess,
   unitentries, unitgitutils;
 
@@ -36,8 +36,6 @@ const
   SECTION_GIT = 'lazgitgui.cfg';
 
 type
-
-  TRefsMap = specialize TFPGMap<string, TRefInfoArray>;
 
   { TGit }
 
@@ -61,8 +59,22 @@ type
     fLastTagCommits: Integer;
     fInternalRefList: TStringList;
     fRefsMap: TRefsMap;
+    function GetBranch: string;
+    function GetBranchOID: string;
+    function GetCommitsAhead: Integer;
+    function GetCommitsBehind: Integer;
     function GetErrorLog: RawByteString;
-    function GetInternalRefList: TStringList; overload;
+    function GetExe: string;
+    function GetLastTag: string;
+    function GetLastTagCommits: Integer;
+    function GetLastTagOID: string;
+    function GetMerging: boolean;
+    function GetMergingConflict: boolean;
+    function GetRefList: TStringList; overload;
+    function GetRefsMap: TRefsMap;
+    function GetTopLevelDir: string;
+    function GetUpstream: string;
+    function GetVersion: string;
     procedure GitStatusBranch(var head: pchar; tail: pchar);
     procedure GitStatusFiles(var head: pchar; tail: pchar; lstUnstaged, lstStaged: TStrings);
     function  TryGitIn(aPath: string): boolean;
@@ -97,32 +109,31 @@ type
     function AddToIgnoreFile(aFile:string; justType:boolean; global:boolean): boolean;
     function Describe(opts: string; out cmdOut:RawByteString): Integer;
     function UpdateRefList: Integer;
-    function RemotesList: TStringList;
+    function GetRemotesList: TStringList;
 
-    property Exe: string read fGitCommand;
-    property CommitsAhead: Integer read fCommitsAhead;
-    property CommitsBehind: Integer read fCommitsBehind;
-    property Branch: string read fBranch;
-    property BranchOID: string read fBranchOID;
-    property Merging: boolean read fMerging;
-    property MergingConflict: boolean read fMergingConflict;
-    property Upstream: string read fUpstream;
-    property TopLevelDir: string read fTopLevelDir;
     property ErrorLog: RawByteString read GetErrorLog;
     property UntrackedMode: string read fUntrackedMode write fUntrackedMode;
     property IgnoredMode: string read fIgnoredMode write fIgnoredMode;
-    property Version: string read FVersion;
-    property LastTag: string read fLastTag;
-    property LastTagOID: string read fLastTagOID;
-    property LastTagCommits: Integer read fLastTagCommits;
     property Config: IConfig read fConfig write fConfig;
-    property RefList: TStringList read GetInternalRefList;
-    property RefsMap: TRefsMap read fRefsMap;
+
+    property CommitsAhead: Integer read GetCommitsAhead;
+    property CommitsBehind: Integer read GetCommitsBehind;
+    property Branch: string read GetBranch;
+    property BranchOID: string read GetBranchOID;
+    property Exe: string read GetExe;
+    property LastTag: string read GetLastTag;
+    property LastTagCommits: Integer read GetLastTagCommits;
+    property LastTagOID: string read GetLastTagOID;
+    property Merging: boolean read GetMerging;
+    property MergingConflict: boolean read GetMergingConflict;
+    property RefList: TStringList read GetRefList;
+    property RefsMap: TRefsMap read GetRefsMap;
+    property TopLevelDir: string read GetTopLevelDir;
+    property Upstream: string read GetUpstream;
+    property Version: string read GetVersion;
   end;
 
   procedure ClearRefList(list: TStrings);
-  function GitDateToDateTime(s: string): TDateTime;
-  function DateTimeToGitFmt(d: TDateTime): string;
 
 implementation
 
@@ -374,11 +385,81 @@ begin
   result := cmdLine.ErrorLog;
 end;
 
-function TGit.GetInternalRefList: TStringList;
+function TGit.GetExe: string;
+begin
+  result := fGitCommand;
+end;
+
+function TGit.GetLastTag: string;
+begin
+  result := fLastTag;
+end;
+
+function TGit.GetLastTagCommits: Integer;
+begin
+  result := fLastTagCommits;
+end;
+
+function TGit.GetLastTagOID: string;
+begin
+  result := fLastTagOID;
+end;
+
+function TGit.GetMerging: boolean;
+begin
+  result := fMerging;
+end;
+
+function TGit.GetMergingConflict: boolean;
+begin
+  result := fMergingConflict;
+end;
+
+function TGit.GetBranchOID: string;
+begin
+  result := fBranchOID;
+end;
+
+function TGit.GetCommitsAhead: Integer;
+begin
+  result := fCommitsAhead;
+end;
+
+function TGit.GetCommitsBehind: Integer;
+begin
+  result := fCommitsBehind;
+end;
+
+function TGit.GetBranch: string;
+begin
+  result := fBranch;
+end;
+
+function TGit.GetRefList: TStringList;
 begin
   if fInternalRefList=nil then
     fInternalRefList := TStringList.Create;
   result := fInternalRefList;
+end;
+
+function TGit.GetRefsMap: TRefsMap;
+begin
+  result := fRefsMap;
+end;
+
+function TGit.GetTopLevelDir: string;
+begin
+  result := fTopLevelDir;
+end;
+
+function TGit.GetUpstream: string;
+begin
+  result := fUpstream;
+end;
+
+function TGit.GetVersion: string;
+begin
+  result := FVersion;
 end;
 
 procedure TGit.GitStatusFiles(var head: pchar; tail: pchar; lstUnstaged,
@@ -567,59 +648,6 @@ begin
     'tree': result := rotTree;
     'tag': result := rotTag;
   end;
-end;
-
-function GitDateToDateTime(s: string): TDateTime;
-  function MonthToInt(m: string): Integer;
-  begin
-    case m of
-      'Jan': result := 1;
-      'Feb': result := 2;
-      'Mar': result := 3;
-      'Apr': result := 4;
-      'May': result := 5;
-      'Jun': result := 6;
-      'Jul': result := 7;
-      'Aug': result := 8;
-      'Sep': result := 9;
-      'Oct': result := 10;
-      'Nov': result := 11;
-      'Dec': result := 12;
-      else   result := 0;
-    end;
-  end;
-var
-  i, mmm, dd, yyyy: Integer;
-  tt: string;
-begin
-  // Mon Dec 6 00:39:46 2021 +0100
-  if (Length(s)<29) or (Length(s)>30) then
-    exit(0);
-
-  mmm := MonthToInt(copy(s, 5, 3));
-  dd := StrToIntDef(Trim(copy(s, 9, 2)), -1);
-  if dd<0 then
-    exit(0);
-
-  i := 10;
-  if s[11]=' ' then inc(i);
-  delete(s, 1, i);
-  tt := copy(s, 1, 8);
-  yyyy := StrToIntDef(copy(s, 10, 4), -1);
-  if yyyy<0 then
-    exit(0);
-  delete(s, 1, 14);
-  insert(':', s, 4);
-
-  s := format('%.4d-%.2d-%.2dT%sZ%s',[yyyy, mmm, dd, tt, s]);
-  result := ISO8601ToDateDef(s, 0);
-  result := UniversalTimeToLocal(result);
-end;
-
-function DateTimeToGitFmt(d: TDateTime): string;
-begin
-  //result := FormatDateTime('ddd mmm d hh:nn:ss yyyy', d);
-  result := DateTimeToStr(d);
 end;
 
 function ParseRefList(M: TMemoryStream; list: TStrings; sep:string; fields:array of string): boolean;
@@ -917,7 +945,7 @@ end;
 function TGit.UpdateRefList: Integer;
 begin
 
-  GetInternalRefList;
+  GetRefList;
 
   result := FillRefList(
       fInternalRefList, '', [
@@ -943,7 +971,7 @@ begin
   UpdateRefsMap;
 end;
 
-function TGit.RemotesList: TStringList;
+function TGit.GetRemotesList: TStringList;
 var
   cmdOut: RawByteString;
 begin

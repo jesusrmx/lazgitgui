@@ -5,7 +5,7 @@ unit unitgitutils;
 interface
 
 uses
-  Classes, SysUtils, LazLogger, unitentries;
+  Classes, SysUtils, DateUtils, LazLogger, unitentries;
 
 type
   TQWordArray = array of QWord;
@@ -29,6 +29,8 @@ type
   function QuoteMsg(msg: string): string;
   function MakePathList(entryArray: TPFileEntryArray; sanitizeItems:boolean=true): string;
   function Sanitize(aPath: RawbyteString; force:boolean=true): RawbyteString;
+  function GitDateToDateTime(s: string): TDateTime;
+  function DateTimeToGitFmt(d: TDateTime): string;
 
   procedure ResetTicks;
   procedure ReportTicks(msg:string);
@@ -109,6 +111,59 @@ begin
   result := '';
   for entry in entryArray do
     Add(entry^.path);
+end;
+
+function GitDateToDateTime(s: string): TDateTime;
+  function MonthToInt(m: string): Integer;
+  begin
+    case m of
+      'Jan': result := 1;
+      'Feb': result := 2;
+      'Mar': result := 3;
+      'Apr': result := 4;
+      'May': result := 5;
+      'Jun': result := 6;
+      'Jul': result := 7;
+      'Aug': result := 8;
+      'Sep': result := 9;
+      'Oct': result := 10;
+      'Nov': result := 11;
+      'Dec': result := 12;
+      else   result := 0;
+    end;
+  end;
+var
+  i, mmm, dd, yyyy: Integer;
+  tt: string;
+begin
+  // Mon Dec 6 00:39:46 2021 +0100
+  if (Length(s)<29) or (Length(s)>30) then
+    exit(0);
+
+  mmm := MonthToInt(copy(s, 5, 3));
+  dd := StrToIntDef(Trim(copy(s, 9, 2)), -1);
+  if dd<0 then
+    exit(0);
+
+  i := 10;
+  if s[11]=' ' then inc(i);
+  delete(s, 1, i);
+  tt := copy(s, 1, 8);
+  yyyy := StrToIntDef(copy(s, 10, 4), -1);
+  if yyyy<0 then
+    exit(0);
+  delete(s, 1, 14);
+  insert(':', s, 4);
+
+  s := format('%.4d-%.2d-%.2dT%sZ%s',[yyyy, mmm, dd, tt, s]);
+  result := ISO8601ToDateDef(s, 0);
+  result := UniversalTimeToLocal(result);
+end;
+
+function DateTimeToGitFmt(d: TDateTime): string;
+begin
+  //result := FormatDateTime('ddd mmm d hh:nn:ss yyyy', d);
+  result := DateTimeToStr(d);
 end;
 
 procedure ResetTicks;

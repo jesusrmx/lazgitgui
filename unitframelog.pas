@@ -38,7 +38,8 @@ uses
   Classes, SysUtils, dateUtils, fgl,
   LazLogger, SynEdit, Graphics, Forms, Dialogs, Controls, Grids,
   ExtCtrls, ComCtrls, Menus, Types, Clipbrd, ActnList,
-  unitlogcache, unitdbindex, unitgitutils, unitgit, unitifaces, unitruncmd;
+  unitgittypes, unitlogcache, unitdbindex, unitgitutils, unitifaces,
+  unitruncmd, unitgitmgr;
 
 const
   GRAPH_LEFT_PADDING          = 12;
@@ -60,7 +61,7 @@ type
 
   { TframeLog }
 
-  TframeLog = class(TFrame)
+  TframeLog = class(TFrame, IObserver)
     actGotoHead: TAction;
     actShowChanges: TAction;
     actLstLog: TActionList;
@@ -89,7 +90,8 @@ type
     procedure MenuItem3Click(Sender: TObject);
   private
     fConfig: IConfig;
-    fGit: TGit;
+    fGit: IGit;
+    fGitMgr: TGitMgr;
     fItemIndices: TItemIndexArray;
     fLogCache: TLogCache;
     fOnLogCacheEvent: TLogThreadEvent;
@@ -103,6 +105,8 @@ type
     function LocateItemIndex(aIndex: Integer): boolean;
     procedure AddMergeBranchMenu;
     procedure OnMergeBranchClick(Sender: TObject);
+    procedure SetGitMgr(AValue: TGitMgr);
+    procedure ObservedChanged(Sender:TObject; what: Integer; data: PtrInt);
   public
     procedure Start;
     procedure Clear;
@@ -110,7 +114,7 @@ type
 
     property LogCache: TLogCache read fLogCache write fLogCache;
     property Config: IConfig read fConfig write fConfig;
-    property Git: TGit read fGit write fGit;
+    property GitMgr: TGitMgr read fGitMgr write SetGitMgr;
     property OnLogCacheEvent: TLogThreadEvent read fOnLogCacheEvent write fOnLogCacheEvent;
 
   end;
@@ -510,11 +514,37 @@ begin
   end;
 end;
 
+procedure TframeLog.SetGitMgr(AValue: TGitMgr);
+begin
+  if fGitMgr = AValue then Exit;
+
+  if fGitMgr<>nil then
+    fGitMgr.RemoveObserver(Self);
+
+  fGitMgr := AValue;
+
+  if fGitMgr<>nil then begin
+    fGitMgr.AddObserver(Self);
+    fGit := fGitMgr.Git;
+  end;
+end;
+
+procedure TframeLog.ObservedChanged(Sender: TObject; what: Integer; data: PtrInt
+  );
+begin
+  case what of
+    GITMGR_EVENT_REFLISTCHANGED:
+      begin
+
+      end;
+  end;
+end;
+
 procedure TframeLog.Start;
 begin
   if fLogCache=nil then begin
     fLogCache := TLogCache.Create(@OnLogEvent);
-    fLogCache.Git := fGit;
+    fLogCache.GitMgr := fGitMgr;
     fLogCache.Config := fConfig;
   end;
 
@@ -522,7 +552,7 @@ begin
 
   gridLog.RowCount := (gridLog.Height div gridLog.DefaultRowHeight) *  2;
 
-  fGit.UpdateRefList;
+  fGitMgr.UpdateRefList;
 
   fLogCache.LoadCache;
 

@@ -873,7 +873,7 @@ var
   cmdOut: RawByteString;
 begin
   f := TfrmNewBranch.Create(Self);
-  f.Git := fGit;
+  f.GitMgr := fGitMgr;
   try
     if f.ShowModal=mrOk then begin
 
@@ -960,12 +960,15 @@ end;
 procedure TfrmMain.ObservedChanged(Sender:TObject; what: Integer; data: PtrInt);
 begin
   case what of
-    GITMGR_EVENT_fGitMgr.UpdateStatus:
+    GITMGR_EVENT_UpdateStatus:
       begin
         if data>0 then
           ShowError
-        else
+        else begin
+          lstUnstaged.Items.Assign(fGitMgr.UnstagedList);
+          lstStaged.Items.Assign(fGitMgr.StagedList);
           UpdateBranch;
+        end;
       end;
   end;
 end;
@@ -1064,6 +1067,7 @@ procedure TfrmMain.FormCreate(Sender: TObject);
 begin
   fGitMgr := TGitMgr.Create;
   fGitMgr.Config := fConfig;
+  fGitMgr.AddObserver(Self);
 
   fGit := fGitMgr.Git;
 
@@ -1091,11 +1095,11 @@ begin
   txtLog.Font.Color := clWhite;
 
   frmLog.Config := fConfig;
-  frmLog.Git := fGit;
+  frmLog.GitMgr := fGitMgr;
   frmLog.OnLogCacheEvent := @OnLogCacheEvent;
 
   fLogHandler := TLogHandler.Create(txtLog, @OnLogEvent);
-  fLogHandler.Git := fGit;
+  fLogHandler.GitMgr := fGitMgr;
 
   fConfig.ReadPreferences;
 
@@ -1166,9 +1170,10 @@ end;
 
 procedure TfrmMain.FormDestroy(Sender: TObject);
 begin
+  fGitMgr.RemoveObserver(self);
   frmLog.Clear;
   fLogHandler.Free;
-  fGit.Free;
+  fGitMgr.Free;
 end;
 
 procedure TfrmMain.OpenDirectory(aDir: string);
@@ -1263,7 +1268,7 @@ begin
   end;
 
   if (fGit.Upstream='') then begin
-    L := fGit.RemotesList;
+    L := fGit.GetRemotesList;
     try
       if L.Count=0 then begin
         ShowMessage('This repository has no remotes defined'^M+

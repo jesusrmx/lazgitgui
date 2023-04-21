@@ -10,8 +10,8 @@ unit unitlog;
 interface
 
 uses
-  Classes, SysUtils, Math, DateUtils, LazLogger, SynEdit, unitansiescapes, unitgit,
-  unitprocess, unitruncmd, unitlogcache;
+  Classes, SysUtils, Math, DateUtils, LazLogger, SynEdit,
+  unitansiescapes, unitifaces, unitgitmgr, unitprocess, unitruncmd, unitlogcache;
 
 type
   TRunThreadEvent = procedure(sender: TObject; thread: TRunThread; event: Integer; var interrupt: boolean) of object;
@@ -20,12 +20,14 @@ type
 
   TLogHandler = class
   private
-    fGit: TGit;
+    fGit: IGit;
     fEdit: TSynEdit;
     fAnsiHandler: TAnsiEscapesHandler;
+    fGitMgr: TGitMgr;
     flogEvent: TRunThreadEvent;
     procedure LogDone(Sender: TObject);
     procedure LogOutput(sender: TObject; var interrupt: boolean);
+    procedure SetGitMgr(AValue: TGitMgr);
     {$IFDEF CaptureOutput}
     fCap: TMemoryStream;
     {$ENDIF}
@@ -34,7 +36,7 @@ type
     destructor Destroy; override;
     procedure ShowLog;
 
-    property Git: TGit read fGit write fGit;
+    property GitMgr: TGitMgr read fGitMgr write SetGitMgr;
   end;
 
 implementation
@@ -75,6 +77,13 @@ begin
     exit;
 
   fAnsiHandler.ProcessLine(thread.Line, thread.LineEnding);
+end;
+
+procedure TLogHandler.SetGitMgr(AValue: TGitMgr);
+begin
+  if fGitMgr = AValue then Exit;
+  fGitMgr := AValue;
+  fGit := fGitMgr.Git;
 end;
 
 procedure TLogHandler.LogDone(Sender: TObject);
