@@ -310,19 +310,22 @@ begin
 
     MENU_LIST_VIEW_UNTRACKED:
       begin
-        fConfig.ViewUntrackedFiles := mi.checked;
+        fGitMgr.ViewUntrackedFiles := mi.checked;
+        fConfig.ViewUntrackedFiles := fGitMgr.ViewUntrackedFiles;
         fGitMgr.UpdateStatus;
       end;
 
     MENU_LIST_VIEW_IGNORED:
       begin
-        fConfig.ViewIgnoredFiles := mi.checked;
+        fGitMgr.ViewIgnoredFiles := mi.checked;
+        fConfig.ViewIgnoredFiles := fGitMgr.ViewIgnoredFiles;
         fGitMgr.UpdateStatus;
       end;
 
     //MENU_LIST_VIEW_TRACKED:
     //  begin
-    //    fConfig.ViewTrackedFiles := mi.Checked;
+    //    fGitMgr.ViewTrackedFiles := mi.Checked;
+    //    fConfig.ViewTrackedFiles := fGitMgr.ViewTrackedFiles;
     //    fGitMgr.UpdateStatus;
     //  end;
 
@@ -1102,6 +1105,10 @@ begin
   fLogHandler.GitMgr := fGitMgr;
 
   fConfig.ReadPreferences;
+  fGitMgr.ViewUntrackedFiles := fConfig.ViewUntrackedFiles;
+  fGitMgr.ViewIgnoredFiles := fConfig.ViewIgnoredFiles;
+  fGitMgr.ViewTrackedFiles := fConfig.ViewTrackedFiles;
+  fGitMgr.ShowTags := fConfig.ShowTags;
 
   if fConfig.ReadBoolean('NeedsMenuWorkaround') then begin
     Self.Menu := nil;

@@ -33,6 +33,7 @@ type
     fGit: TGit;
     fShowTags: boolean;
     fViewIgnoredFiles: boolean;
+    fViewTrackedFiles: boolean;
     fViewUntrackedFiles: boolean;
     fDescribed: boolean;
     fLastDescribedTag: string;
@@ -56,6 +57,7 @@ type
     property ShowTags: boolean read fShowTags write fShowTags;
     property ViewIgnoredFiles: boolean read fViewIgnoredFiles write fViewIgnoredFiles;
     property ViewUntrackedFiles: boolean read fViewUntrackedFiles write fViewUntrackedFiles;
+    property ViewTrackedFiles: boolean read fViewTrackedFiles write fViewTrackedFiles;
     property UnstagedList: TStringList read fUnstagedList;
     property StagedList: TStringList read fStagedList;
   end;
