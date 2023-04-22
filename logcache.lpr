@@ -16,7 +16,7 @@ uses
     -d -e -a +p -i --oidlen=10 --sublen=72 -ct -int -inc -hdr -st -inh
 
 }
-  {$define UseIndex}
+  {.$define UseIndex}
 
 const
   CUT_AT = 80;
@@ -88,7 +88,7 @@ begin
   L.Free;
 end;
 
-function GetCachedItem(stream: TStream; aOffset: Int64; aSize:Integer; out item: TLogItem; skip:boolean=true): boolean;
+function GetCachedItem(indexStream, stream: TStream; aOffset: Int64; aSize:Integer; out item: TLogItem; skip:boolean=true): boolean;
 var
   buf: pchar;
   p, q, t: pchar;
@@ -98,7 +98,16 @@ var
   b: byte;
   w: word;
 begin
+
+  if aOffset>stream.Size then
+    raise Exception.CreateFmt('Corruption detected (beyondLimits) Index: Offset=%d Cache: Offset=%d Size=%d',
+      [indexStream.position - SIZEOF_INDEX, aOffset, stream.size]);
+
   stream.Position := aOffset;
+  w := stream.ReadWord;
+  if aSize-2<>w then
+    raise Exception.CreateFmt('Corruption detected (size mismatch) Index: Offset=%d Size=%d CacheRecord: Offset=%d Size=%d',
+      [indexStream.position - SIZEOF_INDEX, SIZEOF_INDEX, aOffset, w]);
 
   GetMem(buf, aSize);
   try
@@ -294,6 +303,69 @@ begin
 
 end;
 
+procedure GetFilenames(out aIndexFile, aCacheFile: string);
+begin
+  aIndexFile := aDir + 'lazgitgui.logindex';
+  aCacheFile := ChangeFileExt(aIndexFile, '.logcache');
+end;
+
+procedure CheckForCorruption(var fIndexStream: TMemorystream; var fCacheStream: TFileStream);
+var
+  indxRec: TIndexRecord;
+  Item: TLogItem;
+  i, m: Integer;
+  failed: Boolean;
+  w: Word;
+  dummy, aIndexFile: string;
+begin
+  DebugLn('Checking for Corruption');
+  failed := false;
+  i := 0;
+  while fIndexStream.Position<fIndexStream.Size do begin
+    fIndexStream.Read(IndxRec, SIZEOF_INDEX);
+    if IndxRec.offset<fCacheStream.Size then begin
+      fCacheStream.Position := IndxRec.Offset;
+      w := fCacheStream.ReadWord;
+      if IndxRec.size-2<>w then begin
+        DebugLn('Corruption detected at item %d indexOffset=%d cacheOffset=%d expected=%d found=%d',
+          [i, fIndexStream.Position-SIZEOF_INDEX, IndxRec.offset, IndxRec.size-2, w]);
+        failed := true;
+        break;
+      end;
+
+    end else begin
+      DebugLn('Can''t reach item %d offset %d beyond cache size %d',[i, IndxRec.offset, fCacheStream.Size]);
+      failed := true;
+      break;
+    end;
+    inc(i);
+  end;
+
+  if not failed then
+    exit;
+
+  DebugLn('Trying to reconstruct the index');
+
+  //  the signature is ok or we wouldnt be here
+  fCacheStream.Position := 4;
+  fIndexStream.clear;
+  while fCacheStream.Position<fCacheStream.Size do begin
+    w := fCacheStream.ReadWord;
+    IndxRec.offset := fCacheStream.Position - 2;
+    IndxRec.Size := w + 2;
+    fIndexStream.Write(IndxRec, SIZEOF_INDEX);
+    fCacheStream.Seek(w, soFromCurrent);
+  end;
+
+  GetFilenames(aIndexFile, dummy);
+  fIndexStream.SaveToFile(aIndexFile);
+
+  fIndexStream.position := 0;
+  fCacheStream.Position := 4;
+
+  DebugLn('Index stream was recovered: %d records', [fIndexStream.Size div SIZEOF_INDEX]);
+end;
+
 procedure UseDirectAccess;
 var
   fIndexStream: TMemoryStream;
@@ -311,8 +383,7 @@ begin
 
   CheckDir;
 
-  aIndexFile := aDir + 'lazgitgui.logindex';
-  aCacheFile := ChangeFileExt(aIndexFile, '.logcache');
+  GetFilenames(aIndexFile, aCacheFile);
 
   if not FileExists(aCacheFile) then begin
     DebugLn('couldnt find the cache file');
@@ -328,20 +399,28 @@ begin
 
   fIndexStream := TMemoryStream.Create;
   fIndexStream.LoadFromFile(aIndexFile);
+  if withStats then
+    DebugLn('Index file: size=%d indices=%d',[fIndexStream.Size, fIndexStream.Size div SIZEOF_INDEX]);
 
   fCacheStream := TFileStream.Create(aCacheFile, fmOpenRead + fmShareDenyNone);
+  if withStats then
+    DebugLn('Cache file: size=%d',[fCacheStream.Size]);
+  if fCacheStream.Size<4 then begin
+    DebugLn('Invalid file cache size %d', [fCacheStream.Size]);
+    Halt(6);
+  end;
+
   sig := BeToN(fCacheStream.ReadWord);
   ver := BeToN(fCacheStream.ReadWord);
+  if withStats then
+    DebugLn('File Cache Signature=%.4x Version=%d',[sig, ver]);
   if sig<>PGM_SIGNATURE then begin
-    DebugLn('Invalid file signature');
+    DebugLn('Invalid file signature %.4x',[sig]);
     Halt(5);
   end;
 
-  if withStats then begin
-    DebugLn('Index file: size=%d indices=%d',[fIndexStream.Size, fIndexStream.Size div SIZEOF_INDEX]);
-    DebugLn('Cache file: size=%d',[fCacheStream.Size]);
-    DebugLn('File Cache Signature=%4x Version=%d',[sig, ver]);
-  end;
+  CheckForCorruption(fIndexStream, fCacheStream);
+
 
   if withIncOffsets then begin
     if withHeaders then begin
@@ -350,18 +429,25 @@ begin
     end;
     next := 0;
     n := 0;
-    while fIndexStream.Position<fIndexStream.Size do begin
-      fIndexStream.Read(IndxRec, SIZEOF_INDEX);
-      GetCachedItem(fCacheStream, IndxRec.offset, IndxRec.size, Item);
+    try
+      while fIndexStream.Position<fIndexStream.Size do begin
+        fIndexStream.Read(IndxRec, SIZEOF_INDEX);
+        GetCachedItem(fIndexStream, fCacheStream, IndxRec.offset, IndxRec.size, Item);
 
-      if (Next=0) or (fIndexStream.Position=fIndexStream.Size) or (Next<>IndxRec.offset) then begin
-        aDir := GetCacheStr(IndxRec.offset, IndxRec.size, Item);
-        if withRecNum then
-          DbgOut('%8d%s',[n+1,SEP]);
-        DebugLn('%s',[aDir]);
+        if (Next=0) or (fIndexStream.Position=fIndexStream.Size) or (Next<>IndxRec.offset) then begin
+          aDir := GetCacheStr(IndxRec.offset, IndxRec.size, Item);
+          if withRecNum then
+            DbgOut('%8d%s',[n+1,SEP]);
+          DebugLn('%s',[aDir]);
+        end;
+        Next := IndxRec.Offset + IndxRec.Size;
+        inc(n);
       end;
-      Next := IndxRec.Offset + IndxRec.Size;
-      inc(n);
+    except
+      on E:Exception do begin
+        DebugLn('At Index: Offset=%d Cache: Offset=%d error: %s',[fIndexStream.Position-SIZEOF_INDEX, IndxRec.offset, E.Message]);
+        halt(10);
+      end;
     end;
   end;
 
@@ -375,7 +461,7 @@ begin
     fIndexStream.Position := 0;
     while fIndexStream.Position<fIndexStream.Size do begin
       fIndexStream.Read(IndxRec, SIZEOF_INDEX);
-      GetCachedItem(fCacheStream, IndxRec.offset, IndxRec.size, Item);
+      GetCachedItem(fIndexStream, fCacheStream, IndxRec.offset, IndxRec.size, Item);
 
       if (Next=MAXINT) or (fIndexStream.Position=fIndexStream.Size) or (Next<Item.CommiterDate) then begin
         aDir := GetCacheStr(IndxRec.offset, IndxRec.size, Item);
@@ -398,7 +484,7 @@ begin
     fIndexStream.Position := 0;
     while fIndexStream.Position<fIndexStream.Size do begin
       fIndexStream.Read(IndxRec, SIZEOF_INDEX);
-      GetCachedItem(fCacheStream, IndxRec.offset, IndxRec.size, Item);
+      GetCachedItem(fIndexStream, fCacheStream, IndxRec.offset, IndxRec.size, Item);
 
       if (Next=0) or (fIndexStream.Position=fIndexStream.Size) or (Nextoid<>Item.CommitOID) then begin
         aDir := GetCacheStr(IndxRec.offset, IndxRec.size, Item);
@@ -419,7 +505,7 @@ begin
   fIndexStream.Position := 0;
   while fIndexStream.Position<fIndexStream.Size do begin
     fIndexStream.Read(IndxRec, SIZEOF_INDEX);
-    GetCachedItem(fCacheStream, IndxRec.offset, IndxRec.size, Item);
+    GetCachedItem(fIndexStream, fCacheStream, IndxRec.offset, IndxRec.size, Item);
     aDir := GetCacheStr(IndxRec.offset, IndxRec.size, Item);
     if withRecNum then
       DbgOut('%8d%s',[n+1,SEP]);
@@ -440,6 +526,7 @@ begin
   //end;
 end;
 
+{$ifdef UseIndex}
 procedure DoIntervals(db: TDbIndex);
 var
   i: Integer;
@@ -590,6 +677,7 @@ begin
     db.Free;
   end;
 end;
+{$endif}
 
 begin
   CheckDir;
