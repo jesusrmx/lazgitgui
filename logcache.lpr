@@ -44,6 +44,7 @@ var
   withIntervals: boolean = true;
   withInOrder: boolean = true;
   withTopo: boolean = true;
+  withReindex: boolean = true;
 
 
 function Shorten(s: string): string;
@@ -99,24 +100,30 @@ var
   w: word;
 begin
 
-  if aOffset>stream.Size then
-    raise Exception.CreateFmt('Corruption detected (beyondLimits) Index: Offset=%d Cache: Offset=%d Size=%d',
+  result := false;
+
+  if aOffset+aSize>stream.Size then
+    raise Exception.CreateFmt('Corruption detected (read beyond Limits) Index: Offset=%d Cache: Offset=%d Size=%d',
       [indexStream.position - SIZEOF_INDEX, aOffset, stream.size]);
 
   stream.Position := aOffset;
-  w := stream.ReadWord;
-  if aSize-2<>w then
-    raise Exception.CreateFmt('Corruption detected (size mismatch) Index: Offset=%d Size=%d CacheRecord: Offset=%d Size=%d',
-      [indexStream.position - SIZEOF_INDEX, SIZEOF_INDEX, aOffset, w]);
-
   GetMem(buf, aSize);
   try
+
+    stream.Read(buf^, aSize);
+
+    p := buf;
+    t := p + aSize;
+
+    if pword(p)^+2<>aSize then
+      raise Exception.CreateFmt('Corruption detected (size mismatch) Index: Offset=%d Size=%d CacheRecord: Offset=%d Size=%d',
+        [indexStream.position - SIZEOF_INDEX, SIZEOF_INDEX, aOffset, w]);
+
     try
-      stream.Read(buf^, aSize);
-      p := buf;
-      t := p + aSize;
+
       if skip then
         inc(p, 2); // skip record size
+
       num := FIELD_DATE;
       item.CommiterDate := PInt64(p)^; inc(p, SizeOf(Int64));
       inc(num);
@@ -146,6 +153,7 @@ begin
       end;
     except
     end;
+
   finally
     FreeMem(buf);
   end;
@@ -188,85 +196,85 @@ begin
   result += GetItemStr(item);
 end;
 
+function GetBoolParameter(par:string; def:boolean): boolean;
+var
+  s: string;
+  i: Integer;
+begin
+  i := 1;
+  while i<paramcount do begin
+    s := paramstr(i);
+    if (pos('--', s)<>1) then begin
+      if (s[1] in ['-','+']) and SameText(copy(s, 2, length(s)), par) then begin
+        result := s[1]='+';
+        exit;
+      end;
+    end;
+    inc(i);
+  end;
+  result := def;
+end;
+
+function GetStringParameter(par:string; def:string): string;
+var
+  s: string;
+  i, j: Integer;
+begin
+  i := 1;
+  while i<=paramcount do begin
+    s := paramstr(i);
+    if pos('--', s)=1 then begin
+      j := pos('=', s);
+      if j=0 then
+        raise Exception.CreateFmt('Invalid option %s',[s]);
+      if sametext(copy(s, 3, j-3), par) then begin
+        result := Copy(s, j+1, length(s));
+        exit;
+      end;
+    end else if s[1]='-' then begin
+      if SameText(copy(s, 2, Length(s)-1), par) then begin
+        if i>=paramcount-1 then
+          raise Exception.CreateFmt('Option %s needs a value',[par]);
+        inc(i);
+        result := paramStr(i);
+        exit;
+      end;
+    end;
+    inc(i);
+  end;
+  result := def;
+end;
+
+function GetIntParameter(par:string; def: Integer): Integer;
+begin
+  result := StrToIntDef(GetStringParameter(par, ''), def);
+end;
+
 procedure ProcessParameters;
-
-  function GetBool(par:string; def:boolean): boolean;
-  var
-    s: string;
-    i: Integer;
-  begin
-    i := 1;
-    while i<paramcount do begin
-      s := paramstr(i);
-      if (pos('--', s)<>1) then begin
-        if (s[1] in ['-','+']) and SameText(copy(s, 2, length(s)), par) then begin
-          result := s[1]='+';
-          exit;
-        end;
-      end;
-      inc(i);
-    end;
-    result := def;
-  end;
-
-  function GetValue(par:string; def:string): string;
-  var
-    s: string;
-    i, j: Integer;
-  begin
-    i := 1;
-    while i<paramcount do begin
-      s := paramstr(i);
-      if pos('--', s)=1 then begin
-        j := pos('=', s);
-        if j=0 then
-          raise Exception.CreateFmt('Invalid option %s',[s]);
-        if sametext(copy(s, 3, j-3), par) then begin
-          result := Copy(s, j+1, length(s));
-          exit;
-        end;
-      end else if s[1]='-' then begin
-        if SameText(copy(s, 2, Length(s)-1), par) then begin
-          if i>=paramcount-1 then
-            raise Exception.CreateFmt('Option %s needs a value',[par]);
-          inc(i);
-          result := paramStr(i);
-          exit;
-        end;
-      end;
-      inc(i);
-    end;
-    result := def;
-  end;
-
-  function GetIntValue(par:string; def: Integer): Integer;
-  begin
-    result := StrToIntDef(GetValue(par, ''), def);
-  end;
-
 begin
 
-  OIDLen := GetIntValue('OIDLen', OIDLen);
-  SubjLen := GetIntValue('SubLen', SubjLen);
-  withHumanDate := GetBool('hd', withHumanDate);
-  withDate := GetBool('d', withDate);
-  withParentOID := GetBool('p', withParentOID);
-  withCommitOID := GetBool('h', withCommitOID);
-  withAuthor := GetBool('a', withAuthor);
-  withEmail := GetBool('e', withEmail);
-  withRefs := GetBool('r', withRefs);
-  withSubject := GetBool('s', withSubject);
-  withIndexInfo := GetBool('i', withIndexInfo);
-  withCutTag := GetBool('ct', withCutTag);
+  OIDLen := GetIntParameter('OIDLen', OIDLen);
+  SubjLen := GetIntParameter('SubLen', SubjLen);
+  withHumanDate := GetBoolParameter('hd', withHumanDate);
+  withDate := GetBoolParameter('d', withDate);
+  withParentOID := GetBoolParameter('p', withParentOID);
+  withCommitOID := GetBoolParameter('h', withCommitOID);
+  withAuthor := GetBoolParameter('a', withAuthor);
+  withEmail := GetBoolParameter('e', withEmail);
+  withRefs := GetBoolParameter('r', withRefs);
+  withSubject := GetBoolParameter('s', withSubject);
+  withIndexInfo := GetBoolParameter('i', withIndexInfo);
+  withCutTag := GetBoolParameter('ct', withCutTag);
 
-  withStats  := GetBool('st', withStats);
-  withRecNum := GetBool('rn', withRecNum);
-  withHeaders := GetBool('hdr', withHeaders);
-  withIncOffsets := GetBool('inc', withIncOffsets);
-  withInheritance := GetBool('inh', withInheritance);
-  withIntervals := GetBool('int', withIntervals);
-  withInOrder := GetBool('ord', withInOrder);
-  withTopo := GetBool('topo', withTopo);
+  withStats  := GetBoolParameter('st', withStats);
+  withRecNum := GetBoolParameter('rn', withRecNum);
+  withHeaders := GetBoolParameter('hdr', withHeaders);
+  withIncOffsets := GetBoolParameter('inc', withIncOffsets);
+  withInheritance := GetBoolParameter('inh', withInheritance);
+  withIntervals := GetBoolParameter('int', withIntervals);
+  withInOrder := GetBoolParameter('ord', withInOrder);
+  withTopo := GetBoolParameter('topo', withTopo);
+  withReindex := GetBoolParameter('reindex', withReindex);
 
 end;
 
@@ -281,25 +289,37 @@ begin
     halt(1);
   end;
 
-  aFile := ExpandFileName(ParamStr(ParamCount));
-  if FileExists(aFile) then
-    aDir := ExtractFilePath(aFile)
-  else
-    aDir := IncludeTrailingPathDelimiter(aFile);
-
-  found := false;
-  while DirectoryExists(aDir) do begin
-    found := DirectoryExists(aDir + '.git');
-    if found then break;
-    aDir := ExtractFilePath(ExcludeTrailingPathDelimiter(aDir));
+  aDir := GetStringParameter('dir', '');
+  if aDir<>'' then begin
+    aDir := ExpandFilename(aDir);
+    if not DirectoryExists(aDir) then
+      aDir := ''
+    else
+      aDir := IncludeTrailingPathDelimiter(aDir);
   end;
 
-  if not found then begin
-    DebugLn('a git root directory could not be found for ', aFile);
-    halt(2);
-  end;
+  if aDir='' then begin
+    aFile := ExpandFileName(ParamStr(ParamCount));
+    if FileExists(aFile) then
+      aDir := ExtractFilePath(aFile)
+    else
+      aDir := IncludeTrailingPathDelimiter(aFile);
 
-  aDir := aDir + '.git' + PathDelim
+    found := false;
+    while DirectoryExists(aDir) do begin
+      found := DirectoryExists(aDir + '.git');
+      if found then break;
+      aDir := ExtractFilePath(ExcludeTrailingPathDelimiter(aDir));
+    end;
+
+    if not found then begin
+      DebugLn('a git root directory could not be found for ', aFile);
+      halt(2);
+    end;
+
+    aDir := aDir + '.git' + PathDelim;
+
+  end;
 
 end;
 
@@ -315,8 +335,9 @@ var
   Item: TLogItem;
   i, m: Integer;
   failed: Boolean;
-  w: Word;
+  lastSize: Word;
   dummy, aIndexFile: string;
+  ticks: QWord;
 begin
   DebugLn('Checking for Corruption');
   failed := false;
@@ -325,10 +346,10 @@ begin
     fIndexStream.Read(IndxRec, SIZEOF_INDEX);
     if IndxRec.offset<fCacheStream.Size then begin
       fCacheStream.Position := IndxRec.Offset;
-      w := fCacheStream.ReadWord;
-      if IndxRec.size-2<>w then begin
+      lastSize := fCacheStream.ReadWord;
+      if IndxRec.size-2<>lastSize then begin
         DebugLn('Corruption detected at item %d indexOffset=%d cacheOffset=%d expected=%d found=%d',
-          [i, fIndexStream.Position-SIZEOF_INDEX, IndxRec.offset, IndxRec.size-2, w]);
+          [i, fIndexStream.Position-SIZEOF_INDEX, IndxRec.offset, IndxRec.size-2, lastSize]);
         failed := true;
         break;
       end;
@@ -341,24 +362,31 @@ begin
     inc(i);
   end;
 
+  if not failed and (fCacheStream.Position + lastSize<>fCacheStream.Size) then begin
+    DebugLn('CacheFile size inconsistency: Offset=%d Size=%d',[fCacheStream.Position, fCacheStream.Size]);
+    halt(11);
+  end;
+
   if not failed then
     exit;
 
   DebugLn('Trying to reconstruct the index');
 
+  ticks := GetTickCount64;
   //  the signature is ok or we wouldnt be here
   fCacheStream.Position := 4;
   fIndexStream.clear;
   while fCacheStream.Position<fCacheStream.Size do begin
-    w := fCacheStream.ReadWord;
+    lastSize := fCacheStream.ReadWord;
     IndxRec.offset := fCacheStream.Position - 2;
-    IndxRec.Size := w + 2;
+    IndxRec.Size := lastSize + 2;
     fIndexStream.Write(IndxRec, SIZEOF_INDEX);
-    fCacheStream.Seek(w, soFromCurrent);
+    fCacheStream.Seek(lastSize, soFromCurrent);
   end;
 
   GetFilenames(aIndexFile, dummy);
   fIndexStream.SaveToFile(aIndexFile);
+  DebugLn('Reindexig took %d ms',[GetTickCount64 - ticks]);
 
   fIndexStream.position := 0;
   fCacheStream.Position := 4;
@@ -380,8 +408,6 @@ var
   Item: TLogItem;
   sig, ver: word;
 begin
-
-  CheckDir;
 
   GetFilenames(aIndexFile, aCacheFile);
 
@@ -430,6 +456,7 @@ begin
     next := 0;
     n := 0;
     try
+      fIndexStream.Position := 0;
       while fIndexStream.Position<fIndexStream.Size do begin
         fIndexStream.Read(IndxRec, SIZEOF_INDEX);
         GetCachedItem(fIndexStream, fCacheStream, IndxRec.offset, IndxRec.size, Item);
@@ -485,7 +512,6 @@ begin
     while fIndexStream.Position<fIndexStream.Size do begin
       fIndexStream.Read(IndxRec, SIZEOF_INDEX);
       GetCachedItem(fIndexStream, fCacheStream, IndxRec.offset, IndxRec.size, Item);
-
       if (Next=0) or (fIndexStream.Position=fIndexStream.Size) or (Nextoid<>Item.CommitOID) then begin
         aDir := GetCacheStr(IndxRec.offset, IndxRec.size, Item);
         if withRecNum then
@@ -497,20 +523,22 @@ begin
     end;
   end;
 
-  if withHeaders then begin
-    DebugLn;
-    DebugLn('Listing in index order');
-  end;
-  n := 0;
-  fIndexStream.Position := 0;
-  while fIndexStream.Position<fIndexStream.Size do begin
-    fIndexStream.Read(IndxRec, SIZEOF_INDEX);
-    GetCachedItem(fIndexStream, fCacheStream, IndxRec.offset, IndxRec.size, Item);
-    aDir := GetCacheStr(IndxRec.offset, IndxRec.size, Item);
-    if withRecNum then
-      DbgOut('%8d%s',[n+1,SEP]);
-    DebugLn('%s',[aDir]);
-    inc(n);
+  if withInOrder then begin
+    if withHeaders then begin
+      DebugLn;
+      DebugLn('Listing in index order');
+    end;
+    n := 0;
+    fIndexStream.Position := 0;
+    while fIndexStream.Position<fIndexStream.Size do begin
+      fIndexStream.Read(IndxRec, SIZEOF_INDEX);
+      GetCachedItem(fIndexStream, fCacheStream, IndxRec.offset, IndxRec.size, Item);
+      aDir := GetCacheStr(IndxRec.offset, IndxRec.size, Item);
+      if withRecNum then
+        DbgOut('%8d%s',[n+1,SEP]);
+      DebugLn('%s',[aDir]);
+      inc(n);
+    end;
   end;
 
   //DebugLn;
