@@ -570,10 +570,10 @@ begin
   case what of
     GITMGR_EVENT_REFLISTCHANGED:
       if fActive then begin
+        // reflist has changed, update the grid to reflect annotations.
+        gridLog.Update;
+        // queue a cache update
         fLogCache.UpdateCache;
-        //// update graph (reload the log)
-        //fItemIndices := nil;
-        //UpdateGridRows;
       end;
   end;
 end;
