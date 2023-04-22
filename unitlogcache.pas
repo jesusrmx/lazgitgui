@@ -145,7 +145,8 @@ type
   public
     constructor create(aLogEvent: TLogThreadEvent);
     destructor Destroy; override;
-    procedure LoadCache;
+    procedure UpdateCache;
+    procedure Open;
 
     property LogState: TLogState read fLogState;
     property GitMgr: TGitMgr read fGitMgr write SetGitMgr;
@@ -592,15 +593,22 @@ begin
   fGit := fGitMgr.Git;
 end;
 
-procedure TLogCache.LoadCache;
+procedure TLogCache.UpdateCache;
+begin
+  Open;
+  // start cache update anyway
+  EnterLogState(lsStart);
+end;
+
+procedure TLogCache.Open;
 begin
   if fDbIndex=nil then begin
     fDbIndex := TDbIndex.Create(fGit.TopLevelDir + '.git' + PathDelim);
     fLimits.Db := fDbIndex;
     fLimits.Config := Config;
   end;
-  // start cache update anyway
-  EnterLogState(lsStart);
+
+  fDbIndex.Open;
 end;
 
 end.

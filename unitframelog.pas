@@ -182,6 +182,9 @@ begin
   if aRow>=gridLog.FixedRows then begin
     aIndex := aRow - gridLog.FixedRows;
     db := fLogCache.DbIndex;
+    if db=nil then begin
+      exit;
+    end;
     if db.LoadItem(aIndex) then begin
       x := aRect.Left + 7;
       case gridLog.Columns[aCol].Title.Caption of
@@ -523,22 +526,27 @@ begin
 
   if not fActive then begin
 
+    fWithArrows := fConfig.ReadBoolean('DrawArrows', true);
+
     if fLogCache=nil then begin
       fLogCache := TLogCache.Create(@OnLogEvent);
       fLogCache.GitMgr := fGitMgr;
       fLogCache.Config := fConfig;
+
+      fLogCache.Open;
+      if fLogCache.DbIndex.Count>0 then begin
+        UpdateGridRows;
+        Application.ProcessMessages;
+      end;
     end;
-
-    fWithArrows := fConfig.ReadBoolean('DrawArrows', true);
-
-    gridLog.RowCount := (gridLog.Height div gridLog.DefaultRowHeight) *  2;
 
   end;
 
-  if AValue then
+  fActive := AValue;
+
+  if fActive then
     fGitMgr.UpdateRefList;
 
-  fActive := AValue;
 end;
 
 procedure TframeLog.SetGitMgr(AValue: TGitMgr);
@@ -562,7 +570,7 @@ begin
   case what of
     GITMGR_EVENT_REFLISTCHANGED:
       if fActive then begin
-        fLogCache.LoadCache;
+        fLogCache.UpdateCache;
         //// update graph (reload the log)
         //fItemIndices := nil;
         //UpdateGridRows;
