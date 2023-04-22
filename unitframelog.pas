@@ -143,9 +143,10 @@ const
     'Message: ' + LineEnding+LineEnding+
     '%s';
 
-procedure DrawLine(canvas: TCanvas; x1, y1, x2, y2: Integer; withArrow:boolean);
+procedure DrawLine(canvas: TCanvas; x1, y1, x2, y2: Integer; withArrow, destNode:boolean);
 var
   x, y, o: Integer;
+  w: Integer;
 begin
   canvas.Line(x1, y1, x2, y2);
   if withArrow then begin
@@ -153,12 +154,18 @@ begin
     canvas.pen.width := 1;
     x := x2;
     y := y2;
+
+    if destNode then
+      w := GRAPH_NODE_RADIUS
+    else
+      w := GRAPH_LINE_WIDTH;
+
     if x2<x1 then begin
-      x := x + GRAPH_NODE_RADIUS;
+      x := x + w;
       canvas.Line(x, y - GRAPH_LINE_WIDTH, x + ARROWLEN_X, y - ARROWLEN_Y - GRAPH_LINE_WIDTH - 1);
       canvas.Line(x, y, x + ARROWLEN_X, y + ARROWLEN_Y + 1);
     end else begin
-      x := x - GRAPH_LINE_WIDTH;
+      x := x - w;
       canvas.Line(x, y - GRAPH_LINE_WIDTH, x - ARROWLEN_X, y - ARROWLEN_Y - GRAPH_LINE_WIDTH - 1);
       canvas.Line(x, y, x - ARROWLEN_X, y + ARROWLEN_Y + 1);
     end;
@@ -241,14 +248,14 @@ begin
                     // draw a merge line
                     gridLog.Canvas.Line(x, y, x, y2);
                     x1 := w + fItemIndices[lines[i].source].column * GRAPH_COLUMN_SEPARATOR;
-                    DrawLine(gridLog.Canvas, x, y, x1, y, fWithArrows);
+                    DrawLine(gridLog.Canvas, x, y, x1, y, fWithArrows, true);
                   end;
 
                   if lifBorn in flags then begin
                     // draw a new born line with origin at source and dest at this point
                     gridLog.Canvas.Line(x, y1, x, y);
                     x1 := w + fItemIndices[lines[i].source].column * GRAPH_COLUMN_SEPARATOR;
-                    DrawLine(gridLog.Canvas, x1, y, x, y, fWithArrows);
+                    DrawLine(gridLog.Canvas, x1, y, x, y, fWithArrows, false);
                   end;
                 end;
               end;
