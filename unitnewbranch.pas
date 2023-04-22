@@ -28,13 +28,14 @@ interface
 
 uses
   Classes, SysUtils, LazLogger, Forms, Controls, Graphics, Dialogs, StdCtrls, ComCtrls,
-  ButtonPanel, ExtCtrls, unitconfig, unitprocess, unitgit;
+  ButtonPanel, ExtCtrls, unitconfig, unitgittypes, unitifaces, unitprocess, unitgitutils,
+  unitgitmgr;
 
 type
 
   { TfrmNewBranch }
 
-  TfrmNewBranch = class(TForm)
+  TfrmNewBranch = class(TForm, IObserver)
     ButtonPanel1: TButtonPanel;
     chkFetch: TCheckBox;
     chkSwitchTo: TCheckBox;
@@ -55,19 +56,21 @@ type
     procedure txtNameChange(Sender: TObject);
   private
     fBranchName, fReference: string;
-    fGit: TGit;
+    fGitMgr: TGitMgr;
+    fGit: IGit;
     fType: Integer;
     function GetFetch: boolean;
     function GetSwitch: boolean;
+    procedure SetGitMgr(AValue: TGitMgr);
     procedure ShowTabIndex(aIndex: Integer);
     procedure CheckOkButton;
-    function AlreadyExists(aName: string; subType: TRefObjectSubType): boolean;
     procedure EvaluateOutcome;
     procedure ShowInfo;
+    procedure ObservedChanged(Sender:TObject; what: Integer; data: PtrInt);
   public
     function GetBranchCommandOptions: string;
     property BranchName: string read fBranchName;
-    property Git: TGit read fGit write fGit;
+    property GitMgr: TGitMgr read fGitMgr write SetGitMgr;
     property Switch: boolean read GetSwitch;
     property Fetch: boolean read GetFetch;
   end;
@@ -101,14 +104,7 @@ end;
 
 procedure TfrmNewBranch.FormShow(Sender: TObject);
 begin
-  if fGit.UpdateRefList>0 then begin
-    DebugLn(fGit.ErrorLog);
-    ShowMessage('Error while getting list of branches');
-    Close;
-    exit;
-  end;
-
-  ShowTabIndex(0);
+  fGitMgr.UpdateRefList;
 end;
 
 procedure TfrmNewBranch.lstSourceClick(Sender: TObject);
@@ -129,7 +125,7 @@ end;
 
 procedure TfrmNewBranch.ShowTabIndex(aIndex: Integer);
 var
-  branchLine: TStringList;
+  refList: TStringList;
   i, j: Integer;
   info: PRefInfo;
   ok: boolean;
@@ -142,8 +138,10 @@ begin
 
     lstSource.Clear;
 
-    for i:=0 to fGit.RefList.Count-1 do begin
-      info := PRefInfo(fGit.RefList.Objects[i]);
+    refList := fGit.RefList;
+
+    for i:=0 to refList.Count-1 do begin
+      info := PRefInfo(refList.Objects[i]);
       ok := false;
       case aIndex of
         0: ok := info^.subType=rostLocal;// (info^.objType=rotCommit) and (not info^.isTracking);
@@ -152,7 +150,7 @@ begin
         else exit;
       end;
       if ok then begin
-        j := lstSource.Items.AddObject(fGit.RefList[i], TObject(info));
+        j := lstSource.Items.AddObject(refList[i], TObject(info));
         if (aIndex=0) and info^.head then
           lstSource.ItemIndex := j;
       end;
@@ -171,6 +169,21 @@ begin
   result := chkSwitchTo.Checked;
 end;
 
+procedure TfrmNewBranch.SetGitMgr(AValue: TGitMgr);
+begin
+  if fGitMgr = AValue then Exit;
+
+  if fGitMgr<>nil then
+    fGitMgr.RemoveObserver(Self);
+
+  fGitMgr := AValue;
+
+  if fGitMgr<>nil then begin
+    fGitMgr.AddObserver(Self);
+    fGit := fGitMgr.Git;
+  end;
+end;
+
 function TfrmNewBranch.GetFetch: boolean;
 begin
   result := chkFetch.Checked;
@@ -183,23 +196,6 @@ begin
     (fType=BT_NEWLOCAL_BRANCH) or
     (fType=BT_NEWLOCAL_TRACKING) or
     (fType=BT_NEWLOCAL_TAG);
-end;
-
-function TfrmNewBranch.AlreadyExists(aName: string; subType: TRefObjectSubType
-  ): boolean;
-var
-  i: Integer;
-  info: PRefInfo;
-begin
-  result := false;
-  aName := lowercase(aName);
-  for i:=0 to fGit.RefList.Count-1 do begin
-    info := PRefInfo(fGit.RefList.Objects[i]);
-    if (info^.subType=subtype) and (aName=info^.refName) then begin
-      result := true;
-      break;
-    end;
-  end;
 end;
 
 procedure TfrmNewBranch.EvaluateOutcome;
@@ -232,7 +228,7 @@ begin
     0: // branch based on a existing local branch tab
       begin
         if fBranchName<>'' then begin
-          if AlreadyExists(fBranchName, rostLocal) then begin
+          if fGitMgr.IndexOfLocalBranch(fBranchName)>=0 then begin
             AlreadyExisting;
             exit;
           end;
@@ -261,7 +257,7 @@ begin
           p := pos('/', fReference);
           fBranchName := copy(fReference, p+1, MaxInt);
         end;
-        if AlreadyExists(fBranchName, rostLocal) then begin
+        if fGitMgr.IndexOfLocalBranch(fBranchName)>=0 then begin
           AlreadyExisting;
           exit;
         end;
@@ -271,7 +267,7 @@ begin
     2:  // branch based on a tag tab
       begin
         if fBranchName<>'' then begin
-          if AlreadyExists(fBranchName, rostLocal) then begin
+          if fGitMgr.IndexOfLocalBranch(fBranchName)>=0 then begin
             AlreadyExisting;
             exit;
           end;
@@ -331,6 +327,24 @@ begin
 
 end;
 
+procedure TfrmNewBranch.ObservedChanged(Sender: TObject; what: Integer;
+  data: PtrInt);
+begin
+  case what of
+    GITMGR_EVENT_REFLISTCHANGED:
+      begin
+        if Data>0 then begin
+          //DebugLn(fGit.ErrorLog);
+          ShowMessage('Error while getting list of branches');
+          Close;
+          exit;
+        end;
+
+        ShowTabIndex(0);
+      end;
+  end;
+end;
+
 function TfrmNewBranch.GetBranchCommandOptions: string;
 begin
   if fType = BT_INVALID then begin
@@ -352,6 +366,8 @@ end;
 procedure TfrmNewBranch.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
 begin
   fConfig.WriteWindow(Self, 'newbranchform', SECTION_GEOMETRY);
+  if fGitMgr<>nil then
+    fGitMgr.RemoveObserver(Self);
 end;
 
 end.

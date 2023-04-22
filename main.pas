@@ -29,16 +29,17 @@ interface
 uses
   Classes, SysUtils, Math, LazLogger, Forms, Controls, Graphics, Dialogs,
   StdCtrls, ExtCtrls, ActnList, synEditTypes, SynEdit, SynHighlighterDiff,
-  StrUtils, FileUtil, unitconfig, unitprocess, unitentries, unitgit, Types,
-  lclType, Menus, Buttons, Grids, unitnewbranch, unitruncmd, unitansiescapes,
-  unitnewtag, unitlogcache, unitlog, LConvEncoding, fgl, unitdbindex,
-  unitframelog;
+  StrUtils, FileUtil, lclType, Menus, Buttons, Grids, Types, fgl,
+  unitifaces, unitconfig, unitprocess, unitentries, unitgitutils, {unitgit,}
+  unitnewbranch, unitruncmd, unitansiescapes,
+  unitnewtag, unitlogcache, unitlog, LConvEncoding, unitdbindex,
+  unitframelog, unitgitmgr;
 
 type
 
   { TfrmMain }
 
-  TfrmMain = class(TForm)
+  TfrmMain = class(TForm, IObserver)
     actCommit: TAction;
     actFetch: TAction;
     actNewLog: TAction;
@@ -122,7 +123,8 @@ type
     procedure lstUnstagedMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
   private
-    fGit: TGit;
+    fGitMgr: TGitMgr;
+    fGit: IGit;
     fClickedIndex: Integer;
     fDir: string;
     fItemIndices: TItemIndexArray;
@@ -159,7 +161,6 @@ type
     procedure SaveGui;
     procedure ItemAction(sender: TListbox; aIndex: Integer);
     procedure UpdateBranchMenu;
-    procedure UpdateStatus;
     procedure ShowError;
     procedure ViewFile(filename: string);
     procedure ComingSoon;
@@ -171,6 +172,7 @@ type
     procedure CheckMenuDivisorInLastPosition(pop:TPopupMenu);
     procedure FindParents;
     procedure UpdateGridRows;
+    procedure ObservedChanged(Sender:TObject; what: Integer; data: PtrInt);
   public
 
   end;
@@ -308,20 +310,23 @@ begin
 
     MENU_LIST_VIEW_UNTRACKED:
       begin
-        fConfig.ViewUntrackedFiles := mi.checked;
-        UpdateStatus;
+        fGitMgr.ViewUntrackedFiles := mi.checked;
+        fConfig.ViewUntrackedFiles := fGitMgr.ViewUntrackedFiles;
+        fGitMgr.UpdateStatus;
       end;
 
     MENU_LIST_VIEW_IGNORED:
       begin
-        fConfig.ViewIgnoredFiles := mi.checked;
-        UpdateStatus;
+        fGitMgr.ViewIgnoredFiles := mi.checked;
+        fConfig.ViewIgnoredFiles := fGitMgr.ViewIgnoredFiles;
+        fGitMgr.UpdateStatus;
       end;
 
     //MENU_LIST_VIEW_TRACKED:
     //  begin
-    //    fConfig.ViewTrackedFiles := mi.Checked;
-    //    UpdateStatus;
+    //    fGitMgr.ViewTrackedFiles := mi.Checked;
+    //    fConfig.ViewTrackedFiles := fGitMgr.ViewTrackedFiles;
+    //    fGitMgr.UpdateStatus;
     //  end;
 
     else
@@ -338,7 +343,7 @@ begin
     ShowError
   else begin
     fDescribed := false;
-    UpdateStatus;
+    fGitMgr.UpdateStatus;
   end;
   InvalidateBranchMenu;
 end;
@@ -351,7 +356,7 @@ begin
   // what file?
   ignored := lstUnstaged.Items[mi.Tag];
   if fGit.AddToIgnoreFile(ignored, false, true) then
-    UpdateStatus
+    fGitMgr.UpdateStatus
   else
     ShowMessage(Format('''%s'' is already in ignored list',[ignored]));
 end;
@@ -364,7 +369,7 @@ begin
   // what file?
   ignored := lstUnstaged.Items[mi.Tag];
   if fGit.AddToIgnoreFile(ignored, true, true) then
-    UpdateStatus
+    fGitMgr.UpdateStatus
   else
     ShowMessage(Format('The type ''*%s'' is already in the ignored list',[ExtractFileExt(ignored)]));
 end;
@@ -412,7 +417,7 @@ begin
   if fGit.Restore(entryArray, false)>0 then
     ShowError
   else
-    UpdateStatus;
+    fGitMgr.UpdateStatus;
 end;
 
 procedure TfrmMain.OnStageAllClick(Sender: TObject);
@@ -432,7 +437,7 @@ begin
     if fGit.Any(cmd, cmdOut)>0 then
       ShowError
     else begin
-      UpdateStatus;
+      fGitMgr.UpdateStatus;
       //if cmdOut<>'' then
       //  txtDiff.Text := cmdOut;
     end;
@@ -450,7 +455,7 @@ begin
   if fGit.Add(entryArray)>0 then
     ShowError
   else
-    UpdateStatus;
+    fGitMgr.UpdateStatus;
 end;
 
 procedure TfrmMain.OnUnstageItemClick(Sender: TObject);
@@ -464,7 +469,7 @@ begin
   if fGit.Restore(entryArray, true)>0 then
     ShowError
   else
-    UpdateStatus;
+    fGitMgr.UpdateStatus;
 end;
 
 procedure TfrmMain.lblBranchContextPopup(Sender: TObject; MousePos: TPoint;
@@ -652,14 +657,14 @@ begin
           if fGit.Add(Entry)>0 then
             ShowError
           else
-            UpdateStatus;
+            fGitMgr.UpdateStatus;
         end;
       etDeletedInWorktree:
         begin
           if fGit.Rm(Entry)>0 then
             ShowError
           else
-            UpdateStatus;
+            fGitMgr.UpdateStatus;
         end;
       // other merge conflicts:
       // see:
@@ -680,7 +685,7 @@ begin
           if fGit.Restore(entry, true)>0 then
             ShowError
           else
-            UpdateStatus;
+            fGitMgr.UpdateStatus;
         end;
       else
         ShowMessage('Not yet implemented for Staged: '+cmdOut);
@@ -741,34 +746,6 @@ begin
   finally
     list.Free;
     CheckMenuDivisorInLastPosition(popBranch);
-  end;
-end;
-
-procedure TfrmMain.UpdateStatus;
-var
-  cmdout: RawByteString;
-begin
-  lstUnstaged.Items.BeginUpdate;
-  lstStaged.Items.BeginUpdate;
-  try
-
-    // get the more recent tag
-    if fConfig.ShowTags and (not fDescribed) then begin
-      fGit.Describe('', cmdout);
-      fLastDescribedTag := cmdOut;
-      fDescribed := true;
-    end;
-
-    if fConfig.ViewIgnoredFiles then fGit.IgnoredMode:='traditional' else fGit.IgnoredMode:='no';
-    if fConfig.ViewUntrackedFiles then fGit.UntrackedMode:='all' else fGit.UntrackedMode:='no';
-
-    if fGit.Status(lstUnstaged.Items, lstStaged.Items)>0 then
-      ShowError
-    else
-      UpdateBranch;
-  finally
-    lstStaged.Items.EndUpdate;
-    lstUnstaged.Items.EndUpdate;
   end;
 end;
 
@@ -899,7 +876,7 @@ var
   cmdOut: RawByteString;
 begin
   f := TfrmNewBranch.Create(Self);
-  f.Git := fGit;
+  f.GitMgr := fGitMgr;
   try
     if f.ShowModal=mrOk then begin
 
@@ -929,7 +906,7 @@ begin
           exit;
         end;
       finally
-        UpdateStatus;
+        fGitMgr.UpdateStatus;
       end;
 
     end;
@@ -955,7 +932,7 @@ begin
         ShowError
       else begin
         fDescribed := false;
-        UpdateStatus;
+        fGitMgr.UpdateStatus;
       end;
     end;
   finally
@@ -981,6 +958,22 @@ end;
 procedure TfrmMain.UpdateGridRows;
 begin
 
+end;
+
+procedure TfrmMain.ObservedChanged(Sender:TObject; what: Integer; data: PtrInt);
+begin
+  case what of
+    GITMGR_EVENT_UpdateStatus:
+      begin
+        if data>0 then
+          ShowError
+        else begin
+          lstUnstaged.Items.Assign(fGitMgr.UnstagedList);
+          lstStaged.Items.Assign(fGitMgr.StagedList);
+          UpdateBranch;
+        end;
+      end;
+  end;
 end;
 
 function OwnerDrawStateToStr(State: TOwnerDrawState): string;
@@ -1075,12 +1068,15 @@ end;
 
 procedure TfrmMain.FormCreate(Sender: TObject);
 begin
-  fGit := TGit.Create;
-  fGit.Config := fConfig;
+  fGitMgr := TGitMgr.Create;
+  fGitMgr.Config := fConfig;
+  fGitMgr.AddObserver(Self);
+
+  fGit := fGitMgr.Git;
 
   fConfig.OpenConfig;
 
-  if not fGit.Initialize then begin
+  if not fGitMgr.Initialize then begin
     fConfig.CloseConfig;
     DebugLn('Error: Could not find git command');
     Application.Terminate;
@@ -1102,13 +1098,17 @@ begin
   txtLog.Font.Color := clWhite;
 
   frmLog.Config := fConfig;
-  frmLog.Git := fGit;
+  frmLog.GitMgr := fGitMgr;
   frmLog.OnLogCacheEvent := @OnLogCacheEvent;
 
   fLogHandler := TLogHandler.Create(txtLog, @OnLogEvent);
-  fLogHandler.Git := fGit;
+  fLogHandler.GitMgr := fGitMgr;
 
   fConfig.ReadPreferences;
+  fGitMgr.ViewUntrackedFiles := fConfig.ViewUntrackedFiles;
+  fGitMgr.ViewIgnoredFiles := fConfig.ViewIgnoredFiles;
+  fGitMgr.ViewTrackedFiles := fConfig.ViewTrackedFiles;
+  fGitMgr.ShowTags := fConfig.ShowTags;
 
   if fConfig.ReadBoolean('NeedsMenuWorkaround') then begin
     Self.Menu := nil;
@@ -1127,7 +1127,7 @@ end;
 
 procedure TfrmMain.actRescanExecute(Sender: TObject);
 begin
-  UpdateStatus;
+  fGitMgr.UpdateStatus;
 end;
 
 procedure TfrmMain.btnStopClick(Sender: TObject);
@@ -1177,9 +1177,10 @@ end;
 
 procedure TfrmMain.FormDestroy(Sender: TObject);
 begin
+  fGitMgr.RemoveObserver(self);
   frmLog.Clear;
   fLogHandler.Free;
-  fGit.Free;
+  fGitMgr.Free;
 end;
 
 procedure TfrmMain.OpenDirectory(aDir: string);
@@ -1192,7 +1193,7 @@ begin
     exit;
   end;
   fDir := aDir;
-  UpdateStatus;
+  fGitMgr.UpdateStatus;
 end;
 
 procedure TfrmMain.DoItemAction(Data: PtrInt);
@@ -1209,7 +1210,7 @@ begin
   if fGit.Commit(txtComment.Text,'')>0 then
     ShowError
   else begin
-    UpdateStatus;
+    fGitMgr.UpdateStatus;
     txtDiff.Clear;
     txtComment.Clear;
   end;
@@ -1249,7 +1250,7 @@ begin
     btnStop.Visible := true;
     btnStop.Tag := 0;
 
-    frmLog.Start;
+    frmLog.Active := true;
 
   end else begin
     panLog.Visible := false;
@@ -1274,7 +1275,7 @@ begin
   end;
 
   if (fGit.Upstream='') then begin
-    L := fGit.RemotesList;
+    L := fGit.GetRemotesList;
     try
       if L.Count=0 then begin
         ShowMessage('This repository has no remotes defined'^M+
@@ -1307,19 +1308,19 @@ begin
     cmd := ' push --progress';
 
   RunInteractive(fGit.Exe + cmd, fGit.TopLevelDir, 'Pushing to remote: ', 'Push');
-  UpdateStatus;
+  fGitMgr.UpdateStatus;
 end;
 
 procedure TfrmMain.DoFetch;
 begin
   RunInteractive(fGit.Exe + ' -c color.ui=always fetch', fGit.TopLevelDir, 'Fetching from remote: ', 'Fetch');
-  UpdateStatus;
+  fGitMgr.UpdateStatus;
 end;
 
 procedure TfrmMain.DoPull;
 begin
   RunInteractive(fGit.Exe + ' -c color.ui=always pull', fGit.TopLevelDir, 'pulling from remote: ', 'Pull');
-  UpdateStatus;
+  fGitMgr.UpdateStatus;
 end;
 
 procedure TfrmMain.OnLogEvent(sender: TObject; thread: TRunThread;

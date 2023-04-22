@@ -38,7 +38,8 @@ uses
   Classes, SysUtils, dateUtils, fgl,
   LazLogger, SynEdit, Graphics, Forms, Dialogs, Controls, Grids,
   ExtCtrls, ComCtrls, Menus, Types, Clipbrd, ActnList,
-  unitlogcache, unitdbindex, unitgitutils, unitgit, unitifaces, unitruncmd;
+  unitgittypes, unitlogcache, unitdbindex, unitgitutils, unitifaces,
+  unitruncmd, unitgitmgr;
 
 const
   GRAPH_LEFT_PADDING          = 12;
@@ -60,7 +61,7 @@ type
 
   { TframeLog }
 
-  TframeLog = class(TFrame)
+  TframeLog = class(TFrame, IObserver)
     actGotoHead: TAction;
     actShowChanges: TAction;
     actLstLog: TActionList;
@@ -88,8 +89,10 @@ type
     procedure MenuItem2Click(Sender: TObject);
     procedure MenuItem3Click(Sender: TObject);
   private
+    fActive: boolean;
     fConfig: IConfig;
-    fGit: TGit;
+    fGit: IGit;
+    fGitMgr: TGitMgr;
     fItemIndices: TItemIndexArray;
     fLogCache: TLogCache;
     fOnLogCacheEvent: TLogThreadEvent;
@@ -103,15 +106,18 @@ type
     function LocateItemIndex(aIndex: Integer): boolean;
     procedure AddMergeBranchMenu;
     procedure OnMergeBranchClick(Sender: TObject);
+    procedure SetActive(AValue: boolean);
+    procedure SetGitMgr(AValue: TGitMgr);
+    procedure ObservedChanged(Sender:TObject; what: Integer; data: PtrInt);
   public
-    procedure Start;
     procedure Clear;
     procedure UpdateGridRows;
 
     property LogCache: TLogCache read fLogCache write fLogCache;
     property Config: IConfig read fConfig write fConfig;
-    property Git: TGit read fGit write fGit;
+    property GitMgr: TGitMgr read fGitMgr write SetGitMgr;
     property OnLogCacheEvent: TLogThreadEvent read fOnLogCacheEvent write fOnLogCacheEvent;
+    property Active: boolean read fActive write SetActive;
 
   end;
 
@@ -503,29 +509,65 @@ begin
     if RunInteractive(fGit.Exe + ' merge '+ arr[j]^.refName, fGit.TopLevelDir, 'Merging branches', s)>0 then begin
       // an error occurred
     end else begin
-      // queue update status
+      //// queue update status
+      //fGitMgr.UpdateStatus;
       // update refs
-      // update graph (reload the log)
+      fGitMgr.UpdateRefList;
     end;
   end;
 end;
 
-procedure TframeLog.Start;
+procedure TframeLog.SetActive(AValue: boolean);
 begin
-  if fLogCache=nil then begin
-    fLogCache := TLogCache.Create(@OnLogEvent);
-    fLogCache.Git := fGit;
-    fLogCache.Config := fConfig;
+  if fActive = AValue then Exit;
+
+  if not fActive then begin
+
+    if fLogCache=nil then begin
+      fLogCache := TLogCache.Create(@OnLogEvent);
+      fLogCache.GitMgr := fGitMgr;
+      fLogCache.Config := fConfig;
+    end;
+
+    fWithArrows := fConfig.ReadBoolean('DrawArrows', true);
+
+    gridLog.RowCount := (gridLog.Height div gridLog.DefaultRowHeight) *  2;
+
   end;
 
-  fWithArrows := fConfig.ReadBoolean('DrawArrows', true);
+  if AValue then
+    fGitMgr.UpdateRefList;
 
-  gridLog.RowCount := (gridLog.Height div gridLog.DefaultRowHeight) *  2;
+  fActive := AValue;
+end;
 
-  fGit.UpdateRefList;
+procedure TframeLog.SetGitMgr(AValue: TGitMgr);
+begin
+  if fGitMgr = AValue then Exit;
 
-  fLogCache.LoadCache;
+  if fGitMgr<>nil then
+    fGitMgr.RemoveObserver(Self);
 
+  fGitMgr := AValue;
+
+  if fGitMgr<>nil then begin
+    fGitMgr.AddObserver(Self);
+    fGit := fGitMgr.Git;
+  end;
+end;
+
+procedure TframeLog.ObservedChanged(Sender: TObject; what: Integer; data: PtrInt
+  );
+begin
+  case what of
+    GITMGR_EVENT_REFLISTCHANGED:
+      if fActive then begin
+        fLogCache.LoadCache;
+        //// update graph (reload the log)
+        //fItemIndices := nil;
+        //UpdateGridRows;
+      end;
+  end;
 end;
 
 procedure TframeLog.Clear;
