@@ -465,7 +465,7 @@ begin
   else             arr := items[ref].parents;
   for i:=0 to Length(arr)-1 do begin
     j := arr[i];
-    if items[j].column<items[ref].column then begin
+    if items[j].column<>items[ref].column then begin
       result := j;
       break;
     end;
@@ -481,6 +481,20 @@ begin
     // is not the first nor the last it should be an internal node
     // is this a merging node? what is the merging dest?
     dest := FindSource(items, i, true);
+
+    // the source 'dest' must be in another column.
+    if dest=LINE_SOURCE_COLUMN then
+      exit;
+
+    // dest must not be the 'last' of the others column's section
+    // that case is handled in that column's section
+    a := items[dest].column; cur := items[dest].section;
+    if (a>=0) and (cur>=0) then begin
+      section := columns[a].Sections[cur];
+      if (dest>=section.last) then
+        exit;
+    end;
+
     for Section in Sections do
       with Section do begin
         // does it belongs to this section?
@@ -673,8 +687,8 @@ begin
               Include(flags, lifNode);
               // what about the tip?
               if (i=first) then Include(flags, lifFirst) else
-              if (i=last)  then Include(flags, lifLast) else
-              if j>0 then       FindInternalMerges(result, i, columns, j)
+              if (i=last)  then Include(flags, lifLast)
+              else              FindInternalMerges(result, i, columns, j)
             end else
             // a line should be drawn here, what kind of line?
             if (i>=head) and (i<first) then begin
