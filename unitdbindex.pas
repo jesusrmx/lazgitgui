@@ -2,7 +2,7 @@ unit unitdbindex;
 
 {$mode ObjFPC}{$H+}
 
-{$define Debug}
+{.$define Debug}
 
 {$ifdef Debug}
 {.$define DumpCommitsAndParents}
@@ -101,6 +101,7 @@ type
     fReadOnly: boolean;
     fFilter: TIntArray;
     function GetAcceptingNewRecords: boolean;
+    function GetActive: boolean;
     function GetCount: Integer;
     function GetInfo: string;
     //procedure RecoverIndex;
@@ -130,6 +131,7 @@ type
     property ReadOnly: boolean read fReadOnly write fReadOnly;
     property AcceptingNewRecords: boolean read GetAcceptingNewRecords;
     property MaxRecords: Integer read fMaxRecords write fMaxRecords;
+    property Active: boolean read GetActive;
   end;
 
   function GetItemIndexes(db: TDbIndex; withColumns:boolean; out maxColumns:Integer): TItemIndexArray;
@@ -806,6 +808,11 @@ end;
 function TDbIndex.GetAcceptingNewRecords: boolean;
 begin
   result := (fMaxRecords=0) or (Count<fMaxRecords);
+end;
+
+function TDbIndex.GetActive: boolean;
+begin
+  result := fCacheStream<>nil;
 end;
 
 function TDbIndex.GetInfo: string;

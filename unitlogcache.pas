@@ -188,7 +188,7 @@ procedure TCacheLimits.Setup;
 begin
 
   if fDb=nil then
-    raise Exception.Create('Apply restruction on closed db');
+    raise Exception.Create('Apply restriction on closed db');
 
   fShaStart := fConfig.ReadString('CommitStart', '');
   fShaEnd := fConfig.ReadString('CommitEnd', '');
@@ -489,8 +489,6 @@ begin
   if fDbIndex.LoadItem(-1) then
     fOldDate := fDbIndex.Item.CommiterDate;
 
-  fLimits.Setup;
-
   EnterLogState(lsGetFirst);
 end;
 
@@ -521,8 +519,6 @@ var
   arr: TIntArray;
 begin
   fLogState := lsEnd;
-
-  fLimits.Filter;
 
   dummyInterrupt := false;
   SendEvent(nil, LOGEVENT_END, dummyInterrupt);
@@ -601,14 +597,22 @@ begin
 end;
 
 procedure TLogCache.Open;
+var
+  firstTime: boolean;
 begin
-  if fDbIndex=nil then begin
+  firstTime := fDbIndex=nil;
+  if firstTime then begin
     fDbIndex := TDbIndex.Create(fGit.TopLevelDir + '.git' + PathDelim);
     fLimits.Db := fDbIndex;
     fLimits.Config := Config;
   end;
 
   fDbIndex.Open;
+
+  if firstTime then
+    fLimits.Setup;
+
+  fLimits.Filter;
 end;
 
 end.
