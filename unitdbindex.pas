@@ -120,7 +120,7 @@ type
     destructor Destroy; override;
 
     procedure Open;
-    function LoadItem(aIndex: Integer): boolean;
+    function LoadItem(aIndex: Integer; unfiltered:boolean=false): boolean;
     procedure SetFilter(arr: TIntArray);
     procedure TopoSort;
     function FindCommitSha(sha: string; startAt:Integer=-1): Integer;
@@ -1248,9 +1248,9 @@ begin
   end;
 end;
 
-function TDbIndex.LoadItem(aIndex: Integer): boolean;
+function TDbIndex.LoadItem(aIndex: Integer; unfiltered: boolean): boolean;
 begin
-  result := GetCachedItem(aIndex, false, true);
+  result := GetCachedItem(aIndex, unfiltered, true);
   if result then begin
     ItemFromCacheBuffer;
     fLoadedItemIndex := aIndex;

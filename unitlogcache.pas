@@ -483,10 +483,10 @@ begin
   fNewDate := 0;
   fOldDate := 0;
 
-  if fDbIndex.LoadItem(0) then
+  if fDbIndex.LoadItem(0, true) then
     fNewDate := fDbIndex.Item.CommiterDate;
 
-  if fDbIndex.LoadItem(-1) then
+  if fDbIndex.LoadItem(-1, true) then
     fOldDate := fDbIndex.Item.CommiterDate;
 
   EnterLogState(lsGetFirst);
