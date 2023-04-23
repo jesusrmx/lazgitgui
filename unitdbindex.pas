@@ -102,7 +102,6 @@ type
     fFilter: TIntArray;
     function GetAcceptingNewRecords: boolean;
     function GetActive: boolean;
-    function GetCount: Integer;
     function GetInfo: string;
     //procedure RecoverIndex;
     procedure ReIndex;
@@ -124,9 +123,9 @@ type
     procedure SetFilter(arr: TIntArray);
     procedure TopoSort;
     function FindCommitSha(sha: string; startAt:Integer=-1): Integer;
+    function Count(unfiltered: boolean = false): Integer;
 
     property Item: TLogItem read fItem;
-    property Count: Integer read GetCount;
     property Info: string read GetInfo;
     property ReadOnly: boolean read fReadOnly write fReadOnly;
     property AcceptingNewRecords: boolean read GetAcceptingNewRecords;
@@ -791,20 +790,6 @@ end;
 //  SaveIndexStream;
 //end;
 
-function TDbIndex.GetCount: Integer;
-begin
-  if fIndexStream<>nil then begin
-    if fFilter<>nil then
-      result := Length(fFilter)
-    else
-      result := fIndexStream.Size div SIZEOF_INDEX
-  end else
-    result := 0;
-
-  if (fMaxRecords>0) and (result>fMaxRecords) then
-    result := fMaxRecords;
-end;
-
 function TDbIndex.GetAcceptingNewRecords: boolean;
 begin
   result := (fMaxRecords=0) or (Count<fMaxRecords);
@@ -1246,6 +1231,20 @@ begin
     end;
 
   end;
+end;
+
+function TDbIndex.Count(unfiltered: boolean): Integer;
+begin
+  if fIndexStream=nil then
+    exit(0);
+
+  if not unfiltered and (fFilter<>nil) then
+    result := Length(fFilter)
+  else
+    result := fIndexStream.Size div SIZEOF_INDEX;
+
+  if (not unfiltered) and (fMaxRecords>0) and (result>fMaxRecords) then
+    result := fMaxRecords;
 end;
 
 function TDbIndex.LoadItem(aIndex: Integer; unfiltered: boolean): boolean;

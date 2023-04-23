@@ -181,7 +181,7 @@ end;
 function TCacheLimits.IsRestricted: boolean;
 begin
   result := (fDb=nil) or (fMaxCount>0) or
-            ((fRangeStart>0) and (fRangeEnd<fDb.Count) and (fRangeEnd>fRangeStart));
+            ((fRangeStart>0) and (fRangeEnd<fDb.Count(true)) and (fRangeEnd>fRangeStart));
 end;
 
 procedure TCacheLimits.Setup;
@@ -212,7 +212,7 @@ var
   arr: TIntArray;
   i: Integer;
 begin
-  if (fDb<>nil) and (fRangeStart>0) and (fRangeEnd<fDb.Count) and (fRangeEnd>fRangeStart) then begin
+  if (fDb<>nil) and (fRangeStart>0) and (fRangeEnd<fDb.Count(true)) and (fRangeEnd>fRangeStart) then begin
     SetLength(Arr, fRangeEnd-fRangeStart+1);
     for i:=0 to Length(arr)-1 do Arr[i] := i + fRangeStart;
     fDb.SetFilter(arr);
@@ -494,7 +494,7 @@ end;
 
 procedure TLogCache.DoLogStateGetFirst;
 begin
-  if (fOldDate>0) or (fDbIndex.Count=0) then begin
+  if (fOldDate>0) or (fDbIndex.Count(true)=0) then begin
     if fDbIndex.AcceptingNewRecords and not fLimits.IsRestricted then begin
       fLogState := lsGetFirst;
       Run;
@@ -609,10 +609,10 @@ begin
 
   fDbIndex.Open;
 
-  if firstTime then
+  if firstTime then begin
     fLimits.Setup;
-
-  fLimits.Filter;
+    fLimits.Filter;
+  end;
 end;
 
 end.
