@@ -1499,6 +1499,7 @@ object frmMain: TfrmMain
       Top = 2
       Width = 23
       Action = actLog
+      AllowAllUp = True
       Anchors = [akTop, akRight]
       BorderSpacing.Right = 5
       Flat = True
@@ -1551,6 +1552,7 @@ object frmMain: TfrmMain
       Top = 2
       Width = 23
       Action = actNewLog
+      AllowAllUp = True
       Anchors = [akTop, akRight]
       BorderSpacing.Right = 5
       Flat = True
