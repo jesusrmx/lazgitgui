@@ -1247,8 +1247,6 @@ begin
     panLog.Visible := false;
     panLogNew.Visible := true;
     panStatus.Visible := false;
-    btnStop.Visible := true;
-    btnStop.Tag := 0;
 
     frmLog.Active := true;
 
@@ -1340,6 +1338,12 @@ procedure TfrmMain.OnLogCacheEvent(sender: TObject; thread: TLogThread;
 begin
   case event of
 
+    LOGEVENT_START:
+      begin
+        btnStop.Visible := true;
+        btnStop.Tag := 0;
+      end;
+
     LOGEVENT_RECORD:
       begin
         if frmLog.LogCache.LogState=lsGetFirst then lblInfo.Font.Color := clGreen
@@ -1351,7 +1355,6 @@ begin
 
     LOGEVENT_END:
       begin
-        DebugLn('End event received');
         btnStop.Visible := false;
         lblInfo.Visible := false;
       end;

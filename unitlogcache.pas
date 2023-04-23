@@ -19,10 +19,11 @@ uses
 
 const
 
-  LOGEVENT_OUTPUT = 1;
-  LOGEVENT_RECORD = 2;
-  LOGEVENT_DONE   = 3;
-  LOGEVENT_END    = 4;
+  LOGEVENT_START  = 1;
+  LOGEVENT_OUTPUT = 2;
+  LOGEVENT_RECORD = 3;
+  LOGEVENT_DONE   = 4;
+  LOGEVENT_END    = 5;
 
   FILENAME_INFO     = 1;
   FILENAME_INDEX    = 2;
@@ -493,12 +494,18 @@ begin
 end;
 
 procedure TLogCache.DoLogStateGetFirst;
+var
+  interrupt: boolean;
 begin
   if (fOldDate>0) or (fDbIndex.Count(true)=0) then begin
     if fDbIndex.AcceptingNewRecords and not fLimits.IsRestricted then begin
       fLogState := lsGetFirst;
-      Run;
-      exit;
+      interrupt := false;
+      SendEvent(nil, LOGEVENT_START, interrupt);
+      if not interrupt then begin
+        Run;
+        exit;
+      end;
     end;
   end;
   EnterLogState(lsEnd);
