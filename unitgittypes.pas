@@ -34,6 +34,11 @@ type
 
   TRefsMap = specialize TFPGMap<string, TRefInfoArray>;
 
+  PNewTagInfo = ^TNewTagInfo;
+  TNewTagInfo = record
+    commit: string;
+  end;
+
 implementation
 
 end.

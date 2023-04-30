@@ -10,6 +10,7 @@ uses
 const
   GITMGR_EVENT_UPDATESTATUS         = 1;
   GITMGR_EVENT_REFLISTCHANGED       = 2;
+  GITMGR_EVENT_NEWTAG               = 3;
 
 type
 
@@ -51,6 +52,8 @@ type
     procedure AddObserver(who: IObserver);
     procedure RemoveObserver(who: IObserver);
     function IndexOfLocalBranch(aName: string): Integer;
+    procedure QueueNewTag(commit: string);
+    procedure ForceTagDescription;
 
     property Git: IGit read GetGit;
     property Config: IConfig read fConfig write SetConfig;
@@ -198,6 +201,20 @@ begin
       break;
     end;
   end;
+end;
+
+procedure TGitMgr.QueueNewTag(commit: string);
+var
+  info: PNewTagInfo;
+begin
+  new(info);
+  info^.commit := commit;
+  fObserverMgr.NotifyObservers(Self, GITMGR_EVENT_NEWTAG, PtrInt(info));
+end;
+
+procedure TGitMgr.ForceTagDescription;
+begin
+  fDescribed := false;
 end;
 
 end.

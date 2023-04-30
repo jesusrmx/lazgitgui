@@ -105,7 +105,7 @@ type
     function Push(repo, opts: string; callback:TOutputEvent): Integer;
     function Log(opts: string; callback:TOutputEvent): Integer;
     function Any(cmd: string; out cmdout:RawByteString): Integer;
-    function Tag(tagName:string; annotated:boolean; tagMsg:string): Integer;
+    function Tag(tagName, tagCommit:string; annotated:boolean; tagMsg:string): Integer;
     function AddToIgnoreFile(aFile:string; justType:boolean; global:boolean): boolean;
     function Describe(opts: string; out cmdOut:RawByteString): Integer;
     function UpdateRefList: Integer;
@@ -859,7 +859,7 @@ begin
   result := cmdLine.RunProcess(fGitCommand + ' ' + cmd, fTopLevelDir, cmdOut);
 end;
 
-function TGit.Tag(tagName: string; annotated: boolean; tagMsg: string): Integer;
+function TGit.Tag(tagName, tagCommit: string; annotated: boolean; tagMsg: string): Integer;
 var
   cmd: String;
   cmdOut: RawByteString;
@@ -871,6 +871,8 @@ begin
       cmd += '-m ' + QuoteMsg(tagMsg) + ' ';
   end;
   cmd += tagName;
+  if tagCommit<>'' then
+    cmd += ' ' + tagCommit;
   result := cmdLine.RunProcess(fGitCommand + cmd, fTopLevelDir, cmdOut);
 end;
 
@@ -937,6 +939,12 @@ begin
         fLastTagCommits := StrToIntDef(copy(cmd, p+2, MAXINT), 0);
         fLastTag := copy(cmd, 1, p);
       end;
+    end else
+    if cmdOut<>'' then begin
+      // a new tag
+      fLastTagOID := BranchOID;
+      fLastTagCommits := 0;
+      fLastTag := cmdOut;
     end;
   end;
 end;

@@ -30,7 +30,7 @@ uses
   Classes, SysUtils, Math, LazLogger, Forms, Controls, Graphics, Dialogs,
   StdCtrls, ExtCtrls, ActnList, synEditTypes, SynEdit, SynHighlighterDiff,
   StrUtils, FileUtil, lclType, Menus, Buttons, Grids, Types, fgl,
-  unitifaces, unitconfig, unitprocess, unitentries, unitgitutils, {unitgit,}
+  unitgittypes, unitifaces, unitconfig, unitprocess, unitentries, unitgitutils, {unitgit,}
   unitnewbranch, unitruncmd, unitansiescapes,
   unitnewtag, unitlogcache, unitlog, LConvEncoding, unitdbindex,
   unitframelog, unitgitmgr;
@@ -131,8 +131,6 @@ type
     fLogHandler: TLogHandler;
     fPopPoint: TPoint;
     fListAlwaysDrawSelection: boolean;
-    fLastDescribedTag: string;
-    fDescribed: boolean;
     procedure DelayedShowMenu(Data: PtrInt);
     procedure DoGitDiff(Data: PtrInt);
     procedure DoItemAction(Data: PtrInt);
@@ -173,6 +171,7 @@ type
     procedure FindParents;
     procedure UpdateGridRows;
     procedure ObservedChanged(Sender:TObject; what: Integer; data: PtrInt);
+    procedure ShowNewTagForm(commit: string);
   public
 
   end;
@@ -342,7 +341,7 @@ begin
   if fGit.Switch(mi.Caption)>0 then
     ShowError
   else begin
-    fDescribed := false;
+    fGitMgr.ForceTagDescription;
     fGitMgr.UpdateStatus;
   end;
   InvalidateBranchMenu;
@@ -921,23 +920,8 @@ begin
 end;
 
 procedure TfrmMain.NewTag;
-var
-  f: TfrmNewTag;
 begin
-  f := TfrmNewTag.Create(Self);
-  f.Oid := fGit.BranchOID;
-  try
-    if f.ShowModal=mrOk then begin
-      if fGit.Tag(f.txtName.Text, f.chkAnnotated.checked, f.txtMsg.Text)>0 then
-        ShowError
-      else begin
-        fDescribed := false;
-        fGitMgr.UpdateStatus;
-      end;
-    end;
-  finally
-    f.free;
-  end;
+  fGitMgr.QueueNewTag(fGit.BranchOID);
 end;
 
 procedure TfrmMain.CheckMenuDivisorInLastPosition(pop: TPopupMenu);
@@ -961,6 +945,8 @@ begin
 end;
 
 procedure TfrmMain.ObservedChanged(Sender:TObject; what: Integer; data: PtrInt);
+var
+  info: PNewTagInfo;
 begin
   case what of
     GITMGR_EVENT_UpdateStatus:
@@ -973,6 +959,34 @@ begin
           UpdateBranch;
         end;
       end;
+    GITMGR_EVENT_NEWTAG:
+      begin
+        info := PNewTagInfo(data);
+        ShowNewTagForm(info^.Commit);
+        Finalize(info^.commit);
+        dispose(info);
+      end;
+  end;
+end;
+
+procedure TfrmMain.ShowNewTagForm(commit: string);
+var
+  f: TfrmNewTag;
+begin
+  f := TfrmNewTag.Create(Self);
+  f.Oid := commit;
+  try
+    if f.ShowModal=mrOk then begin
+      if fGit.Tag(f.txtName.Text, f.Oid, f.chkAnnotated.checked, f.txtMsg.Text)>0 then
+        ShowError
+      else begin
+        fGitMgr.ForceTagDescription;
+        fGitMgr.UpdateStatus;
+        fGitMgr.UpdateRefList;
+      end;
+    end;
+  finally
+    f.free;
   end;
 end;
 
@@ -1210,6 +1224,7 @@ begin
   if fGit.Commit(txtComment.Text,'')>0 then
     ShowError
   else begin
+    fGitMgr.ForceTagDescription;
     fGitMgr.UpdateStatus;
     txtDiff.Clear;
     txtComment.Clear;
