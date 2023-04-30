@@ -932,14 +932,16 @@ var
 begin
   internal := opts='';
   cmd := 'describe ';
-  if internal then  cmd += '--tags'
-  else              cmd += opts;
-  result := cmdLine.RunProcess(fGitCommand + ' ' + cmd, fTopLevelDir, cmdOut);
-  if (result<=0) and (internal {or IKnowDescribeOptions(opts)}) then begin
-    // tag-commits-'g'OID
+  if internal then  begin
+    cmd += '--tags';
     fLastTag := '';
     fLastTagCommits := 0;
     fLastTagOID := '';
+  end else
+    cmd += opts;
+  result := cmdLine.RunProcess(fGitCommand + ' ' + cmd, fTopLevelDir, cmdOut);
+  if (result<=0) and (internal {or IKnowDescribeOptions(opts)}) then begin
+    // tag-commits-'g'OID
     cmd := cmdOut;
     p := cmd.LastIndexOf('-g');
     if p>=0 then begin

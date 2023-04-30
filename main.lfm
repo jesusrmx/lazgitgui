@@ -1519,7 +1519,7 @@ object frmMain: TfrmMain
     object lblTag: TLabel
       AnchorSideLeft.Control = Label3
       AnchorSideLeft.Side = asrBottom
-      AnchorSideTop.Control = Label3
+      AnchorSideTop.Control = lblBranch
       Left = 594
       Height = 15
       Top = 6
