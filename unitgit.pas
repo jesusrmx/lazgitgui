@@ -110,6 +110,7 @@ type
     function Describe(opts: string; out cmdOut:RawByteString): Integer;
     function UpdateRefList: Integer;
     function GetRemotesList: TStringList;
+    function RefsFilter(commitOID: string; filter: TRefFilterProc): TRefInfoArray;
 
     property ErrorLog: RawByteString read GetErrorLog;
     property UntrackedMode: string read fUntrackedMode write fUntrackedMode;
@@ -986,6 +987,50 @@ begin
   result := TStringList.Create;
   if cmdLine.RunProcess(fGitCommand + ' remote', fTopLevelDir, cmdOut)<=0 then
     result.Text := cmdOut;
+end;
+
+function TGit.RefsFilter(commitOID: string; filter: TRefFilterProc
+  ): TRefInfoArray;
+var
+  aIndex, i: Integer;
+  arr: TRefInfoArray;
+  info: PRefInfo;
+
+  procedure AddInfo;
+  var
+    j: Integer;
+  begin
+    j := Length(result);
+    SetLength(result, j+1);
+    result[j] := info;
+  end;
+
+begin
+  result := nil;
+  if not Assigned(filter) then
+    exit;
+  // if commit is not empty and refsMap is loaded, use it
+  if (commitOID<>'') and (fRefsMap<>nil) then begin
+    if fRefsMap.Find(commitOID, aIndex ) then begin
+      arr := fRefsMap.Data[aIndex];
+      for info in arr do
+        if Filter(info) then AddInfo
+      //for i:=0 to Length(arr)-1 do begin
+      //  info := arr[i];
+      //  if Filter(info) then AddInfo;
+      //end;
+    end;
+  end else
+  // use the internalRefList if loaded
+  if (fInternalRefList<>nil) then begin
+    for i := 0 to fInternalRefList.Count-1 do begin
+      info := PRefInfo(fInternalRefList.Objects[i]);
+      if (commitOID='') or (commitOID=info^.objName) then begin
+        if Filter(info) then AddInfo;
+      end;
+    end;
+  end;
+
 end;
 
 function TGit.GitMerging: boolean;

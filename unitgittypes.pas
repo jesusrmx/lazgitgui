@@ -1,6 +1,7 @@
 unit unitgittypes;
 
 {$mode ObjFPC}{$H+}
+{$ModeSwitch nestedprocvars}
 
 interface
 
@@ -33,6 +34,15 @@ type
   TRefInfoArray = array of PRefInfo;
 
   TRefsMap = specialize TFPGMap<string, TRefInfoArray>;
+
+  TRefItem = record
+    info: PRefInfo;
+    mapIndex: Integer;
+  end;
+
+  TRefItemArray = array of TRefItem;
+
+  TRefFilterProc = function(info: PRefInfo): boolean is nested;
 
   PNewTagInfo = ^TNewTagInfo;
   TNewTagInfo = record

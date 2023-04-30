@@ -1,6 +1,7 @@
 unit unitifaces;
 
 {$mode ObjFPC}{$H+}
+{$ModeSwitch nestedprocvars}
 
 interface
 
@@ -63,6 +64,7 @@ type
     function GetTopLevelDir: string;
     function GetUpstream: string;
     function GetVersion: string;
+    function RefsFilter(commitOID: string; filter: TRefFilterProc): TRefInfoArray;
 
     property Branch: string read GetBranch;
     property BranchOID: string read GetBranchOID;

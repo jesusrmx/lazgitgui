@@ -1,6 +1,7 @@
 unit unitframelog;
 
 {$mode ObjFPC}{$H+}
+{$ModeSwitch nestedprocvars}
 
 {
 
@@ -53,12 +54,6 @@ const
 
 type
 
-  TRefsMap = specialize TFPGMap<string, TRefInfoArray>;
-  TRefItem = record
-    mapIndex: Integer;
-    arrIndex: Integer;
-  end;
-
   { TframeLog }
 
   TframeLog = class(TFrame, IObserver)
@@ -97,15 +92,17 @@ type
     fLogCache: TLogCache;
     fOnLogCacheEvent: TLogThreadEvent;
     fGraphColumns: Integer;
-    fRefItems: array of TRefItem;
+    fRefItems: TRefInfoArray;
     fWithArrows: boolean;
     procedure OnContextPopLogClick(Sender: TObject);
     procedure OnLogEvent(sender: TObject; thread: TLogThread; event: Integer; var interrupt: boolean);
+    procedure OnDeleteTagClick(Sender: TObject);
+    procedure OnMergeBranchClick(Sender: TObject);
     procedure CopyToClipboard(what: Integer);
     procedure LocateHead;
     function LocateItemIndex(aIndex: Integer): boolean;
     procedure AddMergeBranchMenu;
-    procedure OnMergeBranchClick(Sender: TObject);
+    procedure AddTagsMenu;
     procedure SetActive(AValue: boolean);
     procedure SetGitMgr(AValue: TGitMgr);
     procedure ObservedChanged(Sender:TObject; what: Integer; data: PtrInt);
@@ -349,7 +346,7 @@ begin
     mi := TMenuItem.Create(Self.Owner);
     mi.Action := actShowChanges;
     popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
-
+    AddTagsMenu;
     AddMergeBranchMenu;
   end;
 end;
@@ -402,6 +399,40 @@ begin
     LOGEVENT_DONE:
       begin
       end;
+  end;
+end;
+
+procedure TframeLog.OnDeleteTagClick(Sender: TObject);
+var
+  mi: TMenuItem absolute Sender;
+  info: PRefInfo;
+  s: string;
+begin
+  info := PRefInfo(mi.Tag);
+  if info<>nil then begin
+    ShowMessage('Deleting '+ info^.refName);
+  end;
+end;
+
+procedure TframeLog.OnMergeBranchClick(Sender: TObject);
+var
+  mi: TMenuItem absolute Sender;
+  s: string;
+  info: PRefInfo;
+begin
+  info := PRefInfo(mi.Tag);
+  if info<>nil then begin
+
+    s := 'git merge ' + info^.refName;
+    if RunInteractive(fGit.Exe + ' merge '+ info^.refName, fGit.TopLevelDir, 'Merging branches', s)>0 then begin
+      // an error occurred
+    end else begin
+      // queue update status
+      fGitMgr.UpdateStatus;
+      // update refs
+      fGitMgr.UpdateRefList;
+    end;
+
   end;
 end;
 
@@ -476,54 +507,50 @@ var
   headCommit, curCommit: QWord;
   mi: TMenuItem;
   n, i, j: Integer;
-  arr: TRefInfoArray;
+
+  function Filter(info: PRefInfo): boolean;
+  begin
+    result := (info^.subType=rostLocal) and not info^.head;
+  end;
+
 begin
   headcommit := OIDToQWord(fGit.BranchOID);
   curCommit := OIDToQWord(fLogCache.DbIndex.Item.CommitOID);
-  if (headCommit=curCommit) or (fGit.RefsMap=nil) then
+  if (headCommit=curCommit) then
     exit;
-  if fGit.RefsMap.Find(fLogCache.DbIndex.Item.CommitOID, n ) then begin
-    arr := fGit.RefsMap.Data[n];
-    fRefItems := nil;
-    for i:=0 to Length(arr)-1 do begin
-      if arr[i]^.subType=rostLocal then begin
-        if arr[i]^.head then continue;
 
-        j := Length(fRefItems);
-        SetLength(fRefItems, j+1);
-        fRefItems[j].mapIndex := n;
-        fRefItems[j].arrIndex := i;
-
-        mi := TMenuItem.Create(Self.Owner);
-        mi.Caption := format('Merge %s to %s',[QuotedStr(arr[i]^.refName), QuotedStr(fGit.Branch)]);
-        mi.OnClick := @OnMergeBranchClick;
-        mi.Tag := j;
-        popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
-      end;
-    end;
+  fRefItems := fGit.RefsFilter(fLogCache.DbIndex.Item.CommitOID, @Filter);
+  for i := 0 to Length(fRefItems)-1 do begin
+    mi := TMenuItem.Create(Self.Owner);
+    mi.Caption := format('Merge %s to %s',[QuotedStr(fRefItems[i]^.refName), QuotedStr(fGit.Branch)]);
+    mi.OnClick := @OnMergeBranchClick;
+    mi.Tag := PtrInt(fRefItems[i]);
+    popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
   end;
 end;
 
-procedure TframeLog.OnMergeBranchClick(Sender: TObject);
+procedure TframeLog.AddTagsMenu;
 var
-  mi: TMenuItem absolute Sender;
-  j: Integer;
-  arr: TRefInfoArray;
-  s: string;
+  headCommit, curCommit: QWord;
+  mi: TMenuItem;
+  n, i, j: Integer;
+
+  function Filter(info: PRefInfo): boolean;
+  begin
+    result := (info^.subType=rostTag);
+  end;
+
 begin
-  j := mi.Tag;
-  if (j>=0) and (j<Length(fRefItems)) then begin
-    arr := fGit.RefsMap.Data[ fRefItems[j].mapIndex ];
-    j := fRefItems[j].arrIndex;
-    s := 'git merge '+ arr[j]^.refName;
-    if RunInteractive(fGit.Exe + ' merge '+ arr[j]^.refName, fGit.TopLevelDir, 'Merging branches', s)>0 then begin
-      // an error occurred
-    end else begin
-      //// queue update status
-      //fGitMgr.UpdateStatus;
-      // update refs
-      fGitMgr.UpdateRefList;
-    end;
+  headcommit := OIDToQWord(fGit.BranchOID);
+  curCommit := OIDToQWord(fLogCache.DbIndex.Item.CommitOID);
+
+  fRefItems := fGit.RefsFilter(fLogCache.DbIndex.Item.CommitOID, @Filter);
+  for i := 0 to Length(fRefItems)-1 do begin
+    mi := TMenuItem.Create(Self.Owner);
+    mi.Caption := format('Delete tag %s',[QuotedStr(fRefItems[i]^.refName)]);
+    mi.OnClick := @OnDeleteTagClick;
+    mi.Tag := PtrInt(fRefItems[i]);
+    popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
   end;
 end;
 
