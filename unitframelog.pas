@@ -578,7 +578,7 @@ begin
     GITMGR_EVENT_REFLISTCHANGED:
       if fActive then begin
         // reflist has changed, update the grid to reflect annotations.
-        gridLog.Update;
+        gridLog.Invalidate;
         // queue a cache update
         fLogCache.UpdateCache;
       end;
