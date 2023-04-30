@@ -106,6 +106,7 @@ type
     function Log(opts: string; callback:TOutputEvent): Integer;
     function Any(cmd: string; out cmdout:RawByteString): Integer;
     function Tag(tagName, tagCommit:string; annotated:boolean; tagMsg:string): Integer;
+    function DeleteTag(tagName: string): Integer;
     function AddToIgnoreFile(aFile:string; justType:boolean; global:boolean): boolean;
     function Describe(opts: string; out cmdOut:RawByteString): Integer;
     function UpdateRefList: Integer;
@@ -874,6 +875,15 @@ begin
   cmd += tagName;
   if tagCommit<>'' then
     cmd += ' ' + tagCommit;
+  result := cmdLine.RunProcess(fGitCommand + cmd, fTopLevelDir, cmdOut);
+end;
+
+function TGit.DeleteTag(tagName: string): Integer;
+var
+  cmd: String;
+  cmdOut: RawByteString;
+begin
+  cmd := ' tag -d ' + tagName;
   result := cmdLine.RunProcess(fGitCommand + cmd, fTopLevelDir, cmdOut);
 end;
 

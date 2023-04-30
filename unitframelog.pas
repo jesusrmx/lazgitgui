@@ -96,7 +96,9 @@ type
     fWithArrows: boolean;
     procedure OnContextPopLogClick(Sender: TObject);
     procedure OnLogEvent(sender: TObject; thread: TLogThread; event: Integer; var interrupt: boolean);
-    procedure OnDeleteTagClick(Sender: TObject);
+    procedure OnDeleteTagClick(sender: TObject);
+    procedure OnSwitchTagClick(sender: TObject);
+    procedure OnCreateTagClick(sender: TObject);
     procedure OnMergeBranchClick(Sender: TObject);
     procedure CopyToClipboard(what: Integer);
     procedure LocateHead;
@@ -336,8 +338,8 @@ begin
   Handled := (gridLog.RowCount=gridLog.FixedRows) or (aIndex<0) or not LocateItemIndex(aIndex);
 
   if not Handled then begin
-    aIndex := mnuSeparatorFirst.Tag + 1;
-    mnuSeparatorFirst.Tag := aIndex;
+    mIndex := mnuSeparatorFirst.Tag + 1;
+    mnuSeparatorFirst.Tag := mIndex;
     // all is ok, cleanup
     mIndex := mnuSeparatorFirst.MenuIndex+1;
     while mIndex<>mnuSeparatorLast.MenuIndex do
@@ -402,7 +404,25 @@ begin
   end;
 end;
 
-procedure TframeLog.OnDeleteTagClick(Sender: TObject);
+procedure TframeLog.OnDeleteTagClick(sender: TObject);
+var
+  mi: TMenuItem absolute Sender;
+  info: PRefInfo;
+  s: string;
+begin
+  info := {%H-}PRefInfo(PtrInt(mi.Tag));
+  if info<>nil then begin
+    if fGit.DeleteTag(info^.refName)>0 then
+      // error
+    else begin
+      fGitMgr.ForceTagDescription;
+      fGitMgr.UpdateStatus;
+      fGitMgr.UpdateRefList;
+    end;
+  end;
+end;
+
+procedure TframeLog.OnSwitchTagClick(sender: TObject);
 var
   mi: TMenuItem absolute Sender;
   info: PRefInfo;
@@ -410,8 +430,13 @@ var
 begin
   info := PRefInfo(mi.Tag);
   if info<>nil then begin
-    ShowMessage('Deleting '+ info^.refName);
+    ShowMessage('Switching to '+ info^.refName);
   end;
+end;
+
+procedure TframeLog.OnCreateTagClick(sender: TObject);
+begin
+  fGitMgr.QueueNewTag(fLogCache.DbIndex.Item.CommitOID);
 end;
 
 procedure TframeLog.OnMergeBranchClick(Sender: TObject);
@@ -544,14 +569,29 @@ begin
   headcommit := OIDToQWord(fGit.BranchOID);
   curCommit := OIDToQWord(fLogCache.DbIndex.Item.CommitOID);
 
+  mi := TMenuItem.Create(Self.Owner);
+  mi.Caption := 'Create a tag a this commit';
+  mi.OnClick := @OnCreateTagClick;
+  mi.Tag := 0;
+  popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
+
   fRefItems := fGit.RefsFilter(fLogCache.DbIndex.Item.CommitOID, @Filter);
   for i := 0 to Length(fRefItems)-1 do begin
+
+    mi := TMenuItem.Create(Self.Owner);
+    mi.Caption := format('Switch to %s',[QuotedStr(fRefItems[i]^.refName)]);
+    mi.OnClick := @OnSwitchTagClick;
+    mi.Tag := PtrInt(fRefItems[i]);
+    popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
+
     mi := TMenuItem.Create(Self.Owner);
     mi.Caption := format('Delete tag %s',[QuotedStr(fRefItems[i]^.refName)]);
     mi.OnClick := @OnDeleteTagClick;
     mi.Tag := PtrInt(fRefItems[i]);
     popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
   end;
+
+
 end;
 
 procedure TframeLog.SetActive(AValue: boolean);

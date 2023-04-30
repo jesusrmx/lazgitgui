@@ -44,6 +44,7 @@ type
     function BranchList(list: TStrings; opts:array of string): Integer;
     function Describe(opts: string; out cmdOut:RawByteString): Integer;
     function Tag(tagName, tagCommit:string; annotated:boolean; tagMsg:string): Integer;
+    function DeleteTag(tagName: string): Integer;
     function OpenDir(aDir: string): Integer;
     function Commit(msg, opts: string): Integer;
     function Diff(entry: PFileEntry; Unstaged:boolean; Lines:TStrings): Integer;
