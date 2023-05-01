@@ -173,6 +173,7 @@ type
     procedure ObservedChanged(Sender:TObject; what: Integer; data: PtrInt);
     procedure ShowNewTagForm(commit: string);
     procedure ShowSwitchToTagForm(aTag: string);
+    procedure SwitchTo(cmd: string);
   public
 
   end;
@@ -339,12 +340,7 @@ var
   mi: TMenuItem;
 begin
   mi := TMenuItem(TObject(Data));
-  if fGit.Switch(mi.Caption)>0 then
-    ShowError
-  else begin
-    fGitMgr.ForceTagDescription;
-    fGitMgr.UpdateStatus;
-  end;
+  SwitchTo(mi.Caption);
   InvalidateBranchMenu;
 end;
 
@@ -1011,17 +1007,22 @@ begin
       cmd := aTag;
       if f.chkCreateBranch.Checked then
         cmd := '-b ' + Trim(f.txtBranchName.Text) + ' ' + cmd;
-      if fGit.Switch(cmd)>0 then
-        ShowError
-      else begin
-        fGitMgr.ForceTagDescription;
-        fGitMgr.UpdateStatus;
-        fGitMgr.UpdateRefList;
-        if f.chkCreateBranch.Checked then InvalidateBranchMenu;
-      end;
+      SwitchTo(cmd);
     end;
   finally
     f.free;
+  end;
+end;
+
+procedure TfrmMain.SwitchTo(cmd: string);
+begin
+  if fGit.Switch(cmd)>0 then
+    ShowError
+  else begin
+    fGitMgr.ForceTagDescription;
+    fGitMgr.UpdateStatus;
+    fGitMgr.UpdateRefList;
+    InvalidateBranchMenu;
   end;
 end;
 
