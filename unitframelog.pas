@@ -542,6 +542,10 @@ begin
   if (headCommit=curCommit) then
     exit;
 
+  mi := TMenuItem.Create(Self.Owner);
+  mi.Caption := '-';
+  popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
+
   fRefItems := fGit.RefsFilter(fLogCache.DbIndex.Item.CommitOID, @Filter);
   for i := 0 to Length(fRefItems)-1 do begin
     mi := TMenuItem.Create(Self.Owner);
@@ -566,6 +570,10 @@ var
 begin
   headcommit := OIDToQWord(fGit.BranchOID);
   curCommit := OIDToQWord(fLogCache.DbIndex.Item.CommitOID);
+
+  mi := TMenuItem.Create(Self.Owner);
+  mi.Caption := '-';
+  popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
 
   mi := TMenuItem.Create(Self.Owner);
   mi.Caption := 'Create a tag a this commit';
