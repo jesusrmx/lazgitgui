@@ -792,7 +792,7 @@ end;
 
 function TDbIndex.GetAcceptingNewRecords: boolean;
 begin
-  result := (fMaxRecords=0) or (Count<fMaxRecords);
+  result := not fReadOnly and ((fMaxRecords=0) or (Count(true)<fMaxRecords));
 end;
 
 function TDbIndex.GetActive: boolean;
