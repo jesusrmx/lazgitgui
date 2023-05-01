@@ -97,6 +97,7 @@ type
     procedure OnContextPopLogClick(Sender: TObject);
     procedure OnLogEvent(sender: TObject; thread: TLogThread; event: Integer; var interrupt: boolean);
     procedure OnDeleteTagClick(sender: TObject);
+    procedure OnSwitchBranchClick(Sender: TObject);
     procedure OnSwitchTagClick(sender: TObject);
     procedure OnCreateTagClick(sender: TObject);
     procedure OnMergeBranchClick(Sender: TObject);
@@ -422,12 +423,29 @@ begin
   end;
 end;
 
+procedure TframeLog.OnSwitchBranchClick(Sender: TObject);
+var
+  mi: TMenuItem absolute Sender;
+  info: PRefInfo;
+begin
+  info := {%H-}PRefInfo(mi.Tag);
+  if info<>nil then begin
+    if fGit.Switch(info^.refName)>0 then
+      //
+    else begin
+      fGitMgr.ForceTagDescription;
+      fGitMgr.UpdateStatus;
+      fGitMgr.UpdateRefList;
+    end;
+  end;
+end;
+
 procedure TframeLog.OnSwitchTagClick(sender: TObject);
 var
   mi: TMenuItem absolute Sender;
   info: PRefInfo;
 begin
-  info := PRefInfo(mi.Tag);
+  info := {%H-}PRefInfo(mi.Tag);
   if info<>nil then
     fGitMgr.QueueSwitchTag(info^.refName);
 end;
@@ -552,6 +570,12 @@ begin
     mi := TMenuItem.Create(Self.Owner);
     mi.Caption := format('Merge %s to %s',[QuotedStr(fRefItems[i]^.refName), QuotedStr(fGit.Branch)]);
     mi.OnClick := @OnMergeBranchClick;
+    mi.Tag := PtrInt(fRefItems[i]);
+    popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
+
+    mi := TMenuItem.Create(Self.Owner);
+    mi.Caption := format('Switch to %s',[QuotedStr(fRefItems[i]^.refName)]);
+    mi.OnClick := @OnSwitchBranchClick;
     mi.Tag := PtrInt(fRefItems[i]);
     popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
   end;
