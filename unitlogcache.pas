@@ -98,6 +98,7 @@ type
   private
     fConfig: IConfig;
     fDb: TDbIndex;
+    fGit: IGit;
     fRangeStart: Integer;
     fRangeEnd: Integer;
     fShaStart: string[41];
@@ -112,6 +113,7 @@ type
 
     property Db: TDbIndex read fDb write fDb;
     property Config: IConfig read fConfig write fConfig;
+    property Git: IGit read fGit write fGit;
     property IsFiltered: boolean read GetIsFiltered;
     property RangeStart: Integer read fRangeStart;
     property RangeEnd: Integer read fRangeEnd;
@@ -126,8 +128,9 @@ type
     fGitMgr: TGitMgr;
     fGit: IGit;
     fLogState: TLogState;
+    fNeedNewerRecords: Boolean;
+    fNeedOlderRecords: Boolean;
     fNewDate, fOldDate: Int64;
-    fOldDateIsStart: boolean;
     flogEvent: TLogThreadEvent;
     fInterrupted: boolean;
     fLimits: TCacheLimits;
@@ -142,6 +145,7 @@ type
     procedure DoLogStateEnd;
     procedure Run;
     procedure SendEvent(thread: TLogThread; event: Integer; var interrupt:boolean);
+    procedure SetGitConfig(AValue: IConfig);
     procedure SetGitMgr(AValue: TGitMgr);
   public
     constructor create(aLogEvent: TLogThreadEvent);
@@ -152,9 +156,11 @@ type
     property LogState: TLogState read fLogState;
     property GitMgr: TGitMgr read fGitMgr write SetGitMgr;
     property DbIndex: TDbIndex read fDbIndex write fDbIndex;
-    property Config: IConfig read fConfig write fConfig;
+    property Config: IConfig read fConfig write SetGitConfig;
     property RangeStart: Integer read GetRangeStart;
     property RangeEnd: Integer read GetRangeEnd;
+    property NeedNewerRecords: boolean read fNeedNewerRecords write fNeedNewerRecords;
+    property NeedOlderRecords: boolean read fNeedOlderRecords write fNeedOlderRecords;
 
   end;
 
@@ -190,22 +196,24 @@ begin
 
   if fDb=nil then
     raise Exception.Create('Apply restriction on closed db');
+  if fGit=nil then
+    raise Exception.Create('Setup without git interface');
 
-  fShaStart := fConfig.ReadString('CommitStart', '');
-  fShaEnd := fConfig.ReadString('CommitEnd', '');
+  fShaStart := fConfig.ReadString('CommitStart', fGit.TopLevelDir);
+  fShaEnd := fConfig.ReadString('CommitEnd', fGit.TopLevelDir);
   if (fShaStart<>'') and (fShaEnd<>'') then begin
     // find the corresponding indexes
     fRangeStart := fDb.FindCommitSha(fShaStart);
     if fRangeStart>=0 then
       fRangeEnd := fDb.FindCommitSha(fShaEnd, fRangeStart);
   end else begin
-    fRangeStart := fConfig.ReadInteger('RangeStart', -1);
-    fRangeEnd := fConfig.ReadInteger('RangeEnd', -1);
+    fRangeStart := fConfig.ReadInteger('RangeStart', -1, fGit.TopLevelDir);
+    fRangeEnd := fConfig.ReadInteger('RangeEnd', -1, fGit.TopLevelDir);
   end;
   if (fRangeStart>=0) and (fRangeEnd>=0) and (fRangeEnd>=fRangeStart) then begin
     fDb.MaxRecords := fRangeEnd + 1;
   end else
-    fDb.MaxRecords := fConfig.ReadInteger('MaxLogRecords', 5000);
+    fDb.MaxRecords := fConfig.ReadInteger('MaxLogRecords', 5000, fGit.TopLevelDir);
 end;
 
 procedure TCacheLimits.Filter;
@@ -432,6 +440,12 @@ begin
         if (not fInterrupted) and (fOldDate>0) then
           newState := lsGetLast;
       end;
+    lsGetLast:
+      if not fInterrupted then begin
+        // was not interrupted while getting older records
+        // it means there will be no older records anymore
+        fConfig.WriteBoolean('NeedOlderRecords', false, fGit.TopLevelDir);
+      end;
   end;
 
   EnterLogState(newState);
@@ -455,6 +469,8 @@ begin
   inherited Create;
   fLogEvent := aLogEvent;
   fLimits := TCacheLimits.Create;
+  fNeedNewerRecords := true;
+  fNeedOlderRecords := true;
 end;
 
 destructor TLogCache.Destroy;
@@ -480,7 +496,6 @@ begin
 
   fDbIndex.Open;
 
-  fOldDateIsStart := false;
   fNewDate := 0;
   fOldDate := 0;
 
@@ -497,6 +512,10 @@ procedure TLogCache.DoLogStateGetFirst;
 var
   interrupt: boolean;
 begin
+
+  if not fNeedNewerRecords then
+    exit;
+
   if (fOldDate>0) or (fDbIndex.Count(true)=0) then begin
     if fDbIndex.AcceptingNewRecords and not fLimits.IsRestricted then begin
       fLogState := lsGetFirst;
@@ -508,15 +527,17 @@ begin
       end;
     end;
   end;
+
   EnterLogState(lsEnd);
 end;
 
 procedure TLogCache.DoLogStateGetLast;
 begin
-  if fDbIndex.AcceptingNewRecords and not fLimits.IsRestricted then begin
-    fLogState := lsGetLast;
-    Run;
-  end;
+  if fNeedOlderRecords then
+    if fDbIndex.AcceptingNewRecords and not fLimits.IsRestricted then begin
+      fLogState := lsGetLast;
+      Run;
+    end;
 end;
 
 procedure TLogCache.DoLogStateEnd;
@@ -589,11 +610,20 @@ begin
     fLogEvent(self, thread, event, interrupt);
 end;
 
+procedure TLogCache.SetGitConfig(AValue: IConfig);
+begin
+  if fConfig = AValue then Exit;
+  fConfig := AValue;
+  fNeedNewerRecords := fConfig.ReadBoolean('NeedNewerRecords', true, fGit.TopLevelDir);
+  fNeedOlderRecords := fConfig.ReadBoolean('NeedOlderRecords', true, fGit.TopLevelDir);
+end;
+
 procedure TLogCache.SetGitMgr(AValue: TGitMgr);
 begin
   if fGitMgr = AValue then Exit;
   fGitMgr := AValue;
   fGit := fGitMgr.Git;
+  fLimits.Git := fGit;
 end;
 
 procedure TLogCache.UpdateCache;
