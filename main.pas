@@ -33,7 +33,7 @@ uses
   unitgittypes, unitifaces, unitconfig, unitprocess, unitentries, unitgitutils, {unitgit,}
   unitnewbranch, unitruncmd, unitansiescapes,
   unitnewtag, unitlogcache, unitlog, LConvEncoding, unitdbindex,
-  unitframelog, unitgitmgr;
+  unitframelog, unitgitmgr, unitcheckouttag;
 
 type
 
@@ -172,6 +172,7 @@ type
     procedure UpdateGridRows;
     procedure ObservedChanged(Sender:TObject; what: Integer; data: PtrInt);
     procedure ShowNewTagForm(commit: string);
+    procedure ShowSwitchToTagForm(aTag: string);
   public
 
   end;
@@ -946,7 +947,7 @@ end;
 
 procedure TfrmMain.ObservedChanged(Sender:TObject; what: Integer; data: PtrInt);
 var
-  info: PNewTagInfo;
+  info: PTagInfo;
 begin
   case what of
     GITMGR_EVENT_UpdateStatus:
@@ -961,9 +962,16 @@ begin
       end;
     GITMGR_EVENT_NEWTAG:
       begin
-        info := PNewTagInfo(data);
-        ShowNewTagForm(info^.Commit);
-        Finalize(info^.commit);
+        info := PTagInfo(data);
+        ShowNewTagForm(info^.data);
+        Finalize(info^.data);
+        dispose(info);
+      end;
+    GITMGR_EVENT_SWITCHTOTAG:
+      begin
+        info := PTagInfo(data);
+        ShowSwitchToTagForm(info^.data);
+        finalize(info^.data);
         dispose(info);
       end;
   end;
@@ -983,6 +991,33 @@ begin
         fGitMgr.ForceTagDescription;
         fGitMgr.UpdateStatus;
         fGitMgr.UpdateRefList;
+      end;
+    end;
+  finally
+    f.free;
+  end;
+end;
+
+procedure TfrmMain.ShowSwitchToTagForm(aTag: string);
+var
+  f: TfrmCheckouTag;
+  cmd: string;
+begin
+  f := TfrmCheckouTag.Create(Self);
+  f.TagName := aTag;
+  f.GitMgr := fGitMgr;
+  try
+    if f.ShowModal=mrOk then begin
+      cmd := aTag;
+      if f.chkCreateBranch.Checked then
+        cmd := '-b ' + Trim(f.txtBranchName.Text) + ' ' + cmd;
+      if fGit.Switch(cmd)>0 then
+        ShowError
+      else begin
+        fGitMgr.ForceTagDescription;
+        fGitMgr.UpdateStatus;
+        fGitMgr.UpdateRefList;
+        if f.chkCreateBranch.Checked then InvalidateBranchMenu;
       end;
     end;
   finally

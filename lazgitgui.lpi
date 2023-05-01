@@ -132,6 +132,12 @@
         <Filename Value="unitgittypes.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit>
+      <Unit>
+        <Filename Value="unitcheckouttag.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="frmCheckouTag"/>
+        <ResourceBaseClass Value="Form"/>
+      </Unit>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

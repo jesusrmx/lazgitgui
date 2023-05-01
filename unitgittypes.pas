@@ -44,9 +44,9 @@ type
 
   TRefFilterProc = function(info: PRefInfo): boolean is nested;
 
-  PNewTagInfo = ^TNewTagInfo;
-  TNewTagInfo = record
-    commit: string;
+  PTagInfo = ^TTagInfo;
+  TTagInfo = record
+    data: string;
   end;
 
 implementation

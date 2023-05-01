@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, ExtCtrls,
-  ButtonPanel;
+  ButtonPanel, unitgitutils;
 
 type
 
@@ -38,21 +38,6 @@ var
 implementation
 
 {$R *.lfm}
-
-type
-  TSetOfChar = set of char;
-
-function PosAny(chars: TSetOfChar; s:string): Integer;
-var
-  i: Integer;
-begin
-  result := 0;
-  for i:=1 to Length(s) do
-    if s[i] in chars then begin
-      result := i;
-      break;
-    end;
-end;
 
 { TfrmNewTag }
 

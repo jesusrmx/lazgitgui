@@ -11,6 +11,7 @@ const
   GITMGR_EVENT_UPDATESTATUS         = 1;
   GITMGR_EVENT_REFLISTCHANGED       = 2;
   GITMGR_EVENT_NEWTAG               = 3;
+  GITMGR_EVENT_SWITCHTOTAG          = 4;
 
 type
 
@@ -53,6 +54,7 @@ type
     procedure RemoveObserver(who: IObserver);
     function IndexOfLocalBranch(aName: string): Integer;
     procedure QueueNewTag(commit: string);
+    procedure QueueSwitchTag(tagName: string);
     procedure ForceTagDescription;
 
     property Git: IGit read GetGit;
@@ -205,11 +207,20 @@ end;
 
 procedure TGitMgr.QueueNewTag(commit: string);
 var
-  info: PNewTagInfo;
+  info: PTagInfo;
 begin
   new(info);
-  info^.commit := commit;
+  info^.data := commit;
   fObserverMgr.NotifyObservers(Self, GITMGR_EVENT_NEWTAG, PtrInt(info));
+end;
+
+procedure TGitMgr.QueueSwitchTag(tagName: string);
+var
+  info: PTagInfo;
+begin
+  new(info);
+  info^.data := tagName;
+  fObserverMgr.NotifyObservers(Self, GITMGR_EVENT_SWITCHTOTAG, PtrInt(info));
 end;
 
 procedure TGitMgr.ForceTagDescription;

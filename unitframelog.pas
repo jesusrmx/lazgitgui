@@ -426,12 +426,10 @@ procedure TframeLog.OnSwitchTagClick(sender: TObject);
 var
   mi: TMenuItem absolute Sender;
   info: PRefInfo;
-  s: string;
 begin
   info := PRefInfo(mi.Tag);
-  if info<>nil then begin
-    ShowMessage('Switching to '+ info^.refName);
-  end;
+  if info<>nil then
+    fGitMgr.QueueSwitchTag(info^.refName);
 end;
 
 procedure TframeLog.OnCreateTagClick(sender: TObject);

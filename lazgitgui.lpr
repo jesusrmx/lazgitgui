@@ -34,7 +34,8 @@ uses
   SysUtils, Classes, Interfaces, // this includes the LCL widgetset
   Forms, main, unitconfig, unitprocess, unitentries, unitgit, unitnewbranch,
   unitruncmd, unitansiescapes, unitnewtag, unitlog, unitdebug, unitlogcache,
-  unitdbindex, unitgitutils, unitdrafts, unitframelog, unitgitmgr, unitgittypes
+  unitdbindex, unitgitutils, unitdrafts, unitframelog, unitgitmgr, unitgittypes,
+  unitcheckouttag
   { you can add units after this };
 
 {$R *.res}

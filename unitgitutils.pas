@@ -22,6 +22,8 @@ type
     parents: TParentElementArray;
   end;
 
+  TSetOfChar = set of char;
+
   function OIDToQWord(oid: string): QWord;
   function OIDToParents(oid: string; oidlen: Integer): TQWordArray;
   function OIDToParentElements(oid: string; oidlen: Integer): TParentElementArray;
@@ -34,6 +36,8 @@ type
 
   procedure ResetTicks;
   procedure ReportTicks(msg:string);
+
+  function PosAny(chars: TSetOfChar; s:string): Integer;
 
 implementation
 
@@ -180,6 +184,17 @@ begin
   startTicks := curTicks;
 end;
 
+function PosAny(chars: TSetOfChar; s: string): Integer;
+var
+  i: Integer;
+begin
+  result := 0;
+  for i:=1 to Length(s) do
+    if s[i] in chars then begin
+      result := i;
+      break;
+    end;
+end;
 
 end.
 
