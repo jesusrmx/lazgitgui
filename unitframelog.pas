@@ -38,7 +38,7 @@ interface
 uses
   Classes, SysUtils, dateUtils, fgl,
   LazLogger, SynEdit, Graphics, Forms, Dialogs, Controls, Grids,
-  ExtCtrls, ComCtrls, Menus, Types, Clipbrd, ActnList,
+  ExtCtrls, ComCtrls, Menus, Types, Clipbrd, ActnList, Buttons,
   unitgittypes, unitlogcache, unitdbindex, unitgitutils, unitifaces,
   unitruncmd, unitgitmgr;
 
@@ -58,6 +58,7 @@ type
 
   TframeLog = class(TFrame, IObserver)
     actGotoHead: TAction;
+    actReload: TAction;
     actShowChanges: TAction;
     actLstLog: TActionList;
     gridLog: TDrawGrid;
@@ -71,6 +72,8 @@ type
     popLog: TPopupMenu;
     mnuSeparatorLast: TMenuItem;
     mnuSeparatorFirst: TMenuItem;
+    btnShowChanges: TSpeedButton;
+    btnReload: TSpeedButton;
     Splitter1: TSplitter;
     Splitter2: TSplitter;
     TreeView1: TTreeView;
@@ -361,7 +364,7 @@ end;
 
 procedure TframeLog.actShowChangesExecute(Sender: TObject);
 begin
-  ShowMessage('Showing Changes');
+  panBrowser.Visible := not panBrowser.Visible;
 end;
 
 procedure TframeLog.MenuItem2Click(Sender: TObject);
