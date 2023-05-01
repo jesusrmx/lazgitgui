@@ -903,6 +903,7 @@ begin
         end;
       finally
         fGitMgr.UpdateStatus;
+        fGitMgr.UpdateRefList;
       end;
 
     end;
