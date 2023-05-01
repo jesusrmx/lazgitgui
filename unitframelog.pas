@@ -542,12 +542,13 @@ begin
   if (headCommit=curCommit) then
     exit;
 
-  mi := TMenuItem.Create(Self.Owner);
-  mi.Caption := '-';
-  popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
-
   fRefItems := fGit.RefsFilter(fLogCache.DbIndex.Item.CommitOID, @Filter);
   for i := 0 to Length(fRefItems)-1 do begin
+    if i=0 then begin
+      mi := TMenuItem.Create(Self.Owner);
+      mi.Caption := '-';
+      popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
+    end;
     mi := TMenuItem.Create(Self.Owner);
     mi.Caption := format('Merge %s to %s',[QuotedStr(fRefItems[i]^.refName), QuotedStr(fGit.Branch)]);
     mi.OnClick := @OnMergeBranchClick;
