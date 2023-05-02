@@ -99,7 +99,11 @@ object frameLog: TframeLog
         Top = 0
         Width = 200
         Align = alClient
+        ReadOnly = True
+        RowSelect = True
         TabOrder = 0
+        OnSelectionChanged = treeFilesSelectionChanged
+        Options = [tvoAutoItemHeight, tvoHideSelection, tvoKeepCollapsedNodes, tvoReadOnly, tvoRowSelect, tvoShowButtons, tvoShowLines, tvoShowRoot, tvoToolTips, tvoThemedDraw]
       end
     end
     inline txtViewer: TSynEdit

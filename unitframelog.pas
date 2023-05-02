@@ -88,6 +88,7 @@ type
     procedure gridLogSelection(Sender: TObject; aCol, aRow: Integer);
     procedure MenuItem2Click(Sender: TObject);
     procedure MenuItem3Click(Sender: TObject);
+    procedure treeFilesSelectionChanged(Sender: TObject);
   private
     fActive: boolean;
     fConfig: IConfig;
@@ -397,6 +398,17 @@ end;
 procedure TframeLog.MenuItem3Click(Sender: TObject);
 begin
   CopyToClipboard(COPY_SHA)
+end;
+
+procedure TframeLog.treeFilesSelectionChanged(Sender: TObject);
+var
+  node: TTreeNode;
+begin
+  if fCommitBrowser.Mode=cbmPatch then begin
+    node := treeFiles.Selected;
+    if node<>nil then
+      txtViewer.TopLine := PFileTreeNode(Node.Data)^.Info.line;
+  end;
 end;
 
 procedure TframeLog.OnLogEvent(sender: TObject; thread: TLogThread;
