@@ -1513,6 +1513,8 @@ begin
   lstUnstaged.Height := fConfig.ReadInteger('lstUnstaged.Height', lstUnstaged.Height, SECTION_GEOMETRY);
   panLeft.Width := fConfig.ReadInteger('panleft.width', panLeft.Width, SECTION_GEOMETRY);
   pancommit.Height := fConfig.ReadInteger('pancommit.height', pancommit.Height, SECTION_GEOMETRY);
+  frmLog.panBrowser.Height := fConfig.ReadInteger('frmlog.panbrowser.height', frmLog.panBrowser.Height, SECTION_GEOMETRY);
+  frmLog.panFiles.Width := fConfig.ReadInteger('frmlog.panfiles.width', frmLog.panFiles.width, SECTION_GEOMETRY);
 
   fConfig.CloseConfig;
 end;
@@ -1527,7 +1529,8 @@ begin
   fConfig.WriteInteger('lstUnstaged.Height', lstUnstaged.Height, SECTION_GEOMETRY);
   fConfig.WriteInteger('panleft.width', panLeft.Width, SECTION_GEOMETRY);
   fConfig.WriteInteger('pancommit.height', pancommit.Height, SECTION_GEOMETRY);
-
+  fConfig.WriteInteger('frmlog.panbrowser.height', frmlog.panBrowser.Height, SECTION_GEOMETRY);
+  fConfig.WriteInteger('frmlog.panfiles.width', frmlog.panFiles.Width, SECTION_GEOMETRY);
   fConfig.CloseConfig;
 end;
 
