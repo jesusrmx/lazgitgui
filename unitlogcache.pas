@@ -428,9 +428,10 @@ end;
 procedure TLogCache.OnLogThreadDone(Sender: TObject);
 var
   thread: TLogThread absolute Sender;
-  dummy: boolean;
   newState: TLogState;
 begin
+
+  SendEvent(thread, LOGEVENT_DONE, fInterrupted);
 
   newState := lsEnd;
 
@@ -449,9 +450,6 @@ begin
   end;
 
   EnterLogState(newState);
-
-  dummy := false;
-  SendEvent(thread, LOGEVENT_DONE, dummy);
 end;
 
 function TLogCache.GetRangeEnd: Integer;
@@ -513,31 +511,43 @@ var
   interrupt: boolean;
 begin
 
-  if not fNeedNewerRecords then
-    exit;
+  if fNeedNewerRecords then
+    // If we already have some records, or if there is no records yet
+    // request a set of newer records.
+    if (fOldDate>0) or (fDbIndex.Count(true)=0) then begin
+      // only start updating if db is accepting new records and there aren't set restrictions
+      // TODO: restrictions should not block cache updating ....
+      if fDbIndex.AcceptingNewRecords and not fLimits.IsRestricted then begin
 
-  if (fOldDate>0) or (fDbIndex.Count(true)=0) then begin
-    if fDbIndex.AcceptingNewRecords and not fLimits.IsRestricted then begin
-      fLogState := lsGetFirst;
-      interrupt := false;
-      SendEvent(nil, LOGEVENT_START, interrupt);
-      if not interrupt then begin
-        Run;
-        exit;
+        // send a start event and check if we can proceed
+        fLogState := lsGetFirst;
+        interrupt := false;
+        SendEvent(nil, LOGEVENT_START, interrupt);
+
+        if not interrupt then begin
+          // no interrupted, launch the 'getfirst' thread
+          Run;
+          exit;
+        end;
       end;
     end;
-  end;
 
-  EnterLogState(lsEnd);
+  // for some reason, 'getfirst' thread was not launched, check 'getlast'
+  EnterLogState(lsGetLast);
 end;
 
 procedure TLogCache.DoLogStateGetLast;
 begin
   if fNeedOlderRecords then
+    // only start updating if db is accepting new records and there aren't set restrictions
+    // TODO: restrictions should not block cache updating ....
     if fDbIndex.AcceptingNewRecords and not fLimits.IsRestricted then begin
       fLogState := lsGetLast;
       Run;
+      exit;
     end;
+
+  EnterLogState(lsEnd)
 end;
 
 procedure TLogCache.DoLogStateEnd;

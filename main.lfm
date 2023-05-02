@@ -1,11 +1,11 @@
 object frmMain: TfrmMain
-  Left = 365
-  Height = 570
-  Top = 223
-  Width = 924
+  Left = 117
+  Height = 554
+  Top = 170
+  Width = 973
   Caption = 'frmMain'
-  ClientHeight = 570
-  ClientWidth = 924
+  ClientHeight = 554
+  ClientWidth = 973
   Font.Style = [fsBold]
   Menu = mnuMain
   OnCloseQuery = FormCloseQuery
@@ -16,12 +16,12 @@ object frmMain: TfrmMain
   LCLVersion = '2.3.0.0'
   object panLeft: TPanel
     Left = 0
-    Height = 544
+    Height = 528
     Top = 26
     Width = 256
     Align = alLeft
     BevelOuter = bvNone
-    ClientHeight = 544
+    ClientHeight = 528
     ClientWidth = 256
     TabOrder = 0
     object lstUnstaged: TListBox
@@ -71,13 +71,13 @@ object frmMain: TfrmMain
     end
     object panStagedContainer: TPanel
       Left = 0
-      Height = 207
+      Height = 191
       Top = 337
       Width = 256
       Align = alClient
       BevelOuter = bvNone
       Caption = 'panStagedContainer'
-      ClientHeight = 207
+      ClientHeight = 191
       ClientWidth = 256
       TabOrder = 3
       object panStaged: TPanel
@@ -97,7 +97,7 @@ object frmMain: TfrmMain
       end
       object lstStaged: TListBox
         Left = 5
-        Height = 182
+        Height = 166
         Top = 20
         Width = 251
         Align = alClient
@@ -118,36 +118,36 @@ object frmMain: TfrmMain
   end
   object panContent: TPanel
     Left = 261
-    Height = 544
+    Height = 528
     Top = 26
-    Width = 663
+    Width = 712
     Align = alClient
     BevelOuter = bvNone
-    ClientHeight = 544
-    ClientWidth = 663
+    ClientHeight = 528
+    ClientWidth = 712
     TabOrder = 1
     object panLogNew: TPanel
       Left = 0
-      Height = 539
+      Height = 523
       Top = 0
-      Width = 658
+      Width = 707
       Align = alClient
       BorderSpacing.Right = 5
       BorderSpacing.Bottom = 5
-      ClientHeight = 539
-      ClientWidth = 658
+      ClientHeight = 523
+      ClientWidth = 707
       TabOrder = 2
       inline frmLog: TframeLog
         Left = 1
-        Height = 537
+        Height = 521
         Top = 1
-        Width = 656
+        Width = 705
         Align = alClient
-        ClientHeight = 537
-        ClientWidth = 656
+        ClientHeight = 521
+        ClientWidth = 705
         inherited gridLog: TDrawGrid
-          Height = 304
-          Width = 656
+          Height = 288
+          Width = 705
           Columns = <          
             item
               Alignment = taRightJustify
@@ -165,7 +165,7 @@ object frmMain: TfrmMain
             item
               PickList.Strings = (              )
               Title.Caption = 'Subject'
-              Width = 236
+              Width = 285
             end          
             item
               PickList.Strings = (              )
@@ -188,54 +188,60 @@ object frmMain: TfrmMain
           ColWidths = (
             70
             20
-            236
+            285
             150
             90
             90
           )
         end
         inherited panBrowser: TPanel
-          Top = 335
-          Width = 656
-          ClientWidth = 656
+          Top = 319
+          Width = 705
+          ClientWidth = 705
           inherited txtViewer: TSynEdit
-            Width = 451
+            Width = 500
           end
         end
         inherited Splitter1: TSplitter
-          Top = 330
-          Width = 656
+          Top = 314
+          Width = 705
         end
         inherited panLogTools: TPanel
-          Width = 656
+          Width = 705
+          ClientWidth = 705
+          inherited btnShowChanges: TSpeedButton
+            Left = 677
+          end
+          inherited btnReload: TSpeedButton
+            Left = 649
+          end
         end
         inherited actLstLog: TActionList
           inherited actShowChanges: TAction
             AutoCheck = False
             Caption = 'Show Changes'
-            GroupIndex = 0
           end
         end
       end
     end
     object panLog: TPanel
       Left = 0
-      Height = 539
+      Height = 523
       Top = 0
-      Width = 658
+      Width = 707
       Align = alClient
       BorderSpacing.Right = 5
       BorderSpacing.Bottom = 5
       BevelOuter = bvNone
-      ClientHeight = 539
-      ClientWidth = 658
+      ClientHeight = 523
+      ClientWidth = 707
       TabOrder = 1
       Visible = False
       inline txtLog: TSynEdit
         Left = 0
-        Height = 539
+        Height = 523
         Top = 0
-        Width = 658
+        Width = 707
         Align = alClient
         Font.Height = -13
         Font.Name = 'Courier New'
@@ -736,27 +742,27 @@ object frmMain: TfrmMain
     end
     object panStatus: TPanel
       Left = 0
-      Height = 539
+      Height = 523
       Top = 0
-      Width = 658
+      Width = 707
       Align = alClient
       BorderSpacing.Right = 5
       BorderSpacing.Bottom = 5
       BevelOuter = bvNone
       Caption = 'panStatus'
-      ClientHeight = 539
-      ClientWidth = 658
+      ClientHeight = 523
+      ClientWidth = 707
       TabOrder = 0
       object panCommit: TPanel
         Left = 0
         Height = 208
-        Top = 331
-        Width = 658
+        Top = 315
+        Width = 707
         Align = alBottom
         BevelOuter = bvNone
         Caption = 'panButtons'
         ClientHeight = 208
-        ClientWidth = 658
+        ClientWidth = 707
         TabOrder = 0
         object panCommitButtons: TPanel
           Left = 0
@@ -841,7 +847,7 @@ object frmMain: TfrmMain
           Left = 135
           Height = 188
           Top = 20
-          Width = 523
+          Width = 572
           Align = alClient
           TabOrder = 1
         end
@@ -849,7 +855,7 @@ object frmMain: TfrmMain
           Left = 0
           Height = 20
           Top = 0
-          Width = 658
+          Width = 707
           Align = alTop
           BevelOuter = bvNone
           TabOrder = 2
@@ -859,7 +865,7 @@ object frmMain: TfrmMain
         Left = 0
         Height = 20
         Top = 0
-        Width = 658
+        Width = 707
         Align = alTop
         Alignment = taLeftJustify
         BevelOuter = bvNone
@@ -871,9 +877,9 @@ object frmMain: TfrmMain
       end
       inline txtDiff: TSynEdit
         Left = 0
-        Height = 306
+        Height = 290
         Top = 20
-        Width = 658
+        Width = 707
         Align = alClient
         Font.Height = 10
         Font.Name = 'Andale Mono'
@@ -1396,8 +1402,8 @@ object frmMain: TfrmMain
         Cursor = crVSplit
         Left = 0
         Height = 5
-        Top = 326
-        Width = 658
+        Top = 310
+        Width = 707
         Align = alBottom
         ResizeAnchor = akBottom
       end
@@ -1407,12 +1413,12 @@ object frmMain: TfrmMain
     Left = 0
     Height = 26
     Top = 0
-    Width = 924
+    Width = 973
     Align = alTop
     Alignment = taLeftJustify
     BevelOuter = bvNone
     ClientHeight = 26
-    ClientWidth = 924
+    ClientWidth = 973
     TabOrder = 2
     object Label1: TLabel
       AnchorSideLeft.Control = panBranch
@@ -1501,7 +1507,7 @@ object frmMain: TfrmMain
       AnchorSideTop.Side = asrCenter
       AnchorSideRight.Control = panBranch
       AnchorSideRight.Side = asrBottom
-      Left = 896
+      Left = 945
       Height = 22
       Top = 2
       Width = 23
@@ -1539,7 +1545,7 @@ object frmMain: TfrmMain
       ParentFont = False
     end
     object btnStop: TSpeedButton
-      Left = 831
+      Left = 880
       Height = 21
       Top = 0
       Width = 24
@@ -1554,7 +1560,7 @@ object frmMain: TfrmMain
       AnchorSideTop.Control = panBranch
       AnchorSideTop.Side = asrCenter
       AnchorSideRight.Control = btnLog
-      Left = 868
+      Left = 917
       Height = 22
       Top = 2
       Width = 23
@@ -1567,7 +1573,7 @@ object frmMain: TfrmMain
     end
     object lblInfo: TLabel
       AnchorSideRight.Control = btnStop
-      Left = 761
+      Left = 810
       Height = 17
       Top = 2
       Width = 65
@@ -1580,7 +1586,7 @@ object frmMain: TfrmMain
   end
   object splitterMain: TSplitter
     Left = 256
-    Height = 544
+    Height = 528
     Top = 26
     Width = 5
   end
