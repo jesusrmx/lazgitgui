@@ -79,6 +79,7 @@ type
     TreeView1: TTreeView;
     txtViewer: TSynEdit;
     procedure actGotoHeadExecute(Sender: TObject);
+    procedure actReloadExecute(Sender: TObject);
     procedure actShowChangesExecute(Sender: TObject);
     procedure gridLogContextPopup(Sender: TObject; MousePos: TPoint;
       var Handled: Boolean);
@@ -362,9 +363,14 @@ begin
   LocateHead;
 end;
 
+procedure TframeLog.actReloadExecute(Sender: TObject);
+begin
+  // Reload
+end;
+
 procedure TframeLog.actShowChangesExecute(Sender: TObject);
 begin
-  panBrowser.Visible := not panBrowser.Visible;
+  panBrowser.Visible := actShowChanges.Checked;
 end;
 
 procedure TframeLog.MenuItem2Click(Sender: TObject);

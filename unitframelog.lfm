@@ -6,8 +6,8 @@ object frameLog: TframeLog
   ClientHeight = 465
   ClientWidth = 717
   TabOrder = 0
-  DesignLeft = 120
-  DesignTop = 180
+  DesignLeft = 332
+  DesignTop = 145
   object gridLog: TDrawGrid
     Left = 0
     Height = 232
@@ -81,7 +81,6 @@ object frameLog: TframeLog
     ClientHeight = 202
     ClientWidth = 717
     TabOrder = 1
-    Visible = False
     object panFiles: TPanel
       Left = 0
       Height = 202
@@ -625,8 +624,6 @@ object frameLog: TframeLog
     ClientWidth = 717
     TabOrder = 3
     object btnShowChanges: TSpeedButton
-      AnchorSideTop.Control = panLogTools
-      AnchorSideTop.Side = asrCenter
       AnchorSideRight.Control = panLogTools
       AnchorSideRight.Side = asrBottom
       Left = 689
@@ -634,23 +631,22 @@ object frameLog: TframeLog
       Top = 2
       Width = 23
       Action = actShowChanges
+      AllowAllUp = True
       Anchors = [akTop, akRight]
       BorderSpacing.Right = 5
       Flat = True
+      GroupIndex = 1
     end
     object btnReload: TSpeedButton
-      AnchorSideTop.Control = btnShowChanges
       AnchorSideRight.Control = btnShowChanges
       Left = 661
       Height = 22
       Top = 2
       Width = 23
       Action = actReload
-      AllowAllUp = True
       Anchors = [akTop, akRight]
       BorderSpacing.Right = 5
       Flat = True
-      GroupIndex = 2
     end
   end
   object popLog: TPopupMenu
@@ -687,10 +683,12 @@ object frameLog: TframeLog
     object actShowChanges: TAction
       AutoCheck = True
       Caption = 'SC'
+      GroupIndex = 1
       OnExecute = actShowChangesExecute
     end
     object actReload: TAction
       Caption = 'R'
+      OnExecute = actReloadExecute
     end
   end
 end
