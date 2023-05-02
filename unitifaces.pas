@@ -48,6 +48,7 @@ type
     function OpenDir(aDir: string): Integer;
     function Commit(msg, opts: string): Integer;
     function Diff(entry: PFileEntry; Unstaged:boolean; Lines:TStrings): Integer;
+    function Show(obj: string; lines: TStrings): Integer;
     //
     function GetBranch: string;
     function GetBranchOID: string;
@@ -65,6 +66,7 @@ type
     function GetTopLevelDir: string;
     function GetUpstream: string;
     function GetVersion: string;
+    function GetErrorLog: RawByteString;
     function RefsFilter(commitOID: string; filter: TRefFilterProc): TRefInfoArray;
 
     property Branch: string read GetBranch;
@@ -82,6 +84,7 @@ type
     property TopLevelDir: string read GetTopLevelDir;
     property Upstream: string read GetUpstream;
     property Version: string read GetVersion;
+    property ErrorLog: RawByteString read GetErrorLog;
   end;
 
   IObserver = interface ['{6ADBB399-EA69-4FD7-AEF3-E969FB09AC37}']
@@ -102,10 +105,12 @@ implementation
 
 function TMyInterfacedObject._AddRef: longint; {$IFNDEF WINDOWS}cdecl{$ELSE}stdcall{$ENDIF};
 begin
+  result := -1;
 end;
 
 function TMyInterfacedObject._Release: longint; {$IFNDEF WINDOWS}cdecl{$ELSE}stdcall{$ENDIF};
 begin
+  result := -1;
 end;
 
 end.

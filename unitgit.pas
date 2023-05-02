@@ -112,6 +112,7 @@ type
     function UpdateRefList: Integer;
     function GetRemotesList: TStringList;
     function RefsFilter(commitOID: string; filter: TRefFilterProc): TRefInfoArray;
+    function Show(obj: string; lines: TStrings): Integer;
 
     property ErrorLog: RawByteString read GetErrorLog;
     property UntrackedMode: string read fUntrackedMode write fUntrackedMode;
@@ -1043,6 +1044,22 @@ begin
     end;
   end;
 
+end;
+
+function TGit.Show(obj: string; lines: TStrings): Integer;
+var
+  M: TMemoryStream;
+begin
+  M := TMemoryStream.Create;
+  try
+    result := cmdLine.RunProcess(fGitCommand + ' show ' + Obj, fTopLevelDir, M);
+    if M.Size>0 then begin
+      M.Position := 0;
+      lines.LoadFromStream(M);
+    end;
+  finally
+    M.Free;
+  end;
 end;
 
 function TGit.GitMerging: boolean;

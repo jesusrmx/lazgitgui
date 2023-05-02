@@ -62,6 +62,7 @@ object frameLog: TframeLog
     TitleStyle = tsNative
     OnContextPopup = gridLogContextPopup
     OnDrawCell = gridLogDrawCell
+    OnSelection = gridLogSelection
     ColWidths = (
       70
       20
@@ -81,6 +82,7 @@ object frameLog: TframeLog
     ClientHeight = 202
     ClientWidth = 717
     TabOrder = 1
+    Visible = False
     object panFiles: TPanel
       Left = 0
       Height = 202
@@ -91,7 +93,7 @@ object frameLog: TframeLog
       ClientHeight = 202
       ClientWidth = 200
       TabOrder = 0
-      object TreeView1: TTreeView
+      object treeFiles: TTreeView
         Left = 0
         Height = 202
         Top = 0
@@ -118,6 +120,7 @@ object frameLog: TframeLog
       Gutter.MouseActions = <>
       RightGutter.Width = 0
       RightGutter.MouseActions = <>
+      Highlighter = diffHighlighter
       Keystrokes = <      
         item
           Command = ecUp
@@ -604,7 +607,7 @@ object frameLog: TframeLog
       Width = 5
     end
   end
-  object Splitter1: TSplitter
+  object splitChanges: TSplitter
     Cursor = crVSplit
     Left = 0
     Height = 5
@@ -690,5 +693,10 @@ object frameLog: TframeLog
       Caption = 'R'
       OnExecute = actReloadExecute
     end
+  end
+  object diffHighlighter: TSynDiffSyn
+    Enabled = False
+    Left = 465
+    Top = 288
   end
 end

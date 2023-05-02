@@ -29,7 +29,7 @@ interface
 uses
   Classes, SysUtils, Math, LazLogger, Forms, Controls, Graphics, Dialogs,
   StdCtrls, ExtCtrls, ActnList, synEditTypes, SynEdit, SynHighlighterDiff,
-  StrUtils, FileUtil, lclType, Menus, Buttons, Grids, Types, fgl,
+  StrUtils, FileUtil, lclType, Menus, Buttons, Grids, ComCtrls, Types, fgl,
   unitgittypes, unitifaces, unitconfig, unitprocess, unitentries, unitgitutils, {unitgit,}
   unitnewbranch, unitruncmd, unitansiescapes,
   unitnewtag, unitlogcache, unitlog, LConvEncoding, unitdbindex,
@@ -1300,9 +1300,13 @@ begin
     panLogNew.Visible := true;
     panStatus.Visible := false;
 
+    frmLog.GitMgr := fGitMgr;
     frmLog.Active := true;
 
   end else begin
+
+    frmLog.GitMgr := nil;
+
     panLog.Visible := false;
     panLogNew.Visible := false;
     panStatus.Visible := true;

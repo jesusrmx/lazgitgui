@@ -46,7 +46,6 @@ type
   public
     constructor create;
     destructor destroy; override;
-    procedure OpenDirectory(aDir: string);
     function Initialize: boolean;
     procedure UpdateStatus;
     procedure UpdateRefList;
@@ -136,14 +135,11 @@ end;
 
 destructor TGitMgr.destroy;
 begin
+  fObserverMgr.Free;
   fStagedList.Free;
   fUnstagedList.Free;
+  fGit.Free;
   inherited destroy;
-end;
-
-procedure TGitMgr.OpenDirectory(aDir: string);
-begin
-
 end;
 
 function TGitMgr.Initialize: boolean;

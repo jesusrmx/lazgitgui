@@ -36,11 +36,10 @@ c4109375a599264d818df2d265dab104ff8271a4
 interface
 
 uses
-  Classes, SysUtils, dateUtils, fgl,
-  LazLogger, SynEdit, Graphics, Forms, Dialogs, Controls, Grids,
-  ExtCtrls, ComCtrls, Menus, Types, Clipbrd, ActnList, Buttons,
-  unitgittypes, unitlogcache, unitdbindex, unitgitutils, unitifaces,
-  unitruncmd, unitgitmgr;
+  Classes, SysUtils, dateUtils, fgl, LazLogger, SynEdit, SynHighlighterDiff,
+  Graphics, Forms, Dialogs, Controls, Grids, ExtCtrls, ComCtrls, Menus, Types,
+  Clipbrd, ActnList, Buttons, unitgittypes, unitlogcache, unitdbindex,
+  unitgitutils, unitifaces, unitruncmd, unitgitmgr, unitcommitbrowser;
 
 const
   GRAPH_LEFT_PADDING          = 12;
@@ -74,9 +73,10 @@ type
     mnuSeparatorFirst: TMenuItem;
     btnShowChanges: TSpeedButton;
     btnReload: TSpeedButton;
-    Splitter1: TSplitter;
+    splitChanges: TSplitter;
     Splitter2: TSplitter;
-    TreeView1: TTreeView;
+    diffHighlighter: TSynDiffSyn;
+    treeFiles: TTreeView;
     txtViewer: TSynEdit;
     procedure actGotoHeadExecute(Sender: TObject);
     procedure actReloadExecute(Sender: TObject);
@@ -85,6 +85,7 @@ type
       var Handled: Boolean);
     procedure gridLogDrawCell(Sender: TObject; aCol, aRow: Integer;
       aRect: TRect; aState: TGridDrawState);
+    procedure gridLogSelection(Sender: TObject; aCol, aRow: Integer);
     procedure MenuItem2Click(Sender: TObject);
     procedure MenuItem3Click(Sender: TObject);
   private
@@ -98,6 +99,7 @@ type
     fGraphColumns: Integer;
     fRefItems: TRefInfoArray;
     fWithArrows: boolean;
+    fCommitBrowser: TCommitBrowser;
     procedure OnContextPopLogClick(Sender: TObject);
     procedure OnLogEvent(sender: TObject; thread: TLogThread; event: Integer; var interrupt: boolean);
     procedure OnDeleteTagClick(sender: TObject);
@@ -113,6 +115,9 @@ type
     procedure SetActive(AValue: boolean);
     procedure SetGitMgr(AValue: TGitMgr);
     procedure ObservedChanged(Sender:TObject; what: Integer; data: PtrInt);
+    procedure ShowChanges(aRow: Integer);
+    procedure HideChanges;
+    procedure ReloadTreeFile;
   public
     procedure Clear;
     procedure UpdateGridRows;
@@ -327,6 +332,12 @@ begin
   end;
 end;
 
+procedure TframeLog.gridLogSelection(Sender: TObject; aCol, aRow: Integer);
+begin
+  if panBrowser.Visible then
+    ShowChanges(aRow)
+end;
+
 procedure TframeLog.gridLogContextPopup(Sender: TObject; MousePos: TPoint;
   var Handled: Boolean);
 var
@@ -371,6 +382,11 @@ end;
 procedure TframeLog.actShowChangesExecute(Sender: TObject);
 begin
   panBrowser.Visible := actShowChanges.Checked;
+  if panBrowser.Visible then begin
+    ShowChanges(gridLog.Row);
+    splitChanges.Top := panBrowser.Top - 1;
+  end else
+    HideChanges;
 end;
 
 procedure TframeLog.MenuItem2Click(Sender: TObject);
@@ -653,7 +669,6 @@ begin
         Application.ProcessMessages;
       end;
     end;
-
   end;
 
   fActive := AValue;
@@ -682,6 +697,7 @@ procedure TframeLog.ObservedChanged(Sender: TObject; what: Integer; data: PtrInt
   );
 begin
   case what of
+
     GITMGR_EVENT_REFLISTCHANGED:
       if fActive then begin
         // reflist has changed, update the grid to reflect annotations.
@@ -689,12 +705,76 @@ begin
         // queue a cache update
         fLogCache.UpdateCache;
       end;
+
+    COMMITBROWSER_EVENT_RELOAD: begin
+      treeFiles.Items.Clear;
+      txtViewer.Lines.Assign(fCommitBrowser.Diff);
+      if data<>0 then
+        ReloadTreeFile;
+    end;
+  end;
+end;
+
+procedure TframeLog.ShowChanges(aRow: Integer);
+var
+  aIndex: Integer;
+begin
+
+  aIndex := aRow - gridLog.FixedRows;
+  if not LocateItemIndex(aIndex) then begin
+    txtViewer.Lines.Text := 'Unable to locate db index';
+    exit;
+  end;
+
+  if fCommitBrowser=nil then begin
+    fCommitBrowser := TCommitBrowser.Create;
+    fCommitBrowser.GitMgr := fGitMgr;
+    fCommitBrowser.Config := fConfig;
+
+    fCommitBrowser.ObserverMgr.AddObserver(self);
+  end;
+
+  fCommitBrowser.Mode := cbmPatch;
+  fCommitBrowser.Load(fLogCache.DbIndex.Item.CommitOID);
+end;
+
+procedure TframeLog.HideChanges;
+begin
+  if fCommitBrowser<>nil then
+    fCommitBrowser.ObserverMgr.RemoveObserver(Self);
+end;
+
+procedure TframeLog.ReloadTreeFile;
+var
+  sibling: PFileTreeNode;
+
+  procedure PopulateTree(node: PFileTreeNode; treeNode: TTreeNode);
+  var
+    child: PFileTreeNode;
+  begin
+    if node=nil then exit;
+
+    treeNode := treeFiles.Items.AddObject(treeNode, node^.Info.Name, node);
+
+    child := node^.Childs;
+    while child<>nil do begin
+      PopulateTree(child, treeNode);
+      child := child^.Next;
+    end;
+  end;
+
+begin
+  sibling := fCommitBrowser.Tree;
+  while sibling<>nil do begin
+    PopulateTree(sibling, nil);
+    sibling := sibling^.Next;
   end;
 end;
 
 procedure TframeLog.Clear;
 begin
   FreeAndNil(fLogCache);
+  FreeAndNil(fCommitBrowser);
 end;
 
 procedure TframeLog.UpdateGridRows;
