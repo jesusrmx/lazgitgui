@@ -125,6 +125,7 @@ type
     procedure ReloadTreeFile;
     procedure UpdateCommitBrowser(aMode: TCommitBrowserMode);
     function  CommitBrowserModeFromGui:TCommitBrowserMode;
+    function  GetAllCommitInfo: string;
   public
     procedure Clear;
     procedure UpdateGridRows;
@@ -542,41 +543,19 @@ end;
 
 procedure TframeLog.CopyToClipboard(what: Integer);
 var
-  n: Integer;
   s: String;
-  dt: TDateTime;
-  arr: TRefInfoArray;
-  ref: PRefInfo;
 begin
 
-    s := '';
-    with fLogCache.DbIndex.Item do
-      case what of
-        COPY_ALL_INFO:
-          begin
-            s := '';
-            if (fGit.RefsMap<>nil) and fGit.RefsMap.Find(CommitOID, n ) then begin
-              arr := fGit.RefsMap.Data[n];
-              for ref in arr do begin
-                if s<>'' then s+=', ';
-                if ref^.subType=rostTag then
-                  s += 'tag: ';
-                s += ref^.refName
-              end;
-            end;
-            dt := UnixToDateTime(CommiterDate, false);
-            s := format(ALL_INFO_TEMPLATE, [
-              ParentOID, CommitOID, s,
-              Author, Email,
-              format('%s (%d)',[DateTimeToStr(dt), CommiterDate]),
-              Subject]);
-          end;
-        COPY_SHA:
-          s := CommitOID;
-      end;
+  s := '';
+  case what of
+    COPY_ALL_INFO:
+      s := GetAllCommitInfo;
+    COPY_SHA:
+      s := fLogCache.DbIndex.Item.CommitOID;
+  end;
 
-    if s<>'' then
-      clipboard.AsText := s;
+  if s<>'' then
+    clipboard.AsText := s;
 end;
 
 procedure TframeLog.LocateHead;
@@ -745,7 +724,7 @@ begin
       if aMode=cbmPatch then
         txtViewer.Lines.Assign(fCommitBrowser.Diff)
       else
-        ;
+        txtViewer.Lines.Text := GetAllCommitInfo;
       if data<>0 then
         ReloadTreeFile;
     end;
@@ -823,6 +802,33 @@ begin
     result := cbmPatch
   else
     result := cbmTree;
+end;
+
+function TframeLog.GetAllCommitInfo: string;
+var
+  n: Integer;
+  arr: TRefInfoArray;
+  ref: PRefInfo;
+  dt: TDateTime;
+begin
+  result := '';
+  with fLogCache.DbIndex.Item do begin
+    if (fGit.RefsMap<>nil) and fGit.RefsMap.Find(CommitOID, n ) then begin
+      arr := fGit.RefsMap.Data[n];
+      for ref in arr do begin
+        if result<>'' then result+=', ';
+        if ref^.subType=rostTag then
+          result += 'tag: ';
+        result += ref^.refName
+      end;
+    end;
+    dt := UnixToDateTime(CommiterDate, false);
+    result := format(ALL_INFO_TEMPLATE, [
+      ParentOID, CommitOID, result,
+      Author, Email,
+      format('%s (%d)',[DateTimeToStr(dt), CommiterDate]),
+      Subject]);
+  end;
 end;
 
 procedure TframeLog.Clear;

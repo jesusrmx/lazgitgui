@@ -127,6 +127,7 @@ object frameLog: TframeLog
           Checked = True
           OnClick = radPatchClick
           TabOrder = 0
+          TabStop = True
         end
         object radTree: TRadioButton
           AnchorSideTop.Control = radPatch
