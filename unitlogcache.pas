@@ -168,6 +168,9 @@ implementation
 
 const
   LOG_CMD = '--pretty="format:%ct'#2'%P'#2'%H'#2'%an'#2'%ae'#2'%s'#2#3'" --all';
+  //LOG_CMD = '--pretty="format:%ct'#2'%P'#2'%H'#2'%an'#2'%ae'#2'%s'#2#3'" --exclude=refs/stash --all';
+  //LOG_CMD = '--pretty="format:%ct'#2'%P'#2'%H'#2'%an'#2'%ae'#2'%s'#2#3'" --branches --remotes --tags';
+
 
 { TCacheLimits }
 
