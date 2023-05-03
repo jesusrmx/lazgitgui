@@ -35,18 +35,19 @@ uses
   Forms, main, unitconfig, unitprocess, unitentries, unitgit, unitnewbranch,
   unitruncmd, unitansiescapes, unitnewtag, unitlog, unitdebug, unitlogcache,
   unitdbindex, unitgitutils, unitdrafts, unitframelog, unitgitmgr, unitgittypes,
-  unitcheckouttag, unitcommitbrowser
-  { you can add units after this };
+  unitcheckouttag, unitcommitbrowser, unitvfs;
 
 {$R *.res}
 
 {.$define drafts}
 
 begin
+  Application.Scaled := True;
 
   {$ifdef drafts}
   //TestParams;
-  AnalizeColumns;
+  //AnalizeColumns;
+  TestVfs;
   {$else}
 
   fConfig := TConfig.Create;

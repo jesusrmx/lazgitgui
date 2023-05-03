@@ -1,14 +1,16 @@
 unit unitdrafts;
 
 {$mode ObjFPC}{$H+}
+{$ModeSwitch nestedprocvars}
 
 interface
 
 uses
-  Classes, SysUtils, StrUtils, LazLogger, lazfileutils, unitprocess;
+  Classes, SysUtils, StrUtils, LazLogger, lazfileutils, unitprocess, unitvfs;
 
   procedure AnalizeColumns;
   procedure TestParams;
+  procedure TestVfs;
 
 implementation
 
@@ -120,6 +122,59 @@ begin
     dump('Using SplitCmdLineParams with ReadBackSlash=FALSE', l);
   finally
     l.Free;
+  end;
+end;
+
+procedure TestVfs;
+
+type
+  PFileData = ^TFileData;
+  TFileData = record
+    Counter: integer;
+  end;
+
+var
+  counter: Integer = 0;
+  vfs: TVirtualFileSystem;
+  fileData: PfileData;
+
+  procedure OnNewNode(sender: TObject; aName: TvfsString; isDir:boolean; var data:pointer);
+  begin
+    data := nil;
+    if not isDir then begin
+      inc(counter);
+      New(fileData);
+      fileData^.Counter := counter;
+      data := fileData;
+    end;
+  end;
+
+  procedure OnDisposeNode(sender: TObject; aName: TvfsString; data: pointer);
+  var
+    p: PFileData;
+  begin
+    p := data;
+    if p<>nil then
+      Dispose(p);
+  end;
+
+begin
+  vfs := TVirtualFileSystem.Create;
+  vfs.OnNewNodeNested := @OnNewNode;
+  vfs.OnDisposeNodeNested := @OnDisposeNode;
+  try
+    vfs.AddPath('file1.txt');
+    vfs.AddPath('file2.txt');
+    vfs.AddPath('file3.txt');
+    vfs.AddPath('Abc/Lios/archivo.txt');
+    vfs.AddPath('Abc/Lios/Otro/archivo1.txt');
+    vfs.AddPath('Abc/Lios/archivo2.txt');
+    vfs.AddPath('Abc/archivo3.txt');
+    vfs.AddPath('archivo4.txt');
+
+    vfs.Dump;
+  finally
+    vfs.Free;
   end;
 end;
 

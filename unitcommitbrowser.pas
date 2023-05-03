@@ -1,11 +1,13 @@
 unit unitcommitbrowser;
 
 {$mode ObjFPC}{$H+}
+{$ModeSwitch nestedprocvars}
 
 interface
 
 uses
-  Classes, SysUtils, unitgittypes, unitgitutils, unitifaces, unitgitmgr;
+  Classes, SysUtils, strutils, unitgittypes, unitgitutils, unitifaces, unitgitmgr,
+  unitvfs;
 
 const
   COMMITBROWSER_EVENT_RELOAD    =  20;
@@ -14,15 +16,13 @@ type
 
   TCommitBrowserMode = (cbmPatch, cbmTree);
 
+  PInfoNode = ^TInfoNode;
   TInfoNode = record
-    Name: string;
+    //Name: string;
     line: Integer;
-  end;
-
-  PFileTreeNode = ^TFileTreeNode;
-  TFileTreeNode = record
-    Info: TInfoNode;
-    Prev, Next, Childs: PFileTreeNode;
+    filemode: string[7];
+    filetype: string[10];
+    fileTree: string[41];
   end;
 
   { TCommitBrowser }
@@ -32,25 +32,26 @@ type
     fCommit: String;
     fConfig: IConfig;
     fFileDiff: TStringList;
-    fFileTree: PFileTreeNode;
     fGit: IGit;
     fGitMgr: TGitMgr;
     fMode: TCommitBrowserMode;
     fObserverMgr: TObserverMgr;
+    fVfs: TVirtualFileSystem;
+    procedure OnDisposeVfsNode(Sender: TObject; aName: TvfsString; Data: pointer);
     procedure SetGitMgr(AValue: TGitMgr);
     procedure SetMode(AValue: TCommitBrowserMode);
     procedure ApplyMode;
     procedure Clear;
     procedure ScanFilenames;
-    function NewNode(prev: PFileTreeNode): PFileTreeNode;
+    procedure ScanTree(treestr: RawByteString);
   public
     constructor Create;
     destructor Destroy; override;
     procedure Load(commit: string);
 
     property ObserverMgr: TObserverMgr read fObserverMgr;
-    property Tree: PFileTreeNode read fFileTree;
     property Diff: TStringList read fFileDiff;
+    property Vfs: TVirtualFileSystem read fVfs;
 
     property Mode: TCommitBrowserMode read fMode write SetMode;
     property GitMgr: TGitMgr read fGitMgr write SetGitMgr;
@@ -68,6 +69,18 @@ begin
   fGit := fGitMgr.Git;
 end;
 
+procedure TCommitBrowser.OnDisposeVfsNode(Sender: TObject; aName: TvfsString;
+  Data: pointer);
+var
+  info: PInfoNode;
+begin
+  info := Data;
+  if info<>nil then begin
+    Finalize(info^);
+    dispose(info);
+  end;
+end;
+
 procedure TCommitBrowser.SetMode(AValue: TCommitBrowserMode);
 begin
   if fMode = AValue then Exit;
@@ -78,6 +91,7 @@ end;
 procedure TCommitBrowser.ApplyMode;
 var
   lines: TStringList;
+  treestr: RawByteString;
 begin
 
   Clear;
@@ -99,49 +113,47 @@ begin
     finally
       lines.Free;
     end;
+
+  end else begin
+
+    if fGit.Any('ls-tree -r --full-tree -z ' + fCommit, treestr)>0 then begin
+      fFileDiff.Text := fGit.ErrorLog;
+      fObserverMgr.NotifyObservers(self, COMMITBROWSER_EVENT_RELOAD, 0);
+    end else begin
+      ScanTree(treestr);
+      fObserverMgr.NotifyObservers(self, COMMITBROWSER_EVENT_RELOAD, 1);
+    end;
+
   end;
 end;
 
 procedure TCommitBrowser.Clear;
-
-  procedure FreeNode(var aNode: PFileTreeNode);
-  begin
-    Finalize(aNode^.Info);
-    Dispose(aNode);
-    aNode := nil;
-  end;
-
-  procedure DisposeNode(aNode: PFileTreeNode);
-  var
-    cur: PFileTreeNode;
-  begin
-    while aNode<>nil do begin
-      if aNode^.Childs<>nil then begin
-        DisposeNode(aNode^.Childs);
-        FreeNode(aNode^.Childs);
-      end;
-      cur := aNode;
-      aNode := aNode^.Next;
-      FreeNode(cur);
-    end;
-  end;
-
 begin
-  DisposeNode(fFileTree);
+  fVfs.Clear;
 end;
 
 procedure TCommitBrowser.ScanFilenames;
 var
-  Node, last: PFileTreeNode;
   i, j: Integer;
   s: string;
+  info: PInfoNode;
+
+  procedure OnNewNode(sender: TObject; aName:TvfsString; isDir:boolean; var data: Pointer);
+  begin
+    data := info;
+  end;
+
 begin
   if fFileDiff.Count>0 then begin
 
+    fVfs.Clear;
+    fVfs.OnNewNodeNested := @OnNewNode;
+
     // the first node will be the diff header
-    Node := NewNode(nil);
-    Node^.Info.Name := 'comments';
-    fFileTree := Node;
+    New(Info);
+    info^.line := 0;
+    //info^.Name := 'comments';
+    fVfs.AddPath('comments');
 
     for i:=0 to fFileDiff.Count-1 do begin
       s := fFileDiff[i];
@@ -150,26 +162,55 @@ begin
         if j=0 then continue;
 
         // found a file, register it
-        last := Node;
-        Node := NewNode(Node);
-        last^.Next := Node;
-
-        Node^.Info.Name := copy(s, j + 3, Length(s));
-        Node^.Info.line := i;
+        New(info);
+        Info^.line := i;
+        fVfs.AddPath(copy(s, j + 3, Length(s)));
       end;
     end;
+
+    fVfs.OnNewNodeNested := nil;
 
   end;
 end;
 
-function TCommitBrowser.NewNode(prev: PFileTreeNode): PFileTreeNode;
+procedure TCommitBrowser.ScanTree(treestr: RawByteString);
+var
+  info: PInfoNode;
+
+  procedure OnNewNode(sender: TObject; aName:TvfsString; isDir:boolean; var data: Pointer);
+  begin
+    if not isDir then
+      data := info;
+  end;
+
+var
+  p, q, r: pchar;
+  len: Integer;
+  aPath: string;
 begin
-  new(result);
-  result^.Info.Name := '';
-  result^.Info.line := 0;
-  result^.Next := nil;
-  result^.Prev := prev;
-  result^.Childs := nil;
+  if treestr='' then
+    exit;
+
+  fVfs.Clear;
+  fVfs.OnNewNodeNested := @OnNewNode;
+
+  p := @treestr[1];
+  while p^<>#0 do begin
+    r := p;
+    new(info);
+    q := strpos(r, ' '); SetString(info^.filemode, r, q-r); r := q + 1;
+    q := strpos(r, ' '); SetString(info^.filetype, r, q-r); r := q + 1;
+    q := strpos(r, #9 ); SetString(info^.filetree, r, q-r); r := q + 1;
+
+    SetString(aPath, r, strlen(r));
+
+    fVfs.AddPath(aPath);
+
+    len := strlen(p);
+    p := p + len + 1;
+  end;
+
+  fVfs.OnNewNodeNested := nil;
 end;
 
 constructor TCommitBrowser.Create;
@@ -177,11 +218,14 @@ begin
   inherited Create;
   fObserverMgr := TObserverMgr.Create;
   fFileDiff := TStringList.Create;
+  fVfs := TVirtualFileSystem.Create;
+  fVfs.OnDisposeNode := @OnDisposeVfsNode;
 end;
 
 destructor TCommitBrowser.Destroy;
 begin
   Clear;
+  fVfs.Free;
   fFileDiff.Free;
   fObserverMgr.Free;
   inherited Destroy;

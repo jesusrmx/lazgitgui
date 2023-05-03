@@ -39,7 +39,7 @@ uses
   Classes, SysUtils, dateUtils, fgl, LazLogger, SynEdit, SynHighlighterDiff,
   Graphics, Forms, Dialogs, Controls, Grids, ExtCtrls, ComCtrls, Menus, Types,
   Clipbrd, ActnList, Buttons, StdCtrls, unitgittypes, unitlogcache, unitdbindex,
-  unitgitutils, unitifaces, unitruncmd, unitgitmgr, unitcommitbrowser;
+  unitgitutils, unitifaces, unitruncmd, unitgitmgr, unitcommitbrowser, unitvfs;
 
 const
   GRAPH_LEFT_PADDING          = 12;
@@ -419,7 +419,7 @@ begin
   if fCommitBrowser.Mode=cbmPatch then begin
     node := treeFiles.Selected;
     if node<>nil then
-      txtViewer.TopLine := PFileTreeNode(Node.Data)^.Info.line;
+      txtViewer.TopLine := PInfoNode(Node.Data)^.line;
   end;
 end;
 
@@ -769,15 +769,16 @@ end;
 
 procedure TframeLog.ReloadTreeFile;
 var
-  sibling: PFileTreeNode;
+  sibling: TVirtualFileSystem.PNode;
 
-  procedure PopulateTree(node: PFileTreeNode; treeNode: TTreeNode);
+  procedure PopulateTree(node: TVirtualFileSystem.PNode; treeNode: TTreeNode);
   var
-    child: PFileTreeNode;
+    child: TVirtualFileSystem.PNode;
   begin
     if node=nil then exit;
 
-    treeNode := treeFiles.Items.AddObject(treeNode, node^.Info.Name, node);
+    treeNode := treeFiles.Items.AddChildObject(treeNode, node^.Name, node^.Data);
+    //treeNode := treeFiles.Items.AddObject(treeNode, node^.Name, node^.Data);
 
     child := node^.Childs;
     while child<>nil do begin
@@ -787,7 +788,7 @@ var
   end;
 
 begin
-  sibling := fCommitBrowser.Tree;
+  sibling := fCommitBrowser.vfs.root;
   while sibling<>nil do begin
     PopulateTree(sibling, nil);
     sibling := sibling^.Next;
