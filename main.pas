@@ -1155,6 +1155,7 @@ begin
   frmLog.Config := fConfig;
   frmLog.GitMgr := fGitMgr;
   frmLog.OnLogCacheEvent := @OnLogCacheEvent;
+  frmLog.HlHelper := fHlHelper;
 
   fLogHandler := TLogHandler.Create(txtLog, @OnLogEvent);
   fLogHandler.GitMgr := fGitMgr;

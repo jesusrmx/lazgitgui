@@ -40,7 +40,7 @@ uses
   SynHighlighterPas, SynHighlighterXML, Graphics, Forms, Dialogs, Controls,
   Grids, ExtCtrls, ComCtrls, Menus, Types, Clipbrd, ActnList, Buttons, StdCtrls,
   unitgittypes, unitlogcache, unitdbindex, unitgitutils, unitifaces, unitruncmd,
-  unitgitmgr, unitcommitbrowser, unitvfs;
+  unitgitmgr, unitcommitbrowser, unitvfs, unithighlighterhelper;
 
 const
   GRAPH_LEFT_PADDING          = 12;
@@ -98,6 +98,7 @@ type
     fConfig: IConfig;
     fGit: IGit;
     fGitMgr: TGitMgr;
+    fhlHelper: THighlighterHelper;
     fItemIndices: TItemIndexArray;
     fLogCache: TLogCache;
     fOnLogCacheEvent: TLogThreadEvent;
@@ -133,6 +134,7 @@ type
     property LogCache: TLogCache read fLogCache write fLogCache;
     property Config: IConfig read fConfig write fConfig;
     property GitMgr: TGitMgr read fGitMgr write SetGitMgr;
+    property HlHelper: THighlighterHelper read fhlHelper write fhlHelper;
     property OnLogCacheEvent: TLogThreadEvent read fOnLogCacheEvent write fOnLogCacheEvent;
     property Active: boolean read fActive write SetActive;
 
@@ -426,8 +428,10 @@ begin
     if fCommitBrowser.Mode=cbmPatch then
       txtViewer.TopLine := info^.line
     else
-    if info<>nil then
+    if info<>nil then begin
+      fhlHelper.SetHighlighter(txtViewer, node.Text);
       fGit.Show(info^.fileTree, txtViewer.Lines);
+    end;
   end;
 end;
 
@@ -721,6 +725,7 @@ begin
     COMMITBROWSER_EVENT_RELOAD: begin
       treeFiles.Items.Clear;
       aMode := CommitBrowserModeFromGui;
+      fhlHelper.SetHighlighter(txtViewer, 'x.diff');
       if aMode=cbmPatch then
         txtViewer.Lines.Assign(fCommitBrowser.Diff)
       else
