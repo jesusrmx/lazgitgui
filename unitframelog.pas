@@ -38,7 +38,7 @@ interface
 uses
   Classes, SysUtils, dateUtils, fgl, LazLogger, SynEdit, SynHighlighterDiff,
   Graphics, Forms, Dialogs, Controls, Grids, ExtCtrls, ComCtrls, Menus, Types,
-  Clipbrd, ActnList, Buttons, unitgittypes, unitlogcache, unitdbindex,
+  Clipbrd, ActnList, Buttons, StdCtrls, unitgittypes, unitlogcache, unitdbindex,
   unitgitutils, unitifaces, unitruncmd, unitgitmgr, unitcommitbrowser;
 
 const
@@ -66,6 +66,7 @@ type
     MenuItem3: TMenuItem;
     mnuGotoHead: TMenuItem;
     panBrowser: TPanel;
+    panMode: TPanel;
     panLogTools: TPanel;
     panFiles: TPanel;
     popLog: TPopupMenu;
@@ -73,6 +74,8 @@ type
     mnuSeparatorFirst: TMenuItem;
     btnShowChanges: TSpeedButton;
     btnReload: TSpeedButton;
+    radTree: TRadioButton;
+    radPatch: TRadioButton;
     splitChanges: TSplitter;
     Splitter2: TSplitter;
     diffHighlighter: TSynDiffSyn;
@@ -88,6 +91,7 @@ type
     procedure gridLogSelection(Sender: TObject; aCol, aRow: Integer);
     procedure MenuItem2Click(Sender: TObject);
     procedure MenuItem3Click(Sender: TObject);
+    procedure radPatchClick(Sender: TObject);
     procedure treeFilesSelectionChanged(Sender: TObject);
   private
     fActive: boolean;
@@ -398,6 +402,14 @@ end;
 procedure TframeLog.MenuItem3Click(Sender: TObject);
 begin
   CopyToClipboard(COPY_SHA)
+end;
+
+procedure TframeLog.radPatchClick(Sender: TObject);
+begin
+  if radPatch.Checked then
+    fCommitBrowser.Mode := cbmPatch
+  else
+    fCommitBrowser.Mode := cbmTree;
 end;
 
 procedure TframeLog.treeFilesSelectionChanged(Sender: TObject);
@@ -742,7 +754,6 @@ begin
     fCommitBrowser := TCommitBrowser.Create;
     fCommitBrowser.GitMgr := fGitMgr;
     fCommitBrowser.Config := fConfig;
-
     fCommitBrowser.ObserverMgr.AddObserver(self);
   end;
 

@@ -95,8 +95,8 @@ object frameLog: TframeLog
       TabOrder = 0
       object treeFiles: TTreeView
         Left = 0
-        Height = 202
-        Top = 0
+        Height = 180
+        Top = 22
         Width = 200
         Align = alClient
         ReadOnly = True
@@ -104,6 +104,40 @@ object frameLog: TframeLog
         TabOrder = 0
         OnSelectionChanged = treeFilesSelectionChanged
         Options = [tvoAutoItemHeight, tvoHideSelection, tvoKeepCollapsedNodes, tvoReadOnly, tvoRowSelect, tvoShowButtons, tvoShowLines, tvoShowRoot, tvoToolTips, tvoThemedDraw]
+      end
+      object panMode: TPanel
+        Left = 0
+        Height = 22
+        Top = 0
+        Width = 200
+        Align = alTop
+        AutoSize = True
+        BevelOuter = bvNone
+        ClientHeight = 22
+        ClientWidth = 200
+        TabOrder = 1
+        object radPatch: TRadioButton
+          AnchorSideTop.Control = panMode
+          AnchorSideTop.Side = asrCenter
+          Left = 0
+          Height = 21
+          Top = 1
+          Width = 54
+          Caption = 'Patch'
+          Checked = True
+          OnClick = radPatchClick
+          TabOrder = 0
+        end
+        object radTree: TRadioButton
+          AnchorSideTop.Control = radPatch
+          Left = 64
+          Height = 21
+          Top = 1
+          Width = 48
+          Caption = 'Tree'
+          OnClick = radPatchClick
+          TabOrder = 1
+        end
       end
     end
     inline txtViewer: TSynEdit
