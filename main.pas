@@ -29,6 +29,9 @@ interface
 uses
   Classes, SysUtils, Math, LazLogger, Forms, Controls, Graphics, Dialogs,
   StdCtrls, ExtCtrls, ActnList, synEditTypes, SynEdit, SynHighlighterDiff,
+  SynHighlighterPas, SynHighlighterXML, SynHighlighterHTML,
+  synhighlighterunixshellscript, SynHighlighterCpp, SynHighlighterJScript,
+  SynHighlighterLFM, SynHighlighterJava, SynHighlighterCss, SynHighlighterPHP,
   StrUtils, FileUtil, lclType, Menus, Buttons, Grids, ComCtrls, Types, fgl,
   unitgittypes, unitifaces, unitconfig, unitprocess, unitentries, unitgitutils, {unitgit,}
   unitnewbranch, unitruncmd, unitansiescapes,
@@ -88,7 +91,17 @@ type
     popLists: TPopupMenu;
     btnStop: TSpeedButton;
     splitterMain: TSplitter;
-    SynDiffSyn1: TSynDiffSyn;
+    diffHL: TSynDiffSyn;
+    fpcHL: TSynFreePascalSyn;
+    htmlHL: TSynHTMLSyn;
+    shHL: TSynUNIXShellScriptSyn;
+    cppHL: TSynCppSyn;
+    jsHL: TSynJScriptSyn;
+    lfmHL: TSynLFMSyn;
+    javaHL: TSynJavaSyn;
+    cssHL: TSynCssSyn;
+    phpHL: TSynPHPSyn;
+    xmlHL: TSynXMLSyn;
     txtLog: TSynEdit;
     txtComment: TMemo;
     panLeft: TPanel;

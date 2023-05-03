@@ -37,9 +37,10 @@ interface
 
 uses
   Classes, SysUtils, dateUtils, fgl, LazLogger, SynEdit, SynHighlighterDiff,
-  Graphics, Forms, Dialogs, Controls, Grids, ExtCtrls, ComCtrls, Menus, Types,
-  Clipbrd, ActnList, Buttons, StdCtrls, unitgittypes, unitlogcache, unitdbindex,
-  unitgitutils, unitifaces, unitruncmd, unitgitmgr, unitcommitbrowser, unitvfs;
+  SynHighlighterPas, SynHighlighterXML, Graphics, Forms, Dialogs, Controls,
+  Grids, ExtCtrls, ComCtrls, Menus, Types, Clipbrd, ActnList, Buttons, StdCtrls,
+  unitgittypes, unitlogcache, unitdbindex, unitgitutils, unitifaces, unitruncmd,
+  unitgitmgr, unitcommitbrowser, unitvfs;
 
 const
   GRAPH_LEFT_PADDING          = 12;
@@ -78,7 +79,6 @@ type
     radPatch: TRadioButton;
     splitChanges: TSplitter;
     Splitter2: TSplitter;
-    diffHighlighter: TSynDiffSyn;
     treeFiles: TTreeView;
     txtViewer: TSynEdit;
     procedure actGotoHeadExecute(Sender: TObject);

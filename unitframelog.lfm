@@ -6,8 +6,8 @@ object frameLog: TframeLog
   ClientHeight = 465
   ClientWidth = 717
   TabOrder = 0
-  DesignLeft = 156
-  DesignTop = 127
+  DesignLeft = 452
+  DesignTop = 308
   object gridLog: TDrawGrid
     Left = 0
     Height = 232
@@ -95,8 +95,8 @@ object frameLog: TframeLog
       TabOrder = 0
       object treeFiles: TTreeView
         Left = 0
-        Height = 180
-        Top = 22
+        Height = 184
+        Top = 18
         Width = 200
         Align = alClient
         ReadOnly = True
@@ -107,22 +107,22 @@ object frameLog: TframeLog
       end
       object panMode: TPanel
         Left = 0
-        Height = 22
+        Height = 18
         Top = 0
         Width = 200
         Align = alTop
         AutoSize = True
         BevelOuter = bvNone
-        ClientHeight = 22
+        ClientHeight = 18
         ClientWidth = 200
         TabOrder = 1
         object radPatch: TRadioButton
           AnchorSideTop.Control = panMode
           AnchorSideTop.Side = asrCenter
           Left = 0
-          Height = 21
-          Top = 1
-          Width = 54
+          Height = 18
+          Top = 0
+          Width = 59
           Caption = 'Patch'
           Checked = True
           OnClick = radPatchClick
@@ -132,9 +132,9 @@ object frameLog: TframeLog
         object radTree: TRadioButton
           AnchorSideTop.Control = radPatch
           Left = 64
-          Height = 21
-          Top = 1
-          Width = 48
+          Height = 18
+          Top = 0
+          Width = 51
           Caption = 'Tree'
           OnClick = radPatchClick
           TabOrder = 1
@@ -159,7 +159,6 @@ object frameLog: TframeLog
       Gutter.MouseActions = <>
       RightGutter.Width = 0
       RightGutter.MouseActions = <>
-      Highlighter = diffHighlighter
       Keystrokes = <      
         item
           Command = ecUp
@@ -733,10 +732,5 @@ object frameLog: TframeLog
       Caption = 'R'
       OnExecute = actReloadExecute
     end
-  end
-  object diffHighlighter: TSynDiffSyn
-    Enabled = False
-    Left = 465
-    Top = 288
   end
 end

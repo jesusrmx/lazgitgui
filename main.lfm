@@ -679,6 +679,16 @@ object frmMain: TfrmMain
           Top = 319
           Width = 705
           ClientWidth = 705
+          inherited panFiles: TPanel
+            inherited panMode: TPanel
+              inherited radPatch: TRadioButton
+                Width = 63
+              end
+              inherited radTree: TRadioButton
+                Width = 55
+              end
+            end
+          end
           inherited txtViewer: TSynEdit
             Width = 500
           end
@@ -741,49 +751,49 @@ object frmMain: TfrmMain
           TabOrder = 0
           object btnRescan: TButton
             Left = 5
-            Height = 25
+            Height = 20
             Top = 5
-            Width = 125
+            Width = 133
             Action = actRescan
             TabOrder = 0
           end
           object btnStageChanged: TButton
             Left = 5
-            Height = 25
-            Top = 35
-            Width = 125
+            Height = 20
+            Top = 30
+            Width = 133
             Action = actFetch
             TabOrder = 1
           end
           object btnSignOff: TButton
             Left = 5
-            Height = 25
-            Top = 65
-            Width = 125
+            Height = 20
+            Top = 55
+            Width = 133
             Action = actPull
             TabOrder = 2
           end
           object btnCommit: TButton
             Left = 5
-            Height = 25
-            Top = 95
-            Width = 125
+            Height = 20
+            Top = 80
+            Width = 133
             Action = actCommit
             TabOrder = 3
           end
           object panPush: TPanel
             Left = 5
-            Height = 25
-            Top = 125
-            Width = 125
+            Height = 20
+            Top = 105
+            Width = 133
             AutoSize = True
             BevelOuter = bvNone
-            ClientHeight = 25
-            ClientWidth = 125
+            ClientHeight = 20
+            ClientWidth = 133
             TabOrder = 4
             object btnPush: TButton
               Left = 0
-              Height = 25
+              Height = 20
               Top = 0
               Width = 56
               Action = actPush
@@ -792,9 +802,9 @@ object frmMain: TfrmMain
             end
             object btnPushDlg: TButton
               Left = 61
-              Height = 25
+              Height = 20
               Top = 0
-              Width = 64
+              Width = 72
               Action = actPushDialog
               Align = alClient
               BorderSpacing.Left = 5
@@ -852,7 +862,7 @@ object frmMain: TfrmMain
         Gutter.MouseActions = <>
         RightGutter.Width = 0
         RightGutter.MouseActions = <>
-        Highlighter = SynDiffSyn1
+        Highlighter = diffHL
         Keystrokes = <        
           item
             Command = ecUp
@@ -1351,9 +1361,9 @@ object frmMain: TfrmMain
       AnchorSideTop.Control = panBranch
       AnchorSideTop.Side = asrCenter
       Left = 10
-      Height = 15
-      Top = 6
-      Width = 40
+      Height = 16
+      Top = 5
+      Width = 47
       BorderSpacing.Left = 10
       Caption = 'Branch:'
       ParentFont = False
@@ -1363,10 +1373,10 @@ object frmMain: TfrmMain
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = Label1
       Cursor = crHandPoint
-      Left = 60
-      Height = 15
-      Top = 6
-      Width = 27
+      Left = 67
+      Height = 16
+      Top = 5
+      Width = 31
       BorderSpacing.Left = 10
       Caption = 'main'
       Font.Color = clFuchsia
@@ -1381,10 +1391,10 @@ object frmMain: TfrmMain
       AnchorSideLeft.Control = lblMerging
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = Label1
-      Left = 181
-      Height = 15
-      Top = 6
-      Width = 214
+      Left = 201
+      Height = 16
+      Top = 5
+      Width = 250
       BorderSpacing.Left = 20
       BorderSpacing.Right = 20
       Caption = '0 commits ahead, 0 commits behind of'
@@ -1393,10 +1403,10 @@ object frmMain: TfrmMain
       AnchorSideLeft.Control = lblAheadBehind
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = Label1
-      Left = 415
-      Height = 15
-      Top = 6
-      Width = 54
+      Left = 471
+      Height = 16
+      Top = 5
+      Width = 63
       Caption = 'Upstream:'
       ParentFont = False
     end
@@ -1404,10 +1414,10 @@ object frmMain: TfrmMain
       AnchorSideLeft.Control = Label2
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = Label1
-      Left = 479
-      Height = 15
-      Top = 6
-      Width = 74
+      Left = 544
+      Height = 16
+      Top = 5
+      Width = 82
       BorderSpacing.Left = 10
       Caption = 'remote/main'
       Font.Color = clBlue
@@ -1418,10 +1428,10 @@ object frmMain: TfrmMain
       AnchorSideLeft.Control = lblBranch
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = Label1
-      Left = 97
-      Height = 15
-      Top = 6
-      Width = 64
+      Left = 108
+      Height = 16
+      Top = 5
+      Width = 73
       BorderSpacing.Left = 10
       Caption = '(MERGING)'
       Font.Color = clRed
@@ -1448,10 +1458,10 @@ object frmMain: TfrmMain
       AnchorSideLeft.Control = lblRemote
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = Label1
-      Left = 563
-      Height = 15
-      Top = 6
-      Width = 21
+      Left = 636
+      Height = 16
+      Top = 5
+      Width = 26
       BorderSpacing.Left = 10
       Caption = 'Tag:'
       ParentFont = False
@@ -1460,10 +1470,10 @@ object frmMain: TfrmMain
       AnchorSideLeft.Control = Label3
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = lblBranch
-      Left = 594
-      Height = 15
-      Top = 6
-      Width = 82
+      Left = 672
+      Height = 16
+      Top = 5
+      Width = 94
       BorderSpacing.Left = 10
       Caption = '<create a tag>'
       Font.Color = clOlive
@@ -1471,10 +1481,10 @@ object frmMain: TfrmMain
       ParentFont = False
     end
     object btnStop: TSpeedButton
-      Left = 881
-      Height = 19
+      Left = 878
+      Height = 20
       Top = 0
-      Width = 23
+      Width = 26
       Anchors = [akTop, akRight]
       AutoSize = True
       Caption = 'Stp'
@@ -1499,10 +1509,10 @@ object frmMain: TfrmMain
     end
     object lblInfo: TLabel
       AnchorSideRight.Control = btnStop
-      Left = 813
-      Height = 15
+      Left = 798
+      Height = 16
       Top = 2
-      Width = 63
+      Width = 75
       Anchors = [akTop, akRight]
       BorderSpacing.Right = 5
       Caption = 'Working ....'
@@ -1516,7 +1526,7 @@ object frmMain: TfrmMain
     Top = 26
     Width = 5
   end
-  object SynDiffSyn1: TSynDiffSyn
+  object diffHL: TSynDiffSyn
     Enabled = False
     Left = 840
     Top = 64
@@ -1645,5 +1655,68 @@ object frmMain: TfrmMain
   object popLists: TPopupMenu
     Left = 64
     Top = 120
+  end
+  object fpcHL: TSynFreePascalSyn
+    Enabled = False
+    CompilerMode = pcmObjFPC
+    NestedComments = True
+    TypeHelpers = False
+    StringMultilineMode = []
+    Left = 800
+    Top = 64
+  end
+  object xmlHL: TSynXMLSyn
+    DefaultFilter = 'Documento XML (*.xml,*.xsd,*.xsl,*.xslt,*.dtd)|*.xml;*.xsd;*.xsl;*.xslt;*.dtd'
+    Enabled = False
+    WantBracesParsed = False
+    Left = 760
+    Top = 64
+  end
+  object htmlHL: TSynHTMLSyn
+    DefaultFilter = 'Documento HTML (*.htm,*.html)|*.htm;*.html'
+    Enabled = False
+    Left = 896
+    Top = 64
+  end
+  object shHL: TSynUNIXShellScriptSyn
+    DefaultFilter = 'Scripts del Shell de UNIX (*.sh)|*.sh'
+    Enabled = False
+    Left = 760
+    Top = 120
+  end
+  object cppHL: TSynCppSyn
+    DefaultFilter = 'Ficheros C++ (*.c,*.cpp,*.h,*.hpp,*.hh)|*.c;*.cpp;*.h;*.hpp;*.hh'
+    Enabled = False
+    Left = 800
+    Top = 120
+  end
+  object jsHL: TSynJScriptSyn
+    Enabled = False
+    Left = 848
+    Top = 120
+  end
+  object lfmHL: TSynLFMSyn
+    DefaultFilter = 'Ficheros de Formulario Lazarus (*.lfm)|*.lfm'
+    Enabled = False
+    Left = 896
+    Top = 120
+  end
+  object javaHL: TSynJavaSyn
+    DefaultFilter = 'Ficheros Java (*.java)|*.java'
+    Enabled = False
+    Left = 896
+    Top = 176
+  end
+  object cssHL: TSynCssSyn
+    DefaultFilter = 'Hojas de Estilo en Cascada (*.css)|*.css'
+    Enabled = False
+    Left = 848
+    Top = 176
+  end
+  object phpHL: TSynPHPSyn
+    DefaultFilter = 'Ficheros PHP (*.php,*.php3,*.phtml,*.inc)|*.php;*.php3;*.phtml;*.inc'
+    Enabled = False
+    Left = 800
+    Top = 176
   end
 end
