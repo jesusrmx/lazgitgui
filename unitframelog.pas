@@ -123,6 +123,7 @@ type
     procedure ShowChanges(aRow: Integer);
     procedure HideChanges;
     procedure ReloadTreeFile;
+    procedure UpdateCommitBrowser(aMode: TCommitBrowserMode);
   public
     procedure Clear;
     procedure UpdateGridRows;
@@ -407,9 +408,9 @@ end;
 procedure TframeLog.radPatchClick(Sender: TObject);
 begin
   if radPatch.Checked then
-    fCommitBrowser.Mode := cbmPatch
+    UpdateCommitBrowser(cbmPatch)
   else
-    fCommitBrowser.Mode := cbmTree;
+    UpdateCommitBrowser(cbmTree);
 end;
 
 procedure TframeLog.treeFilesSelectionChanged(Sender: TObject);
@@ -757,8 +758,8 @@ begin
     fCommitBrowser.ObserverMgr.AddObserver(self);
   end;
 
-  fCommitBrowser.Mode := cbmPatch;
-  fCommitBrowser.Load(fLogCache.DbIndex.Item.CommitOID);
+  fCommitBrowser.Commit := fLogCache.DbIndex.Item.CommitOID;
+  UpdateCommitBrowser(cbmPatch);
 end;
 
 procedure TframeLog.HideChanges;
@@ -793,6 +794,13 @@ begin
     PopulateTree(sibling, nil);
     sibling := sibling^.Next;
   end;
+end;
+
+procedure TframeLog.UpdateCommitBrowser(aMode: TCommitBrowserMode);
+begin
+  treeFiles.ShowLines := aMode=cbmTree;
+  fCommitBrowser.Mode := aMode;
+  fCommitBrowser.ApplyMode;
 end;
 
 procedure TframeLog.Clear;

@@ -31,6 +31,7 @@ type
     fOnDisposeNodeNested: TDisposeNodeEventNested;
     fOnNewNode: TNewNodeEvent;
     fOnNewNodeNested: TNewNodeEventNested;
+    fPlain: boolean;
     fRoot: PNode;
     function LastSibling(sibling: PNode): PNode;
     function FindNode(parent: PNode; aName: TvfsString): PNode;
@@ -44,7 +45,7 @@ type
     procedure Dump;
 
     property root: PNode read fRoot;
-
+    property Plain: boolean read fPlain write fPlain;
     property OnNewNode: TNewNodeEvent read fOnNewNode write fOnNewNode;
     property OnNewNodeNested: TNewNodeEventNested read fOnNewNodeNested write fOnNewNodeNested;
     property OnDisposeNode: TDisposeNodeEvent read fOnDisposeNode write fOnDisposeNode;
@@ -113,6 +114,11 @@ var
 begin
 
   Parent := nil;
+  if fPlain then begin
+    AddNode(parent, aPath, false);
+    exit;
+  end;
+
   level:=0;
   pIni := @aPath[1];
   t := pIni;
@@ -247,7 +253,7 @@ begin
   end;
 end;
 
-destructor TVirtualFileSystem.destroy;
+destructor TVirtualFileSystem.Destroy;
 begin
   Clear;
   inherited Destroy;

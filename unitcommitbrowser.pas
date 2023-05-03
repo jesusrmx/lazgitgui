@@ -39,21 +39,20 @@ type
     fVfs: TVirtualFileSystem;
     procedure OnDisposeVfsNode(Sender: TObject; aName: TvfsString; Data: pointer);
     procedure SetGitMgr(AValue: TGitMgr);
-    procedure SetMode(AValue: TCommitBrowserMode);
-    procedure ApplyMode;
     procedure Clear;
     procedure ScanFilenames;
     procedure ScanTree(treestr: RawByteString);
   public
     constructor Create;
     destructor Destroy; override;
-    procedure Load(commit: string);
+    procedure ApplyMode;
 
     property ObserverMgr: TObserverMgr read fObserverMgr;
     property Diff: TStringList read fFileDiff;
     property Vfs: TVirtualFileSystem read fVfs;
 
-    property Mode: TCommitBrowserMode read fMode write SetMode;
+    property Commit: string read fCommit write fCommit;
+    property Mode: TCommitBrowserMode read fMode write fMode;
     property GitMgr: TGitMgr read fGitMgr write SetGitMgr;
     property Config: IConfig read fConfig write fConfig;
   end;
@@ -79,13 +78,6 @@ begin
     Finalize(info^);
     dispose(info);
   end;
-end;
-
-procedure TCommitBrowser.SetMode(AValue: TCommitBrowserMode);
-begin
-  if fMode = AValue then Exit;
-  fMode := AValue;
-  ApplyMode;
 end;
 
 procedure TCommitBrowser.ApplyMode;
@@ -148,6 +140,7 @@ begin
 
     fVfs.Clear;
     fVfs.OnNewNodeNested := @OnNewNode;
+    fVfs.Plain := true;
 
     // the first node will be the diff header
     New(Info);
@@ -193,6 +186,7 @@ begin
 
   fVfs.Clear;
   fVfs.OnNewNodeNested := @OnNewNode;
+  fVfs.Plain := false;
 
   p := @treestr[1];
   while p^<>#0 do begin
@@ -229,12 +223,6 @@ begin
   fFileDiff.Free;
   fObserverMgr.Free;
   inherited Destroy;
-end;
-
-procedure TCommitBrowser.Load(commit: string);
-begin
-  fCommit := commit;
-  ApplyMode;
 end;
 
 end.
