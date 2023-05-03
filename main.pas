@@ -28,12 +28,10 @@ interface
 
 uses
   Classes, SysUtils, Math, LazLogger, Forms, Controls, Graphics, Dialogs,
-  StdCtrls, ExtCtrls, ActnList, synEditTypes, SynEdit, SynHighlighterDiff,
-  SynHighlighterPas, SynHighlighterXML, SynHighlighterHTML,
-  synhighlighterunixshellscript, SynHighlighterCpp, SynHighlighterJScript,
-  SynHighlighterLFM, SynHighlighterJava, SynHighlighterCss, SynHighlighterPHP,
-  StrUtils, FileUtil, lclType, Menus, Buttons, Grids, ComCtrls, Types, fgl,
-  unitgittypes, unitifaces, unitconfig, unitprocess, unitentries, unitgitutils, {unitgit,}
+  StdCtrls, ExtCtrls, ActnList, synEditTypes, SynEdit, StrUtils, FileUtil,
+  lclType, Menus, Buttons, Grids, ComCtrls, Types, fgl,
+  unitgittypes, unitifaces, unitconfig, unitprocess, unithighlighterhelper,
+  unitentries, unitgitutils, {unitgit,}
   unitnewbranch, unitruncmd, unitansiescapes,
   unitnewtag, unitlogcache, unitlog, LConvEncoding, unitdbindex,
   unitframelog, unitgitmgr, unitcheckouttag;
@@ -91,17 +89,6 @@ type
     popLists: TPopupMenu;
     btnStop: TSpeedButton;
     splitterMain: TSplitter;
-    diffHL: TSynDiffSyn;
-    fpcHL: TSynFreePascalSyn;
-    htmlHL: TSynHTMLSyn;
-    shHL: TSynUNIXShellScriptSyn;
-    cppHL: TSynCppSyn;
-    jsHL: TSynJScriptSyn;
-    lfmHL: TSynLFMSyn;
-    javaHL: TSynJavaSyn;
-    cssHL: TSynCssSyn;
-    phpHL: TSynPHPSyn;
-    xmlHL: TSynXMLSyn;
     txtLog: TSynEdit;
     txtComment: TMemo;
     panLeft: TPanel;
@@ -144,6 +131,7 @@ type
     fLogHandler: TLogHandler;
     fPopPoint: TPoint;
     fListAlwaysDrawSelection: boolean;
+    fhlHelper: THighlighterHelper;
     procedure DelayedShowMenu(Data: PtrInt);
     procedure DoGitDiff(Data: PtrInt);
     procedure DoItemAction(Data: PtrInt);
@@ -1132,6 +1120,9 @@ end;
 
 procedure TfrmMain.FormCreate(Sender: TObject);
 begin
+
+  fhlHelper := THighlighterHelper.create;
+
   fGitMgr := TGitMgr.Create;
   fGitMgr.Config := fConfig;
   fGitMgr.AddObserver(Self);
@@ -1241,6 +1232,7 @@ end;
 
 procedure TfrmMain.FormDestroy(Sender: TObject);
 begin
+  fhlHelper.Free;
   fGitMgr.RemoveObserver(self);
   frmLog.Clear;
   fLogHandler.Free;
@@ -1445,9 +1437,11 @@ begin
     entry := PFileEntry(lb.Items.Objects[lb.ItemIndex]);
     panFileState.Caption := EntryTypeToStr(entry^.x, entry^.y);
     unstaged := lb=lstUnstaged;
-    if unstaged and (entry^.EntryTypeUnStaged in [etUntracked, etIgnored]) then
-      ViewFile(fGit.TopLevelDir + entry^.path)
-    else begin
+    if unstaged and (entry^.EntryTypeUnStaged in [etUntracked, etIgnored]) then begin
+      fhlHelper.SetHighlighter(txtDiff, entry^.path);
+      ViewFile(fGit.TopLevelDir + entry^.path);
+    end else begin
+      fhlHelper.SetHighlighter(txtDiff, 'x.diff');
       res := fGit.Diff(entry, unstaged, txtDiff.Lines);
       if res>0 then
         ShowError;

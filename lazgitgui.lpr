@@ -35,7 +35,7 @@ uses
   Forms, main, unitconfig, unitprocess, unitentries, unitgit, unitnewbranch,
   unitruncmd, unitansiescapes, unitnewtag, unitlog, unitdebug, unitlogcache,
   unitdbindex, unitgitutils, unitdrafts, unitframelog, unitgitmgr, unitgittypes,
-  unitcheckouttag, unitcommitbrowser, unitvfs;
+  unitcheckouttag, unitcommitbrowser, unitvfs, unithighlighterhelper;
 
 {$R *.res}
 
