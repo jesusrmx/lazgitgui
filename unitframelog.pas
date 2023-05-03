@@ -114,7 +114,7 @@ type
     procedure OnMergeBranchClick(Sender: TObject);
     procedure CopyToClipboard(what: Integer);
     procedure LocateHead;
-    function LocateItemIndex(aIndex: Integer): boolean;
+    function  LocateItemIndex(aIndex: Integer): boolean;
     procedure AddMergeBranchMenu;
     procedure AddTagsMenu;
     procedure SetActive(AValue: boolean);
@@ -124,6 +124,7 @@ type
     procedure HideChanges;
     procedure ReloadTreeFile;
     procedure UpdateCommitBrowser(aMode: TCommitBrowserMode);
+    function  CommitBrowserModeFromGui:TCommitBrowserMode;
   public
     procedure Clear;
     procedure UpdateGridRows;
@@ -406,21 +407,26 @@ begin
 end;
 
 procedure TframeLog.radPatchClick(Sender: TObject);
+var
+  amode: TCommitBrowserMode;
 begin
-  if radPatch.Checked then
-    UpdateCommitBrowser(cbmPatch)
-  else
-    UpdateCommitBrowser(cbmTree);
+  aMode := CommitBrowserModeFromGui;
+  UpdateCommitBrowser(aMode);
 end;
 
 procedure TframeLog.treeFilesSelectionChanged(Sender: TObject);
 var
   node: TTreeNode;
+  info: PInfoNode;
 begin
-  if fCommitBrowser.Mode=cbmPatch then begin
-    node := treeFiles.Selected;
-    if node<>nil then
-      txtViewer.TopLine := PInfoNode(Node.Data)^.line;
+  node := treeFiles.Selected;
+  if node<>nil then begin
+    info := PInfoNode(Node.Data);
+    if fCommitBrowser.Mode=cbmPatch then
+      txtViewer.TopLine := info^.line
+    else
+    if info<>nil then
+      fGit.Show(info^.fileTree, txtViewer.Lines);
   end;
 end;
 
@@ -720,6 +726,8 @@ end;
 
 procedure TframeLog.ObservedChanged(Sender: TObject; what: Integer; data: PtrInt
   );
+var
+  aMode: TCommitBrowserMode;
 begin
   case what of
 
@@ -733,7 +741,11 @@ begin
 
     COMMITBROWSER_EVENT_RELOAD: begin
       treeFiles.Items.Clear;
-      txtViewer.Lines.Assign(fCommitBrowser.Diff);
+      aMode := CommitBrowserModeFromGui;
+      if aMode=cbmPatch then
+        txtViewer.Lines.Assign(fCommitBrowser.Diff)
+      else
+        ;
       if data<>0 then
         ReloadTreeFile;
     end;
@@ -743,6 +755,7 @@ end;
 procedure TframeLog.ShowChanges(aRow: Integer);
 var
   aIndex: Integer;
+  aMode: TCommitBrowserMode;
 begin
 
   aIndex := aRow - gridLog.FixedRows;
@@ -759,7 +772,8 @@ begin
   end;
 
   fCommitBrowser.Commit := fLogCache.DbIndex.Item.CommitOID;
-  UpdateCommitBrowser(cbmPatch);
+  aMode := CommitBrowserModeFromGui;
+  UpdateCommitBrowser(aMode);
 end;
 
 procedure TframeLog.HideChanges;
@@ -801,6 +815,14 @@ begin
   treeFiles.ShowLines := aMode=cbmTree;
   fCommitBrowser.Mode := aMode;
   fCommitBrowser.ApplyMode;
+end;
+
+function TframeLog.CommitBrowserModeFromGui: TCommitBrowserMode;
+begin
+  if radPatch.Checked then
+    result := cbmPatch
+  else
+    result := cbmTree;
 end;
 
 procedure TframeLog.Clear;
