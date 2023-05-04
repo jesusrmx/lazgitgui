@@ -78,6 +78,7 @@ type
     constructor Create;
     destructor Destroy; override;
     procedure ApplyMode;
+    function ExpandVfs(aPath: string):TVirtualFileSystem.PNode;
 
     property ObserverMgr: TObserverMgr read fObserverMgr;
     property Diff: TStringList read fFileDiff;
@@ -149,6 +150,11 @@ begin
     end;
 
   end;
+end;
+
+function TCommitBrowser.ExpandVfs(aPath: string): TVirtualFileSystem.PNode;
+begin
+
 end;
 
 procedure TCommitBrowser.Clear;

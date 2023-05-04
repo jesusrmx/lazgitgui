@@ -76,6 +76,9 @@ const
 
 type
 
+  TDummyDirNode = class(TTreeNode)
+  end;
+
   { TframeLog }
 
   TframeLog = class(TFrame, IObserver)
@@ -114,6 +117,8 @@ type
     procedure MenuItem2Click(Sender: TObject);
     procedure MenuItem3Click(Sender: TObject);
     procedure radPatchClick(Sender: TObject);
+    procedure treeFilesExpanding(Sender: TObject; Node: TTreeNode;
+      var AllowExpansion: Boolean);
     procedure treeFilesSelectionChanged(Sender: TObject);
   private
     fActive: boolean;
@@ -145,10 +150,12 @@ type
     procedure ObservedChanged(Sender:TObject; what: Integer; data: PtrInt);
     procedure ShowChanges(aRow: Integer);
     procedure HideChanges;
+    procedure PopulateTree(node: TVirtualFileSystem.PNode; treeNode: TTreeNode);
     procedure ReloadTreeFile;
     procedure UpdateCommitBrowser(aMode: TCommitBrowserMode);
     function  CommitBrowserModeFromGui:TCommitBrowserMode;
     function  GetAllCommitInfo: string;
+    procedure CreateDummyDirNodeClass(Sender: TCustomTreeView; var NodeClass: TTreeNodeClass);
   public
     procedure Clear;
     procedure UpdateGridRows;
@@ -439,6 +446,27 @@ begin
   UpdateCommitBrowser(aMode);
 end;
 
+procedure TframeLog.treeFilesExpanding(Sender: TObject; Node: TTreeNode;
+  var AllowExpansion: Boolean);
+var
+  N:TTreeNode;
+  vfsNode: TVirtualFileSystem.PNode;
+begin
+  //DebugLn('Expanding node %s',[Node.Text]);
+  AllowExpansion := false;
+  N := Node.GetFirstChild;
+  if N is TDummyDirNode then begin
+    if Node.Data<>nil then begin
+      // ask the commit browser we need expanding this node
+      vfsNode := fCommitBrowser.ExpandVfs(Node.GetTextPath);
+      AllowExpansion := vfsNode<>nil;
+      if AllowExpansion then begin
+        N.Delete;
+        PopulateTree(vfsNode, Node);
+      end;
+    end;
+  end;
+end;
 procedure TframeLog.treeFilesSelectionChanged(Sender: TObject);
 var
   node: TTreeNode;
@@ -788,26 +816,26 @@ begin
     fCommitBrowser.ObserverMgr.RemoveObserver(Self);
 end;
 
+procedure TframeLog.PopulateTree(node: TVirtualFileSystem.PNode;
+  treeNode: TTreeNode);
+var
+  child: TVirtualFileSystem.PNode;
+begin
+  if node=nil then exit;
+
+  treeNode := treeFiles.Items.AddChildObject(treeNode, node^.Name, node^.Data);
+  //treeNode := treeFiles.Items.AddObject(treeNode, node^.Name, node^.Data);
+
+  child := node^.Childs;
+  while child<>nil do begin
+    PopulateTree(child, treeNode);
+    child := child^.Next;
+  end;
+end;
+
 procedure TframeLog.ReloadTreeFile;
 var
   sibling: TVirtualFileSystem.PNode;
-
-  procedure PopulateTree(node: TVirtualFileSystem.PNode; treeNode: TTreeNode);
-  var
-    child: TVirtualFileSystem.PNode;
-  begin
-    if node=nil then exit;
-
-    treeNode := treeFiles.Items.AddChildObject(treeNode, node^.Name, node^.Data);
-    //treeNode := treeFiles.Items.AddObject(treeNode, node^.Name, node^.Data);
-
-    child := node^.Childs;
-    while child<>nil do begin
-      PopulateTree(child, treeNode);
-      child := child^.Next;
-    end;
-  end;
-
 begin
   sibling := fCommitBrowser.vfs.root;
   while sibling<>nil do begin
@@ -856,6 +884,12 @@ begin
       format('%s (%d)',[DateTimeToStr(dt), CommiterDate]),
       Subject]);
   end;
+end;
+
+procedure TframeLog.CreateDummyDirNodeClass(Sender: TCustomTreeView;
+  var NodeClass: TTreeNodeClass);
+begin
+  NodeClass := TDummyDirNode;
 end;
 
 procedure TframeLog.Clear;
