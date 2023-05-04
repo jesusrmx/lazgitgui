@@ -18,7 +18,9 @@
   to the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
   Boston, MA 02110-1335, USA.
 
-  Highlighter helper
+  Highlighter helper.
+  Keeps a record of several highlighters and find and set an highlighter to
+  a synedit depending on the supplied file type.
 }
 unit unithighlighterhelper;
 

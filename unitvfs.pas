@@ -21,9 +21,9 @@
   Virtual File System unit.
 
   This unit defines the class TVirtualFileSystem which can be feed with succesive
-  AddPath() instructions and it will construct a node tree with
-  }
-
+  AddPath() instructions and it will construct a hierarchical tree of files and
+  directories.
+}
 unit unitvfs;
 
 {$mode ObjFPC}{$H+}

@@ -18,7 +18,8 @@
   to the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
   Boston, MA 02110-1335, USA.
 
-  Main unit
+  Runs a command in a thread o runs a command presenting the user a window
+  with the result.
 }
 unit unitruncmd;
 
