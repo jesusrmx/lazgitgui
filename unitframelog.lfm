@@ -95,35 +95,34 @@ object frameLog: TframeLog
       TabOrder = 0
       object treeFiles: TTreeView
         Left = 0
-        Height = 180
-        Top = 22
+        Height = 182
+        Top = 20
         Width = 200
         Align = alClient
         ReadOnly = True
         RowSelect = True
         TabOrder = 0
-        OnExpanding = treeFilesExpanding
         OnSelectionChanged = treeFilesSelectionChanged
         Options = [tvoAutoItemHeight, tvoHideSelection, tvoKeepCollapsedNodes, tvoReadOnly, tvoRowSelect, tvoShowButtons, tvoShowLines, tvoShowRoot, tvoToolTips, tvoThemedDraw]
       end
       object panMode: TPanel
         Left = 0
-        Height = 22
+        Height = 20
         Top = 0
         Width = 200
         Align = alTop
         AutoSize = True
         BevelOuter = bvNone
-        ClientHeight = 22
+        ClientHeight = 20
         ClientWidth = 200
         TabOrder = 1
         object radPatch: TRadioButton
           AnchorSideTop.Control = panMode
           AnchorSideTop.Side = asrCenter
           Left = 0
-          Height = 21
+          Height = 19
           Top = 1
-          Width = 54
+          Width = 48
           Caption = 'Patch'
           Checked = True
           OnClick = radPatchClick
@@ -133,9 +132,9 @@ object frameLog: TframeLog
         object radTree: TRadioButton
           AnchorSideTop.Control = radPatch
           Left = 64
-          Height = 21
+          Height = 19
           Top = 1
-          Width = 48
+          Width = 40
           Caption = 'Tree'
           OnClick = radPatchClick
           TabOrder = 1
@@ -156,7 +155,7 @@ object frameLog: TframeLog
       ParentFont = False
       TabOrder = 1
       Gutter.Visible = False
-      Gutter.Width = 57
+      Gutter.Width = 29
       Gutter.MouseActions = <>
       RightGutter.Width = 0
       RightGutter.MouseActions = <>
@@ -607,6 +606,7 @@ object frameLog: TframeLog
       inline SynLeftGutterPartList1: TSynGutterPartList
         object SynGutterMarks1: TSynGutterMarks
           Width = 24
+          Visible = False
           MouseActions = <>
         end
         object SynGutterLineNumber1: TSynGutterLineNumber
@@ -621,6 +621,7 @@ object frameLog: TframeLog
         end
         object SynGutterChanges1: TSynGutterChanges
           Width = 4
+          Visible = False
           MouseActions = <>
           ModifiedColor = 59900
           SavedColor = clGreen

@@ -820,16 +820,26 @@ procedure TframeLog.PopulateTree(node: TVirtualFileSystem.PNode;
   treeNode: TTreeNode);
 var
   child: TVirtualFileSystem.PNode;
+  info: PInfoNode;
+  oldCreateNodeClass: TTVCreateNodeClassEvent;
 begin
   if node=nil then exit;
 
   treeNode := treeFiles.Items.AddChildObject(treeNode, node^.Name, node^.Data);
   //treeNode := treeFiles.Items.AddObject(treeNode, node^.Name, node^.Data);
 
-  child := node^.Childs;
-  while child<>nil do begin
-    PopulateTree(child, treeNode);
-    child := child^.Next;
+  info := node^.data;
+  if (info<>nil) and (info^.filetype='tree') then begin
+    oldCreateNodeClass := treeFiles.OnCreateNodeClass;
+    TreeFiles.OnCreateNodeClass := @CreateDummyDirNodeClass;
+    TreeFiles.Items.AddChild(treeNode, '');
+    TreeFiles.OnCreateNodeClass  := oldCreateNodeClass;
+  end else begin
+    child := node^.Childs;
+    while child<>nil do begin
+      PopulateTree(child, treeNode);
+      child := child^.Next;
+    end;
   end;
 end;
 

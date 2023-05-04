@@ -66,6 +66,7 @@ type
     fFileDiff: TStringList;
     fGit: IGit;
     fGitMgr: TGitMgr;
+    fInteractiveTree: boolean;
     fMode: TCommitBrowserMode;
     fObserverMgr: TObserverMgr;
     fVfs: TVirtualFileSystem;
@@ -88,6 +89,7 @@ type
     property Mode: TCommitBrowserMode read fMode write fMode;
     property GitMgr: TGitMgr read fGitMgr write SetGitMgr;
     property Config: IConfig read fConfig write fConfig;
+    property InteractiveTree: boolean read fInteractiveTree write fInteractiveTree;
   end;
 
 implementation
@@ -117,6 +119,7 @@ procedure TCommitBrowser.ApplyMode;
 var
   lines: TStringList;
   treestr: RawByteString;
+  cmd: string;
 begin
 
   Clear;
@@ -141,7 +144,11 @@ begin
 
   end else begin
 
-    if fGit.Any('ls-tree -r --full-tree -z ' + fCommit, treestr)>0 then begin
+    cmd := 'ls-tree ';
+    if not fInteractiveTree then cmd += '-r ';
+    cmd += '--full-tree -z ' + fCommit;
+
+    if fGit.Any(cmd, treestr)>0 then begin
       fFileDiff.Text := fGit.ErrorLog;
       fObserverMgr.NotifyObservers(self, COMMITBROWSER_EVENT_RELOAD, 0);
     end else begin
@@ -210,7 +217,7 @@ var
 
   procedure OnNewNode(sender: TObject; aName:TvfsString; isDir:boolean; var data: Pointer);
   begin
-    if not isDir then
+    if (not isDir) or (info^.filetype='tree') then
       data := info;
   end;
 
@@ -252,6 +259,7 @@ begin
   fFileDiff := TStringList.Create;
   fVfs := TVirtualFileSystem.Create;
   fVfs.OnDisposeNode := @OnDisposeVfsNode;
+  fInteractiveTree := true;
 end;
 
 destructor TCommitBrowser.Destroy;
