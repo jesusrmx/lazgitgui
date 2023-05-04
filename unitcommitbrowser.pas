@@ -1,3 +1,35 @@
+{ LazGitGui: An interface to git status with some additional tools
+             and with a familiar git gui interface.
+
+  Copyright (C) 2023 Jesus Reyes Aguilar (jesusrmx@gmail.com)
+
+  This source is free software; you can redistribute it and/or modify it under
+  the terms of the GNU General Public License as published by the Free
+  Software Foundation; either version 2 of the License, or (at your option)
+  any later version.
+
+  This code is distributed in the hope that it will be useful, but WITHOUT ANY
+  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+  FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+  details.
+
+  A copy of the GNU General Public License is available on the World Wide Web
+  at <http://www.gnu.org/copyleft/gpl.html>. You can also obtain it by writing
+  to the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
+  Boston, MA 02110-1335, USA.
+
+  Commit browser unit.
+
+  This unit defines the class TCommitBrowser which given a commit hash
+  queries the git repository for the changes such commit did (in mode cbmPatch)
+  or the resulting file tree (in mode cbmTree), it then constructs a
+  virtual file system which can be used to fill some user interface, for example
+  a treeview (which is indeed done in the log frame). Each node in the virtual
+  file system carries custom information which can be used for further interaction
+  with the ui, in this case, in cbmPatch mode selecting a file in the treeview
+  will locate the selected changes. In cbmTree mode, each file node will show
+  the content of the file. This is of course to mimic gitk.
+  }
 unit unitcommitbrowser;
 
 {$mode ObjFPC}{$H+}
