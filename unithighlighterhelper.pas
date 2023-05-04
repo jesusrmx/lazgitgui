@@ -130,8 +130,11 @@ begin
   else                                                    i := GetHighlighterForExt(ext);
   if i<0 then
     edit.Highlighter := nil
-  else
+  else begin
+    edit.Gutter.Visible := true;
+    edit.Gutter.LineNumberPart().Visible := i>0;
     edit.Highlighter := TSynCustomHighlighter(fList.Objects[i]);
+  end;
 end;
 
 destructor THighlighterHelper.Destroy;
