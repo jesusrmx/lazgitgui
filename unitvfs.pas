@@ -37,42 +37,42 @@ uses
 type
   TvfsString = RawByteString;
 
+  PvfsNode = ^TvfsNode;
+  TvfsNode = record
+    name: TvfsString;
+    Data: Pointer;
+    prev, next, parent, childs: PvfsNode;
+  end;
+
+  TNewNodeEvent = procedure(Sender: TObject; aName:TvfsString; isDir:boolean; var data:Pointer) of object;
+  TNewNodeEventNested = procedure(Sender: TObject; aName:TvfsString; isDir:boolean; var data:Pointer) is nested;
+  TDisposeNodeEvent = procedure(Sender: TObject; aName:TvfsString; Data: pointer) of object;
+  TDisposeNodeEventNested = procedure(Sender: TObject; aName:TvfsString; Data: pointer) is nested;
+
   { TVirtualFileSystem }
 
   TVirtualFileSystem = class
-  public
-    type
-      PNode = ^TNode;
-      TNode = record
-        name: TvfsString;
-        Data: Pointer;
-        prev, next, parent, childs: PNode;
-      end;
-      TNewNodeEvent = procedure(Sender: TObject; aName:TvfsString; isDir:boolean; var data:Pointer) of object;
-      TNewNodeEventNested = procedure(Sender: TObject; aName:TvfsString; isDir:boolean; var data:Pointer) is nested;
-      TDisposeNodeEvent = procedure(Sender: TObject; aName:TvfsString; Data: pointer) of object;
-      TDisposeNodeEventNested = procedure(Sender: TObject; aName:TvfsString; Data: pointer) is nested;
   private
     fOnDisposeNode: TDisposeNodeEvent;
     fOnDisposeNodeNested: TDisposeNodeEventNested;
     fOnNewNode: TNewNodeEvent;
     fOnNewNodeNested: TNewNodeEventNested;
     fPlain: boolean;
-    fRoot: PNode;
-    function LastSibling(sibling: PNode): PNode;
-    function FindChildNode(parent: PNode; aName: TvfsString): PNode;
-    function FindTopLvlNode(aName: TvfsString): PNode;
-    function AddNode(parent: PNode; aName: TvfsString; isDir:boolean): PNode;
-    function GetPath(node: PNode): string;
+    fRoot: PvfsNode;
+    function LastSibling(sibling: PvfsNode): PvfsNode;
+    function FindChildNode(parent: PvfsNode; aName: TvfsString): PvfsNode;
+    function FindTopLvlNode(aName: TvfsString): PvfsNode;
+    function AddNode(parent: PvfsNode; aName: TvfsString; isDir:boolean): PvfsNode;
+    function GetPath(node: PvfsNode): string;
   public
     destructor Destroy; override;
     procedure Clear;
-    procedure AddPath(aPath: string; parent: PNode = nil);
-    function FindPath(aPath: string): PNode;
+    procedure AddPath(aPath: string; parent: PvfsNode = nil);
+    function FindPath(aPath: string): PvfsNode;
     procedure Dump;
-    function NodeToStr(node: PNode): string;
+    function NodeToStr(node: PvfsNode): string;
 
-    property root: PNode read fRoot;
+    property root: PvfsNode read fRoot;
     property Plain: boolean read fPlain write fPlain;
     property OnNewNode: TNewNodeEvent read fOnNewNode write fOnNewNode;
     property OnNewNodeNested: TNewNodeEventNested read fOnNewNodeNested write fOnNewNodeNested;
@@ -130,7 +130,7 @@ end;
 
 procedure TVirtualFileSystem.Clear;
 
-  procedure DeleteNode(node: PNode);
+  procedure DeleteNode(node: PvfsNode);
   begin
     //DebugLn('disposing: %s Data=%s',[node^.name, BoolToStr(node^.Data<>nil,'Not nil', 'nil')]);
     if Node^.Data<>nil then begin
@@ -143,9 +143,9 @@ procedure TVirtualFileSystem.Clear;
     Dispose(Node);
   end;
 
-  procedure DisposeNode(node: PNode);
+  procedure DisposeNode(node: PvfsNode);
   var
-    child, next, parent: PNode;
+    child, next, parent: PvfsNode;
   begin
     if node^.childs=nil then begin
       DeleteNode(node);
@@ -164,7 +164,7 @@ procedure TVirtualFileSystem.Clear;
   end;
 
 var
-  node, next: PNode;
+  node, next: PvfsNode;
 begin
   node := fRoot;
   while node<>nil do begin
@@ -175,13 +175,13 @@ begin
   fRoot := nil;
 end;
 
-procedure TVirtualFileSystem.AddPath(aPath: string; parent: PNode);
+procedure TVirtualFileSystem.AddPath(aPath: string; parent: PvfsNode);
 var
   level: Integer;
   s: TvfsString;
   w, p, pini, c, t, x: pchar;
   ch: Char;
-  Node: PNode;
+  Node: PvfsNode;
   isDir: Boolean;
 begin
   if fPlain then begin
@@ -224,7 +224,7 @@ begin
   }
 end;
 
-function TVirtualFileSystem.FindPath(aPath: string): PNode;
+function TVirtualFileSystem.FindPath(aPath: string): PvfsNode;
 var
   part: TvfsString;
   isDir: boolean;
@@ -241,9 +241,9 @@ procedure TVirtualFileSystem.Dump;
 var
   s: string;
 
-  procedure PrintLeaf(node: PNode);
+  procedure PrintLeaf(node: PvfsNode);
   var
-    child: PNode;
+    child: PvfsNode;
   begin
     if node^.childs=nil then begin
       s := GetPath(Node);
@@ -257,7 +257,7 @@ var
     end;
   end;
 var
-  node: PNode;
+  node: PvfsNode;
 begin
   node := fRoot;
   while node<>nil do begin
@@ -266,7 +266,7 @@ begin
   end;
 end;
 
-function TVirtualFileSystem.LastSibling(sibling: PNode): PNode;
+function TVirtualFileSystem.LastSibling(sibling: PvfsNode): PvfsNode;
 begin
   result := nil;
   while sibling<>nil do begin
@@ -275,14 +275,14 @@ begin
   end;
 end;
 
-function TVirtualFileSystem.FindChildNode(parent: PNode; aName: TvfsString): PNode;
+function TVirtualFileSystem.FindChildNode(parent: PvfsNode; aName: TvfsString): PvfsNode;
 begin
   Result:=Parent^.Childs;
   while (Result<>nil) and (CompareFilenames(Result^.Name, aName)<>0) do
     Result:=Result^.Next;
 end;
 
-function TVirtualFileSystem.FindTopLvlNode(aName: TvfsString): PNode;
+function TVirtualFileSystem.FindTopLvlNode(aName: TvfsString): PvfsNode;
 begin
   result := fRoot;
   while result<>nil do begin
@@ -292,10 +292,10 @@ begin
   end;
 end;
 
-function TVirtualFileSystem.AddNode(parent: PNode; aName: TvfsString;
-  isDir: boolean): PNode;
+function TVirtualFileSystem.AddNode(parent: PvfsNode; aName: TvfsString;
+  isDir: boolean): PvfsNode;
 var
-  prev: PNode;
+  prev: PvfsNode;
   data: pointer;
 begin
   if Parent=nil then
@@ -334,7 +334,7 @@ begin
   end;
 end;
 
-function TVirtualFileSystem.GetPath(node: PNode): string;
+function TVirtualFileSystem.GetPath(node: PvfsNode): string;
 begin
   result := '';
   while node<>nil do begin
@@ -345,7 +345,7 @@ begin
   end;
 end;
 
-function TVirtualFileSystem.NodeToStr(node: PNode): string;
+function TVirtualFileSystem.NodeToStr(node: PvfsNode): string;
 begin
   if node=nil then
     result := 'nil'

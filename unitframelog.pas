@@ -150,7 +150,7 @@ type
     procedure ObservedChanged(Sender:TObject; what: Integer; data: PtrInt);
     procedure ShowChanges(aRow: Integer);
     procedure HideChanges;
-    procedure PopulateTree(node: TVirtualFileSystem.PNode; treeNode: TTreeNode);
+    procedure PopulateTree(node: PvfsNode; treeNode: TTreeNode);
     procedure ReloadTreeFile;
     procedure UpdateCommitBrowser(aMode: TCommitBrowserMode);
     function  CommitBrowserModeFromGui:TCommitBrowserMode;
@@ -450,7 +450,7 @@ procedure TframeLog.treeFilesExpanding(Sender: TObject; Node: TTreeNode;
   var AllowExpansion: Boolean);
 var
   N:TTreeNode;
-  vfsNode, child: TVirtualFileSystem.PNode;
+  vfsNode, child: PvfsNode;
 begin
   //DebugLn('Expanding node %s',[Node.Text]);
   N := Node.GetFirstChild;
@@ -469,7 +469,6 @@ begin
           PopulateTree(child, Node);
           child := child^.next;
         end;
-        //PopulateTree(vfsNode, Node);
       end;
     end;
   end;
@@ -829,10 +828,10 @@ begin
     fCommitBrowser.ObserverMgr.RemoveObserver(Self);
 end;
 
-procedure TframeLog.PopulateTree(node: TVirtualFileSystem.PNode;
+procedure TframeLog.PopulateTree(node: PvfsNode;
   treeNode: TTreeNode);
 var
-  child: TVirtualFileSystem.PNode;
+  child: PvfsNode;
   info: PInfoNode;
   oldCreateNodeClass: TTVCreateNodeClassEvent;
 begin
@@ -858,7 +857,7 @@ end;
 
 procedure TframeLog.ReloadTreeFile;
 var
-  sibling: TVirtualFileSystem.PNode;
+  sibling: PvfsNode;
 begin
   sibling := fCommitBrowser.vfs.root;
   while sibling<>nil do begin

@@ -74,12 +74,12 @@ type
     procedure SetGitMgr(AValue: TGitMgr);
     procedure Clear;
     procedure ScanFilenames;
-    function ScanTree(treestr: RawByteString; expandPath:string=''):TVirtualFileSystem.PNode;
+    function ScanTree(treestr: RawByteString; expandPath:string=''):PvfsNode;
   public
     constructor Create;
     destructor Destroy; override;
     procedure ApplyMode;
-    function ExpandVfs(aPath: string):TVirtualFileSystem.PNode;
+    function ExpandVfs(aPath: string):PvfsNode;
 
     property ObserverMgr: TObserverMgr read fObserverMgr;
     property Diff: TStringList read fFileDiff;
@@ -159,7 +159,7 @@ begin
   end;
 end;
 
-function TCommitBrowser.ExpandVfs(aPath: string): TVirtualFileSystem.PNode;
+function TCommitBrowser.ExpandVfs(aPath: string): PvfsNode;
 var
   cmd: string;
   treestr: RawByteString;
@@ -221,7 +221,7 @@ begin
 end;
 
 function TCommitBrowser.ScanTree(treestr: RawByteString; expandPath: string
-  ): TVirtualFileSystem.PNode;
+  ): PvfsNode;
 var
   info: PInfoNode;
 
