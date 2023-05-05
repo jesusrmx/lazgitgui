@@ -471,6 +471,7 @@ procedure TframeLog.treeFilesSelectionChanged(Sender: TObject);
 var
   node: TTreeNode;
   info: PInfoNode;
+  isTree: boolean;
 begin
   node := treeFiles.Selected;
   if node<>nil then begin
@@ -479,8 +480,13 @@ begin
       txtViewer.TopLine := info^.line
     else
     if info<>nil then begin
+      isTree := info^.filetype='tree';
       fhlHelper.SetHighlighter(txtViewer, node.Text);
       fGit.Show(info^.fileTree, txtViewer.Lines);
+      if isTree then begin
+        txtViewer.Lines.Delete(0);
+        txtViewer.Lines.Delete(0);
+      end;
     end;
   end;
 end;

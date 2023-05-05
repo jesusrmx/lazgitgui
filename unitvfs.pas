@@ -60,14 +60,15 @@ type
     fPlain: boolean;
     fRoot: PNode;
     function LastSibling(sibling: PNode): PNode;
-    function FindNode(parent: PNode; aName: TvfsString): PNode;
+    function FindChildNode(parent: PNode; aName: TvfsString): PNode;
     function FindTopLvlNode(aName: TvfsString): PNode;
     function AddNode(parent: PNode; aName: TvfsString; isDir:boolean): PNode;
     function GetPath(node: PNode): string;
   public
     destructor Destroy; override;
     procedure Clear;
-    procedure AddPath(aPath: string);
+    procedure AddPath(aPath: string; parent: PNode = nil);
+    function FindPath(aPath: string): PNode;
     procedure Dump;
 
     property root: PNode read fRoot;
@@ -79,6 +80,50 @@ type
   end;
 
 implementation
+
+var
+  pathHead:pchar=nil;
+  pathTail:pchar=nil;
+  pathLevel:Integer=0;
+
+function WalkPath(out part:TvfsString; out isDir:boolean; wantRoot:boolean=false): boolean;
+var
+  w,c,x: pchar;
+begin
+  result := (pathHead<>nil) and (pathHead<pathTail);
+  if result then begin
+    w := pathHead;
+    // find next separator
+    while (pathHead<pathTail) and (not (pathHead^ in ['\','/'])) do inc(pathHead);
+    c := pathHead;
+    // skip separators
+    while (pathHead<pathTail) and (pathHead^ in ['\','/']) do inc(pathHead);
+    // c-w='word', p-w='word with separators'
+    x := pathHead;
+
+    if (pathLevel=0) and wantRoot then
+      SetString(part, w, x-w)
+    else
+      SetString(part, w, c-w);
+    isDir := c^ in ['\','/'];
+
+    inc(pathLevel);
+  end;
+end;
+
+function BeginWalkPath(aPath: TvfsString; out part:TvfsString; out isDir:boolean; wantRoot:boolean=false): boolean;
+begin
+  pathLevel := 0;
+  result := aPath<>'';
+  if result then begin
+    pathHead := @aPath[1];
+    pathTail := pathHead + Length(aPath);
+    result := WalkPath(part, isDir, wantRoot);
+  end else begin
+    pathHead := nil;
+    pathTail := nil;
+  end;
+end;
 
 { TVirtualFileSystem }
 
@@ -129,21 +174,28 @@ begin
   fRoot := nil;
 end;
 
-procedure TVirtualFileSystem.AddPath(aPath: string);
+procedure TVirtualFileSystem.AddPath(aPath: string; parent: PNode);
 var
   level: Integer;
   s: TvfsString;
   w, p, pini, c, t, x: pchar;
   ch: Char;
-  Parent, Node: PNode;
+  Node: PNode;
   isDir: Boolean;
 begin
 
-  Parent := nil;
   if fPlain then begin
     AddNode(parent, aPath, false);
     exit;
   end;
+
+  if BeginWalkPath(aPath, s, isDir) then
+    repeat
+      Node := AddNode(Parent, s, isDir);
+      Parent := Node;
+    until not WalkPath(s, isDir);
+
+  {
 
   level:=0;
   pIni := @aPath[1];
@@ -169,6 +221,21 @@ begin
     inc(level);
     Parent := Node;
   end;
+  }
+end;
+
+function TVirtualFileSystem.FindPath(aPath: string): PNode;
+var
+  part: TvfsString;
+  isDir: boolean;
+begin
+  //Dump;
+  result := nil;
+  if BeginWalkPath(aPath, part, isDir) then
+    repeat
+      if result=nil then result := FindTopLvlNode(part)
+      else               result := FindChildNode(result, part);
+    until (result=nil) or not WalkPath(part, isDir);
 end;
 
 procedure TVirtualFileSystem.Dump;
@@ -209,7 +276,7 @@ begin
   end;
 end;
 
-function TVirtualFileSystem.FindNode(parent: PNode; aName: TvfsString): PNode;
+function TVirtualFileSystem.FindChildNode(parent: PNode; aName: TvfsString): PNode;
 begin
   Result:=Parent^.Childs;
   while (Result<>nil) and (CompareFilenames(Result^.Name, aName)<>0) do
@@ -235,7 +302,7 @@ begin
   if Parent=nil then
     result := FindTopLvlNode(aName)
   else
-    result := FindNode(Parent, aName);
+    result := FindChildNode(Parent, aName);
 
   if result=nil then
   begin

@@ -74,7 +74,7 @@ type
     procedure SetGitMgr(AValue: TGitMgr);
     procedure Clear;
     procedure ScanFilenames;
-    procedure ScanTree(treestr: RawByteString);
+    function ScanTree(treestr: RawByteString; expandPath:string=''):TVirtualFileSystem.PNode;
   public
     constructor Create;
     destructor Destroy; override;
@@ -160,7 +160,19 @@ begin
 end;
 
 function TCommitBrowser.ExpandVfs(aPath: string): TVirtualFileSystem.PNode;
+var
+  cmd: string;
+  treestr: RawByteString;
 begin
+  result := nil;
+  cmd := 'ls-tree --full-tree -z ' + fCommit + ':' + aPath;
+  if fGit.Any(cmd, treestr)>0 then begin
+    fFileDiff.Text := fGit.ErrorLog;
+    fObserverMgr.NotifyObservers(self, COMMITBROWSER_EVENT_RELOAD, 0);
+  end else begin
+    result := ScanTree(treestr, aPath);
+    //fObserverMgr.NotifyObservers(self, COMMITBROWSER_EVENT_RELOAD, 1);
+  end;
 
 end;
 
@@ -211,7 +223,8 @@ begin
   end;
 end;
 
-procedure TCommitBrowser.ScanTree(treestr: RawByteString);
+function TCommitBrowser.ScanTree(treestr: RawByteString; expandPath: string
+  ): TVirtualFileSystem.PNode;
 var
   info: PInfoNode;
 
@@ -229,9 +242,15 @@ begin
   if treestr='' then
     exit;
 
-  fVfs.Clear;
+  if expandPath<>'' then
+    result := fVfs.FindPath(expandPath)
+  else begin
+    result := nil;
+    fVfs.Clear;
+  end;
   fVfs.OnNewNodeNested := @OnNewNode;
   fVfs.Plain := false;
+
 
   p := @treestr[1];
   while p^<>#0 do begin
@@ -243,7 +262,7 @@ begin
 
     SetString(aPath, r, strlen(r));
 
-    fVfs.AddPath(aPath);
+    fVfs.AddPath(aPath, result);
 
     len := strlen(p);
     p := p + len + 1;
