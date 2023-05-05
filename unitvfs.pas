@@ -32,7 +32,7 @@ unit unitvfs;
 interface
 
 uses
-  Classes, SysUtils, LazLogger, LazFileUtils;
+  Classes, SysUtils, lazlogger, LazFileUtils;
 
 type
   TvfsString = RawByteString;
@@ -70,6 +70,7 @@ type
     procedure AddPath(aPath: string; parent: PNode = nil);
     function FindPath(aPath: string): PNode;
     procedure Dump;
+    function NodeToStr(node: PNode): string;
 
     property root: PNode read fRoot;
     property Plain: boolean read fPlain write fPlain;
@@ -183,7 +184,6 @@ var
   Node: PNode;
   isDir: Boolean;
 begin
-
   if fPlain then begin
     AddNode(parent, aPath, false);
     exit;
@@ -229,7 +229,6 @@ var
   part: TvfsString;
   isDir: boolean;
 begin
-  //Dump;
   result := nil;
   if BeginWalkPath(aPath, part, isDir) then
     repeat
@@ -344,6 +343,27 @@ begin
      result := node^.name + result;
      node := node^.parent;
   end;
+end;
+
+function TVirtualFileSystem.NodeToStr(node: PNode): string;
+begin
+  if node=nil then
+    result := 'nil'
+  else
+    with node^ do begin
+      result := QuotedStr(name) + '(';
+      if prev<>nil then
+        result += format('prv=%s ', [prev^.name]);
+      if next<>nil then
+        result += format('nxt=%s ', [next^.name]);
+      if parent<>nil then
+        result += format('dad=%s ', [parent^.name]);
+      if childs<>nil then
+        result += format('kid=%s ', [childs^.name]);
+      if data<>nil then
+        result += 'DAT';
+      result += ')';
+    end;
 end;
 
 destructor TVirtualFileSystem.Destroy;

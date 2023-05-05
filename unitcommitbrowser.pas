@@ -38,8 +38,8 @@ unit unitcommitbrowser;
 interface
 
 uses
-  Classes, SysUtils, strutils, unitgittypes, unitgitutils, unitifaces, unitgitmgr,
-  unitvfs;
+  Classes, SysUtils, strutils,
+  unitgittypes, unitgitutils, unitifaces, unitgitmgr, unitvfs;
 
 const
   COMMITBROWSER_EVENT_RELOAD    =  20;
@@ -169,11 +169,8 @@ begin
   if fGit.Any(cmd, treestr)>0 then begin
     fFileDiff.Text := fGit.ErrorLog;
     fObserverMgr.NotifyObservers(self, COMMITBROWSER_EVENT_RELOAD, 0);
-  end else begin
-    result := ScanTree(treestr, aPath);
-    //fObserverMgr.NotifyObservers(self, COMMITBROWSER_EVENT_RELOAD, 1);
-  end;
-
+  end else
+    result := ScanTree(treestr, IncludeTrailingPathDelimiter(aPath));
 end;
 
 procedure TCommitBrowser.Clear;
@@ -250,7 +247,6 @@ begin
   end;
   fVfs.OnNewNodeNested := @OnNewNode;
   fVfs.Plain := false;
-
 
   p := @treestr[1];
   while p^<>#0 do begin

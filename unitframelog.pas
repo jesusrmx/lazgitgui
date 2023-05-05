@@ -450,19 +450,26 @@ procedure TframeLog.treeFilesExpanding(Sender: TObject; Node: TTreeNode;
   var AllowExpansion: Boolean);
 var
   N:TTreeNode;
-  vfsNode: TVirtualFileSystem.PNode;
+  vfsNode, child: TVirtualFileSystem.PNode;
 begin
   //DebugLn('Expanding node %s',[Node.Text]);
-  AllowExpansion := false;
   N := Node.GetFirstChild;
   if N is TDummyDirNode then begin
+    AllowExpansion := false;
     if Node.Data<>nil then begin
       // ask the commit browser we need expanding this node
       vfsNode := fCommitBrowser.ExpandVfs(Node.GetTextPath);
+      // this vfsNode should correspond to the data of treenode 'node'
+      // add the childs of vfsNode as childs of 'node'
       AllowExpansion := vfsNode<>nil;
       if AllowExpansion then begin
         N.Delete;
-        PopulateTree(vfsNode, Node);
+        child := vfsNode^.childs;
+        while child<>nil do begin
+          PopulateTree(child, Node);
+          child := child^.next;
+        end;
+        //PopulateTree(vfsNode, Node);
       end;
     end;
   end;
