@@ -394,6 +394,37 @@ begin
   DebugLn('Index stream was recovered: %d records', [fIndexStream.Size div SIZEOF_INDEX]);
 end;
 
+procedure DirectAccessDateIntervals(fIndexStream: TMemoryStream; fCacheStream: TFileStream);
+var
+  n: Integer;
+  next: Int64;
+  indxRec: TIndexRecord;
+  Item: TLogItem;
+begin
+  if withIntervals then begin
+    if withHeaders then begin
+      DebugLn;
+      DebugLn('Summary of date intervals');
+    end;
+    next := MAXINT;
+    n := 0;
+    fIndexStream.Position := 0;
+    while fIndexStream.Position<fIndexStream.Size do begin
+      fIndexStream.Read(IndxRec, SIZEOF_INDEX);
+      GetCachedItem(fIndexStream, fCacheStream, IndxRec.offset, IndxRec.size, Item);
+
+      if (Next=MAXINT) or (fIndexStream.Position=fIndexStream.Size) or (Next<Item.CommiterDate) then begin
+        aDir := GetCacheStr(IndxRec.offset, IndxRec.size, Item);
+        if withRecNum then
+          DbgOut('%8d%s',[n+1,SEP]);
+        DebugLn('%s',[aDir]);
+      end;
+      Next := Item.CommiterDate;
+      inc(n);
+    end;
+  end;
+end;
+
 procedure UseDirectAccess;
 var
   fIndexStream: TMemoryStream;
@@ -408,6 +439,8 @@ var
   Item: TLogItem;
   sig, ver: word;
 begin
+
+  DebugLn('Using Direct Access');
 
   GetFilenames(aIndexFile, aCacheFile);
 
@@ -478,28 +511,7 @@ begin
     end;
   end;
 
-  if withIntervals then begin
-    if withHeaders then begin
-      DebugLn;
-      DebugLn('Summary of date intervals');
-    end;
-    next := MAXINT;
-    n := 0;
-    fIndexStream.Position := 0;
-    while fIndexStream.Position<fIndexStream.Size do begin
-      fIndexStream.Read(IndxRec, SIZEOF_INDEX);
-      GetCachedItem(fIndexStream, fCacheStream, IndxRec.offset, IndxRec.size, Item);
-
-      if (Next=MAXINT) or (fIndexStream.Position=fIndexStream.Size) or (Next<Item.CommiterDate) then begin
-        aDir := GetCacheStr(IndxRec.offset, IndxRec.size, Item);
-        if withRecNum then
-          DbgOut('%8d%s',[n+1,SEP]);
-        DebugLn('%s',[aDir]);
-      end;
-      Next := Item.CommiterDate;
-      inc(n);
-    end;
-  end;
+  DirectAccessDateIntervals(fIndexStream, fCacheStream);
 
   if withInheritance then begin
     if withHeaders then begin
@@ -688,6 +700,8 @@ function UseDbIndex: boolean;
 var
   db: TDbIndex;
 begin
+  DebugLn('Using DbIndex');
+
   result := false;
   db := TDbIndex.Create(aDir);
   db.ReadOnly := true;
