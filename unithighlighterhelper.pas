@@ -107,7 +107,7 @@ begin
   inherited Create;
   fList := TStringList.Create;
   Register(TSynDiffSyn);
-  Register(TSynFreePascalSyn, '|*.lpr');
+  Register(TSynFreePascalSyn, '|*.lpr;*.pp');
   Register(TSynHTMLSyn);
   Register(TSynUNIXShellScriptSyn);
   Register(TSynCppSyn);
