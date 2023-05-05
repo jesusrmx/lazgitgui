@@ -46,6 +46,14 @@ var
   withTopo: boolean = true;
   withReindex: boolean = true;
 
+type
+  PIndexDateRecord = ^TIndexDateRecord;
+  TIndexDateRecord = packed record
+    offset: Int64;
+    size: word;
+    Date: Int64;
+  end;
+
 
 function Shorten(s: string): string;
 var
@@ -329,6 +337,15 @@ begin
   aCacheFile := ChangeFileExt(aIndexFile, '.logcache');
 end;
 
+
+function CompareIndices(Item1, Item2: Pointer): Integer;
+var
+  itemA: PIndexDateRecord absolute Item1;
+  itemB: PIndexDateRecord absolute Item2;
+begin
+  result := itemB^.Date - itemA^.Date;
+end;
+
 procedure CheckForCorruption(var fIndexStream: TMemorystream; var fCacheStream: TFileStream);
 var
   indxRec: TIndexRecord;
@@ -338,6 +355,8 @@ var
   lastSize: Word;
   dummy, aIndexFile: string;
   ticks: QWord;
+  L: TList;
+  idRec: PIndexDateRecord;
 begin
   DebugLn('Checking for Corruption');
   failed := false;
@@ -364,7 +383,7 @@ begin
 
   if not failed and (fCacheStream.Position + lastSize<>fCacheStream.Size) then begin
     DebugLn('CacheFile size inconsistency: Offset=%d Size=%d',[fCacheStream.Position, fCacheStream.Size]);
-    halt(11);
+    failed := true;
   end;
 
   if not failed then
@@ -373,16 +392,26 @@ begin
   DebugLn('Trying to reconstruct the index');
 
   ticks := GetTickCount64;
+  L := TList.Create;
   //  the signature is ok or we wouldnt be here
   fCacheStream.Position := 4;
   fIndexStream.clear;
   while fCacheStream.Position<fCacheStream.Size do begin
     lastSize := fCacheStream.ReadWord;
-    IndxRec.offset := fCacheStream.Position - 2;
-    IndxRec.Size := lastSize + 2;
-    fIndexStream.Write(IndxRec, SIZEOF_INDEX);
-    fCacheStream.Seek(lastSize, soFromCurrent);
+    new(idRec);
+    idRec^.offset := fCacheStream.Position - 2;
+    idRec^.size := lastSize + 2;
+    idRec^.Date := fCacheStream.ReadQWord;
+    L.Add(idRec);
+    fCacheStream.Seek(lastSize - sizeOf(Int64), soFromCurrent);
   end;
+  L.Sort(@CompareIndices);
+  for i:=0 to L.Count-1 do begin
+    idRec := PIndexDateRecord(L[i]);
+    fIndexStream.Write(idRec^, SIZEOF_INDEX);
+    dispose(idRec);
+  end;
+  L.Free;
 
   GetFilenames(aIndexFile, dummy);
   fIndexStream.SaveToFile(aIndexFile);
