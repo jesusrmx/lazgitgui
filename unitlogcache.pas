@@ -75,13 +75,13 @@ type
   TLogThread = class(TThread)
   private
     fBuffer: PChar;
-    fCacheStream: TFileStream;
+    //fCacheStream: TFileStream;
     fCaptureTo: string;
     fCommand: string;
     fDbIndex: IDbIndex;
     fHaveProgress: boolean;
     fHead, fCacheUpdate: boolean;
-    fIndexStream: TMemoryStream;
+    //fIndexStream: TMemoryStream;
     fOldIndexSize: Int64;
     fOnOutput: TNotifyInterruptEvent;
     fResult: Integer;

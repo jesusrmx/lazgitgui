@@ -112,16 +112,18 @@ type
   private
     fDir: string;
     fCacheStream: TFileStream;
-    fIndexStream: TFileStream;
+    //fIndexStream: TFileStream;
     fMaxRecords: Integer;
     fOldCount: Integer;
-    fOldIndexSize: SizeInt;
+    fOldCacheSize: Int64;
     fCacheUpdate: boolean;
     fOldIndexOffset: Int64;
     fLoadedItemIndex: Integer;
     fItem: TLogItem;
     fReadOnly: boolean;
     fFilter: TIntArray;
+    fIndexCount: Integer;
+    fIndexPtr: pointer;
     function GetAcceptingNewRecords: boolean;
     function GetActive: boolean;
     function GetInfo: string;
@@ -827,12 +829,69 @@ begin
   result := format('%d',[Count]);
 end;
 
+type
+  PIndexDateRecord = ^TIndexDateRecord;
+  TIndexDateRecord = record
+    offset: Int64;
+    size: word;
+    date: Int64;
+  end;
+
+function CompareDates(Item1, Item2: Pointer): Integer;
+var
+  indx1: PIndexDateRecord absolute Item1;
+  indx2: PIndexDateRecord absolute Item2;
+begin
+  result := indx2^.date - indx1^.date;
+end;
+
 procedure TDbIndex.ReIndex;
 var
-  newSize: Integer;
+  newSize, i: Integer;
   buf, p, q: Pbyte;
   tmp, x: TStream;
+  lastSize: Word;
+  list: TFpList;
+  indx: PIndexDateRecord;
 begin
+
+  list := TfpList.Create;
+  try
+
+    // read cache
+    fCacheStream.Position := 4;
+    while fCacheStream.Position<fCacheStream.Size do begin
+      lastSize := fCacheStream.ReadWord;
+      new(indx);
+      indx^.offset := fCacheStream.Position - 2;
+      indx^.size := lastSize + 2;
+      indx^.Date := fCacheStream.ReadQWord;
+      list.Add(indx);
+      fCacheStream.Seek(lastSize - sizeOf(Int64), soFromCurrent);
+    end;
+
+    // inverse sort the list
+    list.Sort(@CompareDates);
+
+    // Get a chunk of memory enough for all the indices
+    if fIndexPtr<>nil then
+      FreeMem(fIndexPtr);
+
+    fIndexCount := list.Count;
+    GetMem(fIndexPtr, fIndexCount * SIZEOF_INDEX);
+
+    // transfer the indices
+    for i:=0 to list.Count-1 do begin
+      indx := PIndexDateRecord(list[i]);
+      Move(indx^, PIndexRecord(fIndexPtr)[i], SIZEOF_INDEX);
+      dispose(indx);
+    end;
+
+  finally
+    list.Free;
+  end;
+
+  {
   tmp := TMemoryStream.Create;
   // copy the new part at the start
   newSize := fIndexStream.Size - fOldIndexOffset;
@@ -854,6 +913,7 @@ begin
   x := tmp; tmp := fIndexStream; TStream(fIndexStream) := x;
 
   tmp.Free;
+  }
 end;
 
 function TDbIndex.GetFileName(aIndex: Integer): string;
@@ -869,13 +929,12 @@ end;
 procedure TDbIndex.GetIndexRecord(var aIndex: Integer; out
   indxRec: TIndexRecord; unfiltered: boolean);
 var
-  indexOffset: SizeInt;
   theIndex: Integer;
 begin
 
   if unfiltered then begin
     if aIndex<0 then
-      aIndex := (fIndexStream.Size div SIZEOF_INDEX)-1;
+      aIndex := fIndexCount-1;
     theIndex := aIndex;
   end else
   if fFilter<>nil then begin
@@ -889,10 +948,7 @@ begin
     theIndex := aIndex;
   end;
 
-  indexOffset := theIndex * SIZEOF_INDEX;
-
-  fIndexStream.Position := indexOffset;
-  fIndexStream.Read(indxRec{%H-}, SIZEOF_INDEX);
+  indxRec := PIndexRecord(fIndexPtr)[theIndex];
 end;
 
 procedure TDbIndex.CacheBufferFromItem(out aBuf: PChar; out len: word);
@@ -1034,7 +1090,7 @@ var
   indxRec: TIndexRecord;
 begin
   DebugLn;
-  DebugLn('          Index: %d of %d',[fLoadedItemIndex, fIndexStream.Size div SIZEOF_INDEX]);
+  DebugLn('          Index: %d of %d',[fLoadedItemIndex, fIndexCount]);
   DebugLn('    Commit Date: %d (%s)',[fItem.CommiterDate, DateTimeToStr(UnixToDateTime(fItem.CommiterDate))]);
   DebugLn('     Parent OID: %s',[fItem.ParentOID]);
   DebugLn('     Commit OID: %s',[fItem.CommitOID]);
@@ -1053,11 +1109,14 @@ begin
   fMaxBufferSize := 1024 * 4;
   GetMem(fBuffer, fMaxBufferSize);
   fLoadedItemIndex := -1;
+  fIndexPtr := nil;
 end;
 
 destructor TDbIndex.Destroy;
 begin
-  fIndexStream.Free;
+  if fIndexPtr<>nil then
+    freeMem(pointer(fIndexPtr), fIndexCount * SIZEOF_INDEX);
+  fIndexPtr := nil;
   fCacheStream.Free;
   Finalize(fItem);
   FreeMem(fBuffer);
@@ -1111,43 +1170,25 @@ begin
     end;
   end;
 
-  if fIndexStream=nil then begin
-    mode := fmOpenReadWrite + fmShareDenyWrite;
-    if not FileExists(aFileIndex) then begin
-      if fReadOnly then
-        raise Exception.CreateFmt('Index file %s do not exists',[aFileIndex]);
-      mode += fmCreate;
-    end;
-    fIndexStream := TFileStream.Create(aFileIndex, mode);
-  end;
-
+  ReIndex;
 end;
 
 procedure TDbIndex.ThreadStart(aHead: boolean);
 begin
-  fOldCount := fIndexStream.Size div SIZEOF_INDEX;
-  fOldIndexSize := fIndexStream.Size;
-  fOldIndexOffset := fIndexStream.Size;
-  fCacheUpdate := fCacheStream.Size>0;
+  fOldCount := fIndexCount;
+  fOldCacheSize := fCacheStream.Size;
+  fCacheUpdate := fOldCacheSize>0;
   fHead := aHead;
 end;
 
 procedure TDbIndex.ThreadDone;
-var
-  records: Integer;
 begin
-  records := (fIndexStream.Size - fOldIndexSize) div SIZEOF_INDEX;
-  if (records<>0) then begin
-    // there are changes in the index, if they are for 'head' and
-    // arent brand new, re-index
-    if fHead and (fOldIndexSize>0) then
-      ReIndex;
-
-    FileFlush(fIndexStream.Handle);
+  if fOldCacheSize<>fCacheStream.Size then begin
     FileFlush(fCacheStream.Handle);
+    ReIndex;
   end;
 
-  DebugLn('TDbIndex.ThreadDone: for %s there are %d new records',[BoolToStr(fHead, 'HEAD', 'TAIL'), records]);
+  DebugLn('TDbIndex.ThreadDone: for %s there are %d new records',[BoolToStr(fHead, 'HEAD', 'TAIL'), fIndexCount-fOldCount]);
 end;
 
 procedure TDbIndex.ThreadStore(buf: pchar; size: Integer);
@@ -1205,12 +1246,6 @@ begin
   fCacheStream.Position := currentOffset;
   fCacheStream.WriteWord(finalOffset - currentOffset - sizeOf(word));
   fCacheStream.Position := finalOffset;
-
-  indxRec.Offset := currentOffset;
-  indxRec.size := finalOffset - currentOffset;
-  fIndexStream.Seek(0, soFromEnd);
-  fIndexStream.WriteBuffer(indxRec, SIZEOF_INDEX);
-
 end;
 
 function TDbIndex.GetCachedItem(aIndex: Integer; unfiltered, tryToFix: boolean): boolean;
@@ -1218,7 +1253,7 @@ var
   indxRec: TIndexRecord;
   w: word;
 begin
-  result := (fIndexStream<>nil) and (fIndexStream.Size>0);
+  result := (fIndexPtr<>nil) and (aIndex<fIndexCount);
   if result then begin
 
     GetIndexRecord(aIndex, indxRec, unfiltered);
@@ -1242,8 +1277,6 @@ begin
           // the cache files are corrupt save what seems right, it will be fixed
           // the next time the log is requested.
           fCacheStream.Size := indxRec.offset;
-          fIndexStream.Size := fIndexStream.Position - SIZEOF_INDEX;
-          FileFlush(fIndexStream.Handle);
           FileFlush(fCacheStream.Handle);
         end;
 
@@ -1257,13 +1290,13 @@ end;
 
 function TDbIndex.Count(unfiltered: boolean): Integer;
 begin
-  if fIndexStream=nil then
+  if (fIndexPtr=nil) or (fIndexCount=0) then
     exit(0);
 
   if not unfiltered and (fFilter<>nil) then
     result := Length(fFilter)
   else
-    result := fIndexStream.Size div SIZEOF_INDEX;
+    result := fIndexCount;
 
   if (not unfiltered) and (fMaxRecords>0) and (result>fMaxRecords) then
     result := fMaxRecords;
@@ -1285,7 +1318,7 @@ begin
   if arr=nil then
     fFilter := nil
   else begin
-    if (fIndexStream=nil) or (fIndexStream.Size=0) then
+    if (fIndexPtr=nil) or (fIndexCount=0) then
       raise Exception.Create('Trying to set a filter while the db is not initialized');
     maxIndex := Count - 1;
     // check that indices are within the range of the index
@@ -1488,11 +1521,11 @@ begin
     exit;         // a commit cannot be empty
   sha := lowercase(sha);
 
-  if (fIndexStream<>nil) and (fCacheStream<>nil) then begin
+  if (fIndexPtr<>nil) and (fCacheStream<>nil) then begin
     nail := @sha[1];
     nailLen := Length(sha);
     if startAt<0 then startAt := 0;
-    for i:=startAt to (FIndexStream.Size div SIZEOF_INDEX)-1 do begin
+    for i:=startAt to fIndexCount-1 do begin
 
       if not GetCachedItem(i, true, false) then
         exit;
