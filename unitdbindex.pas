@@ -1153,19 +1153,27 @@ end;
 procedure TDbIndex.ThreadStore(buf: pchar; size: Integer);
 var
   p, q, t: PChar;
+  tmp, m: pbyte;
   field: Integer;
-  currentOffset, finalOffset, aDate: Int64;
+  aDate: Int64;
   cd: Integer;
   b: byte;
   w: word;
   indxRec: TIndexRecord;
 begin
-  currentOffset := fCacheStream.Size;
-  fCacheStream.Seek(0, soFromEnd);
-  fCacheStream.WriteWord(0);
 
   field := 0;
   p := buf;
+  {      unix date              commitOID
+    buf: 10+1 + P(arentOID)+1 + 40+1 + A(uthor)+1 + E(mail)+1 + S(ubject)+1 = Size
+         56 + P+A+E+S = Size  so  P+A+E+S = Size - 56
+
+    tmp: 8 + 2+P + 1+40 + 1+A + 1+E + 2+S = tmpSize
+         55 + P+A+E+S = tmpSize
+         55 + Size  - 56 = tmpSize  so  tmpSize = Size - 1
+  }
+  GetMem(tmp, size + 11); // only size-1 is really needed, some extra wont hurt
+  m := tmp;
 
   t := p + size;
   while (p<t) and (field<7) do begin
@@ -1177,19 +1185,20 @@ begin
             q^ := #0;
             val(p, aDate, cd);
             q^ := #2;
-            fCacheStream.WriteQWord(aDate);
+            Move(aDate, m^, sizeof(aDate));
+            inc(m, sizeof(aDate));
           end;
         FIELD_COMMITOID, FIELD_AUTHOR, FIELD_EMAIL:
           begin
             b := Min(High(byte), q-p);
-            fCacheStream.WriteByte(b);
-            fCacheStream.WriteBuffer(p^, b);
+            m^ := b; inc(m);
+            Move(p^, m^, b); inc(m, b);
           end;
         FIELD_PARENTOID, FIELD_SUBJECT:
           begin
             w := Min(High(word), q-p);
-            fCacheStream.WriteWord(w);
-            fCacheStream.WriteBuffer(p^, w);
+            pword(m)^ := w; inc(m, 2);
+            move(p^, m^, w); inc(m, w);
           end;
       end;
       inc(field);
@@ -1200,14 +1209,16 @@ begin
     p := q + 1;
   end;
 
-  // fix record length
-  finalOffset := fCacheStream.Position;
-  fCacheStream.Position := currentOffset;
-  fCacheStream.WriteWord(finalOffset - currentOffset - sizeOf(word));
-  fCacheStream.Position := finalOffset;
+  w := m - tmp;
 
-  indxRec.Offset := currentOffset;
-  indxRec.size := finalOffset - currentOffset;
+  fCacheStream.Seek(0, soFromEnd);
+  indxRec.Offset := fCacheStream.Position;
+  fCacheStream.WriteWord(w);
+  fCacheStream.WriteBuffer(tmp^, w);
+
+  freeMem(tmp);
+
+  indxRec.size := w + 2;
   fIndexStream.Seek(0, soFromEnd);
   fIndexStream.WriteBuffer(indxRec, SIZEOF_INDEX);
 
