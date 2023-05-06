@@ -67,7 +67,9 @@ type
     function GetUpstream: string;
     function GetVersion: string;
     function GetErrorLog: RawByteString;
+    function GetLogError: RawByteString;
     function RefsFilter(commitOID: string; filter: TRefFilterProc): TRefInfoArray;
+    procedure ResetLogError;
 
     property Branch: string read GetBranch;
     property BranchOID: string read GetBranchOID;
@@ -85,6 +87,7 @@ type
     property Upstream: string read GetUpstream;
     property Version: string read GetVersion;
     property ErrorLog: RawByteString read GetErrorLog;
+    property LogError: RawByteString read GetLogError;
   end;
 
   IObserver = interface ['{6ADBB399-EA69-4FD7-AEF3-E969FB09AC37}']

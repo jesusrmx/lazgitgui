@@ -59,6 +59,7 @@ type
     fLastTagCommits: Integer;
     fInternalRefList: TStringList;
     fRefsMap: TRefsMap;
+    fLogError: RawByteString;
     function GetBranch: string;
     function GetBranchOID: string;
     function GetCommitsAhead: Integer;
@@ -68,6 +69,7 @@ type
     function GetLastTag: string;
     function GetLastTagCommits: Integer;
     function GetLastTagOID: string;
+    function GetLogError: RawBytestring;
     function GetMerging: boolean;
     function GetMergingConflict: boolean;
     function GetRefList: TStringList; overload;
@@ -84,6 +86,7 @@ type
     function RefListEnabledField(aField: string): boolean;
     procedure SetupExe(aExeFile, aVersion: string);
     procedure UpdateRefsMap;
+    procedure PushError;
   public
     constructor create;
     destructor destroy; override;
@@ -113,8 +116,10 @@ type
     function GetRemotesList: TStringList;
     function RefsFilter(commitOID: string; filter: TRefFilterProc): TRefInfoArray;
     function Show(obj: string; lines: TStrings): Integer;
+    procedure ResetLogError;
 
     property ErrorLog: RawByteString read GetErrorLog;
+    property LogError: RawBytestring read GetLogError;
     property UntrackedMode: string read fUntrackedMode write fUntrackedMode;
     property IgnoredMode: string read fIgnoredMode write fIgnoredMode;
     property Config: IConfig read fConfig write fConfig;
@@ -307,6 +312,15 @@ begin
   //end;
 end;
 
+procedure TGit.PushError;
+begin
+  if cmdLine.ErrorLog<>'' then begin
+    if fLogError<>'' then
+      fLogError += LineEnding;
+    fLogError += cmdLine.ErrorLog;
+  end;
+end;
+
 procedure TGit.Clear;
 var
   i: Integer;
@@ -335,6 +349,7 @@ begin
       [fGitCommand, fIgnoredMode, fUntrackedMode]);
 
     result := cmdLine.RunProcess(aCommand, fTopLevelDir, M);
+    PushError;
     head := M.Memory;
     tail := head + M.Size;
     fMergingConflict := false;
@@ -406,6 +421,11 @@ end;
 function TGit.GetLastTagOID: string;
 begin
   result := fLastTagOID;
+end;
+
+function TGit.GetLogError: RawBytestring;
+begin
+  result := fLogError;
 end;
 
 function TGit.GetMerging: boolean;
@@ -557,6 +577,7 @@ var
   cmdOut: RawByteString;
 begin
   result := cmdLine.RunProcess(fGitCommand+' add '+ Sanitize(entry^.path), fTopLevelDir, cmdOut);
+  PushError;
 end;
 
 function TGit.Add(entryArray: TPFileEntryArray): Integer;
@@ -566,6 +587,7 @@ var
 begin
   list := MakePathList(entryArray);
   result := cmdLine.RunProcess(fGitCommand+' add '+ list, fTopLevelDir, cmdOut);
+  PushError;
 end;
 
 function TGit.Rm(entry: PFileEntry): Integer;
@@ -573,6 +595,7 @@ var
   cmdOut: RawByteString;
 begin
   result := cmdLine.RunProcess(fGitCommand+' rm '+ Sanitize(Entry^.path), fTopLevelDir, cmdOut);
+  PushError;
 end;
 
 function TGit.Restore(entry: PFileEntry; staged: boolean): Integer;
@@ -961,6 +984,7 @@ begin
       fLastTag := cmdOut;
     end;
   end;
+  PushError;
 end;
 
 // Update the internal reflist
@@ -1062,6 +1086,11 @@ begin
   end;
 end;
 
+procedure TGit.ResetLogError;
+begin
+  fLogError := '';
+end;
+
 function TGit.GitMerging: boolean;
 var
   cmdOut: RawByteString;
@@ -1071,6 +1100,7 @@ begin
   //cmdLine.StdOutputClosed := true;
   cmdLine.StdErrorClosed := true;
   result := cmdLine.RunProcess(fGitCommand + ' rev-list -1 MERGE_HEAD', fTopLevelDir, cmdOut) = 0;
+  PushError;
 end;
 
 function TGit.GetVersion(gitCmd: string; out aVersion: string): boolean;

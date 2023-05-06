@@ -449,10 +449,10 @@ begin
   mi := TMenuItem(Sender);
   entryArray := MakeMenuItemUnstagedEntryArray(mi);
 
-  if fGit.Add(entryArray)>0 then
-    ShowError
-  else
+  fGit.ResetLogError;
+  if fGit.Add(entryArray)<=0 then
     fGitMgr.UpdateStatus;
+  txtDiff.Text := fGit.LogError;
 end;
 
 procedure TfrmMain.OnUnstageItemClick(Sender: TObject);
@@ -643,6 +643,7 @@ procedure TfrmMain.ItemAction(sender: TListbox; aIndex: Integer);
 var
   Entry: PFileEntry;
   cmdOut: RawByteString;
+  res: Integer;
 begin
   Entry := PFileEntry(Sender.Items.Objects[aIndex]);
   if sender=lstUnstaged then begin
@@ -651,17 +652,17 @@ begin
       etUntracked,
       etWorktreeChangedSinceIndex..etTypeChangedInWorktreeSinceIndexC:
         begin
-          if fGit.Add(Entry)>0 then
-            ShowError
-          else
+          fGit.ResetLogError;
+          if fGit.Add(Entry)<=0 then
             fGitMgr.UpdateStatus;
+          txtDiff.Text := fGit.LogError;
         end;
       etDeletedInWorktree:
         begin
-          if fGit.Rm(Entry)>0 then
-            ShowError
-          else
+          fGit.ResetLogError;
+          if fGit.Rm(Entry)<=0 then
             fGitMgr.UpdateStatus;
+          txtDiff.Text := fGit.LogError;
         end;
       // other merge conflicts:
       // see:
