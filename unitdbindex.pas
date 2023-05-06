@@ -122,6 +122,7 @@ type
     fItem: TLogItem;
     fReadOnly: boolean;
     fFilter: TIntArray;
+    fCursorLock: TRTLCriticalSection;
     function GetAcceptingNewRecords: boolean;
     function GetActive: boolean;
     function GetInfo: string;
@@ -833,27 +834,32 @@ var
   buf, p, q: Pbyte;
   tmp, x: TStream;
 begin
-  tmp := TMemoryStream.Create;
-  // copy the new part at the start
-  newSize := fIndexStream.Size - fOldIndexOffset;
-  fIndexStream.Position := fOldIndexOffset;
-  tmp.CopyFrom(fIndexStream, newSize);
+  EnterCriticalSection(fCursorLock);
+  try
+    tmp := TMemoryStream.Create;
+    // copy the new part at the start
+    newSize := fIndexStream.Size - fOldIndexOffset;
+    fIndexStream.Position := fOldIndexOffset;
+    tmp.CopyFrom(fIndexStream, newSize);
 
-  // now copy the old data
-  fIndexStream.Position := 0;
-  tmp.CopyFrom(fIndexStream, fOldIndexOffset);
+    // now copy the old data
+    fIndexStream.Position := 0;
+    tmp.CopyFrom(fIndexStream, fOldIndexOffset);
 
-  // the re-indexed stream is now ready, swap streams pointers for a moment
-  x := tmp; tmp := fIndexStream; TStream(fIndexStream) := x;
+    // the re-indexed stream is now ready, swap streams pointers for a moment
+    x := tmp; tmp := fIndexStream; TStream(fIndexStream) := x;
 
-  tmp.Size := 0;
-  fIndexStream.Position := 0;
-  tmp.CopyFrom(fIndexStream, fIndexStream.Size);
+    tmp.Size := 0;
+    fIndexStream.Position := 0;
+    tmp.CopyFrom(fIndexStream, fIndexStream.Size);
 
-  // the re-indexed stream is now ready, finally swap streams pointers
-  x := tmp; tmp := fIndexStream; TStream(fIndexStream) := x;
+    // the re-indexed stream is now ready, finally swap streams pointers
+    x := tmp; tmp := fIndexStream; TStream(fIndexStream) := x;
 
-  tmp.Free;
+  finally
+    tmp.Free;
+    LeaveCriticalSection(fCursorLock);
+  end;
 end;
 
 function TDbIndex.GetFileName(aIndex: Integer): string;
@@ -891,8 +897,13 @@ begin
 
   indexOffset := theIndex * SIZEOF_INDEX;
 
-  fIndexStream.Position := indexOffset;
-  fIndexStream.Read(indxRec{%H-}, SIZEOF_INDEX);
+  EnterCriticalSection(fCursorLock);
+  try
+    fIndexStream.Position := indexOffset;
+    fIndexStream.Read(indxRec{%H-}, SIZEOF_INDEX);
+  finally
+    LeaveCriticalSection(fCursorLock);
+  end;
 end;
 
 procedure TDbIndex.CacheBufferFromItem(out aBuf: PChar; out len: word);
@@ -1053,10 +1064,12 @@ begin
   fMaxBufferSize := 1024 * 4;
   GetMem(fBuffer, fMaxBufferSize);
   fLoadedItemIndex := -1;
+  InitCriticalSection(fCursorLock);
 end;
 
 destructor TDbIndex.Destroy;
 begin
+  DoneCriticalSection(fCursorLock);
   fIndexStream.Free;
   fCacheStream.Free;
   Finalize(fItem);
@@ -1211,17 +1224,21 @@ begin
 
   w := m - tmp;
 
-  fCacheStream.Seek(0, soFromEnd);
-  indxRec.Offset := fCacheStream.Position;
-  fCacheStream.WriteWord(w);
-  fCacheStream.WriteBuffer(tmp^, w);
+  EnterCriticalSection(fCursorLock);
+  try
+    fCacheStream.Seek(0, soFromEnd);
+    indxRec.Offset := fCacheStream.Position;
+    fCacheStream.WriteWord(w);
+    fCacheStream.WriteBuffer(tmp^, w);
+
+    indxRec.size := w + 2;
+    fIndexStream.Seek(0, soFromEnd);
+    fIndexStream.WriteBuffer(indxRec, SIZEOF_INDEX);
+  finally
+    LeaveCriticalSection(fCursorLock);
+  end;
 
   freeMem(tmp);
-
-  indxRec.size := w + 2;
-  fIndexStream.Seek(0, soFromEnd);
-  fIndexStream.WriteBuffer(indxRec, SIZEOF_INDEX);
-
 end;
 
 function TDbIndex.GetCachedItem(aIndex: Integer; unfiltered, tryToFix: boolean): boolean;
@@ -1242,9 +1259,13 @@ begin
         ReallocMem(fBuffer, fMaxBufferSize);
       end;
 
-      fCacheStream.Position := indxRec.offset;
-      fCacheStream.Read(fBuffer^, indxRec.size);
-
+      EnterCriticalSection(fCursorLock);
+      try
+        fCacheStream.Position := indxRec.offset;
+        fCacheStream.Read(fBuffer^, indxRec.size);
+      finally
+        LeaveCriticalSection(fCursorLock);
+      end;
 
       w := PWord(fBuffer)^;
       if indxRec.Size-2<>w then begin
@@ -1252,10 +1273,15 @@ begin
         if tryToFix then begin
           // the cache files are corrupt save what seems right, it will be fixed
           // the next time the log is requested.
-          fCacheStream.Size := indxRec.offset;
-          fIndexStream.Size := fIndexStream.Position - SIZEOF_INDEX;
-          FileFlush(fIndexStream.Handle);
-          FileFlush(fCacheStream.Handle);
+          EnterCriticalSection(fCursorLock);
+          try
+            fCacheStream.Size := indxRec.offset;
+            fIndexStream.Size := fIndexStream.Position - SIZEOF_INDEX;
+            FileFlush(fIndexStream.Handle);
+            FileFlush(fCacheStream.Handle);
+          finally
+            LeaveCriticalSection(fCursorLock);
+          end;
         end;
 
         raise Exception.CreateFmt('Inconsistent data at index %d, expected %d found %d',[aIndex, indxRec.Size-2, w]);
