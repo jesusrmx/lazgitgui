@@ -169,8 +169,6 @@ type
     procedure InvalidateBranchMenu;
     procedure NewTag;
     procedure CheckMenuDivisorInLastPosition(pop:TPopupMenu);
-    procedure FindParents;
-    procedure UpdateGridRows;
     procedure ObservedChanged(Sender:TObject; what: Integer; data: PtrInt);
     procedure ShowNewTagForm(commit: string);
     procedure ShowSwitchToTagForm(aTag: string);
@@ -677,10 +675,10 @@ begin
       etRenamedInIndex..etRenamedInIndexD,
       etDeletedFromIndex:
         begin
-          if fGit.Restore(entry, true)>0 then
-            ShowError
-          else
+          fGit.ResetLogError;
+          if fGit.Restore(entry, true)<=0 then
             fGitMgr.UpdateStatus;
+          txtDiff.Text := fGit.LogError;
         end;
       else
         ShowMessage('Not yet implemented for Staged: '+cmdOut);
@@ -927,18 +925,6 @@ begin
     if pop.Items[pop.Items.Count-1].Caption='-' then
       pop.Items.Delete(pop.Items.Count-1);
   end;
-end;
-
-procedure TfrmMain.FindParents;
-var
-  parents: TParentsArray;
-begin
-
-end;
-
-procedure TfrmMain.UpdateGridRows;
-begin
-
 end;
 
 procedure TfrmMain.ObservedChanged(Sender:TObject; what: Integer; data: PtrInt);
@@ -1260,6 +1246,10 @@ procedure TfrmMain.DoCommit;
 begin
   if lstStaged.Count=0 then begin
     ShowMessage('You have to stage something in order to commit');
+    exit;
+  end;
+  if Trim(txtComment.Text)='' then begin
+    ShowMessage('Your commit message is empty!');
     exit;
   end;
   if fGit.Commit(txtComment.Text,'')>0 then
