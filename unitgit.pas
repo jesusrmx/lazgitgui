@@ -611,6 +611,7 @@ begin
     else           args := ' checkout -- ';
   end;
   result := cmdLine.RunProcess(fGitCommand+args+' '+Sanitize(Entry^.path), fTopLevelDir, cmdOut);
+  PushError;
 end;
 
 function TGit.Restore(entryArray: TPFileEntryArray; staged: boolean): Integer;
@@ -628,6 +629,7 @@ begin
   end;
   args += list;
   result := cmdLine.RunProcess(fGitCommand+args, fTopLevelDir, cmdOut);
+  PushError;
 end;
 
 function TGit.Reset(opts: string; out outMsg: RawByteString): Integer;
@@ -883,6 +885,7 @@ end;
 function TGit.Any(cmd: string; out cmdout: RawByteString): Integer;
 begin
   result := cmdLine.RunProcess(fGitCommand + ' ' + cmd, fTopLevelDir, cmdOut);
+  PushError;
 end;
 
 function TGit.Tag(tagName, tagCommit: string; annotated: boolean; tagMsg: string): Integer;

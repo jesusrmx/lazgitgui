@@ -411,10 +411,10 @@ begin
   DebugLn('Restoring: ',aFile);
   {$ENDIF}
 
-  if fGit.Restore(entryArray, false)>0 then
-    ShowError
-  else
+  fGit.ResetLogError;
+  if fGit.Restore(entryArray, false)<=0 then
     fGitMgr.UpdateStatus;
+  txtDiff.Text := fGit.LogError;
 end;
 
 procedure TfrmMain.OnStageAllClick(Sender: TObject);
@@ -431,13 +431,10 @@ begin
   end;
 
   if cmd<>'' then begin
-    if fGit.Any(cmd, cmdOut)>0 then
-      ShowError
-    else begin
+    fGit.ResetLogError;
+    if fGit.Any(cmd, cmdOut)<=0 then
       fGitMgr.UpdateStatus;
-      //if cmdOut<>'' then
-      //  txtDiff.Text := cmdOut;
-    end;
+    txtDiff.Text := fGit.LogError;
   end;
 end;
 
@@ -463,10 +460,10 @@ begin
   mi := TMenuItem(Sender);
   entryArray := MakeMenuItemStagedEntryArray(mi);
 
-  if fGit.Restore(entryArray, true)>0 then
-    ShowError
-  else
+  fGit.ResetLogError;
+  if fGit.Restore(entryArray, true)<=0 then
     fGitMgr.UpdateStatus;
+  txtDiff.Text := fGit.LogError;
 end;
 
 procedure TfrmMain.lblBranchContextPopup(Sender: TObject; MousePos: TPoint;
