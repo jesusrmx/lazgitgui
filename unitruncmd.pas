@@ -87,17 +87,12 @@ type
     fResult: Integer;
     fRunThread: TRunThread;
     fStartDir: string;
-    fTitle: String;
     fAnsiHandler: TAnsiEscapesHandler;
     procedure OnDone(Sender: TObject);
     procedure OnOutput(sender: TObject; var interrupt: boolean);
-    procedure SetCaption(AValue: string);
-    procedure SetTitle(AValue: string);
   public
     property Command: string read fCommand write fCommand;
     property StartDir: string read fStartDir write fStartDir;
-    property Title: string write SetTitle;
-    property Caption: string write SetCaption;
     property Result: Integer read fResult;
   end;
 
@@ -116,8 +111,8 @@ begin
   rf := TfrmRunCommand.Create(Application);
   rf.Command := command;
   rf.StartDir := startdir;
-  rf.Title := title;
-  rf.Caption := caption;
+  rf.lblCaption.Caption := Caption;
+  rf.Caption := title;
   try
     rf.ShowModal;
     result := rf.Result;
@@ -264,7 +259,6 @@ end;
 procedure TfrmRunCommand.FormShow(Sender: TObject);
 begin
   lblResult.Caption := 'Starting command, please wait ....';
-  Caption := fTitle;
   txtOutput.Clear;
   Application.ProcessMessages;
 
@@ -309,11 +303,6 @@ begin
   fConfig.WriteBoolean('CloseOnSuccess', chkCloseOk.Checked, 'RunCommandForm');
 end;
 
-procedure TfrmRunCommand.SetCaption(AValue: string);
-begin
-  lblCaption.Caption := AValue;
-end;
-
 procedure TfrmRunCommand.OnOutput(sender: TObject; var interrupt: boolean);
 var
   thread: TRunThread absolute sender;
@@ -338,11 +327,6 @@ begin
     lblResult.Font.Color := clWhite;
     lblResult.Caption := 'Failed';
   end;
-end;
-
-procedure TfrmRunCommand.SetTitle(AValue: string);
-begin
-  fTitle := AValue;
 end;
 
 end.
