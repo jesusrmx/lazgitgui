@@ -43,6 +43,7 @@ type
   TfrmMain = class(TForm, IObserver)
     actCommit: TAction;
     actFetch: TAction;
+    actInsertBranchName: TAction;
     actRestoreCommitMsg: TAction;
     actNewLog: TAction;
     actPushDialog: TAction;
@@ -101,6 +102,7 @@ type
     txtDiff: TSynEdit;
     procedure actCommitExecute(Sender: TObject);
     procedure actFetchExecute(Sender: TObject);
+    procedure actInsertBranchNameExecute(Sender: TObject);
     procedure actLogExecute(Sender: TObject);
     procedure actNewLogExecute(Sender: TObject);
     procedure actPullExecute(Sender: TObject);
@@ -1185,8 +1187,19 @@ begin
 end;
 
 procedure TfrmMain.actRestoreCommitMsgExecute(Sender: TObject);
+var
+  s: String;
+  i: SizeInt;
 begin
   RestoreCommitMessage;
+  if txtComment.Lines.Count>0 then begin
+    s := txtComment.Lines[0];
+    i := RPos(':', S);
+    if i>0 then begin
+      txtComment.SelStart := i;
+      txtComment.SelLength := Length(s);
+    end;
+  end;
 end;
 
 procedure TfrmMain.btnStopClick(Sender: TObject);
@@ -1202,6 +1215,11 @@ end;
 procedure TfrmMain.actFetchExecute(Sender: TObject);
 begin
   DoFetch;
+end;
+
+procedure TfrmMain.actInsertBranchNameExecute(Sender: TObject);
+begin
+  txtComment.SelText := fGit.Branch + ': ';
 end;
 
 procedure TfrmMain.actLogExecute(Sender: TObject);

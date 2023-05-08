@@ -6,12 +6,14 @@ object frmMain: TfrmMain
   Caption = 'frmMain'
   ClientHeight = 554
   ClientWidth = 973
+  DoubleBuffered = False
   Font.Style = [fsBold]
   Menu = mnuMain
   OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   OnShow = FormShow
+  ParentDoubleBuffered = False
   ShowHint = True
   LCLVersion = '2.3.0.0'
   object panLeft: TPanel
@@ -680,6 +682,9 @@ object frmMain: TfrmMain
           Width = 705
           ClientWidth = 705
           inherited panFiles: TPanel
+            inherited treeFiles: TTreeView
+              OnExpanding = nil
+            end
             inherited panMode: TPanel
               inherited radPatch: TRadioButton
                 Width = 49
@@ -1575,6 +1580,16 @@ object frmMain: TfrmMain
       AutoCheck = True
       Caption = 'NL'
       OnExecute = actNewLogExecute
+    end
+    object actRestoreCommitMsg: TAction
+      Caption = 'Restore Commit Msg'
+      OnExecute = actRestoreCommitMsgExecute
+      ShortCut = 16422
+    end
+    object actInsertBranchName: TAction
+      Caption = 'Insert Branch Name'
+      OnExecute = actInsertBranchNameExecute
+      ShortCut = 16450
     end
   end
   object imgList: TImageList
