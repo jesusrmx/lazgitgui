@@ -44,7 +44,7 @@ var
   withIntervals: boolean = true;
   withInOrder: boolean = true;
   withTopo: boolean = true;
-  withReindex: boolean = true;
+  withReindex: boolean = false;
 
 type
   PIndexDateRecord = ^TIndexDateRecord;
@@ -200,7 +200,7 @@ function GetCacheStr(aOffset:Int64; aSize: Integer; item: TLogItem):string;
 begin
   result := '';
 
-  if withIndexInfo then Add('Index', format('%8d %4d',[aOffset, aSize]));
+  if withIndexInfo then result += format('%8d %4d',[aOffset, aSize]) + SEP;
   result += GetItemStr(item);
 end;
 
@@ -233,12 +233,13 @@ begin
     s := paramstr(i);
     if pos('--', s)=1 then begin
       j := pos('=', s);
-      if j=0 then
-        raise Exception.CreateFmt('Invalid option %s',[s]);
-      if sametext(copy(s, 3, j-3), par) then begin
-        result := Copy(s, j+1, length(s));
-        exit;
+      if j>0 then begin
+        if sametext(copy(s, 3, j-3), par) then begin
+          result := Copy(s, j+1, length(s));
+          exit;
+        end;
       end;
+      //raise Exception.CreateFmt('Invalid option %s',[s]);
     end else if s[1]='-' then begin
       if SameText(copy(s, 2, Length(s)-1), par) then begin
         if i>=paramcount-1 then
@@ -346,51 +347,15 @@ begin
   result := itemB^.Date - itemA^.Date;
 end;
 
-procedure CheckForCorruption(var fIndexStream: TMemorystream; var fCacheStream: TFileStream);
+procedure ReIndex(var fIndexStream: TMemoryStream; var fCacheStream: TFileStream);
 var
-  indxRec: TIndexRecord;
-  Item: TLogItem;
-  i, m: Integer;
-  failed: Boolean;
-  lastSize: Word;
-  dummy, aIndexFile: string;
   ticks: QWord;
   L: TList;
+  lastSize: word;
   idRec: PIndexDateRecord;
+  dummy, aIndexFile: string;
+  i: Integer;
 begin
-  DebugLn('Checking for Corruption');
-  failed := false;
-  i := 0;
-  while fIndexStream.Position<fIndexStream.Size do begin
-    fIndexStream.Read(IndxRec, SIZEOF_INDEX);
-    if IndxRec.offset<fCacheStream.Size then begin
-      fCacheStream.Position := IndxRec.Offset;
-      lastSize := fCacheStream.ReadWord;
-      if IndxRec.size-2<>lastSize then begin
-        DebugLn('Corruption detected at item %d indexOffset=%d cacheOffset=%d expected=%d found=%d',
-          [i, fIndexStream.Position-SIZEOF_INDEX, IndxRec.offset, IndxRec.size-2, lastSize]);
-        failed := true;
-        break;
-      end;
-
-    end else begin
-      DebugLn('Can''t reach item %d offset %d beyond cache size %d',[i, IndxRec.offset, fCacheStream.Size]);
-      failed := true;
-      break;
-    end;
-    inc(i);
-  end;
-
-  if not failed and (fCacheStream.Position + lastSize<>fCacheStream.Size) then begin
-    DebugLn('CacheFile size inconsistency: Offset=%d Size=%d',[fCacheStream.Position, fCacheStream.Size]);
-    failed := true;
-  end;
-
-  if not failed then
-    exit;
-
-  DebugLn('Trying to reconstruct the index');
-
   ticks := GetTickCount64;
   L := TList.Create;
   //  the signature is ok or we wouldnt be here
@@ -405,6 +370,7 @@ begin
     L.Add(idRec);
     fCacheStream.Seek(lastSize - sizeOf(Int64), soFromCurrent);
   end;
+  DebugLn('Last CacheStream.Position=%d found %d indices',[fCacheStream.Position, L.Count]);
   L.Sort(@CompareIndices);
   for i:=0 to L.Count-1 do begin
     idRec := PIndexDateRecord(L[i]);
@@ -416,6 +382,51 @@ begin
   GetFilenames(aIndexFile, dummy);
   fIndexStream.SaveToFile(aIndexFile);
   DebugLn('Reindexig took %d ms',[GetTickCount64 - ticks]);
+end;
+
+function IsCacheCorrupted(var fIndexStream: TMemorystream; var fCacheStream: TFileStream): boolean;
+var
+  indxRec: TIndexRecord;
+  Item: TLogItem;
+  i, m: Integer;
+  lastSize: Word;
+begin
+  DebugLn('Checking for Corruption: Index position=%d',[fIndexStream.Position]);
+  result := false;
+  i := 0;
+  while fIndexStream.Position<fIndexStream.Size do begin
+    fIndexStream.Read(IndxRec, SIZEOF_INDEX);
+    if IndxRec.offset<fCacheStream.Size then begin
+      fCacheStream.Position := IndxRec.Offset;
+      lastSize := fCacheStream.ReadWord;
+      if IndxRec.size-2<>lastSize then begin
+        DebugLn('Corruption detected at item %d indexOffset=%d cacheOffset=%d expected=%d found=%d',
+          [i, fIndexStream.Position-SIZEOF_INDEX, IndxRec.offset, IndxRec.size-2, lastSize]);
+        result := true;
+        break;
+      end;
+
+    end else begin
+      DebugLn('Can''t reach item %d offset %d beyond cache size %d',[i, IndxRec.offset, fCacheStream.Size]);
+      result := true;
+      break;
+    end;
+    inc(i);
+  end;
+
+  // this assumes that fCacheStream.Position will be at the EOF, but that is
+  // almost always wrong. Only the first time fCacheStream is filled it will be ok
+  // if it has received new records the next condition will never met.
+  //if not result and (fCacheStream.Position + lastSize<>fCacheStream.Size) then begin
+  //  DebugLn('CacheFile size inconsistency: Offset=%d Size=%d',[fCacheStream.Position, fCacheStream.Size]);
+  //  result := true;
+  //end;
+
+  if not result then
+    exit;
+
+  DebugLn('Trying to reconstruct the index');
+  ReIndex(fIndexStream, fCacheStream);
 
   fIndexStream.position := 0;
   fCacheStream.Position := 4;
@@ -507,7 +518,13 @@ begin
     Halt(5);
   end;
 
-  CheckForCorruption(fIndexStream, fCacheStream);
+  if not IsCacheCorrupted(fIndexStream, fCacheStream) then begin
+    DebugLn('Not corrupted');
+    if withReindex then begin
+      DebugLn('Reindexing');
+      ReIndex(fIndexStream, fCacheStream);
+    end;
+  end;
 
 
   if withIncOffsets then begin
