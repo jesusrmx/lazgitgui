@@ -43,6 +43,7 @@ type
   TfrmMain = class(TForm, IObserver)
     actCommit: TAction;
     actFetch: TAction;
+    actRestoreCommitMsg: TAction;
     actNewLog: TAction;
     actPushDialog: TAction;
     actLog: TAction;
@@ -107,6 +108,7 @@ type
     procedure actPushExecute(Sender: TObject);
     procedure actQuitExecute(Sender: TObject);
     procedure actRescanExecute(Sender: TObject);
+    procedure actRestoreCommitMsgExecute(Sender: TObject);
     procedure btnStopClick(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure FormCreate(Sender: TObject);
@@ -173,6 +175,8 @@ type
     procedure ShowNewTagForm(commit: string);
     procedure ShowSwitchToTagForm(aTag: string);
     procedure SwitchTo(cmd: string);
+    procedure SaveCommitMessage;
+    procedure RestoreCommitMessage;
   public
 
   end;
@@ -1012,6 +1016,16 @@ begin
   end;
 end;
 
+procedure TfrmMain.SaveCommitMessage;
+begin
+  fConfig.WriteString('CommitMsg', ReplaceEOLs(txtComment.Text, true), fGit.TopLevelDir);
+end;
+
+procedure TfrmMain.RestoreCommitMessage;
+begin
+  txtComment.Text := ReplaceEOLs(fConfig.ReadString('CommitMsg', '', fGit.TopLevelDir), false);
+end;
+
 function OwnerDrawStateToStr(State: TOwnerDrawState): string;
   procedure Add(st: string);
   begin
@@ -1170,6 +1184,11 @@ begin
   fGitMgr.UpdateStatus;
 end;
 
+procedure TfrmMain.actRestoreCommitMsgExecute(Sender: TObject);
+begin
+  RestoreCommitMessage;
+end;
+
 procedure TfrmMain.btnStopClick(Sender: TObject);
 begin
   btnStop.Tag := 1;
@@ -1255,6 +1274,7 @@ begin
   if fGit.Commit(txtComment.Text,'')>0 then
     ShowError
   else begin
+    SaveCommitMessage;
     fGitMgr.ForceTagDescription;
     fGitMgr.UpdateStatus;
     txtDiff.Clear;

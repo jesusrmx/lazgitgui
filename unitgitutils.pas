@@ -61,6 +61,7 @@ type
   procedure ReportTicks(msg:string);
 
   function PosAny(chars: TSetOfChar; s:string): Integer;
+  function ReplaceEOLs(s: string; encode:boolean): string;
 
 implementation
 
@@ -217,6 +218,18 @@ begin
       result := i;
       break;
     end;
+end;
+
+function ReplaceEOLs(s: string; encode: boolean): string;
+begin
+  if encode then begin
+    result := StringReplace(s, #13#10, '&#1310;', [rfReplaceAll]);
+    result := StringReplace(result, #10, '&#10;', [rfReplaceAll]);
+    result := StringReplace(result, #13, '&#13;', [rfReplaceAll]);
+  end;
+    result := StringReplace(s, '&#13;', #13, [rfReplaceAll]);
+    result := StringReplace(result, '&#10', #10, [rfReplaceAll]);
+    result := StringReplace(result, '&#1310', #1310, [rfReplaceAll]);
 end;
 
 end.
