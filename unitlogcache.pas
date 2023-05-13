@@ -224,8 +224,8 @@ begin
   if fGit=nil then
     raise Exception.Create('Setup without git interface');
 
-  fShaStart := fConfig.ReadString('CommitStart', fGit.TopLevelDir);
-  fShaEnd := fConfig.ReadString('CommitEnd', fGit.TopLevelDir);
+  fShaStart := fConfig.ReadString('CommitStart', '', fGit.TopLevelDir);
+  fShaEnd := fConfig.ReadString('CommitEnd', '', fGit.TopLevelDir);
   if (fShaStart<>'') and (fShaEnd<>'') then begin
     // find the corresponding indexes
     fRangeStart := fDb.FindCommitSha(fShaStart);
