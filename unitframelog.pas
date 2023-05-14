@@ -766,7 +766,8 @@ begin
   if fGitMgr<>nil then begin
     fGitMgr.AddObserver(Self);
     fGit := fGitMgr.Git;
-  end;
+  end else
+    fGit := nil;
 end;
 
 procedure TframeLog.ObservedChanged(Sender: TObject; what: Integer; data: PtrInt

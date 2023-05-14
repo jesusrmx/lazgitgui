@@ -1254,9 +1254,11 @@ end;
 
 procedure TfrmMain.FormDestroy(Sender: TObject);
 begin
+  fGit := nil;
+  fGitMgr.RemoveObserver(Self);
   fhlHelper.Free;
-  fGitMgr.RemoveObserver(self);
   frmLog.Clear;
+  frmLog.GitMgr := nil;
   fLogHandler.Free;
   fGitMgr.Free;
 end;
