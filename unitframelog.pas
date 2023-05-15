@@ -62,7 +62,7 @@ uses
   SynHighlighterPas, SynHighlighterXML, Graphics, Forms, Dialogs, Controls,
   Grids, ExtCtrls, ComCtrls, Menus, Types, Clipbrd, ActnList, Buttons, StdCtrls,
   unitgittypes, unitlogcache, unitdbindex, unitgitutils, unitifaces, unitruncmd,
-  unitgitmgr, unitcommitbrowser, unitvfs, unithighlighterhelper;
+  unitgitmgr, unitcommitbrowser, unitvfs, unithighlighterhelper, unitgraphbuild;
 
 const
   GRAPH_LEFT_PADDING          = 12;
@@ -134,6 +134,7 @@ type
     fWithArrows: boolean;
     fCommitBrowser: TCommitBrowser;
     procedure OnContextPopLogClick(Sender: TObject);
+    procedure OnGraphBuilderDone(Sender: TObject);
     procedure OnLogEvent(sender: TObject; thread: TLogThread; event: Integer; var interrupt: boolean);
     procedure OnDeleteTagClick(sender: TObject);
     procedure OnSwitchBranchClick(Sender: TObject);
@@ -607,6 +608,22 @@ begin
   ShowMessage(format('You really got me: %s',[mi.Caption]));
 end;
 
+procedure TframeLog.OnGraphBuilderDone(Sender: TObject);
+var
+  thread: TGraphBuilderThread absolute sender;
+  col: TGridColumn;
+  i: Integer;
+begin
+  fItemIndices := thread.IndexArray;
+  fGraphColumns := thread.MaxColumns;
+
+  col := gridLog.Columns.ColumnByTitle('Graph');
+  i := gridLog.Columns.IndexOf(col);
+  gridLog.Columns[i].Width := GRAPH_LEFT_PADDING + (fGraphColumns-1)*GRAPH_COLUMN_SEPARATOR + GRAPH_RIGHT_PADDING;
+
+  gridLog.Invalidate;
+end;
+
 procedure TframeLog.CopyToClipboard(what: Integer);
 var
   s: String;
@@ -925,12 +942,19 @@ procedure TframeLog.UpdateGridRows;
 var
   col: TGridColumn;
   i: Integer;
+  gBuild: TGraphBuilderThread;
 begin
   gridLog.RowCount := fLogCache.DbIndex.Count + gridLog.FixedRows;
-  fItemIndices := GetItemIndexes(fLogCache.DbIndex, true, fGraphColumns);
+
+  gBuild := TGraphBuilderThread.Create(fLogCache.DbIndex);
+  gBuild.WithColumns := true;
+  gBuild.FreeOnTerminate := true;
+  gBuild.OnTerminate := @OnGraphBuilderDone;
+  gBuild.Start;
+
   col := gridLog.Columns.ColumnByTitle('Graph');
   i := gridLog.Columns.IndexOf(col);
-  gridLog.Columns[i].Width := GRAPH_LEFT_PADDING + (fGraphColumns-1)*GRAPH_COLUMN_SEPARATOR + GRAPH_RIGHT_PADDING;
+  gridLog.Columns[i].Width := GRAPH_LEFT_PADDING + (0-1)*GRAPH_COLUMN_SEPARATOR + GRAPH_RIGHT_PADDING;
 end;
 
 end.
