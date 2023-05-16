@@ -940,8 +940,6 @@ end;
 
 procedure TframeLog.UpdateGridRows;
 var
-  col: TGridColumn;
-  i: Integer;
   gBuild: TGraphBuilderThread;
 begin
   gridLog.RowCount := fLogCache.DbIndex.Count + gridLog.FixedRows;
@@ -951,10 +949,6 @@ begin
   gBuild.FreeOnTerminate := true;
   gBuild.OnTerminate := @OnGraphBuilderDone;
   gBuild.Start;
-
-  col := gridLog.Columns.ColumnByTitle('Graph');
-  i := gridLog.Columns.IndexOf(col);
-  gridLog.Columns[i].Width := GRAPH_LEFT_PADDING + (0-1)*GRAPH_COLUMN_SEPARATOR + GRAPH_RIGHT_PADDING;
 end;
 
 end.
