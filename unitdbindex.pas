@@ -277,13 +277,9 @@ begin
 
   indexOffset := theIndex * SIZEOF_INDEX;
 
-  EnterCriticalSection(fCursorLock);
-  try
-    fIndexStream.Position := indexOffset;
-    fIndexStream.Read(indxRec{%H-}, SIZEOF_INDEX);
-  finally
-    LeaveCriticalSection(fCursorLock);
-  end;
+  
+  fIndexStream.Position := indexOffset;
+  fIndexStream.Read(indxRec{%H-}, SIZEOF_INDEX);
 end;
 
 procedure TDbIndex.CacheBufferFromItem(out aBuf: PChar; out len: word);
@@ -476,42 +472,48 @@ begin
     gblInvalidateCache := false;
   end;
 
-  mode := fmOpenReadWrite + fmShareDenyWrite;
-  if not FileExists(aFileCache) then begin
-    if fReadOnly then
-      raise Exception.CreateFmt('Cache file %s do not exists',[aFileCache]);
-    mode += fmCreate;
-  end;
-  fCacheStream := TFileStream.Create(aFileCache, mode);
-
-  if mode and fmCreate = fmCreate then begin
-    sig := NToBE((PGM_SIGNATURE shl 16) or PGM_VERSION);
-    fCacheStream.WriteDWord(sig);
-  end
-  else begin
-    sig := BeToN(fCacheStream.ReadDWord);
-    aVersion := sig and $FFFF;
-    sig := sig shr 16;
-    if (sig<>PGM_SIGNATURE) or (aVersion<PGM_VERSION) then begin
-      if fReadOnly then
-        raise Exception.CreateFmt('Invalid cache file %s',[aFileCache]);
-      // this is an old cache file, recreate it
-      DeleteFile(aFileIndex);
-      sig := NToBE((PGM_SIGNATURE shl 16) or PGM_VERSION);
-      fCacheStream.position := 0;
-      fCacheStream.WriteDWord(sig);
-      fCacheStream.Size := fCacheStream.Position;
-    end;
-  end;
-
-  if fIndexStream=nil then begin
+  EnterCriticalSection(fCursorLock);
+  try
     mode := fmOpenReadWrite + fmShareDenyWrite;
-    if not FileExists(aFileIndex) then begin
+    if not FileExists(aFileCache) then begin
       if fReadOnly then
-        raise Exception.CreateFmt('Index file %s do not exists',[aFileIndex]);
+        raise Exception.CreateFmt('Cache file %s do not exists',[aFileCache]);
       mode += fmCreate;
     end;
-    fIndexStream := TFileStream.Create(aFileIndex, mode);
+    fCacheStream := TFileStream.Create(aFileCache, mode);
+
+    if mode and fmCreate = fmCreate then begin
+      sig := NToBE((PGM_SIGNATURE shl 16) or PGM_VERSION);
+      fCacheStream.WriteDWord(sig);
+    end
+    else begin
+      sig := BeToN(fCacheStream.ReadDWord);
+      aVersion := sig and $FFFF;
+      sig := sig shr 16;
+      if (sig<>PGM_SIGNATURE) or (aVersion<PGM_VERSION) then begin
+        if fReadOnly then
+          raise Exception.CreateFmt('Invalid cache file %s',[aFileCache]);
+        // this is an old cache file, recreate it
+        DeleteFile(aFileIndex);
+        sig := NToBE((PGM_SIGNATURE shl 16) or PGM_VERSION);
+        fCacheStream.position := 0;
+        fCacheStream.WriteDWord(sig);
+        fCacheStream.Size := fCacheStream.Position;
+      end;
+    end;
+
+    if fIndexStream=nil then begin
+      mode := fmOpenReadWrite + fmShareDenyWrite;
+      if not FileExists(aFileIndex) then begin
+        if fReadOnly then
+          raise Exception.CreateFmt('Index file %s do not exists',[aFileIndex]);
+        mode += fmCreate;
+      end;
+      fIndexStream := TFileStream.Create(aFileIndex, mode);
+    end;
+
+  finally
+    LeaveCriticalSection(fCursorLock);
   end;
 
 end;
@@ -554,7 +556,6 @@ var
   w: word;
   indxRec: TIndexRecord;
 begin
-
   field := 0;
   p := buf;
   {      unix date              commitOID
@@ -639,13 +640,8 @@ begin
         ReallocMem(fBuffer, fMaxBufferSize);
       end;
 
-      EnterCriticalSection(fCursorLock);
-      try
-        fCacheStream.Position := indxRec.offset;
-        fCacheStream.Read(fBuffer^, indxRec.size);
-      finally
-        LeaveCriticalSection(fCursorLock);
-      end;
+      fCacheStream.Position := indxRec.offset;
+      fCacheStream.Read(fBuffer^, indxRec.size);
 
       w := PWord(fBuffer)^;
       if indxRec.Size-2<>w then begin
@@ -653,15 +649,10 @@ begin
         if tryToFix then begin
           // the cache files are corrupt save what seems right, it will be fixed
           // the next time the log is requested.
-          EnterCriticalSection(fCursorLock);
-          try
-            fCacheStream.Size := indxRec.offset;
-            fIndexStream.Size := fIndexStream.Position - SIZEOF_INDEX;
-            FileFlush(fIndexStream.Handle);
-            FileFlush(fCacheStream.Handle);
-          finally
-            LeaveCriticalSection(fCursorLock);
-          end;
+           fCacheStream.Size := indxRec.offset;
+          fIndexStream.Size := fIndexStream.Position - SIZEOF_INDEX;
+          FileFlush(fIndexStream.Handle);
+          FileFlush(fCacheStream.Handle);
         end;
 
         raise Exception.CreateFmt('Inconsistent data at index %d, expected %d found %d',[aIndex, indxRec.Size-2, w]);
@@ -688,10 +679,15 @@ end;
 
 function TDbIndex.LoadItem(aIndex: Integer; unfiltered: boolean): boolean;
 begin
-  result := GetCachedItem(aIndex, unfiltered, true);
-  if result then begin
-    ItemFromCacheBuffer;
-    fLoadedItemIndex := aIndex;
+  EnterCriticalSection(fCursorLock);
+  try
+    result := GetCachedItem(aIndex, unfiltered, true);
+    if result then begin
+      ItemFromCacheBuffer;
+      fLoadedItemIndex := aIndex;
+    end;
+  finally
+    LeaveCriticalSection(fCursorLock);
   end;
 end;
 
