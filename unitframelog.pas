@@ -519,8 +519,10 @@ begin
 
     LOGEVENT_END:
       begin
-        UpdateGridRows;
-        LocateHead;
+        if fLogCache.DbIndex.Updated then begin
+          UpdateGridRows;
+          LocateHead;
+        end;
       end;
 
     LOGEVENT_DONE:

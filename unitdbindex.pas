@@ -101,6 +101,7 @@ type
 
   TDbIndex = class(TMyInterfacedObject, IDbIndex)
   private
+    fUpdated: Boolean;
     fHead: Boolean;
     fMaxBufferSize: Integer;
     fBuffer: Pchar;
@@ -150,6 +151,7 @@ type
     property AcceptingNewRecords: boolean read GetAcceptingNewRecords;
     property MaxRecords: Integer read fMaxRecords write fMaxRecords;
     property Active: boolean read GetActive;
+    property Updated: boolean read fUpdated;
   end;
 
 var
@@ -516,6 +518,7 @@ end;
 
 procedure TDbIndex.ThreadStart(aHead: boolean);
 begin
+  fUpdated := false;
   fOldCount := fIndexStream.Size div SIZEOF_INDEX;
   fOldIndexSize := fIndexStream.Size;
   fOldIndexOffset := fIndexStream.Size;
@@ -528,7 +531,8 @@ var
   records: Integer;
 begin
   records := (fIndexStream.Size - fOldIndexSize) div SIZEOF_INDEX;
-  if (records<>0) then begin
+  fUpdated := (records<>0);
+  if fUpdated then begin
     // there are changes in the index, if they are for 'head' and
     // arent brand new, re-index
     if fHead and (fOldIndexSize>0) then
@@ -676,6 +680,7 @@ end;
 function TDbIndex.LoadItem(aIndex: Integer; unfiltered: boolean): boolean;
 begin
   EnterCriticalSection(fCursorLock);
+  //DebugLnEnter('LoadItem index=%d ThreadId=%d (%s)', [aIndex, ThreadId, BoolToStr(MainThreadID=ThreadId,'Main Thread', 'Other Thread')]);
   try
     result := GetCachedItem(aIndex, unfiltered, true);
     if result then begin
@@ -683,6 +688,7 @@ begin
       fLoadedItemIndex := aIndex;
     end;
   finally
+    //DebugLnExit('TDbIndex.LoadItem DONE ', []);
     LeaveCriticalSection(fCursorLock);
   end;
 end;

@@ -750,6 +750,8 @@ begin
   {$endif}
   {$ENDIF}
 
+  Terminate;
+
 end;
 
 end.
