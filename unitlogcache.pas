@@ -24,6 +24,7 @@ unit unitlogcache;
 
 {$mode ObjFPC}{$H+}
 {$ModeSwitch nestedprocvars}
+{.$define Debug}
 
 {.$define Capture}
 {.$define CaptureChunks}
@@ -260,9 +261,6 @@ var
   interrupt: boolean;
 begin
   if assigned(fOnOutput) then begin
-    {$IFDEF DEBUG}
-    DebugLn('Notifying: %s',[DbgStr(fLine)]);
-    {$ENDIF}
     interrupt := false;
     fOnOutput(Self, interrupt);
     if interrupt then

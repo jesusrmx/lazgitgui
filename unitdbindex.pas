@@ -26,10 +26,6 @@ unit unitdbindex;
 
 {.$define Debug}
 
-{$ifdef Debug}
-{.$define DumpCommitsAndParents}
-{$endif}
-
 interface
 
 uses

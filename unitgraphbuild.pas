@@ -2,10 +2,19 @@ unit unitgraphbuild;
 
 {$mode ObjFPC}{$H+}
 
+{$define Debug}
+
+{$ifdef Debug}
+  {.$define ReportGetParentsMap}
+  {.$define ReportColumns}
+  {.$define ReportItemIndexArray}
+  {.$define ReportGraph}
+{$endif}
+
 interface
 
 uses
-  Classes, SysUtils, unitgittypes, unitgitutils, unitdbindex;
+  Classes, SysUtils, LazLogger, unitgittypes, unitgitutils, unitdbindex;
 
 type
   TColumnSection = record
@@ -108,6 +117,8 @@ implementation
 
 
 {$IFDEF Debug}
+
+{$ifdef ReportColumns}
 procedure ReportColumns(msg:string; columns: TColumnArray);
 var
   col, sec: Integer;
@@ -122,9 +133,10 @@ begin
         DebugLn('  Section %d: tip=%3d first=%3d last=%3d tail=%3d -> count=%3d',[sec, col, head, first, last, tail, count]);
   end;
 end;
+{$endif}
 
-{$ifdef DumpCommitsAndParents}
-procedure ReportCommitsAndParents(parMap: TParentsMap);
+{$ifdef ReportGetParentsMap}
+procedure ReportGetParentsMap(parMap: TParentsMap);
 var
   pmi: PParentsMapItem;
   mind: TIntArray;
@@ -149,24 +161,7 @@ begin
 end;
 {$endif}
 
-function dbgs(lif: TLineItemFlags): string; overload;
-  procedure Add(s:string);
-  begin
-    if result<>'' then result += ' ';
-    result += s;
-  end;
-var
-  i: TLineItemFlag;
-  s: string;
-begin
-  result := '';
-  for i in lif do begin
-    WriteStr(s, i);
-    Add(s);
-  end;
-  //(lifNode, lifToMerge, lifMerge, lifFirst, lifInternal, lifLast,  lifToBorn, lifBorn);
-end;
-
+{$ifdef ReportItemIndexArray}
 procedure ReportItemIndexArray(result: TItemIndexArray);
 var
   i, j, k, n, p: Integer;
@@ -192,8 +187,29 @@ begin
     DebugLn;
   end;
 end;
+{$endif}
 
-procedure ReportResult(items: TItemIndexArray; columns: TColumnArray);
+{$ifdef ReportGraph}
+
+function dbgs(lif: TLineItemFlags): string; overload;
+  procedure Add(s:string);
+  begin
+    if result<>'' then result += ' ';
+    result += s;
+  end;
+var
+  i: TLineItemFlag;
+  s: string;
+begin
+  result := '';
+  for i in lif do begin
+    WriteStr(s, i);
+    Add(s);
+  end;
+  //(lifNode, lifToMerge, lifMerge, lifFirst, lifInternal, lifLast,  lifToBorn, lifBorn);
+end;
+
+procedure ReportGraph(items: TItemIndexArray; columns: TColumnArray);
 var
   i, j, k: Integer;
   s, l: string;
@@ -215,6 +231,7 @@ begin
     DebugLn('%.6d] %s [%s', [i, s, l]);
   end;
 end;
+{$endif}
 
 {$ENDIF}
 
@@ -327,8 +344,8 @@ begin
 
   {$ifdef Debug}
   ReportTicks('GetParentsMap');
-  {$ifdef DumpCommitsAndParents}
-  ReportCommitsAndParents(result);
+  {$ifdef ReportGetParentsMap}
+  ReportGetParentsMap(result);
   {$endif}
   {$endif}
 end;
@@ -552,8 +569,10 @@ begin
 
   {$IFDEF Debug}
   ReportTicks('ColumnsIdexing');
+  {$IFDEF ReportColumns}
   ReportColumns('After columns indexing', columns);
   ReportTicks('ReportingColumnsIdexing');
+  {$ENDIF}
   {$ENDIF}
 end;
 
@@ -591,8 +610,10 @@ begin
 
   {$IFDEF Debug}
   ReportTicks('FindHeadsAndTails');
+  {$ifdef ReportColumns}
   ReportColumns('After FindHeadsAndTails', columns);
   ReportTicks('Reporting Columns after FindHeadsAndTails');
+  {$endif}
   {$ENDIF}
 end;
 
@@ -698,10 +719,12 @@ begin
   fMaxColumns := Length(Columns);
 
   {$IFDEF Debug}
+  {$ifdef ReportItemIndexArray}
   ReportItemIndexArray(fIndexArray);
-
-  //// now the fIndexArray
-  ReportResult(fIndexArray, columns);
+  {$endif}
+  {$ifdef ReportGraph}
+  ReportGraph(fIndexArray, columns);
+  {$endif}
   {$ENDIF}
 
 end;
