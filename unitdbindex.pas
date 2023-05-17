@@ -115,8 +115,8 @@ type
     fOldIndexSize: SizeInt;
     fCacheUpdate: boolean;
     fOldIndexOffset: Int64;
-    fLoadedItemIndex: Integer;
-    fItem: TLogItem;
+    //fLoadedItemIndex: Integer;
+    //fItem: TLogItem;
     fReadOnly: boolean;
     fFilter: TIntArray;
     fCursorLock: TRTLCriticalSection;
@@ -125,27 +125,28 @@ type
     function GetInfo: string;
     //procedure RecoverIndex;
     procedure ReIndex;
-    procedure GetIndexRecord(var aIndex:Integer; out indxRec: TIndexRecord; unfiltered:boolean);
-    procedure CacheBufferFromItem(out aBuf: PChar; out len: word);
-    procedure ItemFromCacheBuffer;
-    procedure ItemFromLogBuffer(aBuf: PChar);
-    procedure DumpItem;
+    function  GetRealIndex(var aIndex:Integer; unfiltered:boolean): Integer;
+    procedure CacheBufferFromItem(const aItem: TLogItem; out aBuf: PChar; out len: word);
+    procedure ItemFromCacheBuffer(buffer: pchar; out aItem: TLogItem);
+    procedure ItemFromLogBuffer(aBuf: PChar; out aItem: TLogItem);
+    procedure DumpItem(aIndex: Integer; var item: TLogItem);
     procedure ThreadStart(aHead: boolean);
     procedure ThreadDone;
     procedure ThreadStore(buf: pchar; size: Integer);
-    function GetCachedItem(aIndex: Integer; unfiltered, tryToFix:boolean): boolean;
+    function  GetCachedItem(aIndex: Integer; unfiltered, tryToFix:boolean; out aItem:TLogItem): boolean;
+    function  ReadIndexBuffer(realIndex:Integer): boolean;
   public
     constructor Create(dir: string);
     destructor Destroy; override;
 
     procedure Open;
-    function LoadItem(aIndex: Integer; unfiltered:boolean=false): boolean;
+    function LoadItem(aIndex: Integer; out aItem: TLogItem; unfiltered:boolean=false): boolean;
     procedure SetFilter(arr: TIntArray);
     procedure TopoSort;
     function FindCommitSha(sha: string; startAt:Integer=-1): Integer;
     function Count(unfiltered: boolean = false): Integer;
 
-    property Item: TLogItem read fItem;
+    //property Item: TLogItem read fItem;
     property Info: string read GetInfo;
     property ReadOnly: boolean read fReadOnly write fReadOnly;
     property AcceptingNewRecords: boolean read GetAcceptingNewRecords;
@@ -240,6 +241,26 @@ begin
   end;
 end;
 
+function TDbIndex.GetRealIndex(var aIndex: Integer; unfiltered: boolean
+  ): Integer;
+begin
+  if unfiltered then begin
+    if aIndex<0 then
+      aIndex := (fIndexStream.Size div SIZEOF_INDEX)-1;
+    result := aIndex;
+  end else
+  if fFilter<>nil then begin
+    if (aIndex<0) or (aIndex>Length(fFilter)-1) then
+      aIndex := Length(fFilter)-1;
+    result := fFilter[aIndex];
+  end else begin
+    if aIndex<0 then
+      // get the oldest item
+      aIndex := Count - 1;
+    result := aIndex;
+  end;
+end;
+
 function TDbIndex.GetFileName(aIndex: Integer): string;
 begin
   result := fDir + BASE_FILENAME;
@@ -250,37 +271,7 @@ begin
   end;
 end;
 
-procedure TDbIndex.GetIndexRecord(var aIndex: Integer; out
-  indxRec: TIndexRecord; unfiltered: boolean);
-var
-  indexOffset: SizeInt;
-  theIndex: Integer;
-begin
-
-  if unfiltered then begin
-    if aIndex<0 then
-      aIndex := (fIndexStream.Size div SIZEOF_INDEX)-1;
-    theIndex := aIndex;
-  end else
-  if fFilter<>nil then begin
-    if (aIndex<0) or (aIndex>Length(fFilter)-1) then
-      aIndex := Length(fFilter)-1;
-    theIndex := fFilter[aIndex];
-  end else begin
-    if aIndex<0 then
-      // get the oldest item
-      aIndex := Count - 1;
-    theIndex := aIndex;
-  end;
-
-  indexOffset := theIndex * SIZEOF_INDEX;
-
-  
-  fIndexStream.Position := indexOffset;
-  fIndexStream.Read(indxRec{%H-}, SIZEOF_INDEX);
-end;
-
-procedure TDbIndex.CacheBufferFromItem(out aBuf: PChar; out len: word);
+procedure TDbIndex.CacheBufferFromItem(const aItem: TLogItem; out aBuf: PChar; out len: word);
 var
   p: pchar;
   rlen: word;
@@ -311,12 +302,12 @@ var
 begin
 
   len := SizeOf(Word);
-  len += SizeOf(fItem.CommiterDate);
-  len += Min(Length(fItem.ParentOID), High(word)) + 1;
-  len += Min(Length(fItem.CommitOID), High(Byte)) + 1;
-  len += Min(Length(fItem.Author), High(Byte)) + 1;
-  len += Min(Length(fItem.Email), High(Byte)) + 1;
-  len += Min(Length(fItem.Subject), High(word)) + 2;
+  len += SizeOf(aItem.CommiterDate);
+  len += Min(Length(aItem.ParentOID), High(word)) + 1;
+  len += Min(Length(aItem.CommitOID), High(Byte)) + 1;
+  len += Min(Length(aItem.Author), High(Byte)) + 1;
+  len += Min(Length(aItem.Email), High(Byte)) + 1;
+  len += Min(Length(aItem.Subject), High(word)) + 2;
 
   GetMem(aBuf, len);
   p := aBuf;
@@ -327,18 +318,18 @@ begin
   inc(p, sizeOf(word));
 
   // store commit date
-  Move(fItem.CommiterDate, p^, SizeOf(fItem.CommiterDate));
-  inc(p, SizeOf(fItem.CommiterDate));
+  Move(aItem.CommiterDate, p^, SizeOf(aItem.CommiterDate));
+  inc(p, SizeOf(aItem.CommiterDate));
 
   // store remaining fields
-  StoreString(fItem.ParentOID, false);
-  StoreString(fItem.CommitOID, true);
-  StoreString(fItem.Author, true);
-  StoreString(fItem.Email, true);
-  StoreString(fItem.Subject, false);
+  StoreString(aItem.ParentOID, false);
+  StoreString(aItem.CommitOID, true);
+  StoreString(aItem.Author, true);
+  StoreString(aItem.Email, true);
+  StoreString(aItem.Subject, false);
 end;
 
-procedure TDbIndex.ItemFromCacheBuffer;
+procedure TDbIndex.ItemFromCacheBuffer(buffer: pchar; out aItem: TLogItem);
 var
   p: pchar;
 
@@ -371,20 +362,17 @@ var
   end;
 
 begin
-
-  Finalize(fItem);
-
-  p := fBuffer;
+  p := buffer;
   inc(p, SizeOf(word));
-  fItem.CommiterDate := NextInt64;
-  fItem.ParentOID := NextWordString;
-  fItem.CommitOID := NextByteString;
-  fItem.Author := NextByteString;
-  fItem.Email := NextByteString;
-  fItem.Subject := NextWordString;
+  aItem.CommiterDate := NextInt64;
+  aItem.ParentOID := NextWordString;
+  aItem.CommitOID := NextByteString;
+  aItem.Author := NextByteString;
+  aItem.Email := NextByteString;
+  aItem.Subject := NextWordString;
 end;
 
-procedure TDbIndex.ItemFromLogBuffer(aBuf: PChar);
+procedure TDbIndex.ItemFromLogBuffer(aBuf: PChar; out aItem: TLogItem);
 var
   p: PChar;
 
@@ -402,33 +390,31 @@ var
 
 begin
 
-  Finalize(fItem);
-
   p := aBuf;
-  fItem.CommiterDate := StrToInt64Def(NextString, 0);
-  fItem.ParentOID := NextString;
-  fItem.CommitOID := NextString;
-  fItem.Author := NextString;
-  fItem.Email := NextString;
-  fItem.Subject := NextString;
+  aItem.CommiterDate := StrToInt64Def(NextString, 0);
+  aItem.ParentOID := NextString;
+  aItem.CommitOID := NextString;
+  aItem.Author := NextString;
+  aItem.Email := NextString;
+  aItem.Subject := NextString;
 
 end;
 
-procedure TDbIndex.DumpItem;
+procedure TDbIndex.DumpItem(aIndex: Integer; var item: TLogItem);
 var
   indxRec: TIndexRecord;
 begin
   DebugLn;
-  DebugLn('          Index: %d of %d',[fLoadedItemIndex, fIndexStream.Size div SIZEOF_INDEX]);
-  DebugLn('    Commit Date: %d (%s)',[fItem.CommiterDate, DateTimeToStr(UnixToDateTime(fItem.CommiterDate))]);
-  DebugLn('     Parent OID: %s',[fItem.ParentOID]);
-  DebugLn('     Commit OID: %s',[fItem.CommitOID]);
-  DebugLn('         Author: %s',[fItem.ParentOID]);
-  DebugLn('          Email: %s',[fItem.Email]);
-  DebugLn('        Subject: %s',[fItem.Subject]);
-  GetIndexRecord(fLoadedItemIndex, indxRec, false);
-  DebugLn('   Cache Offset: %d', [indxRec.offset]);
-  DebugLn('Cache Item Size: %d', [indxRec.size]);
+  DebugLn('          Index: %d of %d',[aIndex, fIndexStream.Size div SIZEOF_INDEX]);
+  DebugLn('    Commit Date: %d (%s)',[item.CommiterDate, DateTimeToStr(UnixToDateTime(item.CommiterDate, false))]);
+  DebugLn('     Parent OID: %s',[item.ParentOID]);
+  DebugLn('     Commit OID: %s',[item.CommitOID]);
+  DebugLn('         Author: %s',[item.ParentOID]);
+  DebugLn('          Email: %s',[item.Email]);
+  DebugLn('        Subject: %s',[item.Subject]);
+  //GetIndexRecord(aIndex, indxRec, false);
+  //DebugLn('   Cache Offset: %d', [indxRec.offset]);
+  //DebugLn('Cache Item Size: %d', [indxRec.size]);
 end;
 
 constructor TDbIndex.Create(dir: string);
@@ -437,7 +423,6 @@ begin
   fDir := IncludeTrailingPathDelimiter(dir);
   fMaxBufferSize := 1024 * 4;
   GetMem(fBuffer, fMaxBufferSize);
-  fLoadedItemIndex := -1;
   InitCriticalSection(fCursorLock);
 end;
 
@@ -446,7 +431,6 @@ begin
   DoneCriticalSection(fCursorLock);
   fIndexStream.Free;
   fCacheStream.Free;
-  Finalize(fItem);
   FreeMem(fBuffer);
   inherited Destroy;
 end;
@@ -622,15 +606,19 @@ begin
   freeMem(tmp);
 end;
 
-function TDbIndex.GetCachedItem(aIndex: Integer; unfiltered, tryToFix: boolean): boolean;
+function TDbIndex.GetCachedItem(aIndex: Integer; unfiltered, tryToFix: boolean;
+  out aItem: TLogItem): boolean;
 var
+  realIndex: Integer;
   indxRec: TIndexRecord;
   w: word;
 begin
   result := (fIndexStream<>nil) and (fIndexStream.Size>0);
   if result then begin
 
-    GetIndexRecord(aIndex, indxRec, unfiltered);
+    realIndex := GetRealIndex(aIndex, unfiltered);
+    fIndexStream.Position := realIndex * SIZEOF_INDEX;
+    fIndexStream.Read(indxRec{%H-}, SIZEOF_INDEX);
 
     result := indxRec.offset + indxRec.size <= fCacheStream.Size ;
     if result then begin
@@ -646,19 +634,45 @@ begin
       w := PWord(fBuffer)^;
       if indxRec.Size-2<>w then begin
 
-        if tryToFix then begin
-          // the cache files are corrupt save what seems right, it will be fixed
-          // the next time the log is requested.
-           fCacheStream.Size := indxRec.offset;
-          fIndexStream.Size := fIndexStream.Position - SIZEOF_INDEX;
-          FileFlush(fIndexStream.Handle);
-          FileFlush(fCacheStream.Handle);
-        end;
+        //if tryToFix then begin
+        //  // the cache files are corrupt save what seems right, it will be fixed
+        //  // the next time the log is requested.
+        //  fCacheStream.Size := indxRec.offset;
+        //  fIndexStream.Size := fIndexStream.Position - SIZEOF_INDEX;
+        //  FileFlush(fIndexStream.Handle);
+        //  FileFlush(fCacheStream.Handle);
+        //end;
 
         raise Exception.CreateFmt('Inconsistent data at index %d, expected %d found %d',[aIndex, indxRec.Size-2, w]);
       end;
 
+      if result then
+        ItemFromCacheBuffer(fBuffer, aItem);
     end;
+
+  end;
+end;
+
+// TODO: this should take a buffer as argument to be reallocated at the real
+//       cache stream record size
+function TDbIndex.ReadIndexBuffer(realIndex: Integer): boolean;
+var
+  indxRec: TIndexRecord;
+begin
+
+  fIndexStream.Position := realIndex * SIZEOF_INDEX;
+  fIndexStream.Read(indxRec{%H-}, SIZEOF_INDEX);
+
+  result := indxRec.offset + indxRec.size <= fCacheStream.Size ;
+  if result then begin
+
+    if indxRec.size>fMaxBufferSize then begin
+      fMaxBufferSize := indxRec.size * 2;
+      ReallocMem(fBuffer, fMaxBufferSize);
+    end;
+
+    fCacheStream.Position := indxRec.offset;
+    fCacheStream.Read(fBuffer^, indxRec.size);
 
   end;
 end;
@@ -677,16 +691,13 @@ begin
     result := fMaxRecords;
 end;
 
-function TDbIndex.LoadItem(aIndex: Integer; unfiltered: boolean): boolean;
+function TDbIndex.LoadItem(aIndex: Integer; out aItem: TLogItem;
+  unfiltered: boolean): boolean;
 begin
   EnterCriticalSection(fCursorLock);
   //DebugLnEnter('LoadItem index=%d ThreadId=%d (%s)', [aIndex, ThreadId, BoolToStr(MainThreadID=ThreadId,'Main Thread', 'Other Thread')]);
   try
-    result := GetCachedItem(aIndex, unfiltered, true);
-    if result then begin
-      ItemFromCacheBuffer;
-      fLoadedItemIndex := aIndex;
-    end;
+    result := GetCachedItem(aIndex, unfiltered, true, aItem);
   finally
     //DebugLnExit('TDbIndex.LoadItem DONE ', []);
     LeaveCriticalSection(fCursorLock);
@@ -890,7 +901,7 @@ end;
 
 function TDbIndex.FindCommitSha(sha: string; startAt: Integer): Integer;
 var
-  i, n, nailLen: Integer;
+  i, aIndex, n, nailLen, realIndex: Integer;
   indexOffset: Int64;
   indxRec: TIndexRecord;
   b: byte;
@@ -909,7 +920,9 @@ begin
     if startAt<0 then startAt := 0;
     for i:=startAt to (FIndexStream.Size div SIZEOF_INDEX)-1 do begin
 
-      if not GetCachedItem(i, true, false) then
+      aIndex := i;
+      realIndex := GetRealIndex(aIndex, true);
+      if not ReadIndexBuffer(realIndex) then
         exit;
 
       p := fBuffer;           // points to the record data

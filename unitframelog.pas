@@ -133,6 +133,7 @@ type
     fRefItems: TRefInfoArray;
     fWithArrows: boolean;
     fCommitBrowser: TCommitBrowser;
+    fCurrentItem: TLogItem;
     procedure OnContextPopLogClick(Sender: TObject);
     procedure OnGraphBuilderDone(Sender: TObject);
     procedure OnLogEvent(sender: TObject; thread: TLogThread; event: Integer; var interrupt: boolean);
@@ -234,6 +235,7 @@ var
   r: TRect;
   db: TDbIndex;
   flags:  TLineItemFlags;
+  aItem: TLogItem;
 begin
   if aRow>=gridLog.FixedRows then begin
     aIndex := aRow - gridLog.FixedRows;
@@ -241,7 +243,7 @@ begin
     if db=nil then begin
       exit;
     end;
-    if db.LoadItem(aIndex) then begin
+    if db.LoadItem(aIndex, aItem) then begin
       x := aRect.Left + 7;
       case gridLog.Columns[aCol].Title.Caption of
         'RecNo':
@@ -314,8 +316,8 @@ begin
 
         'Subject':
           begin
-            s := db.Item.Subject;
-            if (fGit.RefsMap<>nil) and fGit.RefsMap.Find(db.Item.CommitOID, n ) then begin
+            s := aItem.Subject;
+            if (fGit.RefsMap<>nil) and fGit.RefsMap.Find(aItem.CommitOID, n ) then begin
               arr := fGit.RefsMap.Data[n];
 
               for i:=0 to Length(arr)-1 do begin
@@ -359,15 +361,17 @@ begin
 
             end;
           end;
-        'Author': s := db.Item.Author;
-        'SHA1': s := db.Item.CommitOID;
-        'Date': s := IntToStr(db.Item.CommiterDate);
+        'Author': s := aItem.Author;
+        'SHA1': s := aItem.CommitOID;
+        'Date': s := IntToStr(aItem.CommiterDate);
         else  s := '';
       end;
 
       gridLog.Canvas.Brush.Style := bsClear;
       gridLog.Canvas.TextOut(x, aRect.Top, s);
       gridLog.Canvas.Brush.Style := bsSolid;
+
+      finalize(aItem);
     end;
   end;
 end;
@@ -578,7 +582,7 @@ end;
 
 procedure TframeLog.OnCreateTagClick(sender: TObject);
 begin
-  fGitMgr.QueueNewTag(fLogCache.DbIndex.Item.CommitOID);
+  fGitMgr.QueueNewTag(fCurrentItem.CommitOID);
 end;
 
 procedure TframeLog.OnMergeBranchClick(Sender: TObject);
@@ -636,7 +640,7 @@ begin
     COPY_ALL_INFO:
       s := GetAllCommitInfo;
     COPY_SHA:
-      s := fLogCache.DbIndex.Item.CommitOID;
+      s := fCurrentItem.CommitOID;
   end;
 
   if s<>'' then
@@ -660,7 +664,10 @@ end;
 function TframeLog.LocateItemIndex(aIndex: Integer): boolean;
 begin
   result := (aIndex>=0) and (aIndex<fLogCache.DbIndex.Count);
-  result := result and fLogCache.DbIndex.LoadItem(aIndex);
+  if result then begin
+    Finalize(fCurrentItem);
+    result := fLogCache.DbIndex.LoadItem(aIndex, fCurrentItem);
+  end;
 end;
 
 procedure TframeLog.AddMergeBranchMenu;
@@ -676,11 +683,11 @@ var
 
 begin
   headcommit := OIDToQWord(fGit.BranchOID);
-  curCommit := OIDToQWord(fLogCache.DbIndex.Item.CommitOID);
+  curCommit := OIDToQWord(fCurrentItem.CommitOID);
   if (headCommit=curCommit) then
     exit;
 
-  fRefItems := fGit.RefsFilter(fLogCache.DbIndex.Item.CommitOID, @Filter);
+  fRefItems := fGit.RefsFilter(fCurrentItem.CommitOID, @Filter);
   for i := 0 to Length(fRefItems)-1 do begin
     if i=0 then begin
       mi := TMenuItem.Create(Self.Owner);
@@ -714,7 +721,7 @@ var
 
 begin
   headcommit := OIDToQWord(fGit.BranchOID);
-  curCommit := OIDToQWord(fLogCache.DbIndex.Item.CommitOID);
+  curCommit := OIDToQWord(fCurrentItem.CommitOID);
 
   mi := TMenuItem.Create(Self.Owner);
   mi.Caption := '-';
@@ -726,7 +733,7 @@ begin
   mi.Tag := 0;
   popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
 
-  fRefItems := fGit.RefsFilter(fLogCache.DbIndex.Item.CommitOID, @Filter);
+  fRefItems := fGit.RefsFilter(fCurrentItem.CommitOID, @Filter);
   for i := 0 to Length(fRefItems)-1 do begin
 
     mi := TMenuItem.Create(Self.Owner);
@@ -748,6 +755,8 @@ end;
 procedure TframeLog.SetActive(AValue: boolean);
 begin
   if fActive = AValue then Exit;
+
+  Finalize(fCurrentItem);
 
   if not fActive then begin
 
@@ -837,7 +846,8 @@ begin
     fCommitBrowser.ObserverMgr.AddObserver(self);
   end;
 
-  fCommitBrowser.Commit := fLogCache.DbIndex.Item.CommitOID;
+
+  fCommitBrowser.Commit := fCurrentItem.CommitOID;
   aMode := CommitBrowserModeFromGui;
   UpdateCommitBrowser(aMode);
 end;
@@ -909,7 +919,7 @@ var
   dt: TDateTime;
 begin
   result := '';
-  with fLogCache.DbIndex.Item do begin
+  with fCurrentItem do begin
     if (fGit.RefsMap<>nil) and fGit.RefsMap.Find(CommitOID, n ) then begin
       arr := fGit.RefsMap.Data[n];
       for ref in arr do begin

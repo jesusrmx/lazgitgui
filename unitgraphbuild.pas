@@ -272,6 +272,7 @@ var
   pmi, found: PParentsMapItem;
   elements: TParentElementArray;
   lost: TIntArray;
+  aItem: TLogItem;
 begin
 
   // we scan the db from older to newer commits and supposedly the
@@ -290,8 +291,8 @@ begin
   for i:=fDb.Count-1 downto 0 do begin
 
     // load a item whose properties are available through 'Item'
-    fDb.LoadItem(i);
-    with fDb.Item do begin
+    fDb.LoadItem(i, aItem);
+    with aItem do begin
 
       // create a new map item for the Ith element, the key is
       // the current (limited) commit OID. The data is the current
@@ -336,12 +337,13 @@ begin
       end;
 
     end;
+    finalize(aItem);
   end;
 
   // Now that we have processed all db indices, try to find lost parents
   for i := 0 to Length(Lost)-1 do begin
-    fDb.LoadItem(lost[i]);
-    with fDb.Item do begin
+    fDb.LoadItem(lost[i], aItem);
+    with aItem do begin
 
       // Locate the jth map entry corresponding to the lost db index
       if not result.Find(OIDToQWord(CommitOID), j) then
@@ -363,6 +365,7 @@ begin
           end;
         end;
     end;
+    finalize(aItem);
   end;
 
   {$ifdef Debug}
