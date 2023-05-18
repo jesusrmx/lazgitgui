@@ -101,7 +101,6 @@ object frameLog: TframeLog
         Align = alClient
         ReadOnly = True
         RowSelect = True
-        ShowSeparators = False
         TabOrder = 0
         OnExpanding = treeFilesExpanding
         OnSelectionChanged = treeFilesSelectionChanged
