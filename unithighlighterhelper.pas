@@ -33,7 +33,7 @@ uses
   SynHighlighterPas, SynHighlighterXML, SynHighlighterHTML,
   synhighlighterunixshellscript, SynHighlighterCpp, SynHighlighterJScript,
   SynHighlighterLFM, SynHighlighterJava, SynHighlighterCss, SynHighlighterPHP,
-  SynHighlighterIni;
+  SynHighlighterIni, SynHighlighterBat;
 
 type
 
@@ -106,7 +106,7 @@ constructor THighlighterHelper.create;
 begin
   inherited Create;
   fList := TStringList.Create;
-  Register(TSynDiffSyn);
+  Register(TSynDiffSyn, '|*.rej');
   Register(TSynFreePascalSyn, '|*.lpr;*.pp');
   Register(TSynHTMLSyn);
   Register(TSynUNIXShellScriptSyn);
@@ -117,7 +117,8 @@ begin
   Register(TSynCssSyn);
   Register(TSynPHPSyn);
   Register(TSynIniSyn);
-  Register(TSynXMLSyn, '|*.lpi');
+  Register(TSynXMLSyn, '|*.lpi;*.svg;*.plist');
+  Register(TSynBatSyn);
 end;
 
 procedure THighlighterHelper.SetHighlighter(edit: TSynEdit; fileType: string);
