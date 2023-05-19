@@ -95,12 +95,13 @@ object frameLog: TframeLog
       TabOrder = 0
       object treeFiles: TTreeView
         Left = 0
-        Height = 182
-        Top = 20
+        Height = 180
+        Top = 22
         Width = 200
         Align = alClient
         ReadOnly = True
         RowSelect = True
+        ShowSeparators = False
         TabOrder = 0
         OnExpanding = treeFilesExpanding
         OnSelectionChanged = treeFilesSelectionChanged
@@ -108,13 +109,13 @@ object frameLog: TframeLog
       end
       object panMode: TPanel
         Left = 0
-        Height = 20
+        Height = 22
         Top = 0
         Width = 200
         Align = alTop
         AutoSize = True
         BevelOuter = bvNone
-        ClientHeight = 20
+        ClientHeight = 22
         ClientWidth = 200
         TabOrder = 1
         object radPatch: TRadioButton
@@ -122,11 +123,11 @@ object frameLog: TframeLog
           AnchorSideTop.Side = asrCenter
           Left = 0
           Height = 19
-          Top = 1
+          Top = 2
           Width = 48
           Caption = 'Patch'
           Checked = True
-          OnClick = radPatchClick
+          OnMouseUp = radPatchMouseUp
           TabOrder = 0
           TabStop = True
         end
@@ -134,11 +135,18 @@ object frameLog: TframeLog
           AnchorSideTop.Control = radPatch
           Left = 64
           Height = 19
-          Top = 1
+          Top = 2
           Width = 40
           Caption = 'Tree'
-          OnClick = radPatchClick
+          OnMouseUp = radPatchMouseUp
           TabOrder = 1
+        end
+        object btnShowFileHistory: TSpeedButton
+          Left = 120
+          Height = 22
+          Top = 0
+          Width = 23
+          Action = actShowFileHistory
         end
       end
     end
@@ -734,6 +742,10 @@ object frameLog: TframeLog
     object actReload: TAction
       Caption = 'R'
       OnExecute = actReloadExecute
+    end
+    object actShowFileHistory: TAction
+      Caption = 'FH'
+      OnExecute = actShowFileHistoryExecute
     end
   end
 end

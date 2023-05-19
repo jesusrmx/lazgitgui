@@ -83,6 +83,7 @@ type
 
   TframeLog = class(TFrame, IObserver)
     actGotoHead: TAction;
+    actShowFileHistory: TAction;
     actReload: TAction;
     actShowChanges: TAction;
     actLstLog: TActionList;
@@ -102,6 +103,7 @@ type
     btnReload: TSpeedButton;
     radTree: TRadioButton;
     radPatch: TRadioButton;
+    btnShowFileHistory: TSpeedButton;
     splitChanges: TSplitter;
     Splitter2: TSplitter;
     treeFiles: TTreeView;
@@ -109,6 +111,7 @@ type
     procedure actGotoHeadExecute(Sender: TObject);
     procedure actReloadExecute(Sender: TObject);
     procedure actShowChangesExecute(Sender: TObject);
+    procedure actShowFileHistoryExecute(Sender: TObject);
     procedure gridLogContextPopup(Sender: TObject; MousePos: TPoint;
       var Handled: Boolean);
     procedure gridLogDrawCell(Sender: TObject; aCol, aRow: Integer;
@@ -116,7 +119,8 @@ type
     procedure gridLogSelection(Sender: TObject; aCol, aRow: Integer);
     procedure MenuItem2Click(Sender: TObject);
     procedure MenuItem3Click(Sender: TObject);
-    procedure radPatchClick(Sender: TObject);
+    procedure radPatchMouseUp(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
     procedure treeFilesExpanding(Sender: TObject; Node: TTreeNode;
       var AllowExpansion: Boolean);
     procedure treeFilesSelectionChanged(Sender: TObject);
@@ -128,6 +132,7 @@ type
     fhlHelper: THighlighterHelper;
     fItemIndices: TItemIndexArray;
     fLogCache: TLogCache;
+    fOldViewerText: RawByteString;
     fOnLogCacheEvent: TLogThreadEvent;
     fGraphColumns: Integer;
     fRefItems: TRefInfoArray;
@@ -158,6 +163,7 @@ type
     function  CommitBrowserModeFromGui:TCommitBrowserMode;
     function  GetAllCommitInfo: string;
     procedure CreateDummyDirNodeClass(Sender: TCustomTreeView; var NodeClass: TTreeNodeClass);
+    procedure UpdateMode;
   public
     procedure Clear;
     procedure UpdateGridRows;
@@ -433,6 +439,45 @@ begin
     HideChanges;
 end;
 
+procedure TframeLog.actShowFileHistoryExecute(Sender: TObject);
+var
+  node: TTreeNode;
+  info: PInfoNode;
+  aFile: string;
+  isComments: Boolean;
+begin
+  node := treeFiles.Selected;
+  if (node=nil) or (node.Data=nil) then begin
+    txtViewer.Clear;
+    exit;
+  end;
+
+  info := PInfoNode(Node.Data);
+  isComments := ((fCommitBrowser.Mode=cbmPatch) and (node.Text=COMMITBROWSER_COMMENTS_TEXT));
+
+  if (fCommitBrowser.Mode=cbmPatch) and (btnShowFileHistory.Tag=0) then begin
+    // we are in 'patch' mode and is the first time btnShowFileHistory is clicked
+    // remember the current diff text (to avoid reload and processing it again later)
+    fOldViewerText := txtViewer.Text;
+    btnShowFileHistory.Tag := 1; // this means fOldViewerText is valid and active
+  end else
+    btnShowFileHistory.Tag := 0;
+
+  if isComments or (info^.fileType='tree') then begin
+    txtViewer.Text := 'No history is available for ' + QuotedStr(Node.GetTextPath);
+    treeFiles.Selected := nil;
+    exit;
+  end;
+
+  if fCommitBrowser.Mode=cbmPatch then
+    aFile := node.Text
+  else
+    aFile := node.GetTextPath;
+
+  txtViewer.Text := 'will show the ' + aFile +' history';
+  treeFiles.Selected := nil;
+end;
+
 procedure TframeLog.MenuItem2Click(Sender: TObject);
 begin
   CopyToClipboard(COPY_ALL_INFO);
@@ -443,12 +488,11 @@ begin
   CopyToClipboard(COPY_SHA)
 end;
 
-procedure TframeLog.radPatchClick(Sender: TObject);
-var
-  amode: TCommitBrowserMode;
+procedure TframeLog.radPatchMouseUp(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
 begin
-  aMode := CommitBrowserModeFromGui;
-  UpdateCommitBrowser(aMode);
+  if button=mbLeft then
+    UpdateMode;
 end;
 
 procedure TframeLog.treeFilesExpanding(Sender: TObject; Node: TTreeNode;
@@ -487,9 +531,15 @@ begin
   node := treeFiles.Selected;
   if node<>nil then begin
     info := PInfoNode(Node.Data);
-    if fCommitBrowser.Mode=cbmPatch then
+    if fCommitBrowser.Mode=cbmPatch then begin
+      if btnShowFileHistory.Tag=1 then begin
+        // btn file history was previously clicked, we saved diff changes
+        // recover it.
+        txtViewer.Text := fOldViewerText;
+        btnShowFileHistory.Tag := 0;
+      end;
       txtViewer.TopLine := info^.line
-    else
+    end else
     if info<>nil then begin
       isTree := info^.filetype='tree';
       fhlHelper.SetHighlighter(txtViewer, node.Text);
@@ -942,6 +992,14 @@ procedure TframeLog.CreateDummyDirNodeClass(Sender: TCustomTreeView;
   var NodeClass: TTreeNodeClass);
 begin
   NodeClass := TDummyDirNode;
+end;
+
+procedure TframeLog.UpdateMode;
+var
+  amode: TCommitBrowserMode;
+begin
+  aMode := CommitBrowserModeFromGui;
+  UpdateCommitBrowser(aMode);
 end;
 
 procedure TframeLog.Clear;

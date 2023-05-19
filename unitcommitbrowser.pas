@@ -44,6 +44,8 @@ uses
 const
   COMMITBROWSER_EVENT_RELOAD    =  20;
 
+  COMMITBROWSER_COMMENTS_TEXT   = 'comments';
+
 type
 
   TCommitBrowserMode = (cbmPatch, cbmTree);
@@ -200,7 +202,7 @@ begin
     New(Info);
     info^.line := 0;
     //info^.Name := 'comments';
-    fVfs.AddPath('comments');
+    fVfs.AddPath(COMMITBROWSER_COMMENTS_TEXT);
 
     for i:=0 to fFileDiff.Count-1 do begin
       s := fFileDiff[i];
