@@ -50,6 +50,7 @@ begin
   end;
 
   DebugLogger.LogName := aFile;
+  DebugLogger.Init;
 end;
 
 end.
