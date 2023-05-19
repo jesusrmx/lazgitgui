@@ -682,15 +682,9 @@ object frmMain: TfrmMain
           Width = 705
           ClientWidth = 705
           inherited panFiles: TPanel
-            inherited treeFiles: TTreeView
-              OnExpanding = nil
-            end
             inherited panMode: TPanel
               inherited radPatch: TRadioButton
-                Width = 49
-              end
-              inherited radTree: TRadioButton
-                Width = 44
+                Width = 57
               end
             end
           end
