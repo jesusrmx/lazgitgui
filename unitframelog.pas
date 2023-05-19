@@ -163,7 +163,7 @@ type
     function  CommitBrowserModeFromGui:TCommitBrowserMode;
     function  GetAllCommitInfo: string;
     procedure CreateDummyDirNodeClass(Sender: TCustomTreeView; var NodeClass: TTreeNodeClass);
-    procedure UpdateMode;
+    procedure UpdateMode(Data: PtrInt);
   public
     procedure Clear;
     procedure UpdateGridRows;
@@ -492,7 +492,7 @@ procedure TframeLog.radPatchMouseUp(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
 begin
   if button=mbLeft then
-    UpdateMode;
+    Application.QueueAsyncCall(@UpdateMode, 0);
 end;
 
 procedure TframeLog.treeFilesExpanding(Sender: TObject; Node: TTreeNode;
@@ -994,7 +994,7 @@ begin
   NodeClass := TDummyDirNode;
 end;
 
-procedure TframeLog.UpdateMode;
+procedure TframeLog.UpdateMode(Data: PtrInt);
 var
   amode: TCommitBrowserMode;
 begin
