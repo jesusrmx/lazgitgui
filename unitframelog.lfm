@@ -101,7 +101,6 @@ object frameLog: TframeLog
         Align = alClient
         ReadOnly = True
         RowSelect = True
-        ShowSeparators = False
         TabOrder = 0
         OnExpanding = treeFilesExpanding
         OnSelectionChanged = treeFilesSelectionChanged
@@ -122,9 +121,9 @@ object frameLog: TframeLog
           AnchorSideTop.Control = panMode
           AnchorSideTop.Side = asrCenter
           Left = 0
-          Height = 19
-          Top = 2
-          Width = 48
+          Height = 21
+          Top = 1
+          Width = 54
           Caption = 'Patch'
           Checked = True
           OnMouseUp = radPatchMouseUp
@@ -134,9 +133,9 @@ object frameLog: TframeLog
         object radTree: TRadioButton
           AnchorSideTop.Control = radPatch
           Left = 64
-          Height = 19
-          Top = 2
-          Width = 40
+          Height = 21
+          Top = 1
+          Width = 48
           Caption = 'Tree'
           OnMouseUp = radPatchMouseUp
           TabOrder = 1
