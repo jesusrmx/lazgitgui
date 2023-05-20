@@ -164,6 +164,7 @@ type
     function  GetAllCommitInfo: string;
     procedure CreateDummyDirNodeClass(Sender: TCustomTreeView; var NodeClass: TTreeNodeClass);
     procedure UpdateMode(Data: PtrInt);
+    procedure ShowFileHistory(aFile: string);
   public
     procedure Clear;
     procedure UpdateGridRows;
@@ -463,9 +464,9 @@ begin
   end else
     btnShowFileHistory.Tag := 0;
 
+  treeFiles.Selected := nil;
   if isComments or (info^.fileType='tree') then begin
     txtViewer.Text := 'No history is available for ' + QuotedStr(Node.GetTextPath);
-    treeFiles.Selected := nil;
     exit;
   end;
 
@@ -474,8 +475,7 @@ begin
   else
     aFile := node.GetTextPath;
 
-  txtViewer.Text := 'will show the ' + aFile +' history';
-  treeFiles.Selected := nil;
+  ShowFileHistory(aFile);
 end;
 
 procedure TframeLog.MenuItem2Click(Sender: TObject);
@@ -1000,6 +1000,13 @@ var
 begin
   aMode := CommitBrowserModeFromGui;
   UpdateCommitBrowser(aMode);
+end;
+
+procedure TframeLog.ShowFileHistory(aFile: string);
+begin
+  // TODO: this should go to an external window
+  fhlHelper.SetHighlighter(txtViewer, 'x.diff');
+  fGit.Log('--follow -p -- ' + aFile, txtViewer.Lines);
 end;
 
 procedure TframeLog.Clear;

@@ -49,6 +49,7 @@ type
     function Commit(msg, opts: string): Integer;
     function Diff(entry: PFileEntry; Unstaged:boolean; Lines:TStrings): Integer;
     function Show(obj: string; lines: TStrings): Integer;
+    function Log(opts: string; Lines:TStrings): Integer;
     //
     function GetBranch: string;
     function GetBranchOID: string;

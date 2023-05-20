@@ -106,7 +106,7 @@ type
     function OpenDir(aDir: string): Integer;
     function Commit(msg, opts: string): Integer;
     function Push(repo, opts: string; callback:TOutputEvent): Integer;
-    function Log(opts: string; callback:TOutputEvent): Integer;
+    function Log(opts: string; Lines:TStrings): Integer;
     function Any(cmd: string; out cmdout:RawByteString): Integer;
     function Tag(tagName, tagCommit:string; annotated:boolean; tagMsg:string): Integer;
     function DeleteTag(tagName: string): Integer;
@@ -874,12 +874,20 @@ begin
   result := cmdLine.RunProcess(fGitCommand + cmd, fTopLevelDir, callback);
 end;
 
-function TGit.Log(opts: string; callback: TOutputEvent): Integer;
+function TGit.Log(opts: string; Lines:TStrings): Integer;
 var
-  cmd: string;
+  M: TMemoryStream;
 begin
-  cmd := ' log '+opts;
-  result := cmdLine.RunProcess(fGitCommand + cmd, fTopLevelDir, callback);
+  M := TMemoryStream.Create;
+  try
+    result := cmdLine.RunProcess(fGitCommand + ' log ' + opts, fTopLevelDir, M);
+    if M.Size>0 then begin
+      M.Position := 0;
+      lines.LoadFromStream(M);
+    end;
+  finally
+    M.Free;
+  end;
 end;
 
 function TGit.Any(cmd: string; out cmdout: RawByteString): Integer;
