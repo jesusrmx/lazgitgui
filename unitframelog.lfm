@@ -101,6 +101,7 @@ object frameLog: TframeLog
         Align = alClient
         ReadOnly = True
         RowSelect = True
+        ShowSeparators = False
         TabOrder = 0
         OnExpanding = treeFilesExpanding
         OnSelectionChanged = treeFilesSelectionChanged
@@ -120,10 +121,11 @@ object frameLog: TframeLog
         object radPatch: TRadioButton
           AnchorSideTop.Control = panMode
           AnchorSideTop.Side = asrCenter
-          Left = 0
-          Height = 21
-          Top = 1
-          Width = 54
+          Left = 5
+          Height = 18
+          Top = 2
+          Width = 59
+          BorderSpacing.Left = 5
           Caption = 'Patch'
           Checked = True
           OnMouseUp = radPatchMouseUp
@@ -132,20 +134,25 @@ object frameLog: TframeLog
         end
         object radTree: TRadioButton
           AnchorSideTop.Control = radPatch
-          Left = 64
-          Height = 21
-          Top = 1
-          Width = 48
+          Left = 69
+          Height = 18
+          Top = 2
+          Width = 51
           Caption = 'Tree'
           OnMouseUp = radPatchMouseUp
           TabOrder = 1
         end
         object btnShowFileHistory: TSpeedButton
-          Left = 120
+          AnchorSideRight.Control = panMode
+          AnchorSideRight.Side = asrBottom
+          Left = 172
           Height = 22
           Top = 0
           Width = 23
           Action = actShowFileHistory
+          Anchors = [akTop, akRight]
+          BorderSpacing.Right = 5
+          Flat = True
         end
       end
     end
