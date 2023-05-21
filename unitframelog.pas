@@ -449,17 +449,10 @@ var
   node: TTreeNode;
   info: PInfoNode;
   aFile: string;
-  isComments: Boolean;
+  isInvalid: Boolean;
 begin
   node := treeFiles.Selected;
-  if (node=nil) or (node.Data=nil) then begin
-    txtViewer.Clear;
-    exit;
-  end;
-
-  info := PInfoNode(Node.Data);
-  isComments := ((fCommitBrowser.Mode=cbmPatch) and (node.Text=COMMITBROWSER_COMMENTS_TEXT));
-
+  isInvalid := (node=nil) or (node.Data=nil);
   if (fCommitBrowser.Mode=cbmPatch) and (btnShowFileHistory.Tag=0) then begin
     // we are in 'patch' mode and is the first time btnShowFileHistory is clicked
     // remember the current diff text (to avoid reload and processing it again later)
@@ -468,9 +461,18 @@ begin
   end else
     btnShowFileHistory.Tag := 0;
 
+  if isInvalid then
+    aFile := 'unselected'
+  else begin
+    isInvalid := ((fCommitBrowser.Mode=cbmPatch) and (node.Text=COMMITBROWSER_COMMENTS_TEXT));
+    info := PInfoNode(Node.Data);
+    isInvalid := isInvalid or (info^.fileType='tree');
+    aFile := Node.GetTextPath;
+  end;
+
   treeFiles.Selected := nil;
-  if isComments or (info^.fileType='tree') then begin
-    txtViewer.Text := 'No history is available for ' + QuotedStr(Node.GetTextPath);
+  if isInvalid  then begin
+    txtViewer.Text := 'No history is available for ' + QuotedStr(aFile);
     exit;
   end;
 
