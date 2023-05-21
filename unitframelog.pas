@@ -244,6 +244,10 @@ var
   flags:  TLineItemFlags;
   aItem: TLogItem;
 begin
+
+  if fGitMgr=nil then
+    exit;
+
   if aRow>=gridLog.FixedRows then begin
     aIndex := aRow - gridLog.FixedRows;
     db := fLogCache.DbIndex;
