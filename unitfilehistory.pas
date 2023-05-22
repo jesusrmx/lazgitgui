@@ -36,13 +36,14 @@ type
     fGitMgr: TGitMgr;
     fhlHelper: THighlighterHelper;
     fHistory: array of THistoryItem;
-    procedure LoadFilePath(Data: PtrInt);
+    procedure SetFilePath(AValue: string);
     procedure SetGitMgr(AValue: TGitMgr);
     procedure ObservedChanged(Sender:TObject; what: Integer; data: PtrInt);
+    procedure SetHlHelper(AValue: THighlighterHelper);
   public
-    property FilePath: string read fFilePath write fFilePath;
+    property FilePath: string read fFilePath write SetFilePath;
     property GitMgr: TGitMgr read fGitMgr write SetGitMgr;
-    property HlHelper: THighlighterHelper read fhlHelper write fhlHelper;
+    property HlHelper: THighlighterHelper read fhlHelper write SetHlHelper;
   end;
 
 var
@@ -76,7 +77,6 @@ procedure TfrmFileHistory.FormShow(Sender: TObject);
 begin
   fConfig.ReadWindow(Self, 'frmFileHistory', SECTION_GEOMETRY);
   fConfig.ReadInteger('frmFileHistory.grid.height', grid.Height, SECTION_GEOMETRY);
-  Application.QueueAsyncCall(@LoadFilePath, 0);
 end;
 
 procedure TfrmFileHistory.gridDrawCell(Sender: TObject; aCol, aRow: Integer;
@@ -102,21 +102,23 @@ begin
     fGit := nil;
 end;
 
-procedure TfrmFileHistory.LoadFilePath(Data: PtrInt);
+procedure TfrmFileHistory.SetFilePath(AValue: string);
 var
   L: TStringList;
 begin
+  if fFilePath = AValue then Exit;
+  fFilePath := AValue;
+
   Caption := 'History of ' + fFilePath;
-  fhlHelper.SetHighlighter(txtDiff, 'x.diff');
   L := TStringList.Create;
   try
     // parse this: .....
-    fGit.Log('git log --follow --stat -- ' + fFilePath, L);
+    fGit.Log('--follow --stat -- ' + fFilePath, L);
+
     txtDiff.Lines.Assign(L);
   finally
     L.Free;
   end;
-
 end;
 
 procedure TfrmFileHistory.ObservedChanged(Sender: TObject; what: Integer;
@@ -129,6 +131,14 @@ begin
       end;
   end;
 
+end;
+
+procedure TfrmFileHistory.SetHlHelper(AValue: THighlighterHelper);
+begin
+  if fhlHelper = AValue then Exit;
+  fhlHelper := AValue;
+  if fhlHelper<>nil then
+    fhlHelper.SetHighlighter(txtDiff, 'x.diff');
 end;
 
 end.
