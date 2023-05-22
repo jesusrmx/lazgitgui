@@ -11,6 +11,13 @@ uses
 
 type
 
+  THistoryItem = record
+    CommiterDate: Int64;
+    CommitOID,
+    Author,
+    Subject: RawByteString;
+  end;
+
   { TfrmFileHistory }
 
   TfrmFileHistory = class(TForm, IObserver)
@@ -28,6 +35,7 @@ type
     fGit: IGit;
     fGitMgr: TGitMgr;
     fhlHelper: THighlighterHelper;
+    fHistory: array of THistoryItem;
     procedure LoadFilePath(Data: PtrInt);
     procedure SetGitMgr(AValue: TGitMgr);
     procedure ObservedChanged(Sender:TObject; what: Integer; data: PtrInt);
@@ -95,10 +103,20 @@ begin
 end;
 
 procedure TfrmFileHistory.LoadFilePath(Data: PtrInt);
+var
+  L: TStringList;
 begin
   Caption := 'History of ' + fFilePath;
   fhlHelper.SetHighlighter(txtDiff, 'x.diff');
-  fGit.Log('--follow -p -- ' + fFilePath, txtDiff.Lines);
+  L := TStringList.Create;
+  try
+    // parse this: .....
+    fGit.Log('git log --follow --stat -- ' + fFilePath, L);
+    txtDiff.Lines.Assign(L);
+  finally
+    L.Free;
+  end;
+
 end;
 
 procedure TfrmFileHistory.ObservedChanged(Sender: TObject; what: Integer;

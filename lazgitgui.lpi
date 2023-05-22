@@ -159,6 +159,7 @@
         <Filename Value="unitfilehistory.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="frmFileHistory"/>
+        <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
       </Unit>
     </Units>
