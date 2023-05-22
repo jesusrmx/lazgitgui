@@ -62,7 +62,8 @@ uses
   SynHighlighterPas, SynHighlighterXML, Graphics, Forms, Dialogs, Controls,
   Grids, ExtCtrls, ComCtrls, Menus, Types, Clipbrd, ActnList, Buttons, StdCtrls,
   unitgittypes, unitlogcache, unitdbindex, unitgitutils, unitifaces, unitruncmd,
-  unitgitmgr, unitcommitbrowser, unitvfs, unithighlighterhelper, unitgraphbuild;
+  unitgitmgr, unitcommitbrowser, unitvfs, unithighlighterhelper, unitgraphbuild,
+  unitfilehistory;
 
 const
   GRAPH_LEFT_PADDING          = 12;
@@ -132,7 +133,6 @@ type
     fhlHelper: THighlighterHelper;
     fItemIndices: TItemIndexArray;
     fLogCache: TLogCache;
-    fOldViewerText: RawByteString;
     fOnLogCacheEvent: TLogThreadEvent;
     fGraphColumns: Integer;
     fRefItems: TRefInfoArray;
@@ -164,7 +164,6 @@ type
     function  GetAllCommitInfo: string;
     procedure CreateDummyDirNodeClass(Sender: TCustomTreeView; var NodeClass: TTreeNodeClass);
     procedure UpdateMode(Data: PtrInt);
-    procedure ShowFileHistory(aFile: string);
   public
     procedure Clear;
     procedure UpdateGridRows;
@@ -447,41 +446,21 @@ end;
 procedure TframeLog.actShowFileHistoryExecute(Sender: TObject);
 var
   node: TTreeNode;
-  info: PInfoNode;
   aFile: string;
-  isInvalid: Boolean;
+  f: TfrmFileHistory;
 begin
   node := treeFiles.Selected;
-  isInvalid := (node=nil) or (node.Data=nil);
-  if (fCommitBrowser.Mode=cbmPatch) and (btnShowFileHistory.Tag=0) then begin
-    // we are in 'patch' mode and is the first time btnShowFileHistory is clicked
-    // remember the current diff text (to avoid reload and processing it again later)
-    fOldViewerText := txtViewer.Text;
-    btnShowFileHistory.Tag := 1; // this means fOldViewerText is valid and active
-  end else
-    btnShowFileHistory.Tag := 0;
-
-  if isInvalid then
-    aFile := 'unselected'
-  else begin
-    isInvalid := ((fCommitBrowser.Mode=cbmPatch) and (node.Text=COMMITBROWSER_COMMENTS_TEXT));
-    info := PInfoNode(Node.Data);
-    isInvalid := isInvalid or (info^.fileType='tree');
-    aFile := Node.GetTextPath;
-  end;
-
-  treeFiles.Selected := nil;
-  if isInvalid  then begin
-    txtViewer.Text := 'No history is available for ' + QuotedStr(aFile);
-    exit;
-  end;
 
   if fCommitBrowser.Mode=cbmPatch then
     aFile := node.Text
   else
     aFile := node.GetTextPath;
 
-  ShowFileHistory(aFile);
+  f := TfrmFileHistory.Create(Application);
+  f.GitMgr := fGitMgr;
+  f.HlHelper := fhlHelper;
+  f.FilePath := aFile;
+  f.Show;
 end;
 
 procedure TframeLog.MenuItem2Click(Sender: TObject);
@@ -536,14 +515,10 @@ var
 begin
   node := treeFiles.Selected;
   if node<>nil then begin
+    isTree := true;
     info := PInfoNode(Node.Data);
     if fCommitBrowser.Mode=cbmPatch then begin
-      if btnShowFileHistory.Tag=1 then begin
-        // btn file history was previously clicked, we saved diff changes
-        // recover it.
-        txtViewer.Text := fOldViewerText;
-        btnShowFileHistory.Tag := 0;
-      end;
+      isTree := node.GetPrevSibling=nil;
       txtViewer.TopLine := info^.line
     end else
     if info<>nil then begin
@@ -555,6 +530,7 @@ begin
         txtViewer.Lines.Delete(0);
       end;
     end;
+    actShowFileHistory.Enabled := not isTree;
   end;
 end;
 
@@ -1006,13 +982,6 @@ var
 begin
   aMode := CommitBrowserModeFromGui;
   UpdateCommitBrowser(aMode);
-end;
-
-procedure TframeLog.ShowFileHistory(aFile: string);
-begin
-  // TODO: this should go to an external window
-  fhlHelper.SetHighlighter(txtViewer, 'x.diff');
-  fGit.Log('--follow -p -- ' + aFile, txtViewer.Lines);
 end;
 
 procedure TframeLog.Clear;
