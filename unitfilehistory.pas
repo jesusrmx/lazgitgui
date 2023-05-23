@@ -32,17 +32,20 @@ type
     procedure FormShow(Sender: TObject);
     procedure gridDrawCell(Sender: TObject; aCol, aRow: Integer; aRect: TRect;
       aState: TGridDrawState);
+    procedure gridSelection(Sender: TObject; aCol, aRow: Integer);
   private
     fFilePath: string;
     fGit: IGit;
     fGitMgr: TGitMgr;
     fhlHelper: THighlighterHelper;
     fHistory: array of THistoryItem;
+    fLastRow: Integer;
     procedure ProcessFilePath;
     procedure SetFilePath(AValue: string);
     procedure SetGitMgr(AValue: TGitMgr);
     procedure ObservedChanged(Sender:TObject; what: Integer; data: PtrInt);
     procedure SetHlHelper(AValue: THighlighterHelper);
+    procedure DoRowSelection(aRow: Integer);
   public
     property FilePath: string read fFilePath write SetFilePath;
     property GitMgr: TGitMgr read fGitMgr write SetGitMgr;
@@ -84,9 +87,28 @@ end;
 
 procedure TfrmFileHistory.gridDrawCell(Sender: TObject; aCol, aRow: Integer;
   aRect: TRect; aState: TGridDrawState);
+var
+  s: RawByteString;
+  aIndex, x: Integer;
 begin
   if (fGitMgr=nil) or (aRow<grid.FixedRows) then
     exit;
+  aIndex := aRow - grid.FixedRows;
+  x := aRect.Left + 7;
+  case grid.Columns[aCol].Title.Caption of
+    'Date':     s := fHistory[aIndex].Date;
+    'Author':   s := fHistory[aIndex].Author;
+    'Subject':  s := fHistory[aIndex].Subject;
+    'Commit':   s := fHistory[aIndex].CommitOID;
+  end;
+  grid.Canvas.Brush.Style := bsClear;
+  grid.Canvas.TextOut(x, aRect.Top, s);
+  grid.Canvas.Brush.Style := bsSolid;
+end;
+
+procedure TfrmFileHistory.gridSelection(Sender: TObject; aCol, aRow: Integer);
+begin
+  DoRowSelection(aRow);
 end;
 
 procedure TfrmFileHistory.SetGitMgr(AValue: TGitMgr);
@@ -134,12 +156,15 @@ var
     SetString(Result, start, len);
   end;
 
-  function AdvanceLine: boolean;
+  function AdvanceLine(findEOL:boolean=true): boolean;
   begin
     p := n + 1;
-    while (p^ in [#10, #13]) do
+    while (p<t) and (p^ in [#10, #13]) do
       inc(p);
-    result := NextEOL;
+    if findEOL then
+      result := NextEOL
+    else
+      result := true;
   end;
 
 begin
@@ -193,25 +218,37 @@ begin
         if p+1=n then break;
       end;
 
+      q := strpos(p, '|');
+      if q=nil then break;
 
-      //if s='' then
-      //  item.Flags := [hfChange]
-      //else begin
-      //  if pos(' rename', s)=1 then Include(item.Flags, hfRename) else
-      //  if pos(' delete', s)=1 then Include(item.Flags, hfDelete) else
-      //  if pos(' create', s)=1 then Include(item.Flags, hfCreate);
-      //end;
+      (q-1)^ := #0;
+      q := strpos(p, '=>');
+      if q<>nil then
+        p := q + 2;
+      item.Filename := Trim(GetString(p, strlen(p)));
+      if not AdvanceLine then break;
+
+      // skip line 'x file changed, y insertions, z deletions
+      if not AdvanceLine(false) then break;
+
+      if strlcomp(p, ' rename', 7)=0 then Include(item.flags, hfRename) else
+      if strlcomp(p, ' delete', 7)=0 then Include(item.flags, hfDelete) else
+      if strlcomp(p, ' copy', 5)=0   then Include(item.flags, hfCopy) else
+      if strlcomp(p, ' create', 7)=0 then Include(item.flags, hfCreate)
+      else                                Include(item.Flags, hfChange);
 
       j := Length(fHistory);
       SetLength(fHistory, j+1);
-      fHistory[i] := item;
+      fHistory[j] := item;
 
       p := r;
     end;
 
     grid.RowCount := grid.FixedRows + Length(fHistory);
 
-    txtDiff.Lines.Assign(L);
+    fLastRow := -1;
+    DoRowSelection(grid.FixedRows);
+
   finally
     L.Free;
   end;
@@ -235,6 +272,31 @@ begin
   fhlHelper := AValue;
   if fhlHelper<>nil then
     fhlHelper.SetHighlighter(txtDiff, 'x.diff');
+end;
+
+procedure TfrmFileHistory.DoRowSelection(aRow: Integer);
+var
+  aIndex: Integer;
+  L: TStringList;
+  s: string;
+begin
+  if fLastRow<>aRow then begin
+    aIndex := aRow - grid.FixedRows;
+    L := TStringList.Create;
+    try
+      fGit.Show(fHistory[aIndex].CommitOID + ' -- ' + fHistory[aIndex].Filename, L);
+      while (L.Count>0) do begin
+        s := L[0];
+        L.Delete(0);
+        if pos('diff --git', s)=1 then
+          break;
+      end;
+      txtDiff.Lines.Assign(L);
+    finally
+      L.Free;
+    end;
+    fLastRow := aRow;
+  end;
 end;
 
 end.

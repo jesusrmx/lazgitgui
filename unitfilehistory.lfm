@@ -50,6 +50,7 @@ object frmFileHistory: TfrmFileHistory
     TabOrder = 0
     TitleStyle = tsNative
     OnDrawCell = gridDrawCell
+    OnSelection = gridSelection
     ColWidths = (
       120
       100
