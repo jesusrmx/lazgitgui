@@ -5,17 +5,19 @@ unit unitfilehistory;
 interface
 
 uses
-  Classes, SysUtils, Forms, Controls, Graphics, Dialogs, Grids, ExtCtrls,
-  SynEdit,
+  Classes, SysUtils, Math, StrUtils, Forms, Controls, Graphics, Dialogs, Grids,
+  ExtCtrls, SynEdit,
   unitconfig, unitifaces, unitgitmgr, unithighlighterhelper;
 
 type
 
+  THistoryFlags = set of (hfChange, hfCreate, hfRename, hfDelete, hfCopy);
   THistoryItem = record
-    CommiterDate: Int64;
+    Date,
     CommitOID,
     Author,
-    Subject: RawByteString;
+    Subject, Filename, Refs: RawByteString;
+    Flags: THistoryFlags;
   end;
 
   { TfrmFileHistory }
@@ -36,6 +38,7 @@ type
     fGitMgr: TGitMgr;
     fhlHelper: THighlighterHelper;
     fHistory: array of THistoryItem;
+    procedure ProcessFilePath;
     procedure SetFilePath(AValue: string);
     procedure SetGitMgr(AValue: TGitMgr);
     procedure ObservedChanged(Sender:TObject; what: Integer; data: PtrInt);
@@ -103,17 +106,110 @@ begin
 end;
 
 procedure TfrmFileHistory.SetFilePath(AValue: string);
-var
-  L: TStringList;
 begin
   if fFilePath = AValue then Exit;
   fFilePath := AValue;
 
+  ProcessFilePath;
+end;
+
+procedure TfrmFileHistory.ProcessFilePath;
+var
+  i, j, k: Integer;
+  L: TStringList;
+  item: THistoryItem;
+  o, s: RawByteString;
+  p, q, r, m, n, t: pchar;
+
+  function NextEOL: boolean;
+  begin
+    n := strpos(p, #10);
+    result := n<>nil;
+    if result then
+      n^ := #0;
+  end;
+
+  function GetString(start:pchar; len:Integer): string;
+  begin
+    SetString(Result, start, len);
+  end;
+
+  function AdvanceLine: boolean;
+  begin
+    p := n + 1;
+    while (p^ in [#10, #13]) do
+      inc(p);
+    result := NextEOL;
+  end;
+
+begin
   Caption := 'History of ' + fFilePath;
   L := TStringList.Create;
   try
     // parse this: .....
-    fGit.Log('--follow --stat -- ' + fFilePath, L);
+    if fGit.Any('log --follow --stat --summary -z -- ' + fFilePath, o)>0 then
+      exit; // error
+
+    p := @o[1];
+    t := p + Length(o);
+    while p < t do begin
+
+      // prepare location of next record
+      r := p + strlen(p) + 1;
+
+      // locate EOL
+      if not NextEOL then break;
+
+      // Find start of record
+      if strlcomp(p, 'commit ', 7)<>0 then
+        break;
+
+      // found, save commit oid
+      SetString(item.CommitOID, p+7, 40);
+      inc(p, 47);
+      // save refs if there is any
+      item.Refs := Trim(GetString(p, n - p));
+      if not AdvanceLine then break;
+
+      // skip 'Author: '
+      q := strpos(p + 8, ' ');
+      if q=nil then break;
+      item.Author := GetString(p + 8, q - (p + 8));
+      if not AdvanceLine then break;
+
+      // skip 'Date: ';
+      item.Date := Trim(GetString(p + 6, (n - (p + 6))));
+      if not AdvanceLine then break;
+
+      // skip empty line
+      while (p<t) and (p^ in [#10, #13]) do inc(p);
+
+      // collect subject lines
+      item.Flags := [];
+      item.Subject := '';
+      while (p<t) and (StrLComp(p, '    ', 4)=0) do begin
+        item.Subject += Trim(GetString(p, n-p));
+        AdvanceLine;
+        if p+1=n then break;
+      end;
+
+
+      //if s='' then
+      //  item.Flags := [hfChange]
+      //else begin
+      //  if pos(' rename', s)=1 then Include(item.Flags, hfRename) else
+      //  if pos(' delete', s)=1 then Include(item.Flags, hfDelete) else
+      //  if pos(' create', s)=1 then Include(item.Flags, hfCreate);
+      //end;
+
+      j := Length(fHistory);
+      SetLength(fHistory, j+1);
+      fHistory[i] := item;
+
+      p := r;
+    end;
+
+    grid.RowCount := grid.FixedRows + Length(fHistory);
 
     txtDiff.Lines.Assign(L);
   finally
