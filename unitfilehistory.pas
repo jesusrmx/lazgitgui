@@ -32,6 +32,8 @@ type
     procedure FormShow(Sender: TObject);
     procedure gridDrawCell(Sender: TObject; aCol, aRow: Integer; aRect: TRect;
       aState: TGridDrawState);
+    procedure gridHeaderSized(Sender: TObject; IsColumn: Boolean; Index: Integer
+      );
     procedure gridSelection(Sender: TObject; aCol, aRow: Integer);
   private
     fFilePath: string;
@@ -80,9 +82,19 @@ begin
 end;
 
 procedure TfrmFileHistory.FormShow(Sender: TObject);
+var
+  col: TCollectionItem;
+  gcol: TGridColumn;
 begin
+  fConfig.OpenConfig;
   fConfig.ReadWindow(Self, 'frmFileHistory', SECTION_GEOMETRY);
   fConfig.ReadInteger('frmFileHistory.grid.height', grid.Height, SECTION_GEOMETRY);
+  for col in grid.Columns do begin
+    gcol := TGridColumn(col);
+    if gcol.SizePriority=0 then
+      gcol.Width := fConfig.ReadInteger('frmFileHistory.grid.'+gcol.Title.caption+'.width', gcol.width, SECTION_GEOMETRY);
+  end;
+  fConfig.CloseConfig;
 end;
 
 procedure TfrmFileHistory.gridDrawCell(Sender: TObject; aCol, aRow: Integer;
@@ -104,6 +116,17 @@ begin
   grid.Canvas.Brush.Style := bsClear;
   grid.Canvas.TextOut(x, aRect.Top, s);
   grid.Canvas.Brush.Style := bsSolid;
+end;
+
+procedure TfrmFileHistory.gridHeaderSized(Sender: TObject; IsColumn: Boolean;
+  Index: Integer);
+var
+  col: TGridColumn;
+begin
+  if isColumn then begin
+    col := grid.Columns[Index];
+    fConfig.WriteInteger('frmFileHistory.grid.'+col.Title.caption+'.width', col.Width, SECTION_GEOMETRY);
+  end;
 end;
 
 procedure TfrmFileHistory.gridSelection(Sender: TObject; aCol, aRow: Integer);
