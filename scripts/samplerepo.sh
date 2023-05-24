@@ -55,6 +55,8 @@ docommits () {
 
   echo "Creating commits in $1"
 
+  CD $1
+
   FILE=notes_$1.txt
   if [ "$DRY" == "" ]; then
     BRANCH=$(git symbolic-ref --short HEAD)
@@ -62,14 +64,16 @@ docommits () {
     BRANCH=XYZ
   fi
 
-  CD $1
-
   if [ ! -f $FILE ]; then
     echo "Initial text" > $FILE
     GIT add $FILE
     GIT commit -m "$1-$BRANCH: Added file $FILE"
   else
-    FILESIZE=$(stat -c%s "$FILE")
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+      FILESIZE=$(stat -f %z "$FILE")
+    else
+      FILESIZE=$(stat -c%s "$FILE")
+    fi
     MSG=" - now with $FILESIZE bytes"
   fi
 
@@ -132,9 +136,9 @@ fi
 makerepo
 clonerepos
 
-#docommits gita
+docommits gita
 #docommits gitb
 #docommits gitc
 
-recreatemergetoright gita
+#recreatemergetoright gita
 
