@@ -430,7 +430,7 @@ end;
 
 procedure TframeLog.actReloadExecute(Sender: TObject);
 begin
-  // Reload
+  gitMgr.UpdateRefList;
 end;
 
 procedure TframeLog.actShowChangesExecute(Sender: TObject);

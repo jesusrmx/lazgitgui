@@ -547,7 +547,7 @@ begin
     if (fOldDate>0) or (fDbIndex.Count(true)=0) then begin
       // only start updating if db is accepting new records and there aren't set restrictions
       // TODO: restrictions should not block cache updating ....
-      if fDbIndex.AcceptingNewRecords and not fLimits.IsRestricted then begin
+      if fDbIndex.AcceptingNewRecords then begin
 
         // send a start event and check if we can proceed
         fLogState := lsGetFirst;
@@ -571,7 +571,7 @@ begin
   if fNeedOlderRecords then
     // only start updating if db is accepting new records and there aren't set restrictions
     // TODO: restrictions should not block cache updating ....
-    if fDbIndex.AcceptingNewRecords and not fLimits.IsRestricted then begin
+    if fDbIndex.AcceptingNewRecords then begin
       fLogState := lsGetLast;
       Run;
       exit;
