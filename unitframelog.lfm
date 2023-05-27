@@ -122,9 +122,9 @@ object frameLog: TframeLog
           AnchorSideTop.Control = panMode
           AnchorSideTop.Side = asrCenter
           Left = 5
-          Height = 18
+          Height = 19
           Top = 2
-          Width = 59
+          Width = 48
           BorderSpacing.Left = 5
           Caption = 'Patch'
           Checked = True
@@ -135,9 +135,9 @@ object frameLog: TframeLog
         object radTree: TRadioButton
           AnchorSideTop.Control = radPatch
           Left = 69
-          Height = 18
+          Height = 19
           Top = 2
-          Width = 51
+          Width = 40
           Caption = 'Tree'
           OnMouseUp = radPatchMouseUp
           TabOrder = 1
@@ -706,6 +706,30 @@ object frameLog: TframeLog
       Anchors = [akTop, akRight]
       BorderSpacing.Right = 5
       Flat = True
+    end
+    object lblInfo: TLabel
+      AnchorSideRight.Control = btnStop
+      Left = 575
+      Height = 15
+      Top = 2
+      Width = 60
+      Anchors = [akTop, akRight]
+      BorderSpacing.Right = 5
+      Caption = 'Working ....'
+      Visible = False
+    end
+    object btnStop: TSpeedButton
+      AnchorSideRight.Control = btnReload
+      Left = 640
+      Height = 19
+      Top = 2
+      Width = 21
+      Anchors = [akTop, akRight]
+      AutoSize = True
+      Caption = 'Stp'
+      Flat = True
+      Visible = False
+      OnClick = btnStopClick
     end
   end
   object popLog: TPopupMenu

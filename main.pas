@@ -65,7 +65,7 @@ type
     Label1: TLabel;
     Label2: TLabel;
     Label3: TLabel;
-    lblInfo: TLabel;
+    lblInfoOld: TLabel;
     lblTag: TLabel;
     lblMerging: TLabel;
     lblRemote: TLabel;
@@ -89,7 +89,7 @@ type
     popBranch: TPopupMenu;
     btnLog: TSpeedButton;
     popLists: TPopupMenu;
-    btnStop: TSpeedButton;
+    btnStopOld: TSpeedButton;
     splitterMain: TSplitter;
     txtLog: TSynEdit;
     txtComment: TMemo;
@@ -111,7 +111,7 @@ type
     procedure actQuitExecute(Sender: TObject);
     procedure actRescanExecute(Sender: TObject);
     procedure actRestoreCommitMsgExecute(Sender: TObject);
-    procedure btnStopClick(Sender: TObject);
+    procedure btnStopOldClick(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
@@ -119,7 +119,7 @@ type
     procedure lblBranchClick(Sender: TObject);
     procedure lblBranchContextPopup(Sender: TObject; MousePos: TPoint;
       var Handled: Boolean);
-    procedure lblInfoClick(Sender: TObject);
+    procedure lblInfoOldClick(Sender: TObject);
     procedure lstUnstagedContextPopup(Sender: TObject; MousePos: TPoint;
       var Handled: Boolean);
     procedure lstUnstagedDrawItem(Control: TWinControl; Index: Integer;
@@ -146,8 +146,6 @@ type
     procedure DoFetch;
     procedure DoPull;
     procedure OnLogEvent(sender: TObject; thread: TRunThread; event: Integer;
-      var interrupt: boolean);
-    procedure OnLogCacheEvent(sender: TObject; thread: TLogThread; event: Integer;
       var interrupt: boolean);
     procedure OnPopupItemClick(Sender: TObject);
     procedure OnBranchSwitch(Data: PtrInt);
@@ -480,7 +478,7 @@ begin
   UpdateBranchMenu;
 end;
 
-procedure TfrmMain.lblInfoClick(Sender: TObject);
+procedure TfrmMain.lblInfoOldClick(Sender: TObject);
 begin
   //fLogCache.NotifyMe;
 end;
@@ -1154,7 +1152,6 @@ begin
 
   frmLog.Config := fConfig;
   frmLog.GitMgr := fGitMgr;
-  frmLog.OnLogCacheEvent := @OnLogCacheEvent;
   frmLog.HlHelper := fHlHelper;
 
   fLogHandler := TLogHandler.Create(txtLog, @OnLogEvent);
@@ -1202,9 +1199,9 @@ begin
   end;
 end;
 
-procedure TfrmMain.btnStopClick(Sender: TObject);
+procedure TfrmMain.btnStopOldClick(Sender: TObject);
 begin
-  btnStop.Tag := 1;
+  btnStopOld.Tag := 1;
 end;
 
 procedure TfrmMain.actCommitExecute(Sender: TObject);
@@ -1310,8 +1307,8 @@ begin
     panLog.Visible := true;
     panStatus.Visible := false;
     panLogNew.Visible := false;
-    btnStop.Visible := true;
-    btnStop.Tag := 0;
+    btnStopOld.Visible := true;
+    btnStopOld.Tag := 0;
 
     fLogHandler.ShowLog;
 
@@ -1416,42 +1413,10 @@ procedure TfrmMain.OnLogEvent(sender: TObject; thread: TRunThread;
 begin
   case event of
     LOGEVENT_OUTPUT:
-      interrupt := btnStop.Visible and (btnStop.Tag=1);
+      interrupt := btnStopOld.Visible and (btnStopOld.Tag=1);
 
     LOGEVENT_DONE:
-      btnStop.Visible := false;
-  end;
-end;
-
-procedure TfrmMain.OnLogCacheEvent(sender: TObject; thread: TLogThread;
-  event: Integer; var interrupt: boolean);
-begin
-  case event of
-
-    LOGEVENT_START:
-      begin
-        btnStop.Visible := true;
-        btnStop.Tag := 0;
-      end;
-
-    LOGEVENT_RECORD:
-      begin
-        if frmLog.LogCache.LogState=lsGetFirst then lblInfo.Font.Color := clGreen
-        else                                  lblInfo.Font.Color := clRed;
-        lblInfo.Caption := format('%s',[frmLog.LogCache.DbIndex.Info]);
-        lblInfo.Visible := true;
-        interrupt := btnStop.Visible and (btnStop.Tag=1);
-      end;
-
-    LOGEVENT_END:
-      begin
-        btnStop.Visible := false;
-        lblInfo.Visible := false;
-      end;
-
-    LOGEVENT_DONE:
-      begin
-      end;
+      btnStopOld.Visible := false;
   end;
 end;
 

@@ -88,7 +88,9 @@ type
     actReload: TAction;
     actShowChanges: TAction;
     actLstLog: TActionList;
+    btnStop: TSpeedButton;
     gridLog: TDrawGrid;
+    lblInfo: TLabel;
     MenuItem1: TMenuItem;
     MenuItem2: TMenuItem;
     MenuItem3: TMenuItem;
@@ -113,6 +115,7 @@ type
     procedure actReloadExecute(Sender: TObject);
     procedure actShowChangesExecute(Sender: TObject);
     procedure actShowFileHistoryExecute(Sender: TObject);
+    procedure btnStopClick(Sender: TObject);
     procedure gridLogContextPopup(Sender: TObject; MousePos: TPoint;
       var Handled: Boolean);
     procedure gridLogDrawCell(Sender: TObject; aCol, aRow: Integer;
@@ -133,7 +136,6 @@ type
     fhlHelper: THighlighterHelper;
     fItemIndices: TItemIndexArray;
     fLogCache: TLogCache;
-    fOnLogCacheEvent: TLogThreadEvent;
     fGraphColumns: Integer;
     fRefItems: TRefInfoArray;
     fWithArrows: boolean;
@@ -172,7 +174,6 @@ type
     property Config: IConfig read fConfig write fConfig;
     property GitMgr: TGitMgr read fGitMgr write SetGitMgr;
     property HlHelper: THighlighterHelper read fhlHelper write fhlHelper;
-    property OnLogCacheEvent: TLogThreadEvent read fOnLogCacheEvent write fOnLogCacheEvent;
     property Active: boolean read fActive write SetActive;
 
   end;
@@ -463,6 +464,11 @@ begin
   f.Show;
 end;
 
+procedure TframeLog.btnStopClick(Sender: TObject);
+begin
+  btnStop.Tag := 1;
+end;
+
 procedure TframeLog.MenuItem2Click(Sender: TObject);
 begin
   CopyToClipboard(COPY_ALL_INFO);
@@ -540,13 +546,22 @@ var
   s: string;
 begin
 
-  if Assigned(fOnLogCacheEvent) then
-    fOnLogCacheEvent(Sender, thread, event, interrupt);
-
   case event of
+
+    LOGEVENT_START:
+      begin
+        btnStop.Visible := true;
+        btnStop.Tag := 0;
+      end;
 
     LOGEVENT_RECORD:
       begin
+        if fLogCache.LogState=lsGetFirst then lblInfo.Font.Color := clGreen
+        else                                  lblInfo.Font.Color := clRed;
+        lblInfo.Caption := format('%s',[fLogCache.DbIndex.Info]);
+        lblInfo.Visible := true;
+        interrupt := btnStop.Visible and (btnStop.Tag=1);
+
         if fLogCache.DbIndex.Count<gridLog.height div gridLog.DefaultRowHeight then begin
           if fLogCache.DbIndex.Count mod 3 = 0 then
             gridLog.Invalidate;
@@ -555,6 +570,9 @@ begin
 
     LOGEVENT_END:
       begin
+        btnStop.Visible := false;
+        lblInfo.Visible := false;
+
         if fLogCache.DbIndex.Updated then begin
           UpdateGridRows;
           LocateHead;
@@ -805,6 +823,7 @@ begin
         Application.ProcessMessages;
       end;
     end;
+
   end;
 
   fActive := AValue;
