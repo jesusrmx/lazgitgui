@@ -34,7 +34,7 @@ uses
   unitentries, unitgitutils, {unitgit,}
   unitnewbranch, unitruncmd, unitansiescapes,
   unitnewtag, unitlogcache, unitlog, LConvEncoding, unitdbindex,
-  unitframelog, unitgitmgr, unitcheckouttag;
+  unitframelog, unitgitmgr, unitcheckouttag, unitformlog;
 
 type
 
@@ -60,7 +60,6 @@ type
     btnCommit: TButton;
     btnPush: TButton;
     btnPushDlg: TButton;
-    frmLog: TframeLog;
     imgList: TImageList;
     Label1: TLabel;
     Label2: TLabel;
@@ -78,7 +77,6 @@ type
     mnuMain: TMainMenu;
     panCommitState: TPanel;
     panBranch: TPanel;
-    panLogNew: TPanel;
     panPush: TPanel;
     panLog: TPanel;
     panStatus: TPanel;
@@ -1150,10 +1148,6 @@ begin
   txtLog.Color := clBlack;
   txtLog.Font.Color := clWhite;
 
-  frmLog.Config := fConfig;
-  frmLog.GitMgr := fGitMgr;
-  frmLog.HlHelper := fHlHelper;
-
   fLogHandler := TLogHandler.Create(txtLog, @OnLogEvent);
   fLogHandler.GitMgr := fGitMgr;
 
@@ -1254,8 +1248,6 @@ begin
   fGit := nil;
   fGitMgr.RemoveObserver(Self);
   fhlHelper.Free;
-  frmLog.Clear;
-  frmLog.GitMgr := nil;
   fLogHandler.Free;
   fGitMgr.Free;
 end;
@@ -1306,7 +1298,6 @@ begin
   if actLog.Checked then begin
     panLog.Visible := true;
     panStatus.Visible := false;
-    panLogNew.Visible := false;
     btnStopOld.Visible := true;
     btnStopOld.Tag := 0;
 
@@ -1314,33 +1305,23 @@ begin
 
   end else begin
     panLog.Visible := false;
-    panLogNew.Visible := false;
     panStatus.Visible := true;
   end;
 end;
 
 procedure TfrmMain.DoNewLog;
-var
-  cmd: string;
 begin
-  //CacheRefs;
-  //exit;
+  if frmLog=nil then begin
+    frmLog := TfrmLog.Create(Self);
+    frmLog.GitMgr := fGitMgr;
+    frmLog.HlHelper := fHlHelper;
+  end;
 
   if actNewLog.Checked then begin
-    panLog.Visible := false;
-    panLogNew.Visible := true;
-    panStatus.Visible := false;
-
-    frmLog.GitMgr := fGitMgr;
-    frmLog.Active := true;
-
+    frmLog.Show;
+    frmLog.BringToFront;
   end else begin
-
-    frmLog.GitMgr := nil;
-
-    panLog.Visible := false;
-    panLogNew.Visible := false;
-    panStatus.Visible := true;
+    frmLog.close
   end;
 end;
 
@@ -1514,8 +1495,6 @@ begin
   lstUnstaged.Height := fConfig.ReadInteger('lstUnstaged.Height', lstUnstaged.Height, SECTION_GEOMETRY);
   panLeft.Width := fConfig.ReadInteger('panleft.width', panLeft.Width, SECTION_GEOMETRY);
   pancommit.Height := fConfig.ReadInteger('pancommit.height', pancommit.Height, SECTION_GEOMETRY);
-  frmLog.panBrowser.Height := fConfig.ReadInteger('frmlog.panbrowser.height', frmLog.panBrowser.Height, SECTION_GEOMETRY);
-  frmLog.panFiles.Width := fConfig.ReadInteger('frmlog.panfiles.width', frmLog.panFiles.width, SECTION_GEOMETRY);
 
   fConfig.CloseConfig;
 end;
@@ -1530,8 +1509,6 @@ begin
   fConfig.WriteInteger('lstUnstaged.Height', lstUnstaged.Height, SECTION_GEOMETRY);
   fConfig.WriteInteger('panleft.width', panLeft.Width, SECTION_GEOMETRY);
   fConfig.WriteInteger('pancommit.height', pancommit.Height, SECTION_GEOMETRY);
-  fConfig.WriteInteger('frmlog.panbrowser.height', frmlog.panBrowser.Height, SECTION_GEOMETRY);
-  fConfig.WriteInteger('frmlog.panfiles.width', frmlog.panFiles.Width, SECTION_GEOMETRY);
   fConfig.CloseConfig;
 end;
 

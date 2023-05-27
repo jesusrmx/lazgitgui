@@ -1,0 +1,107 @@
+object frmLog: TfrmLog
+  Left = 234
+  Height = 640
+  Top = 151
+  Width = 777
+  Caption = 'frmLog'
+  ClientHeight = 640
+  ClientWidth = 777
+  OnClose = FormClose
+  OnCloseQuery = FormCloseQuery
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  OnShow = FormShow
+  LCLVersion = '2.3.0.0'
+  object StatusBar1: TStatusBar
+    Left = 0
+    Height = 20
+    Top = 620
+    Width = 777
+    Panels = <>
+  end
+  inline fLog: TframeLog
+    Height = 620
+    Width = 777
+    Align = alClient
+    ClientHeight = 620
+    ClientWidth = 777
+    TabOrder = 1
+    inherited gridLog: TDrawGrid
+      Height = 387
+      Width = 777
+      Columns = <      
+        item
+          Alignment = taRightJustify
+          PickList.Strings = (          )
+          SizePriority = 0
+          Title.Caption = 'RecNo'
+          Width = 70
+        end      
+        item
+          PickList.Strings = (          )
+          SizePriority = 0
+          Title.Caption = 'Graph'
+          Width = 20
+        end      
+        item
+          PickList.Strings = (          )
+          Title.Caption = 'Subject'
+          Width = 357
+        end      
+        item
+          PickList.Strings = (          )
+          SizePriority = 0
+          Title.Caption = 'Author'
+          Width = 150
+        end      
+        item
+          PickList.Strings = (          )
+          SizePriority = 0
+          Title.Caption = 'Date'
+          Width = 90
+        end      
+        item
+          PickList.Strings = (          )
+          SizePriority = 0
+          Title.Caption = 'SHA1'
+          Width = 90
+        end>
+      ColWidths = (
+        70
+        20
+        357
+        150
+        90
+        90
+      )
+    end
+    inherited panBrowser: TPanel
+      Top = 418
+      Width = 777
+      ClientWidth = 777
+      inherited txtViewer: TSynEdit
+        Width = 572
+      end
+    end
+    inherited splitChanges: TSplitter
+      Top = 413
+      Width = 777
+    end
+    inherited panLogTools: TPanel
+      Width = 777
+      ClientWidth = 777
+      inherited btnShowChanges: TSpeedButton
+        Left = 749
+      end
+      inherited btnReload: TSpeedButton
+        Left = 721
+      end
+      inherited lblInfo: TLabel
+        Left = 633
+      end
+      inherited btnStop: TSpeedButton
+        Left = 699
+      end
+    end
+  end
+end

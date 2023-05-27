@@ -36,7 +36,7 @@ uses
   unitruncmd, unitansiescapes, unitnewtag, unitlog, unitdebug, unitlogcache,
   unitdbindex, unitgitutils, unitdrafts, unitframelog, unitgitmgr, unitgittypes,
   unitcheckouttag, unitcommitbrowser, unitvfs, unithighlighterhelper,
-unitgraphbuild, unitfilehistory;
+unitgraphbuild, unitfilehistory, unitformlog;
 
 {$R *.res}
 
