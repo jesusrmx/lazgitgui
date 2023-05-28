@@ -56,11 +56,15 @@ type
     procedure txtNameChange(Sender: TObject);
   private
     fBranchName, fReference: string;
+    fCommitInfo: String;
+    fCommit: string;
     fGitMgr: TGitMgr;
     fGit: IGit;
     fType: Integer;
     function GetFetch: boolean;
     function GetSwitch: boolean;
+    procedure SetCommit(AValue: string);
+    procedure SetCommitInfo(AValue: string);
     procedure SetGitMgr(AValue: TGitMgr);
     procedure ShowTabIndex(aIndex: Integer);
     procedure CheckOkButton;
@@ -73,6 +77,8 @@ type
     property GitMgr: TGitMgr read fGitMgr write SetGitMgr;
     property Switch: boolean read GetSwitch;
     property Fetch: boolean read GetFetch;
+    property Commit: string read fCommit write SetCommit;
+    property CommitInfo: string write SetCommitInfo;
   end;
 
 var
@@ -94,6 +100,12 @@ const
   BT_NEWLOCAL_BRANCH    = 1;
   BT_NEWLOCAL_TRACKING  = 2;
   BT_NEWLOCAL_TAG       = 3;
+  BT_NEWLOCAL_COMMIT    = 4;
+
+  TABINDEX_LOCALBRANCH  = 0;
+  TABINDEX_TRACKING     = 1;
+  TABINDEX_TAG          = 2;
+  TABINDEX_COMMIT       = 3;
 
 { TfrmNewBranch }
 
@@ -131,28 +143,31 @@ var
   ok: boolean;
 begin
 
-  chkFetch.Enabled := (aIndex=1);
+  chkFetch.Enabled := (aIndex=TABINDEX_TRACKING);
 
   lstSource.Items.BeginUpdate;
   try
 
     lstSource.Clear;
 
-    refList := fGit.RefList;
-
-    for i:=0 to refList.Count-1 do begin
-      info := PRefInfo(refList.Objects[i]);
-      ok := false;
-      case aIndex of
-        0: ok := info^.subType=rostLocal;// (info^.objType=rotCommit) and (not info^.isTracking);
-        1: ok := (info^.subType=rostTracking) and (RightStr(info^.refName, 4)<>'HEAD'); // (info^.objType=rotCommit) and info^.isTracking and (RightStr(info^.refName, 4)<>'HEAD');
-        2: ok := (info^.subType=rostTag);
-        else exit;
-      end;
-      if ok then begin
-        j := lstSource.Items.AddObject(refList[i], TObject(info));
-        if (aIndex=0) and info^.head then
-          lstSource.ItemIndex := j;
+    if aIndex=TABINDEX_COMMIT then
+      lstSource.Items.AddObject(fCommit, nil)
+    else begin
+      refList := fGit.RefList;
+      for i:=0 to refList.Count-1 do begin
+        info := PRefInfo(refList.Objects[i]);
+        ok := false;
+        case aIndex of
+          0: ok := info^.subType=rostLocal;// (info^.objType=rotCommit) and (not info^.isTracking);
+          1: ok := (info^.subType=rostTracking) and (RightStr(info^.refName, 4)<>'HEAD'); // (info^.objType=rotCommit) and info^.isTracking and (RightStr(info^.refName, 4)<>'HEAD');
+          2: ok := (info^.subType=rostTag);
+          else exit;
+        end;
+        if ok then begin
+          j := lstSource.Items.AddObject(refList[i], TObject(info));
+          if (aIndex=0) and info^.head then
+            lstSource.ItemIndex := j;
+        end;
       end;
     end;
 
@@ -167,6 +182,18 @@ end;
 function TfrmNewBranch.GetSwitch: boolean;
 begin
   result := chkSwitchTo.Checked;
+end;
+
+procedure TfrmNewBranch.SetCommit(AValue: string);
+begin
+  if fCommit = AValue then Exit;
+  fCommit := AValue;
+  ShowTabIndex(TABINDEX_COMMIT);
+end;
+
+procedure TfrmNewBranch.SetCommitInfo(AValue: string);
+begin
+  fCommitInfo := AValue;
 end;
 
 procedure TfrmNewBranch.SetGitMgr(AValue: TGitMgr);
@@ -216,16 +243,16 @@ begin
   lblHint.Font.Color := clRed;
   fBranchName := Trim(txtName.Text);
   aIndex := lstSource.ItemIndex;
-  if aIndex<0 then begin
-    info := nil;
-    fReference := '';
-  end else begin
+  if aIndex in [TABINDEX_LOCALBRANCH..TABINDEX_TAG] then begin
     info := PRefInfo(lstSource.Items.Objects[aIndex]);
     fReference := lstSource.Items[aIndex];
+  end else begin
+    info := nil;
+    fReference := '';
   end;
 
   case tabSource.TabIndex of
-    0: // branch based on a existing local branch tab
+    TABINDEX_LOCALBRANCH: // branch based on a existing local branch tab
       begin
         if fBranchName<>'' then begin
           if fGitMgr.IndexOfLocalBranch(fBranchName)>=0 then begin
@@ -243,7 +270,7 @@ begin
         end;
       end;
 
-    1: // branch based on a tracking branch tab
+    TABINDEX_TRACKING: // branch based on a tracking branch tab
       begin
         if aIndex<0 then begin
           lblHint.caption := 'No refering branch selected';
@@ -264,7 +291,7 @@ begin
         fType := BT_NEWLOCAL_TRACKING;
       end;
 
-    2:  // branch based on a tag tab
+    TABINDEX_TAG:  // branch based on a tag tab
       begin
         if fBranchName<>'' then begin
           if fGitMgr.IndexOfLocalBranch(fBranchName)>=0 then begin
@@ -276,6 +303,21 @@ begin
             exit;
           end;
           fType := BT_NEWLOCAL_TAG;
+        end else begin
+          lblHint.Caption := 'Branch name is empty';
+          exit;
+        end;
+      end;
+
+    TABINDEX_COMMIT:
+      begin
+        if fBranchName<>'' then begin
+          if fCommit='' then begin
+            lblHint.Caption := 'No commit set';
+            exit;
+          end;
+          fType := BT_NEWLOCAL_COMMIT;
+          fReference := fCommit;
         end else begin
           lblHint.Caption := 'Branch name is empty';
           exit;
@@ -302,6 +344,11 @@ begin
     if aIndex<0 then
       exit;
     info := PRefInfo(lstSource.Items.Objects[aIndex]);
+
+    if info=nil then begin
+      txtInfo.Text := fCommitInfo;
+      exit;
+    end;
 
     s := info^.refName;
     if info^.upstream<>'' then
@@ -340,7 +387,7 @@ begin
           exit;
         end;
 
-        ShowTabIndex(0);
+        ShowTabIndex(TABINDEX_LOCALBRANCH);
       end;
   end;
 end;

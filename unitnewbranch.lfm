@@ -21,6 +21,7 @@ object frmNewBranch: TfrmNewBranch
       'Local Branches'
       'Tracking Branches'
       'Tags'
+      'Commit'
     )
     Anchors = [akTop, akLeft, akRight, akBottom]
     TabOrder = 2
