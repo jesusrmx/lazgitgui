@@ -36,6 +36,7 @@ const
   GITMGR_EVENT_REFLISTCHANGED       = 2;
   GITMGR_EVENT_NEWTAG               = 3;
   GITMGR_EVENT_SWITCHTOTAG          = 4;
+  GITMGR_EVENT_NEWBRANCH            = 5;
 
 type
 
@@ -78,6 +79,7 @@ type
     function IndexOfLocalBranch(aName: string): Integer;
     procedure QueueNewTag(commit: string);
     procedure QueueSwitchTag(tagName: string);
+    procedure QueueNewBranch(sender: TObject; branchName, command: string; switch, fetch:boolean);
     procedure ForceTagDescription;
 
     property Git: IGit read GetGit;
@@ -241,6 +243,20 @@ begin
   new(info);
   info^.data := tagName;
   fObserverMgr.NotifyObservers(Self, GITMGR_EVENT_SWITCHTOTAG, PtrInt(info));
+end;
+
+procedure TGitMgr.QueueNewBranch(sender: TObject; branchName, command: string;
+  switch, fetch: boolean);
+var
+  info: PBranchInfo;
+begin
+  new(info);
+  info^.sender := sender;
+  info^.name := branchName;
+  info^.command := command;
+  info^.switch := switch;
+  info^.fetch := fetch;
+  fObserverMgr.NotifyObservers(self, GITMGR_EVENT_NEWBRANCH, PtrInt(info));
 end;
 
 procedure TGitMgr.ForceTagDescription;

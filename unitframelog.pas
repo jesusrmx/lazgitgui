@@ -63,7 +63,7 @@ uses
   Grids, ExtCtrls, ComCtrls, Menus, Types, Clipbrd, ActnList, Buttons, StdCtrls,
   unitgittypes, unitlogcache, unitdbindex, unitgitutils, unitifaces, unitruncmd,
   unitgitmgr, unitcommitbrowser, unitvfs, unithighlighterhelper, unitgraphbuild,
-  unitfilehistory;
+  unitfilehistory, unitnewbranch;
 
 const
   GRAPH_LEFT_PADDING          = 12;
@@ -142,6 +142,7 @@ type
     fCommitBrowser: TCommitBrowser;
     fCurrentItem: TLogItem;
     procedure OnContextPopLogClick(Sender: TObject);
+    procedure OnCreateBranchClick(Sender: TObject);
     procedure OnGraphBuilderDone(Sender: TObject);
     procedure OnLogEvent(sender: TObject; thread: TLogThread; event: Integer; var interrupt: boolean);
     procedure OnDeleteTagClick(sender: TObject);
@@ -664,6 +665,22 @@ begin
   ShowMessage(format('You really got me: %s',[mi.Caption]));
 end;
 
+procedure TframeLog.OnCreateBranchClick(Sender: TObject);
+var
+  f: TfrmNewBranch;
+begin
+  f := TfrmNewBranch.Create(Self);
+  f.GitMgr := fGitMgr;
+  f.CommitInfo := GetAllCommitInfo;
+  f.Commit := fCurrentItem.CommitOID;
+  try
+    if f.ShowModal=mrOk then
+      fGitMgr.QueueNewBranch(self, f.BranchName, f.GetBranchCommandOptions, f.Switch, f.Fetch);
+  finally
+    f.Free;
+  end;
+end;
+
 procedure TframeLog.OnGraphBuilderDone(Sender: TObject);
 var
   thread: TGraphBuilderThread absolute sender;
@@ -737,13 +754,18 @@ begin
   if (headCommit=curCommit) then
     exit;
 
+  mi := TMenuItem.Create(Self.Owner);
+  mi.Caption := '-';
+  popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
+
+  mi := TMenuItem.Create(Self.Owner);
+  mi.Caption := 'Create a branch at this commit';
+  mi.OnClick := @OnCreateBranchClick;
+  mi.Tag := 0;
+  popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
+
   fRefItems := fGit.RefsFilter(fCurrentItem.CommitOID, @Filter);
   for i := 0 to Length(fRefItems)-1 do begin
-    if i=0 then begin
-      mi := TMenuItem.Create(Self.Owner);
-      mi.Caption := '-';
-      popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
-    end;
     mi := TMenuItem.Create(Self.Owner);
     mi.Caption := format('Merge %s to %s',[QuotedStr(fRefItems[i]^.refName), QuotedStr(fGit.Branch)]);
     mi.OnClick := @OnMergeBranchClick;
@@ -778,7 +800,7 @@ begin
   popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
 
   mi := TMenuItem.Create(Self.Owner);
-  mi.Caption := 'Create a tag a this commit';
+  mi.Caption := 'Create a tag at this commit';
   mi.OnClick := @OnCreateTagClick;
   mi.Tag := 0;
   popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);

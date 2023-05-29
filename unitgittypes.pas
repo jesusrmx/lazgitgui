@@ -70,6 +70,15 @@ type
     data: string;
   end;
 
+  PBranchInfo = ^TBranchInfo;
+  TBranchInfo = record
+    sender: TObject;
+    name: string;
+    command: string;
+    switch: boolean;
+    fetch: boolean;
+  end;
+
 implementation
 
 end.

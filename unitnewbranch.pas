@@ -61,6 +61,7 @@ type
     fGitMgr: TGitMgr;
     fGit: IGit;
     fType: Integer;
+    fStartIndex: Integer;
     function GetFetch: boolean;
     function GetSwitch: boolean;
     procedure SetCommit(AValue: string);
@@ -117,6 +118,8 @@ end;
 procedure TfrmNewBranch.FormShow(Sender: TObject);
 begin
   fGitMgr.UpdateRefList;
+  tabSource.TabIndex := fStartIndex;
+  ShowTabIndex(fStartIndex);
 end;
 
 procedure TfrmNewBranch.lstSourceClick(Sender: TObject);
@@ -150,9 +153,10 @@ begin
 
     lstSource.Clear;
 
-    if aIndex=TABINDEX_COMMIT then
-      lstSource.Items.AddObject(fCommit, nil)
-    else begin
+    if aIndex=TABINDEX_COMMIT then begin
+      lstSource.Items.AddObject(fCommit, nil);
+      lstSource.ItemIndex := 0;
+    end else begin
       refList := fGit.RefList;
       for i:=0 to refList.Count-1 do begin
         info := PRefInfo(refList.Objects[i]);
@@ -188,7 +192,7 @@ procedure TfrmNewBranch.SetCommit(AValue: string);
 begin
   if fCommit = AValue then Exit;
   fCommit := AValue;
-  ShowTabIndex(TABINDEX_COMMIT);
+  fStartIndex := TABINDEX_COMMIT;
 end;
 
 procedure TfrmNewBranch.SetCommitInfo(AValue: string);
@@ -220,9 +224,8 @@ procedure TfrmNewBranch.CheckOkButton;
 begin
   EvaluateOutcome;
   ButtonPanel1.OKButton.Enabled :=
-    (fType=BT_NEWLOCAL_BRANCH) or
-    (fType=BT_NEWLOCAL_TRACKING) or
-    (fType=BT_NEWLOCAL_TAG);
+    (fType in [BT_NEWLOCAL_BRANCH, BT_NEWLOCAL_TRACKING,
+              BT_NEWLOCAL_TAG, BT_NEWLOCAL_COMMIT]);
 end;
 
 procedure TfrmNewBranch.EvaluateOutcome;
@@ -386,8 +389,6 @@ begin
           Close;
           exit;
         end;
-
-        ShowTabIndex(TABINDEX_LOCALBRANCH);
       end;
   end;
 end;

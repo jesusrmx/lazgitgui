@@ -134,6 +134,7 @@ type
     fPopPoint: TPoint;
     fListAlwaysDrawSelection: boolean;
     fhlHelper: THighlighterHelper;
+    procedure CreateBranch(const binfo: PBranchInfo);
     procedure DelayedShowMenu(Data: PtrInt);
     procedure DoGitDiff(Data: PtrInt);
     procedure DoItemAction(Data: PtrInt);
@@ -868,44 +869,12 @@ end;
 procedure TfrmMain.NewBranch;
 var
   f: TfrmNewBranch;
-  cmdOut: RawByteString;
 begin
   f := TfrmNewBranch.Create(Self);
   f.GitMgr := fGitMgr;
   try
-    if f.ShowModal=mrOk then begin
-
-      if fGit.Any('branch ' + f.GetBranchCommandOptions, cmdOut)>0 then begin
-        ShowError;
-        exit;
-      end;
-
-      // there is a new branch, the next time branch list
-      // is requested, recreate it
-      InvalidateBranchMenu;
-
-      if not f.Switch then
-        exit;
-      if fGit.Switch(f.BranchName)>0 then begin
-        ShowError;
-        exit;
-      end;
-
-      // switched to the new branch, even if fetching from the
-      // upstream is not requested, force an update status
-      try
-        if not f.Fetch then
-          exit;
-        if fGit.Any('fetch', cmdOut)>0 then begin
-          ShowError;
-          exit;
-        end;
-      finally
-        fGitMgr.UpdateStatus;
-        fGitMgr.UpdateRefList;
-      end;
-
-    end;
+    if f.ShowModal=mrOk then
+      fGitMgr.QueueNewBranch(self, f.BranchName, f.GetBranchCommandOptions, f.Switch, f.Fetch);
   finally
     f.Free;
   end;
@@ -932,6 +901,7 @@ end;
 procedure TfrmMain.ObservedChanged(Sender:TObject; what: Integer; data: PtrInt);
 var
   info: PTagInfo;
+  binfo: PBranchInfo;
 begin
   case what of
     GITMGR_EVENT_UpdateStatus:
@@ -957,6 +927,12 @@ begin
         ShowSwitchToTagForm(info^.data);
         finalize(info^.data);
         dispose(info);
+      end;
+
+    GITMGR_EVENT_NEWBRANCH:
+      begin
+        binfo := PBranchInfo(data);
+        CreateBranch(binfo);
       end;
   end;
 end;
@@ -1427,6 +1403,61 @@ end;
 procedure TfrmMain.DelayedShowMenu(Data: PtrInt);
 begin
   Self.Menu := mnuMain;
+end;
+
+procedure TfrmMain.CreateBranch(const binfo: PBranchInfo);
+var
+  cmdOut: RawByteString;
+  needReflistUpdate: boolean;
+  needUpdateStatus: boolean;
+
+  procedure BranchError;
+  begin
+    if binfo^.sender=self then
+      ShowError
+    else
+      ShowMessage(fGit.ErrorLog);
+  end;
+
+begin
+  try
+    needReflistUpdate := false;
+    needUpdateStatus := false;
+
+    if fGit.Any('branch ' + binfo^.Command, cmdOut)>0 then begin
+      BranchError;
+      exit;
+    end;
+
+    // there is a new branch, the next time branch list
+    // is requested, recreate it
+    InvalidateBranchMenu;
+
+    needReflistUpdate := true;
+
+    if not binfo^.Switch then
+      exit;
+    if fGit.Switch(binfo^.name)>0 then begin
+      BranchError;
+      exit;
+    end;
+
+    needUpdateStatus := true;
+    // switched to the new branch, even if fetching from the
+    // upstream is not requested, force an update status
+    if not binfo^.Fetch then
+      exit;
+    if fGit.Any('fetch', cmdOut)>0 then begin
+      BranchError;
+      exit;
+    end;
+
+  finally
+    dispose(binfo);
+    if needUpdateStatus then fGitMgr.UpdateStatus;
+    if needReflistUpdate then fGitMgr.UpdateRefList;
+  end;
+
 end;
 
 procedure TfrmMain.UpdateBranch;
