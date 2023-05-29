@@ -143,6 +143,7 @@ type
     fCurrentItem: TLogItem;
     procedure OnContextPopLogClick(Sender: TObject);
     procedure OnCreateBranchClick(Sender: TObject);
+    procedure OnDeleteBranchClick(Sender: TObject);
     procedure OnGraphBuilderDone(Sender: TObject);
     procedure OnLogEvent(sender: TObject; thread: TLogThread; event: Integer; var interrupt: boolean);
     procedure OnDeleteTagClick(sender: TObject);
@@ -681,6 +682,24 @@ begin
   end;
 end;
 
+procedure TframeLog.OnDeleteBranchClick(Sender: TObject);
+var
+  mi: TMenuItem absolute Sender;
+  info: PRefInfo;
+  cmdout: RawByteString;
+begin
+  info := {%H-}PRefInfo(mi.Tag);
+  if info<>nil then begin
+    if fGit.Any('branch -d ' + info^.refName, cmdout)>0 then
+      //
+    else begin
+      fGitMgr.ForceTagDescription;
+      fGitMgr.UpdateStatus;
+      fGitMgr.UpdateRefList;
+    end;
+  end;
+end;
+
 procedure TframeLog.OnGraphBuilderDone(Sender: TObject);
 var
   thread: TGraphBuilderThread absolute sender;
@@ -775,6 +794,12 @@ begin
     mi := TMenuItem.Create(Self.Owner);
     mi.Caption := format('Switch to %s',[QuotedStr(fRefItems[i]^.refName)]);
     mi.OnClick := @OnSwitchBranchClick;
+    mi.Tag := PtrInt(fRefItems[i]);
+    popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
+
+    mi := TMenuItem.Create(Self.Owner);
+    mi.Caption := format('Delete branch %s',[QuotedStr(fRefItems[i]^.refName)]);
+    mi.OnClick := @OnDeleteBranchClick;
     mi.Tag := PtrInt(fRefItems[i]);
     popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
   end;
