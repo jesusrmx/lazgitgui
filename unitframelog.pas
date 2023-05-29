@@ -706,6 +706,8 @@ var
   col: TGridColumn;
   i: Integer;
 begin
+  lblInfo.Visible := false;
+
   fItemIndices := thread.IndexArray;
   fGraphColumns := thread.MaxColumns;
 
@@ -1061,6 +1063,10 @@ var
   gBuild: TGraphBuilderThread;
 begin
   gridLog.RowCount := fLogCache.DbIndex.Count + gridLog.FixedRows;
+
+  lblInfo.Caption := 'Building graph..';
+  lblInfo.Font.Color := clBlue;
+  lblInfo.Visible := true;
 
   gBuild := TGraphBuilderThread.Create(fLogCache.DbIndex);
   gBuild.WithColumns := true;

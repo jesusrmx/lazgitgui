@@ -708,10 +708,12 @@ object frameLog: TframeLog
       Flat = True
     end
     object lblInfo: TLabel
+      AnchorSideTop.Control = panLogTools
+      AnchorSideTop.Side = asrCenter
       AnchorSideRight.Control = btnStop
       Left = 575
       Height = 15
-      Top = 2
+      Top = 6
       Width = 60
       Anchors = [akTop, akRight]
       BorderSpacing.Right = 5
