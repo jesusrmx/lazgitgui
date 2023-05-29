@@ -417,10 +417,6 @@ begin
     mIndex := mnuSeparatorFirst.MenuIndex+1;
     while mIndex<>mnuSeparatorLast.MenuIndex do
       popLog.Items.Delete(mIndex);
-    // add sample menus just for testing
-    mi := TMenuItem.Create(Self.Owner);
-    mi.Action := actShowChanges;
-    popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
     AddTagsMenu;
     AddMergeBranchMenu;
   end;
@@ -821,10 +817,6 @@ var
 begin
   headcommit := OIDToQWord(fGit.BranchOID);
   curCommit := OIDToQWord(fCurrentItem.CommitOID);
-
-  mi := TMenuItem.Create(Self.Owner);
-  mi.Caption := '-';
-  popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
 
   mi := TMenuItem.Create(Self.Owner);
   mi.Caption := 'Create a tag at this commit';
