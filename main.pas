@@ -1288,6 +1288,10 @@ end;
 
 procedure TfrmMain.DoNewLog;
 begin
+
+  if ssShift in KeyboardStateToShiftState then
+    gblInvalidateCache := true;
+
   if frmLog=nil then begin
     frmLog := TfrmLog.Create(Self);
     frmLog.GitMgr := fGitMgr;
