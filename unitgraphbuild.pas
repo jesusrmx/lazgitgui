@@ -29,6 +29,7 @@ unit unitgraphbuild;
 
 {$ifdef Debug}
   {.$define ReportGetParentsMap}
+  {.$define ReportRelatives}
   {.$define ReportColumns}
   {.$define ReportItemIndexArray}
   {.$define ReportGraph}
@@ -181,6 +182,35 @@ begin
   end;
 
   ReportTicks('Reporting Parents OID');
+end;
+{$endif}
+
+{$ifdef ReportRelatives}
+procedure ReportRelatives(fIndexArray: TItemIndexArray);
+var
+  i, j, mxp: Integer;
+  s: string;
+begin
+  mxp := 0;
+  for i:=0 to Length(fIndexArray)-1 do begin
+    if Length(fIndexArray[i].parents)>mxp then
+      mxp := Length(fIndexArray[i].parents);
+  end;
+
+  DebugLn;
+  DebugLn('Relatives report');
+  for i:=0 to Length(fIndexArray)-1 do begin
+    DbgOut('%4d: ', [fIndexArray[i].index]);
+    s := '';
+    for j:=0 to Length(fIndexArray[i].parents)-1 do
+      s += format('%4d ', [fIndexArray[i].parents[j]]);
+    DbgOut(s.PadRight((mxp+1)*4));
+    DbgOut(' | ');
+    for j:=0 to Length(fIndexArray[i].childs)-1 do
+      DbgOut('%4d ', [fIndexArray[i].childs[j]]);
+    DebugLn;
+  end;
+  ReportTicks('Reporting Relatives');
 end;
 {$endif}
 
@@ -429,6 +459,9 @@ begin
 
   {$IFDEF Debug}
   ReportTicks('FindingRelatives');
+  {$ifdef ReportRelatives}
+  ReportRelatives(fIndexArray);
+  {$endif}
   {$ENDIF}
 end;
 
