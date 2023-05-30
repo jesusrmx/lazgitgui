@@ -214,6 +214,14 @@ begin
         New(info);
         Info^.line := i;
         fVfs.AddPath(copy(s, j + 3, Length(s)));
+      end else
+      if (pos('diff --cc', s)=1) or (pos('diff --combined', s)=1) then begin
+        j := posex(' ', s, 9);
+        if j=0 then continue;
+
+        new(info);
+        info^.line := i;
+        fVfs.AddPath(copy(s, j+1, length(s)));
       end;
     end;
 
