@@ -54,7 +54,7 @@ object frameLog: TframeLog
     FixedCols = 0
     Flat = True
     MouseWheelOption = mwGrid
-    Options = [goVertLine, goColSizing, goSmoothScroll, goRowHighlight]
+    Options = [goVertLine, goColSizing, goRowHighlight]
     ParentFont = False
     PopupMenu = popLog
     RowCount = 1
