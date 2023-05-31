@@ -39,7 +39,7 @@ unit unitgraphbuild;
 interface
 
 uses
-  Classes, SysUtils, LazLogger, unitgittypes, unitgitutils, unitdbindex;
+  Classes, SysUtils, Math, LazLogger, unitgittypes, unitgitutils, unitdbindex;
 
 type
   TColumnSection = record
@@ -550,7 +550,7 @@ begin
 
         if dest>first then begin
           // yes, tag from 'dest' to 'i'
-          cur := dest;
+          cur := Min(dest, i);
           while cur<>i do begin
             for a := 0 to Length(fIndexArray[cur].lines)-1 do begin
               if fIndexArray[cur].lines[a].column=j then begin
