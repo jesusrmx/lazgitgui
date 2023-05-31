@@ -325,7 +325,7 @@ var
   L: TStringList;
   s: string;
 begin
-  if fLastRow<>aRow then begin
+  if (fLastRow<>aRow) and (Length(fHistory)>0) then begin
     aIndex := aRow - grid.FixedRows;
     L := TStringList.Create;
     try
