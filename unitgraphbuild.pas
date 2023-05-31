@@ -30,6 +30,7 @@ unit unitgraphbuild;
 {$ifdef Debug}
   {.$define ReportGetParentsMap}
   {.$define ReportRelatives}
+  {.$define ReportTGraph}
   {.$define ReportColumns}
   {.$define ReportItemIndexArray}
   {.$define ReportGraph}
@@ -212,6 +213,37 @@ begin
   end;
   ReportTicks('Reporting Relatives');
 end;
+{$endif}
+
+{$ifdef ReportTGraph}
+procedure ReportTGraph(fIndexArray: TItemIndexArray);
+var
+  i, x, c: Integer;
+begin
+  DebugLn('graph := TGraph.Create(%d);',[Length(fIndexArray)]);
+  c := 0;
+  for i:=0 to Length(fIndexArray)-1 do begin
+    with fIndexArray[i] do begin
+      for x in parents do begin
+        DebugLn('graph.AddEdge(%d, %d);',[x, index]);
+        inc(c);
+      end;
+    end;
+  end;
+  DebugLn;
+  DebugLn('Algs4 file');
+  DebugLn('%d',[Length(fIndexArray)]);
+  DebugLn('%d',[c]);
+  for i:=0 to Length(fIndexArray)-1 do
+    with fIndexArray[i] do begin
+      for x in parents do
+        DebugLn('%d %d',[x, index]);
+    end;
+  DebugLn('Algs4 file end');
+
+  ReportTicks('Reporting TGraph + Algs4 file');
+end;
+
 {$endif}
 
 {$ifdef ReportItemIndexArray}
@@ -461,6 +493,9 @@ begin
   ReportTicks('FindingRelatives');
   {$ifdef ReportRelatives}
   ReportRelatives(fIndexArray);
+  {$endif}
+  {$ifdef ReportTGraph}
+  ReportTGraph(fIndexArray);
   {$endif}
   {$ENDIF}
 end;
