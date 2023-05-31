@@ -679,7 +679,7 @@ var
 begin
   firstTime := fDbIndex=nil;
   if firstTime then begin
-    fDbIndex := TDbIndex.Create(fGit.TopLevelDir + '.git' + PathDelim);
+    fDbIndex := TDbIndex.Create(fGit.GitCommonDir + '.git' + PathDelim);
     fLimits.Db := fDbIndex;
     fLimits.Config := Config;
   end;

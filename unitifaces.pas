@@ -87,6 +87,7 @@ type
     function GetRefList: TStringList;
     function GetRemotesList: TStringList;
     function GetTopLevelDir: string;
+    function GetGitCommonDir: string;
     function GetUpstream: string;
     function GetVersion: string;
     function GetErrorLog: RawByteString;
@@ -107,6 +108,7 @@ type
     property RefList: TStringList read GetRefList;
     property RefsMap: TRefsMap read GetRefsMap;
     property TopLevelDir: string read GetTopLevelDir;
+    property GitCommonDir: string read GetGitCommonDir;
     property Upstream: string read GetUpstream;
     property Version: string read GetVersion;
     property ErrorLog: RawByteString read GetErrorLog;
