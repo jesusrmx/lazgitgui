@@ -35,6 +35,15 @@ uses
 
 type
   TLineEnding = string[3];
+  TCommandItem = record
+    description: string;
+    command: string;
+    RedirStdErr: boolean;
+    tag: pointer;
+  end;
+  TCommandsArray = array of TCommandItem;
+  TCommandProgressEvent = procedure(sender: TObject; item:TCommandItem; percent:single) of object;
+  TCommandProgressEventNested = procedure(sender: TObject; item:TCommandItem; percent:single) is nested;
 
 
   // TODO: add crtitical sections where needed
@@ -44,8 +53,11 @@ type
   TRunThread = class(TThread)
   private
     fCommand: string;
+    fCommands: TCommandsArray;
     fHaveProgress: boolean;
     fLineEnding: TLineEnding;
+    fOnCommandProgress: TCommandProgressEvent;
+    fOnCommandProgressNested: TCommandProgressEventNested;
     fOnOutput: TNotifyInterruptEvent;
     fResult: Integer;
     fErrorLog: string;
@@ -53,11 +65,14 @@ type
     fLine: RawByteString;
     fCmdLine: ^TCmdLine;
     procedure Notify;
+    procedure RunCommand;
+    procedure RunCommandsArray;
   public
     constructor Create;
     destructor Destroy; override;
     procedure Execute; override;
     property Command: string read fCommand write fCommand;
+    property Commands: TCommandsArray read fCommands write fCommands;
     property StartDir: string read fStartDir write fStartDir;
     property Result: Integer read fResult;
     property ErrorLog: string read fErrorLog;
@@ -65,6 +80,8 @@ type
     property HaveProgress: boolean read fHaveProgress write fHaveProgress;
     property LineEnding: TLineEnding read fLineEnding;
     property Line: string read fLine;
+    property OnCommandProgress: TCommandProgressEvent read fOnCommandProgress write fOnCommandProgress;
+    property OnCommandProgressNested: TCommandProgressEventNested read fOnCommandProgressNested write fOnCommandProgressNested;
   end;
 
   { TfrmRunCommand }
@@ -97,7 +114,8 @@ type
   end;
 
   function RunInteractive(command, startdir, title, caption:string): Integer;
-  function RunInThread(Command, startDir: string; OnOutput: TNotifyInterruptEvent; OnDone: TNotifyEvent; startIt:boolean=true): TRunThread;
+  function RunInThread(Command, startDir: string; OnOutput: TNotifyInterruptEvent; OnDone: TNotifyEvent; startIt:boolean=true): TRunThread; overload;
+  function RunInThread(Commands: TCommandsArray; startDir: string; OnOutput: TNotifyInterruptEvent; OnDone: TNotifyEvent; startIt:boolean=true; allowFails:boolean=false): TRunThread; overload;
 
 var
   frmRunCommand: TfrmRunCommand;
@@ -134,6 +152,13 @@ begin
     Result.Start;
 end;
 
+function RunInThread(Commands: TCommandsArray; startDir: string;
+  OnOutput: TNotifyInterruptEvent; OnDone: TNotifyEvent; startIt: boolean
+  ): TRunThread;
+begin
+
+end;
+
 {$R *.lfm}
 
 { TRunThread }
@@ -168,7 +193,7 @@ begin
   inherited Destroy;
 end;
 
-procedure TRunThread.Execute;
+procedure TRunThread.RunCommand;
 var
   outText: string;
 
@@ -251,6 +276,23 @@ begin
   {$IFDEF DEBUG}
   DebugLnExit('RunThread DONE result=%d', [fResult]);
   {$ENDIF}
+end;
+
+procedure TRunThread.RunCommandsArray;
+begin
+  i := 0;
+  while not terminated and (i<Length(fCommands)) do begin
+
+    inc(i);
+  end;
+end;
+
+procedure TRunThread.Execute;
+begin
+  if Length(fCommands)=0 then
+    RunCommand
+  else
+    RunCommandsArray;
   Terminate;
 end;
 

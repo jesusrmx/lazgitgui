@@ -29,7 +29,7 @@ unit unitgitmgr;
 interface
 
 uses
-  Classes, SysUtils, unitgittypes, unitgit, unitifaces;
+  Classes, SysUtils, unitgittypes, unitgit, unitifaces, unitruncmd;
 
 const
   GITMGR_EVENT_UPDATESTATUS         = 1;
