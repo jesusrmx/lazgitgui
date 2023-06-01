@@ -107,7 +107,7 @@ type
     function Switch(branchName: string): Integer;
     function OpenDir(aDir: string): Integer;
     function Commit(msg, opts: string): Integer;
-    function Push(repo, opts: string; callback:TOutputEvent): Integer;
+    function Push(repo, opts: string; callback:TOutputEventNested): Integer;
     function Log(opts: string; Lines:TStrings): Integer;
     function Any(cmd: string; out cmdout:RawByteString): Integer;
     function Tag(tagName, tagCommit:string; annotated:boolean; tagMsg:string): Integer;
@@ -887,7 +887,7 @@ begin
   result := cmdLine.RunProcess(fGitCommand + cmd, fTopLevelDir, cmdOut);
 end;
 
-function TGit.Push(repo,opts: string; callback:TOutputEvent): Integer;
+function TGit.Push(repo,opts: string; callback:TOutputEventNested): Integer;
 var
   cmd: string;
 begin

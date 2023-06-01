@@ -63,6 +63,7 @@ type
     fErrorLog: string;
     fStartDir: string;
     fLine: RawByteString;
+    fCurrentOutput: RawByteString;
     fCmdLine: ^TCmdLine;
     procedure Notify;
     procedure RunCommand;
@@ -76,6 +77,7 @@ type
     property StartDir: string read fStartDir write fStartDir;
     property Result: Integer read fResult;
     property ErrorLog: string read fErrorLog;
+    property CurrentOutput: RawByteString read fCurrentOutput;
     property OnOutput: TNotifyInterruptEvent read fOnOutput write fOnOutput;
     property HaveProgress: boolean read fHaveProgress write fHaveProgress;
     property LineEnding: TLineEnding read fLineEnding;
@@ -115,7 +117,8 @@ type
 
   function RunInteractive(command, startdir, title, caption:string): Integer;
   function RunInThread(Command, startDir: string; OnOutput: TNotifyInterruptEvent; OnDone: TNotifyEvent; startIt:boolean=true): TRunThread; overload;
-  function RunInThread(Commands: TCommandsArray; startDir: string; OnOutput: TNotifyInterruptEvent; OnDone: TNotifyEvent; startIt:boolean=true; allowFails:boolean=false): TRunThread; overload;
+  function RunInThread(Commands: TCommandsArray; startDir: string; OnOutput: TCommandProgressEvent; OnDone: TNotifyEvent; startIt:boolean=true; allowFails:boolean=false): TRunThread; overload;
+  function RunInThread(Commands: TCommandsArray; startDir: string; OnOutput: TCommandProgressEventNested; OnDone: TNotifyEvent; startIt:boolean=true; allowFails:boolean=false): TRunThread; overload;
 
 var
   frmRunCommand: TfrmRunCommand;
@@ -153,8 +156,22 @@ begin
 end;
 
 function RunInThread(Commands: TCommandsArray; startDir: string;
-  OnOutput: TNotifyInterruptEvent; OnDone: TNotifyEvent; startIt: boolean
-  ): TRunThread;
+  OnOutput: TCommandProgressEvent; OnDone: TNotifyEvent; startIt: boolean;
+  allowFails: boolean): TRunThread;
+begin
+
+end;
+
+function RunInThread(Commands: TCommandsArray; startDir: string;
+  OnOutput: TCommandProgressEventNested; OnDone: TNotifyEvent;
+  startIt: boolean; allowFails: boolean): TRunThread;
+begin
+
+end;
+
+function RunInThread(Commands: TCommandsArray; startDir: string;
+  OnOutput: TNotifyInterruptEvent; OnDone: TNotifyEvent; startIt:boolean=true;
+  allowFails:boolean=false): TRunThread;
 begin
 
 end;
@@ -279,10 +296,21 @@ begin
 end;
 
 procedure TRunThread.RunCommandsArray;
+var
+  i: Integer;
 begin
+  if not Assigned(fOnCommandProgress) or
+     not Assigned(fOnCommandProgressNested)
+  then
+    exit;
   i := 0;
   while not terminated and (i<Length(fCommands)) do begin
-
+    fCmdLine^.RedirStdErr := fCommands[i].RedirStdErr;
+    fResult := fCmdLine^.RunProcess(fCommands[i].command, fStartDir, fCurrentOutput);
+    if Assigned(fOnCommandProgress) then
+      fOnCommandProgress(self, fCommands[i], (i+1)/Length(fCommands))
+    else if Assigned(fOnCommandProgressNested) then
+      fOnCommandProgressNested(self, fCommands[i], (i+1)/Length(fCommands)*100);
     inc(i);
   end;
 end;

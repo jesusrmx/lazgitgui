@@ -32,7 +32,7 @@ uses
   Classes, SysUtils, Process, UTF8Process, LazLogger;
 
 type
-  TOutputEvent = procedure(const aBuffer; aSize:longint; var interrupt:boolean) is nested;
+  TOutputEventNested = procedure(const aBuffer; aSize:longint; var interrupt:boolean) is nested;
   TNotifyInterruptEvent = procedure(sender: TObject; var interrupt:boolean) of object;
 
   { TCmdLine }
@@ -54,7 +54,7 @@ type
     constructor Init;
     destructor Done;
 
-    function RunProcess(const aCommand, startDir: string; callback:TOutputEvent): Integer; overload;
+    function RunProcess(const aCommand, startDir: string; callback:TOutputEventNested): Integer; overload;
     function RunProcess(const aCommand, startDir: string; cmdOutput: TStrings): Integer; overload;
     function RunProcess(const aCommand, startDir: string; stream: TStream): Integer; overload;
     function RunProcess(const aCommand, startDir: string; out cmdOutput: RawByteString): Integer; overload;
@@ -175,7 +175,7 @@ begin
 
 end;
 
-function TCmdLine.RunProcess(const aCommand, startDir: string; callback: TOutputEvent): Integer;
+function TCmdLine.RunProcess(const aCommand, startDir: string; callback: TOutputEventNested): Integer;
 var
   Process: TProcessUTF8;
   Buffer, Tail: PByte;
