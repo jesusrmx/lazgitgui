@@ -52,6 +52,7 @@ type
   public
 
     constructor Init;
+    destructor Done;
 
     function RunProcess(const aCommand, startDir: string; callback:TOutputEvent): Integer; overload;
     function RunProcess(const aCommand, startDir: string; cmdOutput: TStrings): Integer; overload;
@@ -167,6 +168,11 @@ begin
   fLastCommand := '';
   fExitCode := 0;
   fRedirStdErr := false;
+end;
+
+destructor TCmdLine.Done;
+begin
+
 end;
 
 function TCmdLine.RunProcess(const aCommand, startDir: string; callback: TOutputEvent): Integer;

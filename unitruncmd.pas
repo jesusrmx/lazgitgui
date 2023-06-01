@@ -164,7 +164,7 @@ begin
   {$IFDEF DEBUG}
   debugln('TRunThread.Destroy: ');
   {$ENDIF}
-  Dispose(fCmdLine);
+  Dispose(fCmdLine, Done);
   inherited Destroy;
 end;
 
