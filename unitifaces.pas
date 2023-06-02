@@ -64,7 +64,7 @@ type
     function Add(entryArray: TPFileEntryArray): Integer; overload;
     function Rm(entry: PFileEntry): Integer;
     function BranchList(list: TStrings; opts:array of string): Integer;
-    function Describe(opts: string; out cmdOut:RawByteString): Integer;
+    //function Describe(opts: string; out cmdOut:RawByteString): Integer;
     function Tag(tagName, tagCommit:string; annotated:boolean; tagMsg:string): Integer;
     function DeleteTag(tagName: string): Integer;
     function OpenDir(aDir: string): Integer;
@@ -73,11 +73,11 @@ type
     function Show(obj: string; lines: TStrings): Integer;
     function Log(opts: string; Lines:TStrings): Integer;
     //
-    function GetBranch: string;
-    function GetBranchOID: string;
+    //function GetBranch: string;
+    //function GetBranchOID: string;
     function GetExe: string;
-    function GetCommitsAhead: Integer;
-    function GetCommitsBehind: Integer;
+    //function GetCommitsAhead: Integer;
+    //function GetCommitsBehind: Integer;
     function GetLastTag: string;
     function GetLastTagCommits: Integer;
     function GetLastTagOID: string;
@@ -88,17 +88,17 @@ type
     function GetRemotesList: TStringList;
     function GetTopLevelDir: string;
     function GetGitCommonDir: string;
-    function GetUpstream: string;
+    //function GetUpstream: string;
     function GetVersion: string;
     function GetErrorLog: RawByteString;
     function GetLogError: RawByteString;
     function RefsFilter(commitOID: string; filter: TRefFilterProc): TRefInfoArray;
     procedure ResetLogError;
 
-    property Branch: string read GetBranch;
-    property BranchOID: string read GetBranchOID;
-    property CommitsBehind: Integer read GetCommitsBehind;
-    property CommitsAhead: Integer read GetCommitsAhead;
+    //property Branch: string read GetBranch;
+    //property BranchOID: string read GetBranchOID;
+    //property CommitsBehind: Integer read GetCommitsBehind;
+    //property CommitsAhead: Integer read GetCommitsAhead;
     property Exe: string read GetExe;
     property LastTag: string read GetLastTag;
     property LastTagCommits: Integer read GetLastTagCommits;
@@ -109,7 +109,7 @@ type
     property RefsMap: TRefsMap read GetRefsMap;
     property TopLevelDir: string read GetTopLevelDir;
     property GitCommonDir: string read GetGitCommonDir;
-    property Upstream: string read GetUpstream;
+    //property Upstream: string read GetUpstream;
     property Version: string read GetVersion;
     property ErrorLog: RawByteString read GetErrorLog;
     property LogError: RawByteString read GetLogError;

@@ -56,9 +56,14 @@ type
 
   TGitMgr = class
   private
+    fBranch: string;
+    fBranchOID: string;
+    fCommitsAhead: Integer;
+    fCommitsBehind: Integer;
     fConfig: IConfig;
     fGit: TGit;
     fShowTags: boolean;
+    fUpstream: string;
     fViewIgnoredFiles: boolean;
     fViewTrackedFiles: boolean;
     fViewUntrackedFiles: boolean;
@@ -81,6 +86,12 @@ type
     procedure QueueSwitchTag(tagName: string);
     procedure QueueNewBranch(sender: TObject; branchName, command: string; switch, fetch:boolean);
     procedure ForceTagDescription;
+
+    property CommitsAhead: Integer read fCommitsAhead;
+    property CommitsBehind: Integer read fCommitsBehind;
+    property Branch: string read fBranch;
+    property BranchOID: string read fBranchOID;
+    property Upstream: string read fUpstream;
 
     property Git: IGit read GetGit;
     property Config: IConfig read fConfig write SetConfig;
@@ -176,10 +187,17 @@ end;
 procedure TGitMgr.UpdateStatus;
 var
   cmdout: RawByteString;
-  res: Integer;
+  i: Integer;
+  commands: TCommandsArray;
 begin
+
+  commands := nil;
   // get the more recent tag
   if fShowTags and (not fDescribed) then begin
+    i := Length(commands);
+    SetLength(commands, i+1);
+    commands[i].description := 'describe';
+    commands[i].command := 'git describe';
     fGit.Describe('', cmdout);
     fLastDescribedTag := cmdOut;
     fDescribed := true;

@@ -41,18 +41,18 @@ type
 
   TGit = class(TMyInterfacedObject, IGit)
   private
-    fBranch: String;
-    fBranchOID: string;
+    //fBranch: String;
+    //fBranchOID: string;
     fConfig: IConfig;
     fGitCommand: string;
     fTopLevelDir: string;
     fGitCommonDir: string;
     fMerging, fMergingConflict: Boolean;
-    fUpstream: String;
+    //fUpstream: String;
     fUntrackedMode: string;
     fIgnoredMode: string;
-    fCommitsAhead: Integer;
-    fCommitsBehind: Integer;
+    //fCommitsAhead: Integer;
+    //fCommitsBehind: Integer;
     fEntries: TFPList;
     fVersion: String;
     fLastTag: string;
@@ -61,10 +61,10 @@ type
     fInternalRefList: TStringList;
     fRefsMap: TRefsMap;
     fLogError: RawByteString;
-    function GetBranch: string;
-    function GetBranchOID: string;
-    function GetCommitsAhead: Integer;
-    function GetCommitsBehind: Integer;
+    //function GetBranch: string;
+    //function GetBranchOID: string;
+    //function GetCommitsAhead: Integer;
+    //function GetCommitsBehind: Integer;
     function GetErrorLog: RawByteString;
     function GetExe: string;
     function GetLastTag: string;
@@ -77,9 +77,9 @@ type
     function GetRefsMap: TRefsMap;
     function GetTopLevelDir: string;
     function GetGitCommonDir: string;
-    function GetUpstream: string;
+    //function GetUpstream: string;
     function GetVersion: string;
-    procedure GitStatusBranch(var head: pchar; tail: pchar);
+    //procedure GitStatusBranch(var head: pchar; tail: pchar);
     function  TryGitIn(aPath: string): boolean;
     function GitMerging: boolean;
     function GetVersion(gitCmd:string; out aVersion:string): boolean;
@@ -93,7 +93,7 @@ type
     destructor destroy; override;
     function Initialize: boolean;
     procedure Clear;
-    function Status(unstagedList, stagedList: TStrings): Integer;
+    //function Status(unstagedList, stagedList: TStrings): Integer;
     function Diff(entry: PFileEntry; Unstaged:boolean; Lines:TStrings): Integer;
     function Add(entry: PFileEntry): Integer; overload;
     function Add(entryArray: TPFileEntryArray): Integer; overload;
@@ -112,7 +112,7 @@ type
     function Tag(tagName, tagCommit:string; annotated:boolean; tagMsg:string): Integer;
     function DeleteTag(tagName: string): Integer;
     function AddToIgnoreFile(aFile:string; justType:boolean; global:boolean): boolean;
-    function Describe(opts: string; out cmdOut:RawByteString): Integer;
+    //function Describe(opts: string; out cmdOut:RawByteString): Integer;
     function UpdateRefList: Integer;
     function GetRemotesList: TStringList;
     function RefsFilter(commitOID: string; filter: TRefFilterProc): TRefInfoArray;
@@ -125,10 +125,6 @@ type
     property IgnoredMode: string read fIgnoredMode write fIgnoredMode;
     property Config: IConfig read fConfig write fConfig;
 
-    property CommitsAhead: Integer read GetCommitsAhead;
-    property CommitsBehind: Integer read GetCommitsBehind;
-    property Branch: string read GetBranch;
-    property BranchOID: string read GetBranchOID;
     property Exe: string read GetExe;
     property LastTag: string read GetLastTag;
     property LastTagCommits: Integer read GetLastTagCommits;
@@ -139,7 +135,6 @@ type
     property RefsMap: TRefsMap read GetRefsMap;
     property TopLevelDir: string read GetTopLevelDir;
     property GitCommonDir: string read GetGitCommonDir;
-    property Upstream: string read GetUpstream;
     property Version: string read GetVersion;
   end;
 
@@ -338,30 +333,30 @@ begin
   end;
 end;
 
-function TGit.Status(unstagedList, stagedList: TStrings): Integer;
-var
-  aCommand: string;
-  M: TMemoryStream;
-  head, tail: PChar;
-begin
-  // DebugLn('Status ----------------------------------------------');
-  M := TMemoryStream.Create;
-  try
-    aCommand := format('%s status -b --long --porcelain=2 --ahead-behind --ignored=%s --untracked-files=%s -z',
-      [fGitCommand, fIgnoredMode, fUntrackedMode]);
-
-    result := cmdLine.RunProcess(aCommand, fTopLevelDir, M);
-    PushError;
-    head := M.Memory;
-    tail := head + M.Size;
-    fMerging := GitMerging;
-
-    ParseBranches(head, tail, fBranch, fBranchOID, fUpstream, fCommitsAhead, fCommitsBehind);
-    ParseStatus(head, tail, unstagedList, stagedList, fEntries, fMergingConflict);
-  finally
-    M.Free;
-  end;
-end;
+//function TGit.Status(unstagedList, stagedList: TStrings): Integer;
+//var
+//  aCommand: string;
+//  M: TMemoryStream;
+//  head, tail: PChar;
+//begin
+//  // DebugLn('Status ----------------------------------------------');
+//  M := TMemoryStream.Create;
+//  try
+//    aCommand := format('%s status -b --long --porcelain=2 --ahead-behind --ignored=%s --untracked-files=%s -z',
+//      [fGitCommand, fIgnoredMode, fUntrackedMode]);
+//
+//    result := cmdLine.RunProcess(aCommand, fTopLevelDir, M);
+//    PushError;
+//    head := M.Memory;
+//    tail := head + M.Size;
+//    fMerging := GitMerging;
+//
+//    ParseBranches(head, tail, fBranch, fBranchOID, fUpstream, fCommitsAhead, fCommitsBehind);
+//    ParseStatus(head, tail, unstagedList, stagedList, fEntries, fMergingConflict);
+//  finally
+//    M.Free;
+//  end;
+//end;
 
 function TGit.GetErrorLog: RawByteString;
 begin
@@ -403,25 +398,25 @@ begin
   result := fMergingConflict;
 end;
 
-function TGit.GetBranchOID: string;
-begin
-  result := fBranchOID;
-end;
-
-function TGit.GetCommitsAhead: Integer;
-begin
-  result := fCommitsAhead;
-end;
-
-function TGit.GetCommitsBehind: Integer;
-begin
-  result := fCommitsBehind;
-end;
-
-function TGit.GetBranch: string;
-begin
-  result := fBranch;
-end;
+//function TGit.GetBranchOID: string;
+//begin
+//  result := fBranchOID;
+//end;
+//
+//function TGit.GetCommitsAhead: Integer;
+//begin
+//  result := fCommitsAhead;
+//end;
+//
+//function TGit.GetCommitsBehind: Integer;
+//begin
+//  result := fCommitsBehind;
+//end;
+//
+//function TGit.GetBranch: string;
+//begin
+//  result := fBranch;
+//end;
 
 function TGit.GetRefList: TStringList;
 begin
@@ -445,10 +440,10 @@ begin
   result := fGitCommonDir;
 end;
 
-function TGit.GetUpstream: string;
-begin
-  result := fUpstream;
-end;
+//function TGit.GetUpstream: string;
+//begin
+//  result := fUpstream;
+//end;
 
 function TGit.GetVersion: string;
 begin
@@ -886,44 +881,44 @@ begin
   end;
 end;
 
-function TGit.Describe(opts: string; out cmdOut: RawByteString): Integer;
-var
-  internal: boolean;
-  cmd: string;
-  p: SizeInt;
-begin
-  internal := opts='';
-  cmd := 'describe ';
-  if internal then  begin
-    cmd += '--tags';
-    fLastTag := '';
-    fLastTagCommits := 0;
-    fLastTagOID := '';
-  end else
-    cmd += opts;
-  result := cmdLine.RunProcess(fGitCommand + ' ' + cmd, fTopLevelDir, cmdOut);
-  if (result<=0) and (internal {or IKnowDescribeOptions(opts)}) then begin
-    // tag-commits-'g'OID
-    cmd := cmdOut;
-    p := cmd.LastIndexOf('-g');
-    if p>=0 then begin
-      fLastTagOID := Trim(copy(cmd, p+3, MAXINT));
-      delete(cmd, p+1, MAXINT);
-      p := cmd.LastIndexOf('-');
-      if p>=0 then begin
-        fLastTagCommits := StrToIntDef(copy(cmd, p+2, MAXINT), 0);
-        fLastTag := copy(cmd, 1, p);
-      end;
-    end else
-    if cmdOut<>'' then begin
-      // a new tag
-      fLastTagOID := BranchOID;
-      fLastTagCommits := 0;
-      fLastTag := cmdOut;
-    end;
-  end;
-  PushError;
-end;
+//function TGit.Describe(opts: string; out cmdOut: RawByteString): Integer;
+//var
+//  internal: boolean;
+//  cmd: string;
+//  p: SizeInt;
+//begin
+//  internal := opts='';
+//  cmd := 'describe ';
+//  if internal then  begin
+//    cmd += '--tags';
+//    fLastTag := '';
+//    fLastTagCommits := 0;
+//    fLastTagOID := '';
+//  end else
+//    cmd += opts;
+//  result := cmdLine.RunProcess(fGitCommand + ' ' + cmd, fTopLevelDir, cmdOut);
+//  if (result<=0) and (internal {or IKnowDescribeOptions(opts)}) then begin
+//    // tag-commits-'g'OID
+//    cmd := cmdOut;
+//    p := cmd.LastIndexOf('-g');
+//    if p>=0 then begin
+//      fLastTagOID := Trim(copy(cmd, p+3, MAXINT));
+//      delete(cmd, p+1, MAXINT);
+//      p := cmd.LastIndexOf('-');
+//      if p>=0 then begin
+//        fLastTagCommits := StrToIntDef(copy(cmd, p+2, MAXINT), 0);
+//        fLastTag := copy(cmd, 1, p);
+//      end;
+//    end else
+//    if cmdOut<>'' then begin
+//      // a new tag
+//      fLastTagOID := BranchOID;
+//      fLastTagCommits := 0;
+//      fLastTag := cmdOut;
+//    end;
+//  end;
+//  PushError;
+//end;
 
 // Update the internal reflist
 function TGit.UpdateRefList: Integer;
