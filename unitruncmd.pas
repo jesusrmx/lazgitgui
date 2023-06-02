@@ -60,6 +60,7 @@ type
     fOnCommandProgressNested: TCommandProgressEventNested;
     fOnOutput: TNotifyInterruptEvent;
     fResult: Integer;
+    fIndex: Integer;
     fErrorLog: string;
     fStartDir: string;
     fLine: RawByteString;
@@ -68,6 +69,7 @@ type
     procedure Notify;
     procedure RunCommand;
     procedure RunCommandsArray;
+    procedure DoCommandProgress;
   public
     constructor Create;
     destructor Destroy; override;
@@ -116,9 +118,10 @@ type
   end;
 
   function RunInteractive(command, startdir, title, caption:string): Integer;
+
   function RunInThread(Command, startDir: string; OnOutput: TNotifyInterruptEvent; OnDone: TNotifyEvent; startIt:boolean=true): TRunThread; overload;
-  function RunInThread(Commands: TCommandsArray; startDir: string; OnOutput: TCommandProgressEvent; OnDone: TNotifyEvent; startIt:boolean=true; allowFails:boolean=false): TRunThread; overload;
-  function RunInThread(Commands: TCommandsArray; startDir: string; OnOutput: TCommandProgressEventNested; OnDone: TNotifyEvent; startIt:boolean=true; allowFails:boolean=false): TRunThread; overload;
+  function RunInThread(Commands: TCommandsArray; startDir: string; OnProgress: TCommandProgressEvent; OnDone: TNotifyEvent; startIt:boolean=true; allowFails:boolean=false): TRunThread; overload;
+  function RunInThread(Commands: TCommandsArray; startDir: string; OnProgress: TCommandProgressEventNested; OnDone: TNotifyEvent; startIt:boolean=true; allowFails:boolean=false): TRunThread; overload;
 
 var
   frmRunCommand: TfrmRunCommand;
@@ -156,24 +159,31 @@ begin
 end;
 
 function RunInThread(Commands: TCommandsArray; startDir: string;
-  OnOutput: TCommandProgressEvent; OnDone: TNotifyEvent; startIt: boolean;
+  OnProgress: TCommandProgressEvent; OnDone: TNotifyEvent; startIt: boolean;
   allowFails: boolean): TRunThread;
 begin
-
+  Result := TRunThread.Create;
+  Result.Commands := Commands;
+  Result.StartDir := startDir;
+  Result.FreeOnTerminate := true;
+  Result.OnCommandProgress := OnProgress;
+  Result.OnTerminate := OnDone;
+  if startIt then
+    Result.Start;
 end;
 
 function RunInThread(Commands: TCommandsArray; startDir: string;
-  OnOutput: TCommandProgressEventNested; OnDone: TNotifyEvent;
+  OnProgress: TCommandProgressEventNested; OnDone: TNotifyEvent;
   startIt: boolean; allowFails: boolean): TRunThread;
 begin
-
-end;
-
-function RunInThread(Commands: TCommandsArray; startDir: string;
-  OnOutput: TNotifyInterruptEvent; OnDone: TNotifyEvent; startIt:boolean=true;
-  allowFails:boolean=false): TRunThread;
-begin
-
+  Result := TRunThread.Create;
+  Result.Commands := Commands;
+  Result.StartDir := startDir;
+  Result.FreeOnTerminate := true;
+  Result.OnCommandProgressNested := OnProgress;
+  Result.OnTerminate := OnDone;
+  if startIt then
+    Result.Start;
 end;
 
 {$R *.lfm}
@@ -296,23 +306,26 @@ begin
 end;
 
 procedure TRunThread.RunCommandsArray;
-var
-  i: Integer;
 begin
   if not Assigned(fOnCommandProgress) or
      not Assigned(fOnCommandProgressNested)
   then
     exit;
-  i := 0;
-  while not terminated and (i<Length(fCommands)) do begin
-    fCmdLine^.RedirStdErr := fCommands[i].RedirStdErr;
-    fResult := fCmdLine^.RunProcess(fCommands[i].command, fStartDir, fCurrentOutput);
-    if Assigned(fOnCommandProgress) then
-      fOnCommandProgress(self, fCommands[i], (i+1)/Length(fCommands))
-    else if Assigned(fOnCommandProgressNested) then
-      fOnCommandProgressNested(self, fCommands[i], (i+1)/Length(fCommands)*100);
-    inc(i);
+  fIndex := 0;
+  while not terminated and (fIndex<Length(fCommands)) do begin
+    fCmdLine^.RedirStdErr := fCommands[fIndex].RedirStdErr;
+    fResult := fCmdLine^.RunProcess(fCommands[fIndex].command, fStartDir, fCurrentOutput);
+    Synchronize(@DoCommandProgress);
+    inc(fIndex);
   end;
+end;
+
+procedure TRunThread.DoCommandProgress;
+begin
+  if not terminated and Assigned(fOnCommandProgress) then
+    fOnCommandProgress(self, fCommands[fIndex], (fIndex+1)/Length(fCommands)*100)
+  else if not terminated and Assigned(fOnCommandProgressNested) then
+    fOnCommandProgressNested(self, fCommands[fIndex], (fIndex+1)/Length(fCommands)*100);
 end;
 
 procedure TRunThread.Execute;
