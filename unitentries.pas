@@ -131,9 +131,12 @@ procedure ParseOrdinaryChanged(var head: pchar; tail: pchar; out entry: PFileEnt
 procedure ParseRenamedCopied(var head: pchar; tail: pchar; out entry: PFileEntry);
 procedure ParseUnmerged(var head: pchar; tail: pchar; out entry: PFileEntry);
 procedure ParseOther(var head: pchar; tail: pchar; out entry: PFileEntry);
+procedure ParseBranches(var head: pchar; tail: pchar; out fBranch, fBranchOID, fUpstream: string; out fCommitsAhead, fCommitsBehind: Integer);
+procedure ParseStatus(var head: pchar; tail: pchar; lstUnstaged, lstStaged: TStrings; fEntries:TfpList; out fMergingConflict:boolean);
 
 function EntryTypeToStr(X, Y: char): string;
 procedure DumpEntry(Entry: PFileEntry);
+procedure ClearEntries(fEntries: TfpList);
 
 const
   ChangedInWorktreeSet = [ etWorktreeChangedSinceIndex .. etCopiedInWorkTree ];
@@ -373,6 +376,21 @@ begin
   end;
 end;
 
+procedure ClearEntries(fEntries: TfpList);
+var
+  i: Integer;
+  entry: PFileEntry;
+begin
+  if fEntries<>nil then begin
+    for i:=0 to fEntries.Count-1 do begin
+      entry := PFileEntry(fEntries[i]);
+      if entry<>nil then
+        Dispose(entry)
+    end;
+    fEntries.Clear;
+  end;
+end;
+
 function NextField(var head:pchar): string;
 var
   p: pchar;
@@ -535,6 +553,103 @@ begin
 
   inc(head, 2);
   entry^.path := head;
+end;
+
+procedure ParseBranches(var head: pchar; tail: pchar; out fBranch, fBranchOID,
+  fUpstream: string; out fCommitsAhead, fCommitsBehind: Integer);
+var
+  ab: string;
+  i, n: Integer;
+begin
+  fBranch := '';
+  fBranchOID := '';
+  fUpstream := '';
+  fCommitsAhead := 0;
+  fCommitsBehind := 0;
+  ab := '';
+
+  // scan header lines
+  while (head<tail) and (head^='#') do begin
+
+    n := strlen(head);
+
+    if (fBranchOID='') and (strlcomp(head, '# branch.oid', 12)=0) then begin
+      SetString(fBranchOID, head + 13, n - 13);
+    end else
+    if (fBranch='') and (strlcomp(head, '# branch.head', 13)=0) then begin
+      SetString(fBranch, head + 14, n - 14);
+    end else
+    if (fUpstream='') and (strlcomp(head, '# branch.upstream', 17)=0) then begin
+      SetString(fUpstream, head + 18, n - 18);
+    end else
+    if (ab='') and (strlcomp(head, '# branch.ab', 11)=0) then begin
+      SetString(ab, head + 12, n - 12);
+      i := pos(' ', ab);
+      fCommitsAhead := StrToIntDef(copy(ab, 1, i-1), 0);
+      fCommitsBehind := StrToIntDef(copy(ab, i+1, Length(ab)), 0);
+    end;
+
+    inc(head, n + 1);
+  end;
+end;
+
+procedure ParseStatus(var head: pchar; tail: pchar; lstUnstaged,
+  lstStaged: TStrings; fEntries: TfpList; out fMergingConflict: boolean);
+var
+  n: Integer;
+  entry: PFileEntry;
+  start: pchar;
+begin
+  // clear lists
+  ClearEntries(fEntries);
+  lstUnstaged.Clear;
+  lstStaged.Clear;
+  fMergingConflict := false;
+
+  // scan header lines
+  while (head<tail) do begin
+
+    start := head;
+    n := strlen(head);
+    //DebugLn(start);
+
+    case head^ of
+      '1': ParseOrdinaryChanged(head, tail, entry);
+      '2': ParseRenamedCopied(head, tail, entry);
+      'u':
+        begin
+          fMergingConflict := true;
+          ParseUnmerged(head, tail, entry);
+        end;
+      '?',
+      '!': ParseOther(head, tail, entry);
+      else entry := nil;
+    end;
+
+    if entry<>nil then begin
+      fEntries.Add(entry);
+
+      // staged list
+      case entry^.EntryTypeStaged of
+        etUpdatedInIndex..etDeletedFromIndex:
+          lstStaged.AddObject(entry^.path, TObject(entry));
+        etRenamedInIndex..etCopiedInIndexD:
+          lstStaged.AddObject(entry^.origPath + ' -> ' + entry^.path, TObject(entry));
+      end;
+
+      // unstaged list
+      case entry^.EntryTypeUnStaged of
+        etUnknown:;
+        etUpdatedInIndex..etCopiedInIndexD:;
+        etIndexAndWorktreeMatchesM..etIndexAndWorktreeMatchesC:;
+        else
+          lstUnstaged.AddObject(entry^.path, TObject(entry));
+      end;
+
+    end;
+
+    head := start + n + 1;
+  end;
 end;
 
 end.
