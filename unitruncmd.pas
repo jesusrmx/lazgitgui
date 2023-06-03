@@ -35,10 +35,12 @@ uses
 
 type
   TLineEnding = string[3];
+  TCommandItemPreferredOutputType = (cipotString, cipotStream);
   TCommandItem = record
     description: string;
     command: string;
     RedirStdErr: boolean;
+    PreferredOutputType: TCommandItemPreferredOutputType;
     tag: pointer;
   end;
   TCommandsArray = array of TCommandItem;
@@ -306,16 +308,29 @@ begin
 end;
 
 procedure TRunThread.RunCommandsArray;
+var
+  M: TMemoryStream;
 begin
-  if not Assigned(fOnCommandProgress) or
-     not Assigned(fOnCommandProgressNested)
+  if (not Assigned(fOnCommandProgress)) and
+     (not Assigned(fOnCommandProgressNested))
   then
     exit;
   fIndex := 0;
   while not terminated and (fIndex<Length(fCommands)) do begin
     fCmdLine^.RedirStdErr := fCommands[fIndex].RedirStdErr;
-    fResult := fCmdLine^.RunProcess(fCommands[fIndex].command, fStartDir, fCurrentOutput);
-    Synchronize(@DoCommandProgress);
+    try
+      M := nil;
+      if fCommands[fIndex].PreferredOutputType=cipotStream then begin
+        M := TMemoryStream.Create;
+        fResult := fCmdLine^.RunProcess(fCommands[fIndex].command, fStartDir, M);
+        fCommands[fIndex].tag := M;
+      end else begin
+        fResult := fCmdLine^.RunProcess(fCommands[fIndex].command, fStartDir, fCurrentOutput);
+      end;
+      Synchronize(@DoCommandProgress);
+    finally
+      M.Free;
+    end;
     inc(fIndex);
   end;
 end;

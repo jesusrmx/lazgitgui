@@ -887,7 +887,7 @@ end;
 
 procedure TfrmMain.NewTag;
 begin
-  fGitMgr.QueueNewTag(fGit.BranchOID);
+  fGitMgr.QueueNewTag(fGitMgr.BranchOID);
 end;
 
 procedure TfrmMain.CheckMenuDivisorInLastPosition(pop: TPopupMenu);
@@ -1186,7 +1186,7 @@ end;
 
 procedure TfrmMain.actInsertBranchNameExecute(Sender: TObject);
 begin
-  txtComment.SelText := fGit.Branch + ': ';
+  txtComment.SelText := fGitMgr.Branch + ': ';
 end;
 
 procedure TfrmMain.actLogExecute(Sender: TObject);
@@ -1314,14 +1314,14 @@ var
 begin
   //if fConfig.ReadBoolean('FetchBeforePush', false) then
   //  doFetch;
-  if fGit.CommitsBehind<0 then begin
+  if fGitMgr.CommitsBehind<0 then begin
     res := QuestionDlg(rsPushingYourCommits, rsThereAreCommitsBehind, mtConfirmation,
       [mrYes, 'Push', mrCancel, 'Cancel'], 0 );
     if res<>mrYes then
       exit;
   end;
 
-  if (fGit.Upstream='') then begin
+  if (fGitMgr.Upstream='') then begin
     L := fGit.GetRemotesList;
     try
       if L.Count=0 then begin
@@ -1330,7 +1330,7 @@ begin
         exit;
       end;
       if L.Count>1 then begin
-        ShowMessage(fGit.Branch + ' has no tracking and there are '^M+
+        ShowMessage(fGitMgr.Branch + ' has no tracking and there are '^M+
                     IntToStr(l.Count)+' remotes ('+L.CommaText+')'^M+
                     'I''m not yet prepared to handle this');
        exit;
@@ -1338,14 +1338,14 @@ begin
 
       res := QuestionDlg(
         'Pushing branch without tracking information',
-        'Do you want to push "'+fGit.Branch+'" to "'+L[0]+'"'+LineEnding+
+        'Do you want to push "'+fGitMgr.Branch+'" to "'+L[0]+'"'+LineEnding+
         'And setup tracking information? I will do:'^M+LineEnding+LineEnding+
-        'git push --set-upstream '+L[0]+' '+fGit.Branch, mtConfirmation,
+        'git push --set-upstream '+L[0]+' '+fGitMgr.Branch, mtConfirmation,
         [mrYes, 'yes, do it', mrCancel, 'Cancel'], 0 );
       if res<>mrYes then
         exit;
 
-      cmd := ' push --progress --set-upstream '+L[0]+' '+fGit.Branch;
+      cmd := ' push --progress --set-upstream '+L[0]+' '+fGitMgr.Branch;
 
     finally
       L.Free;
@@ -1470,45 +1470,45 @@ var
   s: string;
   ahead, behind: boolean;
 begin
-  ahead := fGit.CommitsAhead>0;
-  behind := fGit.CommitsBehind<0;
+  ahead := fGitMgr.CommitsAhead>0;
+  behind := fGitMgr.CommitsBehind<0;
 
   label1.Visible := not ahead and not behind;
-  lblBranch.Caption := fGit.Branch;
-  lblBranch.Hint := fGit.Branch + LineEnding + fGit.BranchOID;
+  lblBranch.Caption := fGitMgr.Branch;
+  lblBranch.Hint := fGitMgr.Branch + LineEnding + fGitMgr.BranchOID;
 
   s := '';
-  if fGit.Merging then begin
+  if fGitMgr.Merging then begin
     s += '(MERGING';
-    if fGit.MergingConflict then s += ' CONFLICT';
+    if fGitMgr.MergingConflict then s += ' CONFLICT';
     s += ')';
   end;
   lblMerging.Caption := s;
 
   s := '';
-  if ahead then s += format('%d commits ahead', [fGit.CommitsAhead]);
+  if ahead then s += format('%d commits ahead', [fGitMgr.CommitsAhead]);
   if ahead and behind then s += ', ';
-  if behind then s += format('%d commits behind', [-fGit.CommitsBehind]);
+  if behind then s += format('%d commits behind', [-fGitMgr.CommitsBehind]);
   if ahead or behind then s += ' of';
 
   if s='' then s:=' ';
   lblAheadBehind.Caption := s;
 
-  label2.Visible := (not ahead and not behind) and (fGit.Upstream<>'');
-  lblRemote.Caption := fGit.Upstream;
+  label2.Visible := (not ahead and not behind) and (fGitMgr.Upstream<>'');
+  lblRemote.Caption := fGitMgr.Upstream;
 
   if fConfig.ShowTags then begin
-    if fGit.LastTag='' then begin
+    if fGitMgr.LastTag='' then begin
       lblTag.Caption :='No Tag available';
       lblTag.Hint := '';
       label3.Caption := '';
     end else begin
-      lblTag.Caption := fGit.LastTag;
-      if fGit.LastTagCommits=0 then
+      lblTag.Caption := fGitMgr.LastTag;
+      if fGitMgr.LastTagCommits=0 then
         label3.Caption := 'At tag'
       else
-        label3.Caption := format('%d commits since',[fGit.LastTagCommits]);
-      lblTag.Hint := fGit.LastTagOID;
+        label3.Caption := format('%d commits since',[fGitMgr.LastTagCommits]);
+      lblTag.Hint := fGitMgr.LastTagOID;
     end;
   end else begin
     lblTag.Caption :='';

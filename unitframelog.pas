@@ -736,7 +736,7 @@ var
   commit: QWord;
   i: Integer;
 begin
-  commit := OIDToQWord(fGit.BranchOID);
+  commit := OIDToQWord(fGitmgr.BranchOID);
   for i:=0 to Length(fItemIndices)-1 do begin
     if commit=fItemIndices[i].commit then begin
       gridLog.Row :=  gridLog.FixedRows + i;
@@ -766,7 +766,7 @@ var
   end;
 
 begin
-  headcommit := OIDToQWord(fGit.BranchOID);
+  headcommit := OIDToQWord(fGitMgr.BranchOID);
   curCommit := OIDToQWord(fCurrentItem.CommitOID);
   if (headCommit=curCommit) then
     exit;
@@ -784,7 +784,7 @@ begin
   fRefItems := fGit.RefsFilter(fCurrentItem.CommitOID, @Filter);
   for i := 0 to Length(fRefItems)-1 do begin
     mi := TMenuItem.Create(Self.Owner);
-    mi.Caption := format('Merge %s to %s',[QuotedStr(fRefItems[i]^.refName), QuotedStr(fGit.Branch)]);
+    mi.Caption := format('Merge %s to %s',[QuotedStr(fRefItems[i]^.refName), QuotedStr(fGitMgr.Branch)]);
     mi.OnClick := @OnMergeBranchClick;
     mi.Tag := PtrInt(fRefItems[i]);
     popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
@@ -815,7 +815,7 @@ var
   end;
 
 begin
-  headcommit := OIDToQWord(fGit.BranchOID);
+  headcommit := OIDToQWord(fGitMgr.BranchOID);
   curCommit := OIDToQWord(fCurrentItem.CommitOID);
 
   mi := TMenuItem.Create(Self.Owner);

@@ -47,13 +47,13 @@ type
     fGitCommand: string;
     fTopLevelDir: string;
     fGitCommonDir: string;
-    fMerging, fMergingConflict: Boolean;
+    //fMerging, fMergingConflict: Boolean;
     //fUpstream: String;
     fUntrackedMode: string;
     fIgnoredMode: string;
     //fCommitsAhead: Integer;
     //fCommitsBehind: Integer;
-    fEntries: TFPList;
+    //fEntries: TFPList;
     fVersion: String;
     fLastTag: string;
     fLastTagOID: string;
@@ -67,12 +67,12 @@ type
     //function GetCommitsBehind: Integer;
     function GetErrorLog: RawByteString;
     function GetExe: string;
-    function GetLastTag: string;
-    function GetLastTagCommits: Integer;
-    function GetLastTagOID: string;
+    //function GetLastTag: string;
+    //function GetLastTagCommits: Integer;
+    //function GetLastTagOID: string;
     function GetLogError: RawBytestring;
-    function GetMerging: boolean;
-    function GetMergingConflict: boolean;
+    //function GetMerging: boolean;
+    //function GetMergingConflict: boolean;
     function GetRefList: TStringList; overload;
     function GetRefsMap: TRefsMap;
     function GetTopLevelDir: string;
@@ -81,7 +81,7 @@ type
     function GetVersion: string;
     //procedure GitStatusBranch(var head: pchar; tail: pchar);
     function  TryGitIn(aPath: string): boolean;
-    function GitMerging: boolean;
+    //function GitMerging: boolean;
     function GetVersion(gitCmd:string; out aVersion:string): boolean;
     function AtLeastVersion(aVer: string): boolean;
     function RefListEnabledField(aField: string): boolean;
@@ -92,7 +92,7 @@ type
     constructor create;
     destructor destroy; override;
     function Initialize: boolean;
-    procedure Clear;
+    //procedure Clear;
     //function Status(unstagedList, stagedList: TStrings): Integer;
     function Diff(entry: PFileEntry; Unstaged:boolean; Lines:TStrings): Integer;
     function Add(entry: PFileEntry): Integer; overload;
@@ -126,11 +126,11 @@ type
     property Config: IConfig read fConfig write fConfig;
 
     property Exe: string read GetExe;
-    property LastTag: string read GetLastTag;
-    property LastTagCommits: Integer read GetLastTagCommits;
-    property LastTagOID: string read GetLastTagOID;
-    property Merging: boolean read GetMerging;
-    property MergingConflict: boolean read GetMergingConflict;
+    //property LastTag: string read GetLastTag;
+    //property LastTagCommits: Integer read GetLastTagCommits;
+    //property LastTagOID: string read GetLastTagOID;
+    //property Merging: boolean read GetMerging;
+    //property MergingConflict: boolean read GetMergingConflict;
     property RefList: TStringList read GetRefList;
     property RefsMap: TRefsMap read GetRefsMap;
     property TopLevelDir: string read GetTopLevelDir;
@@ -193,7 +193,6 @@ begin
   inherited create;
   fUntrackedMode := 'all';
   fIgnoredMode := 'no';
-  fEntries := TFpList.Create;
 end;
 
 destructor TGit.destroy;
@@ -203,8 +202,6 @@ begin
   fRefsMap.Free;
   ClearRefList(fInternalRefList);
   fInternalRefList.Free;
-  clear;
-  fEntries.Free;
   inherited destroy;
 end;
 
@@ -318,21 +315,21 @@ begin
   end;
 end;
 
-procedure TGit.Clear;
-var
-  i: Integer;
-  entry: PFileEntry;
-begin
-  if fEntries<>nil then begin
-    for i:=0 to fEntries.Count-1 do begin
-      entry := PFileEntry(fEntries[i]);
-      if entry<>nil then
-        Dispose(entry)
-    end;
-    fEntries.Clear;
-  end;
-end;
-
+//procedure TGit.Clear;
+//var
+//  i: Integer;
+//  entry: PFileEntry;
+//begin
+//  if fEntries<>nil then begin
+//    for i:=0 to fEntries.Count-1 do begin
+//      entry := PFileEntry(fEntries[i]);
+//      if entry<>nil then
+//        Dispose(entry)
+//    end;
+//    fEntries.Clear;
+//  end;
+//end;
+//
 //function TGit.Status(unstagedList, stagedList: TStrings): Integer;
 //var
 //  aCommand: string;
@@ -368,36 +365,36 @@ begin
   result := fGitCommand;
 end;
 
-function TGit.GetLastTag: string;
-begin
-  result := fLastTag;
-end;
-
-function TGit.GetLastTagCommits: Integer;
-begin
-  result := fLastTagCommits;
-end;
-
-function TGit.GetLastTagOID: string;
-begin
-  result := fLastTagOID;
-end;
+//function TGit.GetLastTag: string;
+//begin
+//  result := fLastTag;
+//end;
+//
+//function TGit.GetLastTagCommits: Integer;
+//begin
+//  result := fLastTagCommits;
+//end;
+//
+//function TGit.GetLastTagOID: string;
+//begin
+//  result := fLastTagOID;
+//end;
 
 function TGit.GetLogError: RawBytestring;
 begin
   result := fLogError;
 end;
 
-function TGit.GetMerging: boolean;
-begin
-  result := fMerging;
-end;
-
-function TGit.GetMergingConflict: boolean;
-begin
-  result := fMergingConflict;
-end;
-
+//function TGit.GetMerging: boolean;
+//begin
+//  result := fMerging;
+//end;
+//
+//function TGit.GetMergingConflict: boolean;
+//begin
+//  result := fMergingConflict;
+//end;
+//
 //function TGit.GetBranchOID: string;
 //begin
 //  result := fBranchOID;
@@ -1024,17 +1021,17 @@ begin
   fLogError := '';
 end;
 
-function TGit.GitMerging: boolean;
-var
-  cmdOut: RawByteString;
-begin
-  //result := FileExists(fTopLevelDir + '.git/MERGE_HEAD');
-  // ref: https://stackoverflow.com/a/55192451
-  //cmdLine.StdOutputClosed := true;
-  cmdLine.StdErrorClosed := true;
-  result := cmdLine.RunProcess(fGitCommand + ' rev-list -1 MERGE_HEAD', fTopLevelDir, cmdOut) = 0;
-  PushError;
-end;
+//function TGit.GitMerging: boolean;
+//var
+//  cmdOut: RawByteString;
+//begin
+//  //result := FileExists(fTopLevelDir + '.git/MERGE_HEAD');
+//  // ref: https://stackoverflow.com/a/55192451
+//  //cmdLine.StdOutputClosed := true;
+//  cmdLine.StdErrorClosed := true;
+//  result := cmdLine.RunProcess(fGitCommand + ' rev-list -1 MERGE_HEAD', fTopLevelDir, cmdOut) = 0;
+//  PushError;
+//end;
 
 function TGit.GetVersion(gitCmd: string; out aVersion: string): boolean;
 var

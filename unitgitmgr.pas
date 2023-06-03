@@ -29,7 +29,8 @@ unit unitgitmgr;
 interface
 
 uses
-  Classes, SysUtils, unitgittypes, unitgit, unitifaces, unitruncmd;
+  Classes, SysUtils, unitgittypes, unitgit, unitifaces, unitruncmd, unitentries,
+  LazLogger;
 
 const
   GITMGR_EVENT_UPDATESTATUS         = 1;
@@ -60,6 +61,11 @@ type
     fBranchOID: string;
     fCommitsAhead: Integer;
     fCommitsBehind: Integer;
+    fEntries: TFPList;
+    fLastTag: string;
+    fLastTagOID: string;
+    fLastTagCommits: Integer;
+    fMerging, fMergingConflict: boolean;
     fConfig: IConfig;
     fGit: TGit;
     fShowTags: boolean;
@@ -72,7 +78,9 @@ type
     fUnstagedList, fStagedList: TStringList;
     fObserverMgr: TObserverMgr;
     function GetGit: IGit;
+    procedure OnCommandsDone(Sender: TObject);
     procedure SetConfig(AValue: IConfig);
+    procedure OnCommandProgress(sender: TObject; item: TCommandItem; percent: single);
   public
     constructor create;
     destructor destroy; override;
@@ -92,6 +100,11 @@ type
     property Branch: string read fBranch;
     property BranchOID: string read fBranchOID;
     property Upstream: string read fUpstream;
+    property LastTag: string read fLastTag;
+    property LastTagCommits: Integer read fLastTagCommits;
+    property LastTagOID: string read fLastTagOID;
+    property Merging: boolean read fMerging;
+    property MergingConflict: boolean read fMergingConflict;
 
     property Git: IGit read GetGit;
     property Config: IConfig read fConfig write SetConfig;
@@ -168,10 +181,13 @@ begin
   fUnstagedList := TStringList.Create;
   fStagedList := TStringList.Create;
   fObserverMgr := TObserverMgr.Create;
+  fEntries := TFpList.Create;
 end;
 
 destructor TGitMgr.destroy;
 begin
+  ClearEntries(fEntries);
+  fEntries.Free;
   fObserverMgr.Free;
   fStagedList.Free;
   fUnstagedList.Free;
@@ -184,31 +200,103 @@ begin
   result := fGit.Initialize;
 end;
 
+procedure TGitMgr.OnCommandProgress(sender: TObject; item: TCommandItem; percent: single);
+var
+  thread: TRunThread absolute sender;
+  cmd: string;
+  p: Integer;
+  head, tail: pchar;
+begin
+  DebugLn('%3f%%: %s',[percent, item.description]);
+  case item.description of
+    'describe':
+      begin
+        fLastTag := '';
+        fLastTagCommits := 0;
+        fLastTagOID := '';
+        if thread.Result<=0 then begin
+          // tag-commits-'g'OID
+          cmd := thread.CurrentOutput;
+          p := cmd.LastIndexOf('-g');
+          if p>=0 then begin
+            fLastTagOID := Trim(copy(cmd, p+3, MAXINT));
+            delete(cmd, p+1, MAXINT);
+            p := cmd.LastIndexOf('-');
+            if p>=0 then begin
+              fLastTagCommits := StrToIntDef(copy(cmd, p+2, MAXINT), 0);
+              fLastTag := copy(cmd, 1, p);
+            end;
+          end;
+        end;
+      end;
+
+    'merging':
+      begin
+        fMerging := thread.Result=0;
+      end;
+
+    'status':
+      begin
+        head := TMemoryStream(item.tag).Memory;
+        tail := head + TMemoryStream(item.tag).Size;
+
+        ParseBranches(head, tail, fBranch, fBranchOID, fUpstream, fCommitsAhead, fCommitsBehind);
+        ParseStatus(head, tail, fUnstagedList, fStagedList, fEntries, fMergingConflict);
+
+        fObserverMgr.NotifyObservers(self, GITMGR_EVENT_UPDATESTATUS, 0);
+      end;
+  end;
+end;
+
+
+procedure TGitMgr.OnCommandsDone(Sender: TObject);
+var
+  thread: TRunThread absolute sender;
+begin
+
+end;
+
 procedure TGitMgr.UpdateStatus;
 var
-  cmdout: RawByteString;
   i: Integer;
   commands: TCommandsArray;
 begin
 
   commands := nil;
+
   // get the more recent tag
   if fShowTags and (not fDescribed) then begin
     i := Length(commands);
     SetLength(commands, i+1);
     commands[i].description := 'describe';
-    commands[i].command := 'git describe';
-    fGit.Describe('', cmdout);
-    fLastDescribedTag := cmdOut;
-    fDescribed := true;
+    commands[i].command := fGit.Exe + ' describe --tags';
+    commands[i].RedirStdErr := false;
+    commands[i].PreferredOutputType := cipotString;
   end;
 
-  if fViewIgnoredFiles then fGit.IgnoredMode:='traditional' else fGit.IgnoredMode:='no';
-  if fViewUntrackedFiles then fGit.UntrackedMode:='all' else fGit.UntrackedMode:='no';
+  //result := FileExists(fTopLevelDir + '.git/MERGE_HEAD');
+  // ref: https://stackoverflow.com/a/55192451
+  //cmdLine.StdOutputClosed := true;
+  i := Length(commands);
+  SetLength(commands, i+1);
+  commands[i].description := 'merging';
+  commands[i].command := fGit.Exe + ' rev-list -1 MERGE_HEAD';
+  commands[i].RedirStdErr := true;
+  commands[i].PreferredOutputType := cipotString;
 
-  res := fGit.Status(fUnstagedList, fStagedList);
+  i := Length(commands);
+  SetLength(commands, i+1);
+  commands[i].description := 'status';
+  commands[i].command := fGit.Exe +
+    format(' status -b --long --porcelain=2 --ahead-behind --ignored=%s --untracked-files=%s -z',
+      [BoolToStr(fViewIgnoredFiles, 'traditional', 'no'),
+       BoolToStr(fViewUntrackedFiles, 'all', 'no')]);
+  commands[i].RedirStdErr := false;
+  commands[i].PreferredOutputType := cipotStream;
 
-  fObserverMgr.NotifyObservers(self, GITMGR_EVENT_UPDATESTATUS, res);
+  RunInThread(commands, fGit.TopLevelDir, @OnCommandProgress, @OnCommandsDone);
+
+  //fObserverMgr.NotifyObservers(self, GITMGR_EVENT_UPDATESTATUS, res);
 end;
 
 procedure TGitMgr.UpdateRefList;
