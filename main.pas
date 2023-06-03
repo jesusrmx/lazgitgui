@@ -88,6 +88,7 @@ type
     btnLog: TSpeedButton;
     popLists: TPopupMenu;
     btnStopOld: TSpeedButton;
+    prgBar: TProgressBar;
     splitterMain: TSplitter;
     txtLog: TSynEdit;
     txtComment: TMemo;
@@ -906,6 +907,7 @@ begin
   case what of
     GITMGR_EVENT_UpdateStatus:
       begin
+        prgBar.Visible := false;
         if data>0 then
           ShowError
         else begin
@@ -1092,6 +1094,7 @@ end;
 
 procedure TfrmMain.FormCreate(Sender: TObject);
 begin
+  prgBar.Style := pbstMarquee;
 
   fhlHelper := THighlighterHelper.create;
 
@@ -1240,6 +1243,7 @@ begin
   end;
   fDir := aDir;
   fGitMgr.UpdateStatus;
+  prgBar.Visible := true;
 end;
 
 procedure TfrmMain.DoItemAction(Data: PtrInt);
