@@ -18,12 +18,12 @@ object frmMain: TfrmMain
   LCLVersion = '2.3.0.0'
   object panLeft: TPanel
     Left = 0
-    Height = 524
-    Top = 30
+    Height = 528
+    Top = 26
     Width = 256
     Align = alLeft
     BevelOuter = bvNone
-    ClientHeight = 524
+    ClientHeight = 528
     ClientWidth = 256
     TabOrder = 0
     object lstUnstaged: TListBox
@@ -72,13 +72,13 @@ object frmMain: TfrmMain
     end
     object panStagedContainer: TPanel
       Left = 0
-      Height = 187
+      Height = 191
       Top = 337
       Width = 256
       Align = alClient
       BevelOuter = bvNone
       Caption = 'panStagedContainer'
-      ClientHeight = 187
+      ClientHeight = 191
       ClientWidth = 256
       TabOrder = 3
       object panStaged: TPanel
@@ -98,7 +98,7 @@ object frmMain: TfrmMain
       end
       object lstStaged: TListBox
         Left = 5
-        Height = 162
+        Height = 166
         Top = 20
         Width = 251
         Align = alClient
@@ -118,30 +118,30 @@ object frmMain: TfrmMain
   end
   object panContent: TPanel
     Left = 261
-    Height = 524
-    Top = 30
+    Height = 528
+    Top = 26
     Width = 712
     Align = alClient
     BevelOuter = bvNone
-    ClientHeight = 524
+    ClientHeight = 528
     ClientWidth = 712
     TabOrder = 1
     object panLog: TPanel
       Left = 0
-      Height = 519
+      Height = 523
       Top = 0
       Width = 707
       Align = alClient
       BorderSpacing.Right = 5
       BorderSpacing.Bottom = 5
       BevelOuter = bvNone
-      ClientHeight = 519
+      ClientHeight = 523
       ClientWidth = 707
       TabOrder = 1
       Visible = False
       inline txtLog: TSynEdit
         Left = 0
-        Height = 519
+        Height = 523
         Top = 0
         Width = 707
         Align = alClient
@@ -611,7 +611,7 @@ object frmMain: TfrmMain
     end
     object panStatus: TPanel
       Left = 0
-      Height = 519
+      Height = 523
       Top = 0
       Width = 707
       Align = alClient
@@ -619,13 +619,13 @@ object frmMain: TfrmMain
       BorderSpacing.Bottom = 5
       BevelOuter = bvNone
       Caption = 'panStatus'
-      ClientHeight = 519
+      ClientHeight = 523
       ClientWidth = 707
       TabOrder = 0
       object panCommit: TPanel
         Left = 0
         Height = 208
-        Top = 311
+        Top = 315
         Width = 707
         Align = alBottom
         BevelOuter = bvNone
@@ -746,7 +746,7 @@ object frmMain: TfrmMain
       end
       inline txtDiff: TSynEdit
         Left = 0
-        Height = 286
+        Height = 290
         Top = 20
         Width = 707
         Align = alClient
@@ -1247,7 +1247,7 @@ object frmMain: TfrmMain
         Cursor = crVSplit
         Left = 0
         Height = 5
-        Top = 306
+        Top = 310
         Width = 707
         Align = alBottom
         ResizeAnchor = akBottom
@@ -1257,7 +1257,7 @@ object frmMain: TfrmMain
   object panBranch: TPanel
     Left = 0
     Height = 26
-    Top = 4
+    Top = 0
     Width = 973
     Align = alTop
     Alignment = taLeftJustify
@@ -1426,22 +1426,22 @@ object frmMain: TfrmMain
       Visible = False
       OnClick = lblInfoOldClick
     end
+    object prgBar: TProgressBar
+      AnchorSideTop.Control = panBranch
+      Left = 0
+      Height = 4
+      Top = 0
+      Width = 973
+      Smooth = True
+      TabOrder = 0
+      Visible = False
+    end
   end
   object splitterMain: TSplitter
     Left = 256
-    Height = 524
-    Top = 30
+    Height = 528
+    Top = 26
     Width = 5
-  end
-  object prgBar: TProgressBar
-    Left = 0
-    Height = 4
-    Top = 0
-    Width = 973
-    Align = alTop
-    Smooth = True
-    TabOrder = 4
-    Visible = False
   end
   object ActionList1: TActionList
     Left = 296
