@@ -137,13 +137,13 @@ type
     fItemIndices: TItemIndexArray;
     fLogCache: TLogCache;
     fGraphColumns: Integer;
-    fRefItems: TRefInfoArray;
     fWithArrows: boolean;
     fCommitBrowser: TCommitBrowser;
     fCurrentItem: TLogItem;
     procedure OnContextPopLogClick(Sender: TObject);
     procedure OnCreateBranchClick(Sender: TObject);
     procedure OnDeleteBranchClick(Sender: TObject);
+    procedure OnDeleteRemoteBranchClick(Sender: TObject);
     procedure OnGraphBuilderDone(Sender: TObject);
     procedure OnLogEvent(sender: TObject; thread: TLogThread; event: Integer; var interrupt: boolean);
     procedure OnDeleteTagClick(sender: TObject);
@@ -696,6 +696,26 @@ begin
   end;
 end;
 
+procedure TframeLog.OnDeleteRemoteBranchClick(Sender: TObject);
+var
+  mi: TMenuItem absolute Sender;
+  info: PRefInfo;
+  cmd: string;
+  cmdout: RawByteString;
+begin
+  info := {%H-}PRefInfo(mi.Tag);
+  if info<>nil then begin
+    cmd := stringReplace(info^.refName, '/', ' -d ', []);
+    if fGit.Any('push ' + cmd, cmdout)>0 then
+      //
+    else begin
+      fGitMgr.ForceTagDescription;
+      fGitMgr.UpdateStatus;
+      fGitMgr.UpdateRefList;
+    end;
+  end;
+end;
+
 procedure TframeLog.OnGraphBuilderDone(Sender: TObject);
 var
   thread: TGraphBuilderThread absolute sender;
@@ -759,10 +779,17 @@ var
   headCommit, curCommit: QWord;
   mi: TMenuItem;
   n, i, j: Integer;
+  refItems: TRefInfoArray;
+  curBranch: string;
 
-  function Filter(info: PRefInfo): boolean;
+  function FilterLocal(info: PRefInfo): boolean;
   begin
     result := (info^.subType=rostLocal) and not info^.head;
+  end;
+
+  function FilterTracking(info: PRefInfo): boolean;
+  begin
+    result := (info^.subType=rostTracking) and not info^.head;
   end;
 
 begin
@@ -781,24 +808,41 @@ begin
   mi.Tag := 0;
   popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
 
-  fRefItems := fGit.RefsFilter(fCurrentItem.CommitOID, @Filter);
-  for i := 0 to Length(fRefItems)-1 do begin
+  refItems := fGit.RefsFilter(fCurrentItem.CommitOID, @FilterLocal);
+  for i := 0 to Length(refItems)-1 do begin
     mi := TMenuItem.Create(Self.Owner);
-    mi.Caption := format('Merge %s to %s',[QuotedStr(fRefItems[i]^.refName), QuotedStr(fGitMgr.Branch)]);
+    mi.Caption := format('Merge %s to %s',[QuotedStr(refItems[i]^.refName), QuotedStr(fGitMgr.Branch)]);
     mi.OnClick := @OnMergeBranchClick;
-    mi.Tag := PtrInt(fRefItems[i]);
+    mi.Tag := PtrInt(refItems[i]);
     popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
 
     mi := TMenuItem.Create(Self.Owner);
-    mi.Caption := format('Switch to %s',[QuotedStr(fRefItems[i]^.refName)]);
+    mi.Caption := format('Switch to %s',[QuotedStr(refItems[i]^.refName)]);
     mi.OnClick := @OnSwitchBranchClick;
-    mi.Tag := PtrInt(fRefItems[i]);
+    mi.Tag := PtrInt(refItems[i]);
     popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
 
     mi := TMenuItem.Create(Self.Owner);
-    mi.Caption := format('Delete branch %s',[QuotedStr(fRefItems[i]^.refName)]);
+    mi.Caption := format('Delete branch %s',[QuotedStr(refItems[i]^.refName)]);
     mi.OnClick := @OnDeleteBranchClick;
-    mi.Tag := PtrInt(fRefItems[i]);
+    mi.Tag := PtrInt(refItems[i]);
+    popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
+
+    if refItems[i]^.head then
+      curBranch := refItems[i]^.refName;
+  end;
+
+  refItems := fGit.RefsFilter(fCurrentItem.CommitOID, @FilterTracking);
+  for i := 0 to Length(refItems)-1 do begin
+    if refItems[i]^.refName.EndsWith('HEAD') then
+      continue;
+    if refItems[i]^.refName.EndsWith('/' + curBranch) then
+      continue;
+
+    mi := TMenuItem.Create(Self.Owner);
+    mi.Caption := format('Delete remote branch %s',[QuotedStr(refItems[i]^.refName)]);
+    mi.OnClick := @OnDeleteRemoteBranchClick;
+    mi.Tag := PtrInt(refItems[i]);
     popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
   end;
 end;
@@ -808,6 +852,7 @@ var
   headCommit, curCommit: QWord;
   mi: TMenuItem;
   n, i, j: Integer;
+  refItems: TRefInfoArray;
 
   function Filter(info: PRefInfo): boolean;
   begin
@@ -824,19 +869,19 @@ begin
   mi.Tag := 0;
   popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
 
-  fRefItems := fGit.RefsFilter(fCurrentItem.CommitOID, @Filter);
-  for i := 0 to Length(fRefItems)-1 do begin
+  refItems := fGit.RefsFilter(fCurrentItem.CommitOID, @Filter);
+  for i := 0 to Length(refItems)-1 do begin
 
     mi := TMenuItem.Create(Self.Owner);
-    mi.Caption := format('Switch to %s',[QuotedStr(fRefItems[i]^.refName)]);
+    mi.Caption := format('Switch to %s',[QuotedStr(refItems[i]^.refName)]);
     mi.OnClick := @OnSwitchTagClick;
-    mi.Tag := PtrInt(fRefItems[i]);
+    mi.Tag := PtrInt(refItems[i]);
     popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
 
     mi := TMenuItem.Create(Self.Owner);
-    mi.Caption := format('Delete tag %s',[QuotedStr(fRefItems[i]^.refName)]);
+    mi.Caption := format('Delete tag %s',[QuotedStr(refItems[i]^.refName)]);
     mi.OnClick := @OnDeleteTagClick;
-    mi.Tag := PtrInt(fRefItems[i]);
+    mi.Tag := PtrInt(refItems[i]);
     popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
   end;
 
