@@ -706,7 +706,7 @@ begin
   info := {%H-}PRefInfo(mi.Tag);
   if info<>nil then begin
     cmd := stringReplace(info^.refName, '/', ' -d ', []);
-    if fGit.Any('push ' + cmd, cmdout)>0 then
+    if RunInteractive(fGit.Exe + ' push ' + cmd, fGit.TopLevelDir, 'Deleting remote branch', info^.refName)>0 then
       //
     else begin
       fGitMgr.ForceTagDescription;
