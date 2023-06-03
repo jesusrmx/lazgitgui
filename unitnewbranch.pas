@@ -246,12 +246,12 @@ begin
   lblHint.Font.Color := clRed;
   fBranchName := Trim(txtName.Text);
   aIndex := lstSource.ItemIndex;
-  if aIndex in [TABINDEX_LOCALBRANCH..TABINDEX_TAG] then begin
-    info := PRefInfo(lstSource.Items.Objects[aIndex]);
-    fReference := lstSource.Items[aIndex];
-  end else begin
+  if (aIndex<0) or (tabSource.TabIndex=TABINDEX_COMMIT) then begin
     info := nil;
     fReference := '';
+  end else begin
+    info := PRefInfo(lstSource.Items.Objects[aIndex]);
+    fReference := lstSource.Items[aIndex];
   end;
 
   case tabSource.TabIndex of
