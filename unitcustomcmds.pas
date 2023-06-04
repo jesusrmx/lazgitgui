@@ -89,7 +89,7 @@ begin
     SetLength(commands, List.Count);
 
     for i:=0 to List.Count-1 do begin
-      DecodeDelimitedText( List.Values[IntToStr(i+1)], '|', L);
+      DecodeDelimitedText( List.Values[IntToStr(i+1)], CMDSEP, L);
       if L.Count=4 then begin
         commands[i].description := L[0];
         commands[i].command := L[1];
@@ -119,9 +119,9 @@ begin
     for i:=0 to Count-1 do begin
       L[0] := commands[i].description;
       L[1] := commands[i].command;
-      L[2] := BoolToStr(commands[i].RunInDlg);
-      L[3] := commands[i].description;
-      List.Add(IntToStr(i+1)+'='+EncodeDelimitedText('|', L));
+      L[2] := BoolToStr(commands[i].RunInDlg, '1', '0');
+      L[3] := commands[i].image;
+      List.Add(IntToStr(i+1)+'='+EncodeDelimitedText(CMDSEP, L));
     end;
     fConfig.WriteSection('CustomCommands', List);
   finally

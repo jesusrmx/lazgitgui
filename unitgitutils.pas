@@ -246,6 +246,7 @@ var
   end;
 
 begin
+  result := '';
   for s in strings do
     add;
 end;

@@ -67,6 +67,10 @@ procedure TfrmCustomCommands.FormCloseQuery(Sender: TObject;
   var CanClose: Boolean);
 begin
   fConfig.WriteWindow(Self, 'customcmdform', SECTION_GEOMETRY);
+  if ModalResult=mrOk then begin
+    fCommands.Assign(fNewCommands);
+    fCommands.SaveToConfig;
+  end;
 end;
 
 procedure TfrmCustomCommands.chkInDialogClick(Sender: TObject);
@@ -80,6 +84,7 @@ end;
 procedure TfrmCustomCommands.btnAddClick(Sender: TObject);
 begin
   NewCommand;
+  Self.ActiveControl := txtDescription;
 end;
 
 procedure TfrmCustomCommands.btnDelClick(Sender: TObject);
