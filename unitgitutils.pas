@@ -62,6 +62,8 @@ type
 
   function PosAny(chars: TSetOfChar; s:string): Integer;
   function ReplaceEOLs(s: string; encode:boolean): string;
+  function EncodeDelimitedText(delimiter:string; strings:TStrings): string;
+  procedure DecodeDelimitedText(s:string; delimiter:string; strings:TStrings);
 
 implementation
 
@@ -230,6 +232,37 @@ begin
     result := StringReplace(s, '&#13;', #13, [rfReplaceAll]);
     result := StringReplace(result, '&#10', #10, [rfReplaceAll]);
     result := StringReplace(result, '&#1310', #1310, [rfReplaceAll]);
+end;
+
+function EncodeDelimitedText(delimiter: string; strings: TStrings): string;
+var
+  s: string;
+
+  procedure Add;
+  begin
+    if result<>'' then
+      result += delimiter;
+    result += s;
+  end;
+
+begin
+  for s in strings do
+    add;
+end;
+
+procedure DecodeDelimitedText(s: string; delimiter: string; strings: TStrings);
+var
+  L: TStringList;
+begin
+  L := TStringList.Create;
+  try
+    L.Delimiter := #2;
+    L.StrictDelimiter := true;
+    L.DelimitedText := StringReplace(s, delimiter, #2, [rfReplaceAll]);
+    strings.Assign(L);
+  finally
+    L.Free;
+  end;
 end;
 
 end.

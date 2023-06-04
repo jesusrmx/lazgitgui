@@ -9,25 +9,28 @@ object frmCustomCommands: TfrmCustomCommands
   ClientWidth = 592
   OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  OnShow = FormShow
   ShowHint = True
   LCLVersion = '2.3.0.0'
-  object ListBox1: TListBox
+  object lbCommands: TListBox
     Left = 8
     Height = 273
     Top = 8
     Width = 240
     Anchors = [akTop, akLeft, akBottom]
     ItemHeight = 0
+    OnSelectionChange = lbCommandsSelectionChange
     TabOrder = 0
-    TopIndex = -1
   end
-  object ButtonPanel1: TButtonPanel
+  object bPanel: TButtonPanel
     Left = 6
-    Height = 35
-    Top = 287
+    Height = 34
+    Top = 288
     Width = 580
     OKButton.Name = 'OKButton'
     OKButton.DefaultCaption = True
+    OKButton.Enabled = False
     HelpButton.Name = 'HelpButton'
     HelpButton.DefaultCaption = True
     CloseButton.Name = 'CloseButton'
@@ -40,21 +43,23 @@ object frmCustomCommands: TfrmCustomCommands
   object btnUp: TSpeedButton
     Left = 264
     Height = 22
-    Top = 112
+    Top = 128
     Width = 23
     Caption = '^'
+    Enabled = False
   end
   object btnDown: TSpeedButton
     Left = 264
     Height = 22
-    Top = 144
+    Top = 152
     Width = 23
     Caption = 'v'
+    Enabled = False
   end
   object GroupBox1: TGroupBox
     Left = 304
-    Height = 272
-    Top = 9
+    Height = 273
+    Top = 8
     Width = 280
     Anchors = [akTop, akLeft, akRight]
     Caption = 'Command properties'
@@ -63,30 +68,33 @@ object frmCustomCommands: TfrmCustomCommands
     TabOrder = 2
     object txtDescription: TEdit
       Left = 8
-      Height = 26
+      Height = 23
       Hint = 'Command description'
       Top = 24
       Width = 259
       Anchors = [akTop, akLeft, akRight]
+      OnKeyPress = txtDescriptionKeyPress
       TabOrder = 0
       TextHint = 'Description'
     end
     object txtCommand: TEdit
       Left = 8
-      Height = 26
+      Height = 23
       Hint = 'Command (make sure it starts with ''git'')'
       Top = 56
       Width = 259
       Anchors = [akTop, akLeft, akRight]
+      OnKeyPress = txtDescriptionKeyPress
       TabOrder = 1
       TextHint = 'Command'
     end
     object chkInDialog: TCheckBox
       Left = 8
-      Height = 21
-      Top = 88
-      Width = 152
+      Height = 19
+      Top = 120
+      Width = 145
       Caption = 'Run in a dialog window.'
+      OnClick = chkInDialogClick
       TabOrder = 2
     end
     object imgCmd: TImage
@@ -94,10 +102,44 @@ object frmCustomCommands: TfrmCustomCommands
       AnchorSideLeft.Side = asrCenter
       Left = 93
       Height = 90
-      Top = 136
+      Top = 152
       Width = 90
       Center = True
       Proportional = True
     end
+    object txtImage: TFileNameEdit
+      Left = 8
+      Height = 23
+      Top = 89
+      Width = 259
+      OnAcceptFileName = txtImageAcceptFileName
+      Filter = 'Portable Network Image (*.png)|*.png|Bitmap|*.bmp|All Files|*.*'
+      FilterIndex = 0
+      HideDirectories = False
+      ButtonWidth = 23
+      NumGlyphs = 1
+      Anchors = [akTop, akLeft, akRight]
+      MaxLength = 0
+      TabOrder = 3
+      OnEditingDone = txtImageEditingDone
+      OnKeyPress = txtDescriptionKeyPress
+      TextHint = 'Image filename'
+    end
+  end
+  object btnAdd: TSpeedButton
+    Left = 264
+    Height = 22
+    Top = 8
+    Width = 23
+    Caption = '+'
+    OnClick = btnAddClick
+  end
+  object btnDel: TSpeedButton
+    Left = 264
+    Height = 22
+    Top = 32
+    Width = 23
+    Caption = '-'
+    OnClick = btnDelClick
   end
 end

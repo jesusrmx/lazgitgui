@@ -34,7 +34,8 @@ uses
   unitentries, unitgitutils, {unitgit,}
   unitnewbranch, unitruncmd, unitansiescapes,
   unitnewtag, unitlogcache, unitlog, LConvEncoding, unitdbindex,
-  unitframelog, unitgitmgr, unitcheckouttag, unitformlog, unitcustcmdform;
+  unitframelog, unitgitmgr, unitcheckouttag, unitformlog, unitcustomcmds,
+  unitcustcmdform;
 
 type
 
@@ -139,6 +140,7 @@ type
     fPopPoint: TPoint;
     fListAlwaysDrawSelection: boolean;
     fhlHelper: THighlighterHelper;
+    fCustomCommands: TCustomCommandsMgr;
     procedure CreateBranch(const binfo: PBranchInfo);
     procedure DelayedShowMenu(Data: PtrInt);
     procedure DoGitDiff(Data: PtrInt);
@@ -1145,6 +1147,9 @@ begin
     Application.QueueAsyncCall(@DelayedShowMenu, 0);
   end;
 
+  fCustomCommands := TCustomCommandsMgr.create;
+  fCustomCommands.LoadFromConfig;
+
   fConfig.CloseConfig;
 
   gblInvalidateCache := Application.HasOption('ClearCache');
@@ -1191,7 +1196,8 @@ var
   F: TfrmCustomCommands;
 begin
   F := TfrmCustomCommands.Create(Self);
-  F.NewCommand;
+  F.Commands := fCustomCommands;
+  F.AddNew := true;
   try
     F.ShowModal;
   finally
@@ -1241,6 +1247,7 @@ end;
 
 procedure TfrmMain.FormDestroy(Sender: TObject);
 begin
+  fCustomCommands.Free;
   frmLog.Free;
   fGit := nil;
   fGitMgr.RemoveObserver(Self);
@@ -1557,11 +1564,8 @@ begin
 end;
 
 procedure TfrmMain.SaveGui;
-var
-  isMaximized: Boolean;
 begin
   fConfig.OpenConfig;
-
   fConfig.WriteWindow(Self, 'mainform', SECTION_GEOMETRY);
   fConfig.WriteInteger('lstUnstaged.Height', lstUnstaged.Height, SECTION_GEOMETRY);
   fConfig.WriteInteger('panleft.width', panLeft.Width, SECTION_GEOMETRY);

@@ -60,9 +60,11 @@ type
     function ReadString(aKey:string; default:string=''; section:string=SECTION_DEFAULT): string;
     function ReadBoolean(aKey:string; default:boolean=false; section:string=SECTION_DEFAULT): boolean;
     function ReadInteger(aKey:string; default:Integer=0; section:string=SECTION_DEFAULT): Integer;
+    procedure ReadSection(section:string; strings:TStrings);
     procedure WriteString(aKey:string; avalue:string; section:string=SECTION_DEFAULT);
     procedure WriteBoolean(aKey:string; avalue:boolean; section:string=SECTION_DEFAULT);
     procedure WriteInteger(aKey:string; avalue:Integer; section:string=SECTION_DEFAULT);
+    procedure WriteSection(section:string; strings:TStrings);
     procedure ReadPreferences;
 
     property ViewUntrackedFiles: boolean read fViewUntrackedFiles write SetViewUntrackedFiles;
@@ -208,6 +210,13 @@ begin
   CloseConfig;
 end;
 
+procedure TConfig.ReadSection(section: string; strings: TStrings);
+begin
+  OpenConfig;
+  fIniFile.ReadSection(section, strings);
+  CloseConfig;
+end;
+
 procedure TConfig.WriteString(aKey: string; avalue: string; section: string);
 begin
   OpenConfig;
@@ -226,6 +235,31 @@ procedure TConfig.WriteInteger(aKey: string; avalue: Integer; section: string);
 begin
   OpenConfig;
   fIniFile.WriteInteger(Section, aKey, aValue);
+  CloseConfig;
+end;
+
+procedure TConfig.WriteSection(section: string; strings: TStrings);
+var
+  i, p: Integer;
+  s, key, value: String;
+begin
+  OpenConfig;
+  if fIniFile.SectionExists(section) then
+    fIniFile.EraseSection(section);
+  if (strings<>nil) then begin
+    for i:=0 to strings.count-1 do begin
+      s := strings[i];
+      p := pos('=', s);
+      if p=0 then begin
+        key := IntToStr(i+1);
+        value := s;
+      end else begin
+        key := trim(copy(s, 1, p-1));
+        value := trim(copy(s, p+1, MAXINT));
+      end;
+      fIniFile.WriteString(section, key, value);
+    end;
+  end;
   CloseConfig;
 end;
 
