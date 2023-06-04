@@ -485,6 +485,8 @@ begin
   n := strlen(head);
   inc(head, n+1);
   entry^.origPath := head;
+  n := strlen(head);
+  inc(head, n+1);
 end;
 
 procedure ParseUnmerged(var head: pchar; tail: pchar; out entry: PFileEntry);
@@ -599,6 +601,7 @@ var
   n: Integer;
   entry: PFileEntry;
   start: pchar;
+  needResetHead: boolean;
 begin
   // clear lists
   ClearEntries(fEntries);
@@ -612,10 +615,15 @@ begin
     start := head;
     n := strlen(head);
     //DebugLn(start);
+    needResetHead := true;
 
     case head^ of
       '1': ParseOrdinaryChanged(head, tail, entry);
-      '2': ParseRenamedCopied(head, tail, entry);
+      '2':
+        begin
+          ParseRenamedCopied(head, tail, entry);
+          needResetHead := false;
+        end;
       'u':
         begin
           fMergingConflict := true;
@@ -648,7 +656,8 @@ begin
 
     end;
 
-    head := start + n + 1;
+    if needResetHead then
+      head := start + n + 1;
   end;
 end;
 

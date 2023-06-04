@@ -206,6 +206,7 @@ var
   cmd: string;
   p: Integer;
   head, tail: pchar;
+  M: TMemoryStream;
 begin
   DebugLn('%3f%%: %s',[percent, item.description]);
   case item.description of
@@ -237,8 +238,10 @@ begin
 
     'status':
       begin
-        head := TMemoryStream(item.tag).Memory;
-        tail := head + TMemoryStream(item.tag).Size;
+        M := TMemoryStream(item.tag);
+        head := M.Memory;
+        tail := head + M.Size;
+        //M.SaveToFile('laststatus.txt');
 
         ParseBranches(head, tail, fBranch, fBranchOID, fUpstream, fCommitsAhead, fCommitsBehind);
         ParseStatus(head, tail, fUnstagedList, fStagedList, fEntries, fMergingConflict);
