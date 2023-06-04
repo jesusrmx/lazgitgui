@@ -73,6 +73,7 @@ object frmCustomCommands: TfrmCustomCommands
       Top = 24
       Width = 259
       Anchors = [akTop, akLeft, akRight]
+      OnChange = txtDescriptionChange
       OnKeyPress = txtDescriptionKeyPress
       TabOrder = 0
       TextHint = 'Description'
@@ -84,6 +85,7 @@ object frmCustomCommands: TfrmCustomCommands
       Top = 56
       Width = 259
       Anchors = [akTop, akLeft, akRight]
+      OnChange = txtDescriptionChange
       OnKeyPress = txtDescriptionKeyPress
       TabOrder = 1
       TextHint = 'Command'
@@ -121,7 +123,6 @@ object frmCustomCommands: TfrmCustomCommands
       Anchors = [akTop, akLeft, akRight]
       MaxLength = 0
       TabOrder = 3
-      OnEditingDone = txtImageEditingDone
       OnKeyPress = txtDescriptionKeyPress
       TextHint = 'Image filename'
     end

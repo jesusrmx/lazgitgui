@@ -5,7 +5,7 @@ unit unitcustcmdform;
 interface
 
 uses
-  Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, ButtonPanel,
+  Classes, SysUtils, Math, Forms, Controls, Graphics, Dialogs, StdCtrls, ButtonPanel,
   Buttons, ExtCtrls, EditBtn, unitgittypes, unitconfig, unitcustomcmds;
 
 type
@@ -33,9 +33,9 @@ type
     procedure FormDestroy(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure lbCommandsSelectionChange(Sender: TObject; User: boolean);
+    procedure txtDescriptionChange(Sender: TObject);
     procedure txtDescriptionKeyPress(Sender: TObject; var Key: char);
     procedure txtImageAcceptFileName(Sender: TObject; var Value: String);
-    procedure txtImageEditingDone(Sender: TObject);
   private
     fAddNew: boolean;
     fCommands, fNewCommands: TCustomCommandsMgr;
@@ -83,8 +83,7 @@ procedure TfrmCustomCommands.btnDelClick(Sender: TObject);
 begin
   if fCurrentItem>=0 then begin
     fNewCommands.Delete(fCurrentItem);
-    if fNewCommands.Count=0 then
-      fCurrentItem := -1;
+    fCurrentItem := min(fNewCommands.Count-1, fCurrentItem);
     FillList;
     Changed;
   end;
@@ -116,6 +115,13 @@ begin
   UpdateCurrentItem;
 end;
 
+procedure TfrmCustomCommands.txtDescriptionChange(Sender: TObject);
+begin
+  GuiToCommand;
+  if Sender=txtDescription then
+    lbCommands.Items[fCurrentItem] := txtDescription.Text;
+end;
+
 procedure TfrmCustomCommands.txtDescriptionKeyPress(Sender: TObject;
   var Key: char);
 begin
@@ -124,15 +130,12 @@ end;
 
 procedure TfrmCustomCommands.txtImageAcceptFileName(Sender: TObject;
   var Value: String);
+var
+  cmd: TCustomCmdItem;
 begin
-  GuiToCommand;
-  UpdateCommandImage;
-  Changed;
-end;
-
-procedure TfrmCustomCommands.txtImageEditingDone(Sender: TObject);
-begin
-  GuiToCommand;
+  cmd := fNewCommands[fCurrentItem];
+  cmd.image := value;
+  fNewCommands[fCurrentItem] := cmd;
   UpdateCommandImage;
   Changed;
 end;
