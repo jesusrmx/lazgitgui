@@ -39,6 +39,15 @@ object frmCustomCommands: TfrmCustomCommands
     CancelButton.DefaultCaption = True
     TabOrder = 1
     ShowButtons = [pbOK, pbCancel]
+    object lblInfo: TLabel
+      AnchorSideTop.Control = bPanel
+      AnchorSideTop.Side = asrCenter
+      Left = 0
+      Height = 15
+      Top = 10
+      Width = 5
+      Caption = '-'
+    end
   end
   object btnUp: TSpeedButton
     Left = 264
@@ -74,7 +83,6 @@ object frmCustomCommands: TfrmCustomCommands
       Width = 259
       Anchors = [akTop, akLeft, akRight]
       OnChange = txtDescriptionChange
-      OnKeyPress = txtDescriptionKeyPress
       TabOrder = 0
       TextHint = 'Description'
     end
@@ -86,7 +94,6 @@ object frmCustomCommands: TfrmCustomCommands
       Width = 259
       Anchors = [akTop, akLeft, akRight]
       OnChange = txtDescriptionChange
-      OnKeyPress = txtDescriptionKeyPress
       TabOrder = 1
       TextHint = 'Command'
     end
@@ -97,7 +104,7 @@ object frmCustomCommands: TfrmCustomCommands
       Width = 145
       Caption = 'Run in a dialog window.'
       OnClick = chkInDialogClick
-      TabOrder = 2
+      TabOrder = 3
     end
     object imgCmd: TImage
       AnchorSideLeft.Control = GroupBox1
@@ -122,8 +129,7 @@ object frmCustomCommands: TfrmCustomCommands
       NumGlyphs = 1
       Anchors = [akTop, akLeft, akRight]
       MaxLength = 0
-      TabOrder = 3
-      OnKeyPress = txtDescriptionKeyPress
+      TabOrder = 2
       TextHint = 'Image filename'
     end
   end

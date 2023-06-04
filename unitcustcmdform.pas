@@ -17,6 +17,7 @@ type
     chkInDialog: TCheckBox;
     btnAdd: TSpeedButton;
     btnDel: TSpeedButton;
+    lblInfo: TLabel;
     txtImage: TFileNameEdit;
     GroupBox1: TGroupBox;
     imgCmd: TImage;
@@ -34,7 +35,6 @@ type
     procedure FormShow(Sender: TObject);
     procedure lbCommandsSelectionChange(Sender: TObject; User: boolean);
     procedure txtDescriptionChange(Sender: TObject);
-    procedure txtDescriptionKeyPress(Sender: TObject; var Key: char);
     procedure txtImageAcceptFileName(Sender: TObject; var Value: String);
   private
     fAddNew: boolean;
@@ -120,11 +120,6 @@ begin
   GuiToCommand;
   if Sender=txtDescription then
     lbCommands.Items[fCurrentItem] := txtDescription.Text;
-end;
-
-procedure TfrmCustomCommands.txtDescriptionKeyPress(Sender: TObject;
-  var Key: char);
-begin
   Changed;
 end;
 
@@ -166,7 +161,37 @@ begin
 end;
 
 procedure TfrmCustomCommands.Changed;
+  procedure Error(i: Integer; msg:string);
+  begin
+    lblInfo.Caption := format('command %d: %s',[i+1, msg]);
+  end;
+
+var
+  i: Integer;
+  cmd: TCustomCmdItem;
 begin
+  bPanel.OKButton.Enabled := false;
+  for i:=0 to fNewCommands.Count-1 do begin
+    cmd := fNewCommands[i];
+    if cmd.description='' then begin
+      Error(i, 'Description is empty');
+      exit;
+    end;
+    if cmd.description=NEWCOMMAND_DESC then begin
+      Error(i, 'Invalid description');
+      exit;
+    end;
+    if pos('git ', cmd.command)<>1 then begin
+      Error(i, 'Command must start with ''git ''');
+      exit;
+    end;
+    if cmd.command='git ' then begin
+      Error(i, 'Incomplete command');
+      exit;
+    end;
+
+  end;
+  lblInfo.Caption := '';
   bPanel.OKButton.Enabled := true;
 end;
 

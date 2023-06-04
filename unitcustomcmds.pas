@@ -9,7 +9,7 @@ uses
   unitgitutils, unitconfig;
 
 const
-  NEWCOMMAND_DESC = 'New Command';
+  NEWCOMMAND_DESC = '<New Command>';
 
 type
 
