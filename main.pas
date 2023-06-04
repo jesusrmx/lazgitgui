@@ -34,7 +34,7 @@ uses
   unitentries, unitgitutils, {unitgit,}
   unitnewbranch, unitruncmd, unitansiescapes,
   unitnewtag, unitlogcache, unitlog, LConvEncoding, unitdbindex,
-  unitframelog, unitgitmgr, unitcheckouttag, unitformlog;
+  unitframelog, unitgitmgr, unitcheckouttag, unitformlog, unitcustcmd;
 
 type
 
@@ -44,6 +44,7 @@ type
     actCommit: TAction;
     actFetch: TAction;
     actInsertBranchName: TAction;
+    actAddCmd: TAction;
     actRestoreCommitMsg: TAction;
     actNewLog: TAction;
     actPushDialog: TAction;
@@ -90,6 +91,8 @@ type
     btnStopOld: TSpeedButton;
     prgBar: TProgressBar;
     splitterMain: TSplitter;
+    barCustomCmds: TToolBar;
+    ToolButton1: TToolButton;
     txtLog: TSynEdit;
     txtComment: TMemo;
     panLeft: TPanel;
@@ -99,6 +102,7 @@ type
     splitterStaged: TSplitter;
     splitterCommit: TSplitter;
     txtDiff: TSynEdit;
+    procedure actAddCmdExecute(Sender: TObject);
     procedure actCommitExecute(Sender: TObject);
     procedure actFetchExecute(Sender: TObject);
     procedure actInsertBranchNameExecute(Sender: TObject);
@@ -1180,6 +1184,19 @@ end;
 procedure TfrmMain.actCommitExecute(Sender: TObject);
 begin
   DoCommit;
+end;
+
+procedure TfrmMain.actAddCmdExecute(Sender: TObject);
+var
+  F: TfrmCustomCommands;
+begin
+  F := TfrmCustomCommands.Create(Self);
+  F.NewCommand;
+  try
+    F.ShowModal;
+  finally
+    F.Free;
+  end;
 end;
 
 procedure TfrmMain.actFetchExecute(Sender: TObject);

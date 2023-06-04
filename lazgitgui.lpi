@@ -169,6 +169,12 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
       </Unit>
+      <Unit>
+        <Filename Value="unitcustcmd.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="frmCustomCommands"/>
+        <ResourceBaseClass Value="Form"/>
+      </Unit>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

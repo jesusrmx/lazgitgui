@@ -1,0 +1,103 @@
+object frmCustomCommands: TfrmCustomCommands
+  Left = 144
+  Height = 328
+  Top = 207
+  Width = 592
+  Anchors = [akTop, akLeft, akBottom]
+  Caption = 'Custom Commands'
+  ClientHeight = 328
+  ClientWidth = 592
+  OnCloseQuery = FormCloseQuery
+  OnCreate = FormCreate
+  ShowHint = True
+  LCLVersion = '2.3.0.0'
+  object ListBox1: TListBox
+    Left = 8
+    Height = 273
+    Top = 8
+    Width = 240
+    Anchors = [akTop, akLeft, akBottom]
+    ItemHeight = 0
+    TabOrder = 0
+    TopIndex = -1
+  end
+  object ButtonPanel1: TButtonPanel
+    Left = 6
+    Height = 35
+    Top = 287
+    Width = 580
+    OKButton.Name = 'OKButton'
+    OKButton.DefaultCaption = True
+    HelpButton.Name = 'HelpButton'
+    HelpButton.DefaultCaption = True
+    CloseButton.Name = 'CloseButton'
+    CloseButton.DefaultCaption = True
+    CancelButton.Name = 'CancelButton'
+    CancelButton.DefaultCaption = True
+    TabOrder = 1
+    ShowButtons = [pbOK, pbCancel]
+  end
+  object btnUp: TSpeedButton
+    Left = 264
+    Height = 22
+    Top = 112
+    Width = 23
+    Caption = '^'
+  end
+  object btnDown: TSpeedButton
+    Left = 264
+    Height = 22
+    Top = 144
+    Width = 23
+    Caption = 'v'
+  end
+  object GroupBox1: TGroupBox
+    Left = 304
+    Height = 272
+    Top = 9
+    Width = 280
+    Anchors = [akTop, akLeft, akRight]
+    Caption = 'Command properties'
+    ClientHeight = 253
+    ClientWidth = 276
+    TabOrder = 2
+    object txtDescription: TEdit
+      Left = 8
+      Height = 26
+      Hint = 'Command description'
+      Top = 24
+      Width = 267
+      Anchors = [akTop, akLeft, akRight]
+      TabOrder = 0
+      TextHint = 'Description'
+    end
+    object txtCommand: TEdit
+      Left = 8
+      Height = 26
+      Hint = 'Command (make sure it starts with ''git'')'
+      Top = 56
+      Width = 267
+      Anchors = [akTop, akLeft, akRight]
+      TabOrder = 1
+      TextHint = 'Command'
+    end
+    object chkInDialog: TCheckBox
+      Left = 8
+      Height = 21
+      Top = 88
+      Width = 152
+      Caption = 'Run in a dialog window.'
+      TabOrder = 2
+    end
+    object imgCmd: TImage
+      AnchorSideLeft.Control = GroupBox1
+      AnchorSideLeft.Side = asrCenter
+      Left = 93
+      Height = 90
+      Top = 136
+      Width = 90
+      Center = True
+      Proportional = True
+    end
+  end
+end
