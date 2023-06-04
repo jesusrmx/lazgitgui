@@ -39,6 +39,7 @@ type
   private
     fAddNew: boolean;
     fCommands, fNewCommands: TCustomCommandsMgr;
+    fEventsDisabled: Boolean;
     fCurrentItem: Integer;
     procedure SetCommands(AValue: TCustomCommandsMgr);
     procedure NewCommand;
@@ -70,8 +71,10 @@ end;
 
 procedure TfrmCustomCommands.chkInDialogClick(Sender: TObject);
 begin
-  GuiToCommand;
-  Changed;
+  if not fEventsDisabled then begin
+    GuiToCommand;
+    Changed;
+  end;
 end;
 
 procedure TfrmCustomCommands.btnAddClick(Sender: TObject);
@@ -113,14 +116,17 @@ procedure TfrmCustomCommands.lbCommandsSelectionChange(Sender: TObject;
 begin
   fCurrentItem := lbCommands.ItemIndex;
   UpdateCurrentItem;
+  CheckControls;
 end;
 
 procedure TfrmCustomCommands.txtDescriptionChange(Sender: TObject);
 begin
-  GuiToCommand;
-  if Sender=txtDescription then
-    lbCommands.Items[fCurrentItem] := txtDescription.Text;
-  Changed;
+  if not fEventsDisabled then begin
+    GuiToCommand;
+    if Sender=txtDescription then
+      lbCommands.Items[fCurrentItem] := txtDescription.Text;
+    Changed;
+  end;
 end;
 
 procedure TfrmCustomCommands.txtImageAcceptFileName(Sender: TObject;
@@ -208,11 +214,13 @@ end;
 
 procedure TfrmCustomCommands.UpdateCurrentItem;
 begin
+  fEventsDisabled := true;
   txtDescription.Text := fNewCommands[fCurrentItem].description;
   txtCommand.Text := fNewCommands[fCurrentItem].command;
   chkInDialog.Checked := fNewCommands[fCurrentItem].RunInDlg;
   txtImage.Text := fNewCommands[fCurrentItem].image;
   UpdateCommandImage;
+  fEventsDisabled := false;
 end;
 
 procedure TfrmCustomCommands.UpdateCommandImage;

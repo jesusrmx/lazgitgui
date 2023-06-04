@@ -22,11 +22,12 @@ object frmCustomCommands: TfrmCustomCommands
     ItemHeight = 0
     OnSelectionChange = lbCommandsSelectionChange
     TabOrder = 0
+    TopIndex = -1
   end
   object bPanel: TButtonPanel
     Left = 6
-    Height = 34
-    Top = 288
+    Height = 35
+    Top = 287
     Width = 580
     OKButton.Name = 'OKButton'
     OKButton.DefaultCaption = True
@@ -43,9 +44,9 @@ object frmCustomCommands: TfrmCustomCommands
       AnchorSideTop.Control = bPanel
       AnchorSideTop.Side = asrCenter
       Left = 0
-      Height = 15
-      Top = 10
-      Width = 5
+      Height = 17
+      Top = 9
+      Width = 4
       Caption = '-'
     end
   end
@@ -72,12 +73,12 @@ object frmCustomCommands: TfrmCustomCommands
     Width = 280
     Anchors = [akTop, akLeft, akRight]
     Caption = 'Command properties'
-    ClientHeight = 253
+    ClientHeight = 254
     ClientWidth = 276
     TabOrder = 2
     object txtDescription: TEdit
       Left = 8
-      Height = 23
+      Height = 26
       Hint = 'Command description'
       Top = 24
       Width = 259
@@ -88,7 +89,7 @@ object frmCustomCommands: TfrmCustomCommands
     end
     object txtCommand: TEdit
       Left = 8
-      Height = 23
+      Height = 26
       Hint = 'Command (make sure it starts with ''git'')'
       Top = 56
       Width = 259
@@ -99,9 +100,9 @@ object frmCustomCommands: TfrmCustomCommands
     end
     object chkInDialog: TCheckBox
       Left = 8
-      Height = 19
+      Height = 21
       Top = 120
-      Width = 145
+      Width = 152
       Caption = 'Run in a dialog window.'
       OnClick = chkInDialogClick
       TabOrder = 3
@@ -118,7 +119,7 @@ object frmCustomCommands: TfrmCustomCommands
     end
     object txtImage: TFileNameEdit
       Left = 8
-      Height = 23
+      Height = 26
       Top = 89
       Width = 259
       OnAcceptFileName = txtImageAcceptFileName
