@@ -1,4 +1,4 @@
-unit unitcustcmd;
+unit unitcustcmdform;
 
 {$mode ObjFPC}{$H+}
 
@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, ButtonPanel,
-  Buttons, ExtCtrls, unitconfig;
+  Buttons, ExtCtrls, unitgittypes, unitconfig;
 
 type
 
@@ -52,7 +52,6 @@ end;
 
 procedure TfrmCustomCommands.NewCommand;
 begin
-
 end;
 
 end.

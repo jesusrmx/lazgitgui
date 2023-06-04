@@ -66,7 +66,7 @@ object frmCustomCommands: TfrmCustomCommands
       Height = 26
       Hint = 'Command description'
       Top = 24
-      Width = 267
+      Width = 259
       Anchors = [akTop, akLeft, akRight]
       TabOrder = 0
       TextHint = 'Description'
@@ -76,7 +76,7 @@ object frmCustomCommands: TfrmCustomCommands
       Height = 26
       Hint = 'Command (make sure it starts with ''git'')'
       Top = 56
-      Width = 267
+      Width = 259
       Anchors = [akTop, akLeft, akRight]
       TabOrder = 1
       TextHint = 'Command'

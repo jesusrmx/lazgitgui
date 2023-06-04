@@ -170,7 +170,7 @@
         <ResourceBaseClass Value="Form"/>
       </Unit>
       <Unit>
-        <Filename Value="unitcustcmd.pas"/>
+        <Filename Value="unitcustcmdform.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="frmCustomCommands"/>
         <ResourceBaseClass Value="Form"/>

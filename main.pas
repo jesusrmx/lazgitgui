@@ -34,7 +34,7 @@ uses
   unitentries, unitgitutils, {unitgit,}
   unitnewbranch, unitruncmd, unitansiescapes,
   unitnewtag, unitlogcache, unitlog, LConvEncoding, unitdbindex,
-  unitframelog, unitgitmgr, unitcheckouttag, unitformlog, unitcustcmd;
+  unitframelog, unitgitmgr, unitcheckouttag, unitformlog, unitcustcmdform;
 
 type
 
