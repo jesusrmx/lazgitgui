@@ -151,6 +151,7 @@ type
     procedure DoPush;
     procedure DoFetch;
     procedure DoPull;
+    procedure OnCustomCommandClick(Sender: TObject);
     procedure OnLogEvent(sender: TObject; thread: TRunThread; event: Integer;
       var interrupt: boolean);
     procedure OnPopupItemClick(Sender: TObject);
@@ -183,6 +184,7 @@ type
     procedure SwitchTo(cmd: string);
     procedure SaveCommitMessage;
     procedure RestoreCommitMessage;
+    procedure UpdateCommandsBar;
   public
 
   end;
@@ -1008,6 +1010,43 @@ begin
   txtComment.Text := ReplaceEOLs(fConfig.ReadString('CommitMsg', '', fGit.TopLevelDir), false);
 end;
 
+procedure TfrmMain.UpdateCommandsBar;
+var
+  btn: TToolButton;
+  i, x: Integer;
+begin
+
+  // remove the current buttons
+  while barCustomCmds.ButtonCount>1 do
+    barCustomCmds.Buttons[1].Free;
+
+  if fCustomCommands.Count>0 then begin
+    btn := TToolButton.Create(self);
+    btn.Style := tbsDivider;
+    btn.Parent := barCustomCmds;
+  end;
+
+  // add the new buttons
+  for i:=0 to fCustomCommands.Count-1 do
+    with fCustomCommands[i] do begin
+      btn := TToolButton.Create(self);
+      if description='-' then
+        btn.Style := tbsDivider
+      else begin
+        btn.Style := tbsButton;
+        btn.Tag := i;
+        btn.OnClick := @OnCustomCommandClick;
+        btn.Hint := description;
+        btn.Caption := description;
+        btn.Parent := barCustomCmds;
+      end;
+    end;
+
+  for i:=barCustomCmds.ButtonCount-1 downto 0 do
+    barCustomCmds.Buttons[i].Left := 0;
+
+end;
+
 function OwnerDrawStateToStr(State: TOwnerDrawState): string;
   procedure Add(st: string);
   begin
@@ -1199,7 +1238,8 @@ begin
   F.Commands := fCustomCommands;
   F.AddNew := true;
   try
-    F.ShowModal;
+    if F.ShowModal=mrOk then
+      UpdateCommandsBar;
   finally
     F.Free;
   end;
@@ -1396,6 +1436,13 @@ procedure TfrmMain.DoPull;
 begin
   RunInteractive(fGit.Exe + ' -c color.ui=always pull', fGit.TopLevelDir, 'pulling from remote: ', 'Pull');
   fGitMgr.UpdateStatus;
+end;
+
+procedure TfrmMain.OnCustomCommandClick(Sender: TObject);
+var
+  c: TComponent absolute Sender;
+begin
+  ShowMessageFmt('You pressed ''%s''', [fCustomCommands[c.Tag].description]);
 end;
 
 procedure TfrmMain.OnLogEvent(sender: TObject; thread: TRunThread;

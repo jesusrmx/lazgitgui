@@ -18,6 +18,7 @@ type
     command: string;
     RunInDlg: boolean;
     image: string;
+    Ask: boolean;
   end;
 
   { TCustomCommandsMgr }
@@ -34,7 +35,7 @@ type
     procedure LoadFromConfig;
     procedure SaveToConfig;
     procedure Assign(mgr: TCustomCommandsMgr);
-    function  Add(descr:string=NEWCOMMAND_DESC; cmd:string=''; inDlg:boolean=false; img:string=''): Integer;
+    function  Add(descr:string=NEWCOMMAND_DESC; cmd:string=''; inDlg:boolean=false; img:string=''; ask:boolean=true): Integer;
     procedure Delete(aIndex: Integer);
     procedure Exchange(a, b: Integer);
 
@@ -91,12 +92,14 @@ begin
 
     for i:=0 to List.Count-1 do begin
       DecodeDelimitedText( List.Values[IntToStr(i+1)], CMDSEP, L);
-      if L.Count=4 then begin
+      if L.Count>=4 then begin
         commands[i].description := L[0];
         commands[i].command := L[1];
         commands[i].RunInDlg := L[2]='1';
         commands[i].image := L[3];
       end;
+      if L.Count>=5 then
+        commands[i].Ask := L[4]='1';
     end;
 
   finally
@@ -114,14 +117,14 @@ begin
   fConfig.OpenConfig;
   List := TStringList.Create;
   L := TStringList.Create;
-  L.Capacity := 4;
   try
-    L.Add(''); L.Add(''); L.Add(''); L.Add('');
+    L.Add(''); L.Add(''); L.Add(''); L.Add(''); L.Add('');
     for i:=0 to Count-1 do begin
       L[0] := commands[i].description;
       L[1] := commands[i].command;
       L[2] := BoolToStr(commands[i].RunInDlg, '1', '0');
       L[3] := commands[i].image;
+      L[4] := BoolToStr(commands[i].Ask, '1', '0');
       List.Add(IntToStr(i+1)+'='+EncodeDelimitedText(CMDSEP, L));
     end;
     fConfig.WriteSection('CustomCommands', List);
@@ -141,7 +144,7 @@ begin
 end;
 
 function TCustomCommandsMgr.Add(descr: string; cmd: string; inDlg: boolean;
-  img: string): Integer;
+  img: string; ask: boolean): Integer;
 begin
   result := Count;
   SetLength(commands, result + 1);
@@ -149,6 +152,7 @@ begin
   commands[result].command := cmd;
   commands[result].RunInDlg := inDlg;
   commands[result].image := img;
+  commands[result].Ask := ask;
 end;
 
 procedure TCustomCommandsMgr.Delete(aIndex: Integer);

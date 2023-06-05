@@ -1,11 +1,11 @@
 object frmCustomCommands: TfrmCustomCommands
   Left = 144
-  Height = 328
-  Top = 207
+  Height = 364
+  Top = 171
   Width = 592
   Anchors = [akTop, akLeft, akBottom]
   Caption = 'Custom Commands'
-  ClientHeight = 328
+  ClientHeight = 364
   ClientWidth = 592
   OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
@@ -15,7 +15,7 @@ object frmCustomCommands: TfrmCustomCommands
   LCLVersion = '2.3.0.0'
   object lbCommands: TListBox
     Left = 8
-    Height = 273
+    Height = 309
     Top = 8
     Width = 240
     Anchors = [akTop, akLeft, akBottom]
@@ -26,7 +26,7 @@ object frmCustomCommands: TfrmCustomCommands
   object bPanel: TButtonPanel
     Left = 6
     Height = 34
-    Top = 288
+    Top = 324
     Width = 580
     OKButton.Name = 'OKButton'
     OKButton.DefaultCaption = True
@@ -69,12 +69,12 @@ object frmCustomCommands: TfrmCustomCommands
   end
   object GroupBox1: TGroupBox
     Left = 304
-    Height = 273
+    Height = 309
     Top = 8
     Width = 280
-    Anchors = [akTop, akLeft, akRight]
+    Anchors = [akTop, akLeft, akRight, akBottom]
     Caption = 'Command properties'
-    ClientHeight = 253
+    ClientHeight = 289
     ClientWidth = 276
     TabOrder = 0
     object txtDescription: TEdit
@@ -113,7 +113,7 @@ object frmCustomCommands: TfrmCustomCommands
       AnchorSideLeft.Side = asrCenter
       Left = 93
       Height = 90
-      Top = 152
+      Top = 192
       Width = 90
       Center = True
       Proportional = True
@@ -133,6 +133,15 @@ object frmCustomCommands: TfrmCustomCommands
       MaxLength = 0
       TabOrder = 2
       TextHint = 'Image filename'
+    end
+    object chkAsk: TCheckBox
+      Left = 8
+      Height = 19
+      Top = 142
+      Width = 198
+      Caption = 'Ask confirmation before excution.'
+      OnClick = chkInDialogClick
+      TabOrder = 4
     end
   end
   object btnAdd: TSpeedButton
