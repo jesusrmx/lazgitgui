@@ -25,8 +25,8 @@ object frmCustomCommands: TfrmCustomCommands
   end
   object bPanel: TButtonPanel
     Left = 6
-    Height = 34
-    Top = 324
+    Height = 35
+    Top = 323
     Width = 580
     OKButton.Name = 'OKButton'
     OKButton.DefaultCaption = True
@@ -43,9 +43,9 @@ object frmCustomCommands: TfrmCustomCommands
       AnchorSideTop.Control = bPanel
       AnchorSideTop.Side = asrCenter
       Left = 0
-      Height = 15
-      Top = 10
-      Width = 5
+      Height = 16
+      Top = 9
+      Width = 6
       Caption = '-'
     end
   end
@@ -74,15 +74,15 @@ object frmCustomCommands: TfrmCustomCommands
     Width = 280
     Anchors = [akTop, akLeft, akRight, akBottom]
     Caption = 'Command properties'
-    ClientHeight = 289
-    ClientWidth = 276
+    ClientHeight = 282
+    ClientWidth = 270
     TabOrder = 0
     object txtDescription: TEdit
       Left = 8
-      Height = 23
+      Height = 21
       Hint = 'Command description'
       Top = 24
-      Width = 259
+      Width = 253
       Anchors = [akTop, akLeft, akRight]
       OnChange = txtDescriptionChange
       TabOrder = 0
@@ -90,10 +90,10 @@ object frmCustomCommands: TfrmCustomCommands
     end
     object txtCommand: TEdit
       Left = 8
-      Height = 23
+      Height = 21
       Hint = 'Command (make sure it starts with ''git'')'
       Top = 56
-      Width = 259
+      Width = 253
       Anchors = [akTop, akLeft, akRight]
       OnChange = txtDescriptionChange
       TabOrder = 1
@@ -101,9 +101,9 @@ object frmCustomCommands: TfrmCustomCommands
     end
     object chkInDialog: TCheckBox
       Left = 8
-      Height = 19
+      Height = 18
       Top = 120
-      Width = 145
+      Width = 158
       Caption = 'Run in a dialog window.'
       OnClick = chkInDialogClick
       TabOrder = 3
@@ -111,7 +111,7 @@ object frmCustomCommands: TfrmCustomCommands
     object imgCmd: TImage
       AnchorSideLeft.Control = GroupBox1
       AnchorSideLeft.Side = asrCenter
-      Left = 93
+      Left = 90
       Height = 90
       Top = 192
       Width = 90
@@ -120,9 +120,9 @@ object frmCustomCommands: TfrmCustomCommands
     end
     object txtImage: TFileNameEdit
       Left = 8
-      Height = 23
+      Height = 21
       Top = 89
-      Width = 259
+      Width = 253
       OnAcceptFileName = txtImageAcceptFileName
       Filter = 'Portable Network Image (*.png)|*.png|Bitmap|*.bmp|All Files|*.*'
       FilterIndex = 0
@@ -136,12 +136,21 @@ object frmCustomCommands: TfrmCustomCommands
     end
     object chkAsk: TCheckBox
       Left = 8
-      Height = 19
-      Top = 142
-      Width = 198
+      Height = 18
+      Top = 136
+      Width = 217
       Caption = 'Ask confirmation before excution.'
       OnClick = chkInDialogClick
       TabOrder = 4
+    end
+    object chkStatus: TCheckBox
+      Left = 8
+      Height = 18
+      Top = 152
+      Width = 159
+      Caption = 'Rescan after execution.'
+      OnClick = chkInDialogClick
+      TabOrder = 5
     end
   end
   object btnAdd: TSpeedButton

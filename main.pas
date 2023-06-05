@@ -287,6 +287,7 @@ end;
 procedure TfrmMain.FormShow(Sender: TObject);
 begin
   OpenDirectory(targetDir);
+  UpdateCommandsBar;
 end;
 
 procedure TfrmMain.lblBranchClick(Sender: TObject);
@@ -1441,8 +1442,30 @@ end;
 procedure TfrmMain.OnCustomCommandClick(Sender: TObject);
 var
   c: TComponent absolute Sender;
+  cmd: TCustomCmdItem;
+  res: TModalResult;
+  s: String;
 begin
-  ShowMessageFmt('You pressed ''%s''', [fCustomCommands[c.Tag].description]);
+  cmd := fCustomCommands[c.Tag];
+  if cmd.Ask then begin
+    res := QuestionDlg(
+      'Executing a custom command',
+      'You are about to execute ' + QuotedStr(cmd.description) + ': ' + LineEnding + LineEnding +
+      'command: ' + cmd.command + LineEnding + LineEnding +
+      'Do you want to proceed?', mtConfirmation,
+      [mrYes, 'yes, do it', mrCancel, 'Cancel'], 0 );
+    if res<>mrYes then
+      exit;
+  end;
+  if pos('git ', cmd.command)=1 then begin
+    s := StringReplace(cmd.command, 'git', fGit.Exe, []);
+    if cmd.RunInDlg then
+      RunInteractive(s, fGit.TopLevelDir, 'Executing a custom command', cmd.description)
+    else
+      RunInThread(s, fGit.TopLevelDir, nil, nil);
+    if cmd.updatestatus then
+      fGitMgr.UpdateStatus;
+  end;
 end;
 
 procedure TfrmMain.OnLogEvent(sender: TObject; thread: TRunThread;

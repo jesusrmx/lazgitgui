@@ -14,6 +14,7 @@ type
 
   TfrmCustomCommands = class(TForm)
     bPanel: TButtonPanel;
+    chkStatus: TCheckBox;
     chkAsk: TCheckBox;
     chkInDialog: TCheckBox;
     btnAdd: TSpeedButton;
@@ -134,9 +135,11 @@ procedure TfrmCustomCommands.lbCommandsSelectionChange(Sender: TObject;
   User: boolean);
 begin
   if not fEventsDisabled then begin
-    fCurrentItem := lbCommands.ItemIndex;
-    CommandToGui;
-    CheckControls;
+    if lbCommands.ItemIndex>=0 then begin
+      fCurrentItem := lbCommands.ItemIndex;
+      CommandToGui;
+      CheckControls;
+    end;
   end;
 end;
 
@@ -231,6 +234,7 @@ begin
   cmd.RunInDlg := chkInDialog.Checked;
   cmd.image := txtImage.Text;
   cmd.Ask := chkAsk.Checked;
+  cmd.UpdateStatus := chkStatus.Checked;
   fNewCommands[fCurrentItem] := cmd;
 end;
 
@@ -242,6 +246,7 @@ begin
   chkInDialog.Checked := fNewCommands[fCurrentItem].RunInDlg;
   txtImage.Text := fNewCommands[fCurrentItem].image;
   chkAsk.Checked := fNewCommands[fCurrentItem].Ask;
+  chkStatus.Checked := fNewCommands[fCurrentItem].UpdateStatus;
   UpdateCommandImage;
   fEventsDisabled := false;
 end;
@@ -268,6 +273,7 @@ begin
   txtCommand.Enabled := txtDescription.Enabled;
   chkInDialog.Enabled := txtDescription.Enabled;
   chkAsk.Enabled := txtDescription.Enabled;
+  chkStatus.Enabled := txtDescription.Enabled;
   imgCmd.Enabled := txtDescription.Enabled;
 end;
 

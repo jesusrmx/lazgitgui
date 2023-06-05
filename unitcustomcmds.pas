@@ -19,6 +19,7 @@ type
     RunInDlg: boolean;
     image: string;
     Ask: boolean;
+    UpdateStatus: boolean;
   end;
 
   { TCustomCommandsMgr }
@@ -99,7 +100,13 @@ begin
         commands[i].image := L[3];
       end;
       if L.Count>=5 then
-        commands[i].Ask := L[4]='1';
+        commands[i].Ask := L[4]='1'
+      else
+        commands[i].Ask := true;
+      if L.Count>=6 then
+        commands[i].UpdateStatus:= L[5]='1'
+      else
+        commands[i].UpdateStatus := true;
     end;
 
   finally
@@ -118,13 +125,14 @@ begin
   List := TStringList.Create;
   L := TStringList.Create;
   try
-    L.Add(''); L.Add(''); L.Add(''); L.Add(''); L.Add('');
+    for i:=1 to 6 do L.Add('');
     for i:=0 to Count-1 do begin
       L[0] := commands[i].description;
       L[1] := commands[i].command;
       L[2] := BoolToStr(commands[i].RunInDlg, '1', '0');
       L[3] := commands[i].image;
       L[4] := BoolToStr(commands[i].Ask, '1', '0');
+      L[5] := BoolToStr(commands[i].UpdateStatus, '1', '0');
       List.Add(IntToStr(i+1)+'='+EncodeDelimitedText(CMDSEP, L));
     end;
     fConfig.WriteSection('CustomCommands', List);
