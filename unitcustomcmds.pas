@@ -59,7 +59,9 @@ type
     procedure LoadFromConfig;
     procedure SaveToConfig;
     procedure Assign(mgr: TCustomCommandsMgr);
-    function  Add(descr:string=NEWCOMMAND_DESC; cmd:string=''; inDlg:boolean=false; img:string=''; ask:boolean=true): Integer;
+    function  Add(descr:string=NEWCOMMAND_DESC; cmd:string='';
+                  inDlg:boolean=false; img:string=''; ask:boolean=true;
+                  upd:boolean=true): Integer;
     procedure Delete(aIndex: Integer);
     procedure Exchange(a, b: Integer);
 
@@ -175,7 +177,7 @@ begin
 end;
 
 function TCustomCommandsMgr.Add(descr: string; cmd: string; inDlg: boolean;
-  img: string; ask: boolean): Integer;
+  img: string; ask: boolean; upd: boolean): Integer;
 begin
   result := Count;
   SetLength(commands, result + 1);
@@ -184,6 +186,7 @@ begin
   commands[result].RunInDlg := inDlg;
   commands[result].image := img;
   commands[result].Ask := ask;
+  commands[result].UpdateStatus := upd;
 end;
 
 procedure TCustomCommandsMgr.Delete(aIndex: Integer);
