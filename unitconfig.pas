@@ -213,7 +213,7 @@ end;
 procedure TConfig.ReadSection(section: string; strings: TStrings);
 begin
   OpenConfig;
-  fIniFile.ReadSection(section, strings);
+  fIniFile.ReadSectionRaw(section, strings);
   CloseConfig;
 end;
 

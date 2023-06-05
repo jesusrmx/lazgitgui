@@ -36,6 +36,7 @@ type
     procedure Assign(mgr: TCustomCommandsMgr);
     function  Add(descr:string=NEWCOMMAND_DESC; cmd:string=''; inDlg:boolean=false; img:string=''): Integer;
     procedure Delete(aIndex: Integer);
+    procedure Exchange(a, b: Integer);
 
     property Count: Integer read GetCount;
     property Command[aIndex:Integer]: TCustomCmdItem read GetCommand write SetCommand; default;
@@ -154,6 +155,15 @@ procedure TCustomCommandsMgr.Delete(aIndex: Integer);
 begin
   if (aIndex>=0) and (aIndex<Count) then
     System.Delete(commands, aIndex, 1)
+end;
+
+procedure TCustomCommandsMgr.Exchange(a, b: Integer);
+var
+  cmd: TCustomCmdItem;
+begin
+  cmd := commands[a];
+  commands[a] := commands[b];
+  commands[b] := cmd;
 end;
 
 end.

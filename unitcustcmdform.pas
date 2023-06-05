@@ -28,6 +28,8 @@ type
     btnDown: TSpeedButton;
     procedure btnAddClick(Sender: TObject);
     procedure btnDelClick(Sender: TObject);
+    procedure btnDownClick(Sender: TObject);
+    procedure btnUpClick(Sender: TObject);
     procedure chkInDialogClick(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure FormCreate(Sender: TObject);
@@ -49,6 +51,7 @@ type
     procedure UpdateCurrentItem;
     procedure UpdateCommandImage;
     procedure CheckControls;
+    procedure ExchangeCommands(dst: Integer);
   public
     property Commands: TCustomCommandsMgr read fCommands write SetCommands;
     property AddNew: boolean write fAddNew;
@@ -97,6 +100,16 @@ begin
   end;
 end;
 
+procedure TfrmCustomCommands.btnDownClick(Sender: TObject);
+begin
+  ExchangeCommands(fCurrentItem + 1);
+end;
+
+procedure TfrmCustomCommands.btnUpClick(Sender: TObject);
+begin
+  ExchangeCommands(fCurrentItem - 1);
+end;
+
 procedure TfrmCustomCommands.FormCreate(Sender: TObject);
 begin
   fConfig.ReadWindow(Self, 'customcmdform', SECTION_GEOMETRY);
@@ -119,9 +132,11 @@ end;
 procedure TfrmCustomCommands.lbCommandsSelectionChange(Sender: TObject;
   User: boolean);
 begin
-  fCurrentItem := lbCommands.ItemIndex;
-  UpdateCurrentItem;
-  CheckControls;
+  if not fEventsDisabled then begin
+    fCurrentItem := lbCommands.ItemIndex;
+    UpdateCurrentItem;
+    CheckControls;
+  end;
 end;
 
 procedure TfrmCustomCommands.txtDescriptionChange(Sender: TObject);
@@ -250,6 +265,18 @@ begin
   txtCommand.Enabled := txtDescription.Enabled;
   chkInDialog.Enabled := txtDescription.Enabled;
   imgCmd.Enabled := txtDescription.Enabled;
+end;
+
+procedure TfrmCustomCommands.ExchangeCommands(dst: Integer);
+begin
+  fNewCommands.Exchange(fCurrentItem, dst);
+  lbCommands.Items.Exchange(fCurrentItem, dst);
+  fCurrentItem := dst;
+  fEventsDisabled := true;
+  lbCommands.ItemIndex := fCurrentItem;
+  fEventsDisabled := false;
+  CheckControls;
+  Changed;
 end;
 
 end.
