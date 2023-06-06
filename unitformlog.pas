@@ -27,7 +27,7 @@ unit unitformlog;
 interface
 
 uses
-  Classes, SysUtils, Forms, Controls, Graphics, Dialogs, ComCtrls,
+  Classes, SysUtils, Forms, Controls, Graphics, Dialogs, ComCtrls, grids,
   unitifaces, unitconfig, unithighlighterhelper, unitgitmgr, unitframelog;
 
 type
@@ -77,12 +77,20 @@ begin
 end;
 
 procedure TfrmLog.FormCreate(Sender: TObject);
+var
+  col: TCollectionItem;
+  gcol: TGridColumn;
 begin
   fConfig.OpenConfig;
   fLog.Config := fConfig;
   fConfig.ReadWindow(Self, 'frmlog', SECTION_GEOMETRY);
   fLog.panBrowser.Height := fConfig.ReadInteger('frmlog.panbrowser.height', fLog.panBrowser.Height, SECTION_GEOMETRY);
   fLog.panFiles.Width := fConfig.ReadInteger('frmlog.panfiles.width', fLog.panFiles.width, SECTION_GEOMETRY);
+  for col in fLog.gridLog.Columns do begin
+    gcol := TGridColumn(col);
+    if gcol.SizePriority=0 then
+      gcol.Width := fConfig.ReadInteger('frmlog.grid.'+gcol.Title.caption+'.width', gcol.width, SECTION_GEOMETRY);
+  end;
   fConfig.CloseConfig;
 end;
 

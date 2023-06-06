@@ -30,7 +30,6 @@ uses
   Classes, SysUtils, FileUtil, IniFiles, LazLogger, Graphics, Forms, unitifaces;
 
 const
-  SECTION_GEOMETRY = 'geometry';
   SECTION_FONTS = 'fonts';
 
 type

@@ -31,7 +31,8 @@ uses
   Classes, SysUtils, unitgittypes, unitentries;
 
 const
-  SECTION_DEFAULT = 'options';
+  SECTION_DEFAULT   = 'options';
+  SECTION_GEOMETRY  = 'geometry';
 
 type
 

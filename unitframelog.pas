@@ -120,6 +120,8 @@ type
       var Handled: Boolean);
     procedure gridLogDrawCell(Sender: TObject; aCol, aRow: Integer;
       aRect: TRect; aState: TGridDrawState);
+    procedure gridLogHeaderSized(Sender: TObject; IsColumn: Boolean;
+      Index: Integer);
     procedure gridLogSelection(Sender: TObject; aCol, aRow: Integer);
     procedure MenuItem2Click(Sender: TObject);
     procedure MenuItem3Click(Sender: TObject);
@@ -386,6 +388,17 @@ begin
 
       finalize(aItem);
     end;
+  end;
+end;
+
+procedure TframeLog.gridLogHeaderSized(Sender: TObject; IsColumn: Boolean;
+  Index: Integer);
+var
+  col: TGridColumn;
+begin
+  if isColumn then begin
+    col := gridLog.Columns[Index];
+    fConfig.WriteInteger('frmlog.grid.'+col.Title.caption+'.width', col.Width, SECTION_GEOMETRY);
   end;
 end;
 

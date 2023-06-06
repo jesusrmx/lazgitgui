@@ -28,7 +28,7 @@ interface
 
 uses
   Classes, SysUtils, Math, Forms, Controls, Graphics, Dialogs, StdCtrls, ButtonPanel,
-  Buttons, ExtCtrls, EditBtn, unitgittypes, unitconfig, unitcustomcmds;
+  Buttons, ExtCtrls, EditBtn, unitifaces, unitconfig, unitcustomcmds;
 
 type
 

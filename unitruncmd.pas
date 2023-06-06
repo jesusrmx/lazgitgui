@@ -31,7 +31,7 @@ interface
 
 uses
   Classes, SysUtils, Math, LazLogger, SynEdit, Forms, Controls, Graphics,
-  Dialogs, StdCtrls, ButtonPanel, unitconfig, unitprocess, unitansiescapes;
+  Dialogs, StdCtrls, ButtonPanel, unitifaces, unitconfig, unitprocess, unitansiescapes;
 
 type
   TLineEnding = string[3];
