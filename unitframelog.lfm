@@ -741,6 +741,12 @@ object frameLog: TframeLog
     object mnuGotoHead: TMenuItem
       Action = actGotoHead
     end
+    object MenuItem4: TMenuItem
+      Action = actGotoParent
+    end
+    object MenuItem5: TMenuItem
+      Action = actGotoChild
+    end
     object mnuSeparatorFirst: TMenuItem
       Caption = '-'
     end
@@ -780,6 +786,16 @@ object frameLog: TframeLog
       Caption = 'FH'
       Enabled = False
       OnExecute = actShowFileHistoryExecute
+    end
+    object actGotoParent: TAction
+      Caption = 'Go to Parent'
+      OnExecute = actGotoParentExecute
+      ShortCut = 32851
+    end
+    object actGotoChild: TAction
+      Caption = 'Go to child'
+      OnExecute = actGotoChildExecute
+      ShortCut = 32855
     end
   end
 end

@@ -84,6 +84,8 @@ type
 
   TframeLog = class(TFrame, IObserver)
     actGotoHead: TAction;
+    actGotoParent: TAction;
+    actGotoChild: TAction;
     actShowFileHistory: TAction;
     actReload: TAction;
     actShowChanges: TAction;
@@ -94,6 +96,8 @@ type
     MenuItem1: TMenuItem;
     MenuItem2: TMenuItem;
     MenuItem3: TMenuItem;
+    MenuItem4: TMenuItem;
+    MenuItem5: TMenuItem;
     mnuGotoHead: TMenuItem;
     panBrowser: TPanel;
     panMode: TPanel;
@@ -111,7 +115,9 @@ type
     Splitter2: TSplitter;
     treeFiles: TTreeView;
     txtViewer: TSynEdit;
+    procedure actGotoChildExecute(Sender: TObject);
     procedure actGotoHeadExecute(Sender: TObject);
+    procedure actGotoParentExecute(Sender: TObject);
     procedure actReloadExecute(Sender: TObject);
     procedure actShowChangesExecute(Sender: TObject);
     procedure actShowFileHistoryExecute(Sender: TObject);
@@ -154,7 +160,10 @@ type
     procedure OnCreateTagClick(sender: TObject);
     procedure OnMergeBranchClick(Sender: TObject);
     procedure CopyToClipboard(what: Integer);
+    function  LocateCommit(const commit: QWord): boolean;
     procedure LocateHead;
+    procedure LocateParent;
+    procedure LocateChild;
     function  LocateItemIndex(aIndex: Integer): boolean;
     procedure AddMergeBranchMenu;
     procedure AddTagsMenu;
@@ -403,7 +412,13 @@ begin
 end;
 
 procedure TframeLog.gridLogSelection(Sender: TObject; aCol, aRow: Integer);
+var
+  aIndex: Integer;
 begin
+  aIndex := gridLog.Row - gridLog.FixedRows;
+  actGotoParent.Enabled := (aIndex>=0) and (aIndex<Length(fItemIndices)) and (Length(fItemIndices[aIndex].parents)>0);
+  actGotoChild.Enabled := (aIndex>=0) and (aIndex<Length(fItemIndices)) and (Length(fItemIndices[aIndex].childs)>0);
+
   if panBrowser.Visible then
     ShowChanges(aRow)
 end;
@@ -430,7 +445,9 @@ begin
     mIndex := mnuSeparatorFirst.MenuIndex+1;
     while mIndex<>mnuSeparatorLast.MenuIndex do
       popLog.Items.Delete(mIndex);
+
     AddTagsMenu;
+
     AddMergeBranchMenu;
   end;
 end;
@@ -438,6 +455,16 @@ end;
 procedure TframeLog.actGotoHeadExecute(Sender: TObject);
 begin
   LocateHead;
+end;
+
+procedure TframeLog.actGotoChildExecute(Sender: TObject);
+begin
+  LocateChild;
+end;
+
+procedure TframeLog.actGotoParentExecute(Sender: TObject);
+begin
+  LocateParent;
 end;
 
 procedure TframeLog.actReloadExecute(Sender: TObject);
@@ -764,17 +791,47 @@ begin
     clipboard.AsText := s;
 end;
 
+function TframeLog.LocateCommit(const commit: QWord): boolean;
+var
+  i: Integer;
+begin
+  result := false;
+  for i := 0 to Length(fItemIndices) - 1 do begin
+    if commit = fItemIndices[i].commit then begin
+      gridLog.Row :=  gridLog.FixedRows + i;
+      result := true;
+      break;
+    end;
+  end;
+end;
+
 procedure TframeLog.LocateHead;
 var
   commit: QWord;
-  i: Integer;
 begin
   commit := OIDToQWord(fGitmgr.BranchOID);
-  for i:=0 to Length(fItemIndices)-1 do begin
-    if commit=fItemIndices[i].commit then begin
-      gridLog.Row :=  gridLog.FixedRows + i;
-      break;
-    end;
+  LocateCommit(commit);
+end;
+
+procedure TframeLog.LocateParent;
+var
+  aIndex: Integer;
+begin
+  aIndex := gridLog.Row - gridLog.FixedRows;
+  if Length(fItemIndices[aIndex].parents)>0 then begin
+    aIndex := fItemIndices[aIndex].parents[0];
+    LocateCommit(fItemIndices[aIndex].commit);
+  end;
+end;
+
+procedure TframeLog.LocateChild;
+var
+  aIndex: Integer;
+begin
+  aIndex := gridLog.Row - gridLog.FixedRows;
+  if Length(fItemIndices[aIndex].childs)>0 then begin
+    aIndex := fItemIndices[aIndex].childs[0];
+    LocateCommit(fItemIndices[aIndex].commit);
   end;
 end;
 
@@ -995,7 +1052,6 @@ begin
     fCommitBrowser.Config := fConfig;
     fCommitBrowser.ObserverMgr.AddObserver(self);
   end;
-
 
   fCommitBrowser.Commit := fCurrentItem.CommitOID;
   aMode := CommitBrowserModeFromGui;
