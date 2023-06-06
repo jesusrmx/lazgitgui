@@ -378,7 +378,7 @@ begin
           end;
         'Author': s := aItem.Author;
         'SHA1': s := aItem.CommitOID;
-        'Date': s := IntToStr(aItem.CommiterDate);
+        'Date': s := DateTimeToStr(UnixToDateTime(aItem.CommiterDate, false));
         else  s := '';
       end;
 
