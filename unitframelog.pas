@@ -1046,6 +1046,8 @@ begin
     exit;
   end;
 
+  actShowFileHistory.Enabled := false;
+
   if fCommitBrowser=nil then begin
     fCommitBrowser := TCommitBrowser.Create;
     fCommitBrowser.GitMgr := fGitMgr;
