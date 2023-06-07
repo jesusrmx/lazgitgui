@@ -52,9 +52,9 @@ From Lazarus, an external tool can be configured with the following properties:
 (macos)
 
     Title: LazGitGui
-    Program Filename:
-    Parameters: --logfile=PATH/TO/LazGitGui/ide.log $EdFile()
-    Shortcut:
+    Program Filename: open
+    Parameters: -a PATH/TO/LazGitGui.app --args --logfile=PATH/TO/LazGitGui/ide.log $EdFile()
+    Shortcut: CMD + G
 
     
 
