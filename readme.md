@@ -31,16 +31,31 @@ The config file can be found in the following locations:
     Windows:    %LOCALAPPDATA%\appdata\lazgitgui\config\lazgitgui.cfg
     Linux/mac:  $HOME/.config/lazgitgui\lazgitgui.cfg
 
+for example (this works under linux):
+
+    [lazgitgui.cfg]
+    git=/usr/bin/git
+
 **How to use.**
 
-LazGitGui requires a path passed as the last parameter in the command line, it can be a directory or a file residing within the working area of the repository.
+LazGitGui requires a path passed as the last parameter in the command line, it can be a directory or a file residing within the working area of the repository. Some suggestions for invoking LazGitGUI:
 
 From Lazarus, an external tool can be configured with the following properties:
+
+(linux + windows)
 
     Title: LazGitGui
     Program Filename: PATH/TO/LazGitGui executable
     Parameters: --logfile=PATH/TO/LazGitGui/ide.log $EdFile()
     Shortcut: CTRL+ALT+G
+
+(macos)
+
+    Title: LazGitGui
+    Program Filename:
+    Parameters: --logfile=PATH/TO/LazGitGui/ide.log $EdFile()
+    Shortcut:
+
     
 
 
