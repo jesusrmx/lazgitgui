@@ -1,4 +1,4 @@
-LazGitGui.
+**LazGitGUI**
 
 This is yet another git tool, resembling git gui with some additional features.
 I started this tool because it was not available, by default, under mac os, as
@@ -7,7 +7,15 @@ it is under linux and windows (when you install git by your own).
 It was built also as a test for doing some git commands, with the ultimate goal
 of doing a Lazarus integration.
 
-STARTING IT.
+**Screenshots.**
+
+![main](images/main.png)
+
+![log](images/log.png)
+
+![filehistory](images/filehistory.png)
+
+**Starting it.**
 
 At start, the program tries to find the git executable in the system (or user)
 path, once located, it gets stored in the LazGitGui config file. LazGitGui does
@@ -23,12 +31,11 @@ The config file can be found in the following locations:
     Windows:    %LOCALAPPDATA%\appdata\lazgitgui\config\lazgitgui.cfg
     Linux/mac:  $HOME/.config/lazgitgui\lazgitgui.cfg
 
-HOW TO USE.
+**How to use.**
 
-LazGitGui requires a path (a directory or a file) within the working area in order 
-to find the root 'git' dir (the directory that contains the .git directory).
+LazGitGui requires a path passed as the last parameter in the command line, it can be a directory or a file residing within the working area of the repository.
 
-From Lazarus a external tool can be configured with the following properties:
+From Lazarus, an external tool can be configured with the following properties:
 
     Title: LazGitGui
     Program Filename: PATH/TO/LazGitGui executable
