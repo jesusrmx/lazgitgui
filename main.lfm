@@ -653,7 +653,7 @@ object frmMain: TfrmMain
             Left = 5
             Height = 20
             Top = 5
-            Width = 133
+            Width = 129
             Action = actRescan
             TabOrder = 0
           end
@@ -661,7 +661,7 @@ object frmMain: TfrmMain
             Left = 5
             Height = 20
             Top = 30
-            Width = 133
+            Width = 129
             Action = actFetch
             TabOrder = 1
           end
@@ -669,7 +669,7 @@ object frmMain: TfrmMain
             Left = 5
             Height = 20
             Top = 55
-            Width = 133
+            Width = 129
             Action = actPull
             TabOrder = 2
           end
@@ -677,7 +677,7 @@ object frmMain: TfrmMain
             Left = 5
             Height = 20
             Top = 80
-            Width = 133
+            Width = 129
             Action = actCommit
             TabOrder = 3
           end
@@ -685,11 +685,11 @@ object frmMain: TfrmMain
             Left = 5
             Height = 20
             Top = 105
-            Width = 133
+            Width = 129
             AutoSize = True
             BevelOuter = bvNone
             ClientHeight = 20
-            ClientWidth = 133
+            ClientWidth = 129
             TabOrder = 4
             object btnPush: TButton
               Left = 0
@@ -704,7 +704,7 @@ object frmMain: TfrmMain
               Left = 61
               Height = 20
               Top = 0
-              Width = 72
+              Width = 68
               Action = actPushDialog
               Align = alClient
               BorderSpacing.Left = 5
@@ -1432,6 +1432,7 @@ object frmMain: TfrmMain
       Height = 4
       Top = 0
       Width = 973
+      Anchors = [akTop, akLeft, akRight]
       Smooth = True
       TabOrder = 0
       Visible = False
