@@ -1,0 +1,454 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Project-Id-Version: \n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 2.3\n"
+"Last-Translator: Jesus Reyes Aguilar <jesusrmx@gmai.com>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: es_MX\n"
+
+#: main.rsnewbranch
+msgid "New Branch"
+msgstr "Nueva Rama"
+
+#: main.rsnewtag
+msgid "Create a tag at this point"
+msgstr "Crear etiqueta aquí"
+
+#: main.rspushingyourcommits
+msgid "Pushing your commits"
+msgstr "Subiendo tus cambios"
+
+#: main.rsreload
+msgid "Reload"
+msgstr "Recargar"
+
+#: main.rsrestoringworkfiles
+msgid "Restoring working files"
+msgstr "Restaurando archivos de trabajo"
+
+#: main.rsrestoringworkfileswarning
+#, fuzzy, object-pascal-format
+msgid ""
+"You are about to discard changes in %s,\n"
+"\n"
+"data will be lost and this action cannot be undone\n"
+"\n"
+"Are you sure to continue?"
+msgstr ""
+"Estas por desechar los cambios en %s,\n"
+"\n"
+"La información se perderá y esta acción no se puede deshacer\n"
+"\n"
+"¿Estás seguro de continuar?"
+
+#: main.rstherearecommitsbehind
+msgid "There are commits behind, are you sure you want to push?"
+msgstr "Hay cambios remotos sin integrar, ¿Estás seguro de subir los cambios?"
+
+#: tframelog.actgotochild.caption
+msgid "Go to child"
+msgstr "Ir al hijo de este cambio"
+
+#: tframelog.actgotohead.caption
+msgid "Go to head"
+msgstr "Ir al cambio actual"
+
+#: tframelog.actgotoparent.caption
+msgid "Go to Parent"
+msgstr "Ir al padre de este cambio"
+
+#: tframelog.actreload.caption
+msgid "R"
+msgstr "R"
+
+#: tframelog.actshowchanges.caption
+msgid "SC"
+msgstr "SC"
+
+#: tframelog.actshowfilehistory.caption
+msgid "FH"
+msgstr "FH"
+
+#: tframelog.btnstop.caption
+msgctxt "tframelog.btnstop.caption"
+msgid "Stp"
+msgstr "Paso"
+
+#: tframelog.gridlog.columns[0].title.caption
+msgctxt "tframelog.gridlog.columns[0].title.caption"
+msgid "RecNo"
+msgstr "RegNo"
+
+#: tframelog.gridlog.columns[1].title.caption
+msgctxt "tframelog.gridlog.columns[1].title.caption"
+msgid "Graph"
+msgstr "Gráfico"
+
+#: tframelog.gridlog.columns[2].title.caption
+msgctxt "tframelog.gridlog.columns[2].title.caption"
+msgid "Subject"
+msgstr "Mensaje"
+
+#: tframelog.gridlog.columns[3].title.caption
+msgctxt "tframelog.gridlog.columns[3].title.caption"
+msgid "Author"
+msgstr "Autor"
+
+#: tframelog.gridlog.columns[4].title.caption
+msgctxt "tframelog.gridlog.columns[4].title.caption"
+msgid "Date"
+msgstr "Fecha"
+
+#: tframelog.gridlog.columns[5].title.caption
+msgctxt "tframelog.gridlog.columns[5].title.caption"
+msgid "SHA1"
+msgstr "SHA1"
+
+#: tframelog.lblinfo.caption
+msgctxt "tframelog.lblinfo.caption"
+msgid "Working ...."
+msgstr "Procesando ...."
+
+#: tframelog.menuitem1.caption
+msgid "Copy"
+msgstr "Copiar"
+
+#: tframelog.menuitem2.caption
+msgid "All info"
+msgstr "Toda la información"
+
+#: tframelog.menuitem3.caption
+msgid "Sha"
+msgstr "Sha"
+
+#: tframelog.radpatch.caption
+msgid "Patch"
+msgstr "Parche"
+
+#: tframelog.radtree.caption
+msgid "Tree"
+msgstr "Archivos"
+
+#: tfrmcheckoutag.caption
+msgid "Check out a Tag"
+msgstr "Cargar una etiqueta"
+
+#: tfrmcheckoutag.chkcreatebranch.caption
+msgid "Create a branch."
+msgstr "Crear rama."
+
+#: tfrmcheckoutag.label1.caption
+msgid "tag"
+msgstr "etiqueta"
+
+#: tfrmcheckoutag.lblbranch.caption
+msgid "Branch Name:"
+msgstr "Rama:"
+
+#: tfrmcheckoutag.lbltag.caption
+msgid "lblTag"
+msgstr ""
+
+#: tfrmcustomcommands.btnadd.caption
+msgctxt "tfrmcustomcommands.btnadd.caption"
+msgid "+"
+msgstr ""
+
+#: tfrmcustomcommands.btndel.caption
+msgctxt "tfrmcustomcommands.btndel.caption"
+msgid "-"
+msgstr ""
+
+#: tfrmcustomcommands.btndown.caption
+msgid "v"
+msgstr ""
+
+#: tfrmcustomcommands.btnup.caption
+msgid "^"
+msgstr ""
+
+#: tfrmcustomcommands.caption
+msgid "Custom Commands"
+msgstr "Comandos del usuario"
+
+#: tfrmcustomcommands.chkask.caption
+msgid "Ask confirmation before excution."
+msgstr "Pedir confirmación antes de ejecutar"
+
+#: tfrmcustomcommands.chkindialog.caption
+msgid "Run in a dialog window."
+msgstr "Ejecutar en una ventana"
+
+#: tfrmcustomcommands.chkstatus.caption
+msgid "Rescan after execution."
+msgstr "Actualizar después de ejecutar"
+
+#: tfrmcustomcommands.groupbox1.caption
+msgid "Command properties"
+msgstr "Propiedades del comando"
+
+#: tfrmcustomcommands.lblinfo.caption
+msgctxt "tfrmcustomcommands.lblinfo.caption"
+msgid "-"
+msgstr ""
+
+#: tfrmcustomcommands.txtcommand.hint
+msgid "Command (make sure it starts with 'git')"
+msgstr "Comando (asegúrese de comience con 'git')"
+
+#: tfrmcustomcommands.txtcommand.texthint
+msgid "Command"
+msgstr "Comando"
+
+#: tfrmcustomcommands.txtdescription.hint
+msgid "Command description"
+msgstr "Descripción del comando"
+
+#: tfrmcustomcommands.txtdescription.texthint
+msgid "Description"
+msgstr "Descripción"
+
+#: tfrmcustomcommands.txtimage.texthint
+msgid "Image filename"
+msgstr "Nombre de imágen"
+
+#: tfrmfilehistory.caption
+msgid "frmFileHistory"
+msgstr "Historial de archivo"
+
+#: tfrmfilehistory.grid.columns[0].title.caption
+msgctxt "tfrmfilehistory.grid.columns[0].title.caption"
+msgid "Date"
+msgstr "Fecha"
+
+#: tfrmfilehistory.grid.columns[1].title.caption
+msgctxt "tfrmfilehistory.grid.columns[1].title.caption"
+msgid "Author"
+msgstr "Autor"
+
+#: tfrmfilehistory.grid.columns[2].title.caption
+msgctxt "tfrmfilehistory.grid.columns[2].title.caption"
+msgid "Subject"
+msgstr "Mensaje"
+
+#: tfrmfilehistory.grid.columns[3].title.caption
+msgctxt "tfrmfilehistory.grid.columns[3].title.caption"
+msgid "Commit"
+msgstr "Identificador"
+
+#: tfrmlog.caption
+msgid "frmLog"
+msgstr "Historial"
+
+#: tfrmlog.flog.gridlog.columns[0].title.caption
+msgctxt "tfrmlog.flog.gridlog.columns[0].title.caption"
+msgid "RecNo"
+msgstr "RegNo"
+
+#: tfrmlog.flog.gridlog.columns[1].title.caption
+msgctxt "tfrmlog.flog.gridlog.columns[1].title.caption"
+msgid "Graph"
+msgstr "Gráfico"
+
+#: tfrmlog.flog.gridlog.columns[2].title.caption
+msgctxt "tfrmlog.flog.gridlog.columns[2].title.caption"
+msgid "Subject"
+msgstr "Mensaje"
+
+#: tfrmlog.flog.gridlog.columns[3].title.caption
+msgctxt "tfrmlog.flog.gridlog.columns[3].title.caption"
+msgid "Author"
+msgstr "Autor"
+
+#: tfrmlog.flog.gridlog.columns[4].title.caption
+msgctxt "tfrmlog.flog.gridlog.columns[4].title.caption"
+msgid "Date"
+msgstr "Fecha"
+
+#: tfrmlog.flog.gridlog.columns[5].title.caption
+msgctxt "tfrmlog.flog.gridlog.columns[5].title.caption"
+msgid "SHA1"
+msgstr "SHA1"
+
+#: tfrmnewbranch.caption
+msgid "Create a new branch"
+msgstr "Crear nueva rama"
+
+#: tfrmnewbranch.chkfetch.caption
+msgid "Fetch Tracked Branch"
+msgstr "Recibir rama"
+
+#: tfrmnewbranch.chkswitchto.caption
+msgid "Switch to the new branch"
+msgstr "Cargar la nueva rama"
+
+#: tfrmnewbranch.label1.caption
+msgid "Options"
+msgstr "Opciones"
+
+#: tfrmnewbranch.label2.caption
+msgctxt "tfrmnewbranch.label2.caption"
+msgid "Name"
+msgstr "Nombre"
+
+#: tfrmnewbranch.txtcustomoptions.texthint
+msgid "Custom Options"
+msgstr "Opciones"
+
+#: tfrmnewtag.caption
+msgid "New tag"
+msgstr "Nueva etiqueta"
+
+#: tfrmnewtag.chkannotated.caption
+msgid "Annotated tag."
+msgstr "Etiqueta con propiedades"
+
+#: tfrmnewtag.label1.caption
+msgctxt "tfrmnewtag.label1.caption"
+msgid "Name"
+msgstr "Nombre"
+
+#: tfrmnewtag.lblinfo.caption
+msgctxt "tfrmnewtag.lblinfo.caption"
+msgid "-"
+msgstr ""
+
+#: tfrmnewtag.lblmsg.caption
+msgid "Message:"
+msgstr "Mensaje:"
+
+#: tfrmreset.caption
+msgid "Reset branch"
+msgstr "Restaurar rama"
+
+#: tfrmreset.lblprompt.caption
+msgid "You are reset"
+msgstr "Estas restaurando"
+
+#: tfrmreset.radresettype.caption
+msgid "Reset Type"
+msgstr "Tipo de restauración"
+
+#: tfrmruncommand.caption
+msgid "frmRunCommand"
+msgstr "Ejecutar comando"
+
+#: tfrmruncommand.chkcloseok.caption
+msgid "Close on Succeed"
+msgstr "Cerrar en caso de ejecución exitosa"
+
+#: tfrmruncommand.lblcaption.caption
+msgctxt "tfrmruncommand.lblcaption.caption"
+msgid "-"
+msgstr ""
+
+#: tfrmruncommand.lblresult.caption
+msgctxt "tfrmruncommand.lblresult.caption"
+msgid "-"
+msgstr ""
+
+#: unitentries.rslazgitguifilestatemissingdescription
+msgid "File state missing description"
+msgstr ""
+
+#: unitentries.rslazgitguifiletypechangednotstaged
+msgid "File type changed, not staged"
+msgstr ""
+
+#: unitentries.rslazgitguifiletypechangedoldtypestagedforcommit
+msgid "File type changed, old type staged for commit"
+msgstr ""
+
+#: unitentries.rslazgitguifiletypechangedstaged
+msgid "File type changed, staged"
+msgstr ""
+
+#: unitentries.rslazgitguifiletypechangefilemissing
+msgid "File type change staged, Missing"
+msgstr ""
+
+#: unitentries.rslazgitguifiletypechangestagedmodificationnotstaged
+msgid "File type change staged, Modification not staged"
+msgstr ""
+
+#: unitentries.rslazgitguiignored
+msgid "Ignored"
+msgstr ""
+
+#: unitentries.rslazgitguimissing
+msgid "Missing"
+msgstr ""
+
+#: unitentries.rslazgitguimodifiednotstaged
+msgid "Modified, not staged"
+msgstr ""
+
+#: unitentries.rslazgitguiportionsstagedforcommit
+msgid "Portions staged for commit"
+msgstr ""
+
+#: unitentries.rslazgitguirequiresmergeresolution
+msgid "Requires merge resolution"
+msgstr ""
+
+#: unitentries.rslazgitguistagedforcommit
+msgid "Staged for commit"
+msgstr ""
+
+#: unitentries.rslazgitguistagedforcommitmissing
+msgid "Staged for commit, missing"
+msgstr ""
+
+#: unitentries.rslazgitguistagedforremoval
+msgid "Staged for removal"
+msgstr ""
+
+#: unitentries.rslazgitguistagedforremovalstillpresent
+msgid "Staged for removal, still present"
+msgstr ""
+
+#: unitentries.rslazgitguistagedforrename
+msgid "Staged for Rename"
+msgstr ""
+
+#: unitentries.rslazgitguiunmergedaddedbythem
+msgid "Unmerged, Added by Them"
+msgstr ""
+
+#: unitentries.rslazgitguiunmergedaddedbyus
+msgid "Unmerged, Added by Us"
+msgstr ""
+
+#: unitentries.rslazgitguiunmergedbothadded
+msgid "Unmerged, Both added"
+msgstr ""
+
+#: unitentries.rslazgitguiunmergedbothdeleted
+msgid "Unmerged, Both deleted"
+msgstr ""
+
+#: unitentries.rslazgitguiunmergedbothmodified
+msgid "Unmerged, Both Modified"
+msgstr ""
+
+#: unitentries.rslazgitguiunmergeddeletedbythem
+msgid "Unmerged, Deleted by Them"
+msgstr ""
+
+#: unitentries.rslazgitguiunmergeddeletedbyus
+msgid "Unmerged, Deleted by Us"
+msgstr ""
+
+#: unitentries.rslazgitguiunmodified
+msgid "Unmodified"
+msgstr ""
+
+#: unitentries.rslazgitguiuntrackednotstaged
+msgid "Untracked, not staged"
+msgstr ""
