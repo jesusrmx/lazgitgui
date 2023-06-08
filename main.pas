@@ -1332,6 +1332,7 @@ begin
     SaveCommitMessage;
     fGitMgr.ForceTagDescription;
     fGitMgr.UpdateStatus;
+    fGitMgr.UpdateRefList;
     txtDiff.Clear;
     txtComment.Clear;
   end;
