@@ -442,8 +442,13 @@ var
   sig: cardinal;
 begin
 
-  if fCacheStream<>nil then
-    exit;
+  if fCacheStream<>nil then begin
+    if gblInvalidateCache then begin
+      FreeAndNil(fIndexStream);
+      FreeAndNil(fCacheStream);
+    end else
+      exit;
+  end;
 
   aFileCache := GetFilename(FILENAME_CACHE);
   aFileIndex := GetFilename(FILENAME_INDEX);

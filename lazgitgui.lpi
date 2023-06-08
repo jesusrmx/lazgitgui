@@ -180,6 +180,12 @@
         <Filename Value="unitcustomcmds.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit>
+      <Unit>
+        <Filename Value="unitreset.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="frmReset"/>
+        <ResourceBaseClass Value="Form"/>
+      </Unit>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

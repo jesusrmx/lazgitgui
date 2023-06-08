@@ -36,7 +36,8 @@ uses
   unitruncmd, unitansiescapes, unitnewtag, unitlog, unitdebug, unitlogcache,
   unitdbindex, unitgitutils, unitdrafts, unitframelog, unitgitmgr, unitgittypes,
   unitcheckouttag, unitcommitbrowser, unitvfs, unithighlighterhelper,
-  unitgraphbuild, unitfilehistory, unitformlog, unitcustcmdform, unitcustomcmds;
+  unitgraphbuild, unitfilehistory, unitformlog, unitcustcmdform, unitcustomcmds,
+  unitreset;
 
 {$R *.res}
 
@@ -76,6 +77,7 @@ begin
   Application.Scaled := True;
   Application.Initialize;
   Application.CreateForm(TfrmMain, frmMain);
+  Application.CreateForm(TfrmReset, frmReset);
   Application.Run;
 
   {$endif}

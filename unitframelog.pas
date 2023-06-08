@@ -63,7 +63,7 @@ uses
   Grids, ExtCtrls, ComCtrls, Menus, Types, Clipbrd, ActnList, Buttons, StdCtrls,
   unitgittypes, unitlogcache, unitdbindex, unitgitutils, unitifaces, unitruncmd,
   unitgitmgr, unitcommitbrowser, unitvfs, unithighlighterhelper, unitgraphbuild,
-  unitfilehistory, unitnewbranch;
+  unitfilehistory, unitnewbranch, unitreset;
 
 const
   GRAPH_LEFT_PADDING          = 12;
@@ -155,6 +155,7 @@ type
     procedure OnGraphBuilderDone(Sender: TObject);
     procedure OnLogEvent(sender: TObject; thread: TLogThread; event: Integer; var interrupt: boolean);
     procedure OnDeleteTagClick(sender: TObject);
+    procedure OnResetBranchClick(Sender: TObject);
     procedure OnSwitchBranchClick(Sender: TObject);
     procedure OnSwitchTagClick(sender: TObject);
     procedure OnCreateTagClick(sender: TObject);
@@ -167,6 +168,7 @@ type
     function  LocateItemIndex(aIndex: Integer): boolean;
     procedure AddMergeBranchMenu;
     procedure AddTagsMenu;
+    procedure AddExtraMenus;
     procedure SetActive(AValue: boolean);
     procedure SetGitMgr(AValue: TGitMgr);
     procedure ObservedChanged(Sender:TObject; what: Integer; data: PtrInt);
@@ -449,6 +451,8 @@ begin
     AddTagsMenu;
 
     AddMergeBranchMenu;
+
+    AddExtraMenus;
   end;
 end;
 
@@ -638,6 +642,55 @@ begin
       fGitMgr.UpdateStatus;
       fGitMgr.UpdateRefList;
     end;
+  end;
+end;
+
+procedure TframeLog.OnResetBranchClick(Sender: TObject);
+var
+  f: TfrmReset;
+  fullReload: Boolean;
+  cmd: String;
+  aType: Integer;
+begin
+  f := TfrmReset.Create(Self);
+  f.branch := fGitMgr.Branch;
+  f.Subject := fCurrentItem.Subject;
+  f.Commit := fCurrentItem.CommitOID;
+  try
+    if f.ShowModal=mrOk then begin
+      aType := f.radResetType.ItemIndex;
+      case aType of
+        RESETTYPE_SOFT:
+          begin
+            cmd := '--soft';
+            fullReload := false;
+          end;
+        RESETTYPE_MIXED:
+          begin
+            cmd := '--mixed';
+            fullReload := false;
+          end;
+        RESETTYPE_HARD:
+          begin
+            cmd := '--hard';
+            fullReload := true;
+          end;
+      end;
+
+      cmd +=  ' ' + fCurrentItem.CommitOID;
+
+      if RunInteractive(fGit.Exe + ' reset ' + cmd, fGit.TopLevelDir, 'Reset a branch', fGitMgr.Branch)>0 then
+        //
+      else begin
+        fGitMgr.ForceTagDescription;
+        fGitMgr.UpdateStatus;
+        gblInvalidateCache := fullReload;   // TODO: trigger invalidate cache immediately
+        fGitMgr.UpdateRefList;
+      end;
+
+    end;
+  finally
+    f.Free;
   end;
 end;
 
@@ -956,6 +1009,28 @@ begin
   end;
 
 
+end;
+
+procedure TframeLog.AddExtraMenus;
+var
+  headcommit, curCommit: QWord;
+  mi: TMenuItem;
+begin
+
+  headcommit := OIDToQWord(fGitMgr.BranchOID);
+  curCommit := OIDToQWord(fCurrentItem.CommitOID);
+  if (headCommit=curCommit) then
+    exit;
+
+  mi := TMenuItem.Create(Self.Owner);
+  mi.Caption := '-';
+  popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
+
+  mi := TMenuItem.Create(Self.Owner);
+  mi.Caption := format('Reset %s to this commit',[QuotedStr(fGitMgr.Branch)]);
+  mi.OnClick := @OnResetBranchClick;
+  mi.Tag := 0;
+  popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
 end;
 
 procedure TframeLog.SetActive(AValue: boolean);
