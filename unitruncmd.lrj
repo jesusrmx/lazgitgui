@@ -1,0 +1,6 @@
+{"version":1,"strings":[
+{"hash":97692676,"name":"tfrmruncommand.caption","sourcebytes":[102,114,109,82,117,110,67,111,109,109,97,110,100],"value":"frmRunCommand"},
+{"hash":45,"name":"tfrmruncommand.lblcaption.caption","sourcebytes":[45],"value":"-"},
+{"hash":45,"name":"tfrmruncommand.lblresult.caption","sourcebytes":[45],"value":"-"},
+{"hash":63805572,"name":"tfrmruncommand.chkcloseok.caption","sourcebytes":[67,108,111,115,101,32,111,110,32,83,117,99,99,101,101,100],"value":"Close on Succeed"}
+]}

@@ -1,7 +1,7 @@
 object frmLog: TfrmLog
-  Left = 234
+  Left = 239
   Height = 640
-  Top = 151
+  Top = 150
   Width = 777
   Caption = 'frmLog'
   ClientHeight = 640
@@ -14,20 +14,20 @@ object frmLog: TfrmLog
   LCLVersion = '2.3.0.0'
   object StatusBar1: TStatusBar
     Left = 0
-    Height = 20
-    Top = 620
+    Height = 23
+    Top = 617
     Width = 777
     Panels = <>
   end
   inline fLog: TframeLog
-    Height = 620
+    Height = 617
     Width = 777
     Align = alClient
-    ClientHeight = 620
+    ClientHeight = 617
     ClientWidth = 777
     TabOrder = 1
     inherited gridLog: TDrawGrid
-      Height = 387
+      Height = 384
       Width = 777
       Columns = <      
         item
@@ -76,7 +76,7 @@ object frmLog: TfrmLog
       )
     end
     inherited panBrowser: TPanel
-      Top = 418
+      Top = 415
       Width = 777
       ClientWidth = 777
       inherited txtViewer: TSynEdit
@@ -84,7 +84,7 @@ object frmLog: TfrmLog
       end
     end
     inherited splitChanges: TSplitter
-      Top = 413
+      Top = 410
       Width = 777
     end
     inherited panLogTools: TPanel
@@ -97,10 +97,10 @@ object frmLog: TfrmLog
         Left = 721
       end
       inherited lblInfo: TLabel
-        Left = 633
+        Left = 635
       end
       inherited btnStop: TSpeedButton
-        Left = 699
+        Left = 700
       end
     end
   end

@@ -1,7 +1,7 @@
 object frmCheckouTag: TfrmCheckouTag
-  Left = 503
+  Left = 428
   Height = 157
-  Top = 192
+  Top = 207
   Width = 545
   Caption = 'Check out a Tag'
   ClientHeight = 157

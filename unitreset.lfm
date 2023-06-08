@@ -1,5 +1,5 @@
 object frmReset: TfrmReset
-  Left = 258
+  Left = 263
   Height = 283
   Top = 249
   Width = 515
@@ -34,7 +34,7 @@ object frmReset: TfrmReset
     ChildSizing.ShrinkVertical = crsScaleChilds
     ChildSizing.Layout = cclLeftToRightThenTopToBottom
     ChildSizing.ControlsPerLine = 1
-    ClientHeight = 133
+    ClientHeight = 132
     ClientWidth = 100
     ItemIndex = 1
     Items.Strings = (
@@ -47,8 +47,8 @@ object frmReset: TfrmReset
   end
   object ButtonPanel1: TButtonPanel
     Left = 6
-    Height = 35
-    Top = 242
+    Height = 34
+    Top = 243
     Width = 503
     OKButton.Name = 'OKButton'
     OKButton.DefaultCaption = True

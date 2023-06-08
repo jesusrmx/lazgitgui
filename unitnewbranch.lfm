@@ -1,7 +1,7 @@
 object frmNewBranch: TfrmNewBranch
-  Left = 178
+  Left = 187
   Height = 408
-  Top = 196
+  Top = 195
   Width = 640
   Caption = 'Create a new branch'
   ClientHeight = 408
@@ -28,7 +28,7 @@ object frmNewBranch: TfrmNewBranch
   end
   object txtName: TEdit
     Left = 64
-    Height = 26
+    Height = 23
     Top = 8
     Width = 224
     BorderSpacing.Top = 28
@@ -56,12 +56,11 @@ object frmNewBranch: TfrmNewBranch
     ParentShowHint = False
     ShowHint = True
     TabOrder = 1
-    TopIndex = -1
   end
   object ButtonPanel1: TButtonPanel
     Left = 6
-    Height = 35
-    Top = 367
+    Height = 34
+    Top = 368
     Width = 628
     OKButton.Name = 'OKButton'
     OKButton.DefaultCaption = True
@@ -97,16 +96,16 @@ object frmNewBranch: TfrmNewBranch
     TabOrder = 4
     object Label1: TLabel
       Left = 8
-      Height = 17
+      Height = 15
       Top = 8
-      Width = 43
+      Width = 42
       Caption = 'Options'
     end
     object chkSwitchTo: TCheckBox
       Left = 8
-      Height = 21
+      Height = 19
       Top = 32
-      Width = 162
+      Width = 152
       Caption = 'Switch to the new branch'
       Checked = True
       State = cbChecked
@@ -114,7 +113,7 @@ object frmNewBranch: TfrmNewBranch
     end
     object txtCustomOptions: TEdit
       Left = 8
-      Height = 26
+      Height = 23
       Top = 128
       Width = 256
       TabOrder = 1
@@ -122,9 +121,9 @@ object frmNewBranch: TfrmNewBranch
     end
     object chkFetch: TCheckBox
       Left = 8
-      Height = 21
+      Height = 19
       Top = 56
-      Width = 143
+      Width = 131
       Caption = 'Fetch Tracked Branch'
       Checked = True
       Enabled = False
@@ -135,9 +134,9 @@ object frmNewBranch: TfrmNewBranch
   object Label2: TLabel
     AnchorSideRight.Control = tabSource
     Left = 16
-    Height = 17
+    Height = 15
     Top = 10
-    Width = 34
+    Width = 32
     Caption = 'Name'
   end
   object txtInfo: TMemo

@@ -1,7 +1,7 @@
 object frmMain: TfrmMain
-  Left = 117
+  Left = 139
   Height = 554
-  Top = 169
+  Top = 171
   Width = 973
   Caption = 'frmMain'
   ClientHeight = 554
@@ -651,49 +651,49 @@ object frmMain: TfrmMain
           TabOrder = 0
           object btnRescan: TButton
             Left = 5
-            Height = 20
+            Height = 25
             Top = 5
-            Width = 129
+            Width = 125
             Action = actRescan
             TabOrder = 0
           end
           object btnStageChanged: TButton
             Left = 5
-            Height = 20
-            Top = 30
-            Width = 129
+            Height = 25
+            Top = 35
+            Width = 125
             Action = actFetch
             TabOrder = 1
           end
           object btnSignOff: TButton
             Left = 5
-            Height = 20
-            Top = 55
-            Width = 129
+            Height = 25
+            Top = 65
+            Width = 125
             Action = actPull
             TabOrder = 2
           end
           object btnCommit: TButton
             Left = 5
-            Height = 20
-            Top = 80
-            Width = 129
+            Height = 25
+            Top = 95
+            Width = 125
             Action = actCommit
             TabOrder = 3
           end
           object panPush: TPanel
             Left = 5
-            Height = 20
-            Top = 105
-            Width = 129
+            Height = 25
+            Top = 125
+            Width = 125
             AutoSize = True
             BevelOuter = bvNone
-            ClientHeight = 20
-            ClientWidth = 129
+            ClientHeight = 25
+            ClientWidth = 125
             TabOrder = 4
             object btnPush: TButton
               Left = 0
-              Height = 20
+              Height = 25
               Top = 0
               Width = 56
               Action = actPush
@@ -702,9 +702,9 @@ object frmMain: TfrmMain
             end
             object btnPushDlg: TButton
               Left = 61
-              Height = 20
+              Height = 25
               Top = 0
-              Width = 68
+              Width = 64
               Action = actPushDialog
               Align = alClient
               BorderSpacing.Left = 5
@@ -758,7 +758,7 @@ object frmMain: TfrmMain
         ParentFont = False
         TabOrder = 2
         Gutter.Visible = False
-        Gutter.Width = 13
+        Gutter.Width = 11
         Gutter.MouseActions = <>
         RightGutter.Width = 0
         RightGutter.MouseActions = <>
@@ -1232,7 +1232,7 @@ object frmMain: TfrmMain
         LineHighlightColor.Foreground = clNone
         inline SynLeftGutterPartList1: TSynGutterPartList
           object SynGutterLineNumber1: TSynGutterLineNumber
-            Width = 13
+            Width = 11
             MouseActions = <>
             MarkupInfo.Background = clBtnFace
             MarkupInfo.Foreground = clNone
@@ -1270,9 +1270,9 @@ object frmMain: TfrmMain
       AnchorSideTop.Control = panBranch
       AnchorSideTop.Side = asrCenter
       Left = 10
-      Height = 16
-      Top = 5
-      Width = 47
+      Height = 15
+      Top = 6
+      Width = 40
       BorderSpacing.Left = 10
       Caption = 'Branch:'
       ParentFont = False
@@ -1282,10 +1282,10 @@ object frmMain: TfrmMain
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = Label1
       Cursor = crHandPoint
-      Left = 67
-      Height = 16
-      Top = 5
-      Width = 6
+      Left = 60
+      Height = 15
+      Top = 6
+      Width = 5
       BorderSpacing.Left = 10
       Caption = '-'
       Font.Color = clFuchsia
@@ -1300,10 +1300,10 @@ object frmMain: TfrmMain
       AnchorSideLeft.Control = lblMerging
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = Label1
-      Left = 109
-      Height = 16
-      Top = 5
-      Width = 6
+      Left = 100
+      Height = 15
+      Top = 6
+      Width = 5
       BorderSpacing.Left = 20
       BorderSpacing.Right = 20
       Caption = '-'
@@ -1312,10 +1312,10 @@ object frmMain: TfrmMain
       AnchorSideLeft.Control = lblAheadBehind
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = Label1
-      Left = 135
-      Height = 16
-      Top = 5
-      Width = 63
+      Left = 125
+      Height = 15
+      Top = 6
+      Width = 54
       Caption = 'Upstream:'
       ParentFont = False
     end
@@ -1323,10 +1323,10 @@ object frmMain: TfrmMain
       AnchorSideLeft.Control = Label2
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = Label1
-      Left = 208
-      Height = 16
-      Top = 5
-      Width = 4
+      Left = 189
+      Height = 15
+      Top = 6
+      Width = 3
       BorderSpacing.Left = 10
       Caption = '.'
       Font.Color = clBlue
@@ -1337,10 +1337,10 @@ object frmMain: TfrmMain
       AnchorSideLeft.Control = lblBranch
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = Label1
-      Left = 83
-      Height = 16
-      Top = 5
-      Width = 6
+      Left = 75
+      Height = 15
+      Top = 6
+      Width = 5
       BorderSpacing.Left = 10
       Caption = '-'
       Font.Color = clRed
@@ -1367,10 +1367,10 @@ object frmMain: TfrmMain
       AnchorSideLeft.Control = lblRemote
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = Label1
-      Left = 222
-      Height = 16
-      Top = 5
-      Width = 26
+      Left = 202
+      Height = 15
+      Top = 6
+      Width = 21
       BorderSpacing.Left = 10
       Caption = 'Tag:'
       ParentFont = False
@@ -1379,10 +1379,10 @@ object frmMain: TfrmMain
       AnchorSideLeft.Control = Label3
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = lblBranch
-      Left = 258
-      Height = 16
-      Top = 5
-      Width = 6
+      Left = 233
+      Height = 15
+      Top = 6
+      Width = 5
       BorderSpacing.Left = 10
       Caption = '-'
       Font.Color = clOlive
@@ -1390,10 +1390,10 @@ object frmMain: TfrmMain
       ParentFont = False
     end
     object btnStopOld: TSpeedButton
-      Left = 878
-      Height = 20
+      Left = 881
+      Height = 19
       Top = 0
-      Width = 26
+      Width = 23
       Anchors = [akTop, akRight]
       AutoSize = True
       Caption = 'Stp'
@@ -1416,10 +1416,10 @@ object frmMain: TfrmMain
     end
     object lblInfoOld: TLabel
       AnchorSideRight.Control = btnStopOld
-      Left = 798
-      Height = 16
+      Left = 813
+      Height = 15
       Top = 2
-      Width = 75
+      Width = 63
       Anchors = [akTop, akRight]
       BorderSpacing.Right = 5
       Caption = 'Working ....'
@@ -1442,7 +1442,7 @@ object frmMain: TfrmMain
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = panBranch
       AnchorSideTop.Side = asrCenter
-      Left = 289
+      Left = 263
       Height = 22
       Top = 2
       Width = 24

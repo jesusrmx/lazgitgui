@@ -1,7 +1,7 @@
 object frmFileHistory: TfrmFileHistory
-  Left = 285
+  Left = 286
   Height = 540
-  Top = 222
+  Top = 204
   Width = 777
   Caption = 'frmFileHistory'
   ClientHeight = 540

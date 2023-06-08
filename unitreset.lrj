@@ -1,0 +1,5 @@
+{"version":1,"strings":[
+{"hash":51706104,"name":"tfrmreset.caption","sourcebytes":[82,101,115,101,116,32,98,114,97,110,99,104],"value":"Reset branch"},
+{"hash":119513380,"name":"tfrmreset.lblprompt.caption","sourcebytes":[89,111,117,32,97,114,101,32,114,101,115,101,116],"value":"You are reset"},
+{"hash":207637749,"name":"tfrmreset.radresettype.caption","sourcebytes":[82,101,115,101,116,32,84,121,112,101],"value":"Reset Type"}
+]}

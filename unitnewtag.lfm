@@ -1,7 +1,7 @@
 object frmNewTag: TfrmNewTag
-  Left = 425
+  Left = 416
   Height = 161
-  Top = 351
+  Top = 343
   Width = 428
   Caption = 'New tag'
   ClientHeight = 161

@@ -1,0 +1,9 @@
+{"version":1,"strings":[
+{"hash":114893655,"name":"tfrmlog.caption","sourcebytes":[102,114,109,76,111,103],"value":"frmLog"},
+{"hash":5814351,"name":"tfrmlog.flog.gridlog.columns[0].title.caption","sourcebytes":[82,101,99,78,111],"value":"RecNo"},
+{"hash":5146728,"name":"tfrmlog.flog.gridlog.columns[1].title.caption","sourcebytes":[71,114,97,112,104],"value":"Graph"},
+{"hash":179899380,"name":"tfrmlog.flog.gridlog.columns[2].title.caption","sourcebytes":[83,117,98,106,101,99,116],"value":"Subject"},
+{"hash":76328802,"name":"tfrmlog.flog.gridlog.columns[3].title.caption","sourcebytes":[65,117,116,104,111,114],"value":"Author"},
+{"hash":305317,"name":"tfrmlog.flog.gridlog.columns[4].title.caption","sourcebytes":[68,97,116,101],"value":"Date"},
+{"hash":359489,"name":"tfrmlog.flog.gridlog.columns[5].title.caption","sourcebytes":[83,72,65,49],"value":"SHA1"}
+]}
