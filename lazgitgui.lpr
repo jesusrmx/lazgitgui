@@ -77,7 +77,6 @@ begin
   Application.Scaled := True;
   Application.Initialize;
   Application.CreateForm(TfrmMain, frmMain);
-  Application.CreateForm(TfrmReset, frmReset);
   Application.Run;
 
   {$endif}
