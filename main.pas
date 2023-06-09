@@ -208,9 +208,56 @@ resourcestring
     'You are about to discard changes in %s,'^M^M+
     'data will be lost and this action cannot be undone'^M^M+
     'Are you sure to continue?';
-
-
-
+  rsSIsAlreadyInIgnoredList = '''%s'' is already in ignored list';
+  rsTheTypeSIsAlreadyInTheIgnoredList = 'The type ''*%s'' is already in the ignored list';
+  rsDFiles = '%d files';
+  rsDiscardChanges = 'Discard changes';
+  rsCancel = 'Cancel';
+  rsViewUntrackedFiles = 'View Untracked Files';
+  rsViewIgnoredFiles = 'View Ignored Files';
+  rsViewTrackedFiles = 'View Tracked Files';
+  rsStageS = 'Stage ''%s''';
+  rsUnstageS = 'Unstage ''%s''';
+  rsStageChanged = 'Stage Changed';
+  rsStageAll = 'Stage All';
+  rsUnstageAll = 'Unstage All';
+  rsAddSToIgnoreList = 'Add ''%s'' to ignore list';
+  rsAddSFilesToIgnoreList = 'Add ''*%s'' Files to ignore list';
+  rsRestoreS = 'Restore ''%s''';
+  rsRestoreAllChanged = 'Restore All Changed';
+  rsNotYetImplementedForUnstagedS = 'Not yet implemented for Unstaged: %s';
+  rsNotYetImplementedForStagedS = 'Not yet implemented for Staged: %s';
+  rsSDoesNotExists = '%s does not exists';
+  rsTheFileSIsBinaryDBytes = 'The file ''%s'' is binary, %d bytes';
+  rsThisFeatureWillBeImplementedASAP = 'This feature will be implemented ASAP';
+  rsCouldnTGetToplevelDirectoryOfS = 'Couldn''t get toplevel directory of %s';
+  rsYouHaveToStageSomething = 'You have to stage something in order to commit';
+  rsYourCommitMessageIsEmpt = 'Your commit message is empty!';
+  rsThisRepositoryHasNoRemotes = 'This repository has no remotes defined'^M+
+                                 'I''m not yet prepared to handle this';
+  rsSHasNoTrackingAndThere = '%s has no tracking and there are '^M+
+                             '%d remotes (%s)'^M+
+                             'I''m not yet prepared to handle this';
+  rsPushingBranchWithout = 'Pushing branch without tracking information';
+  rsDoYouWantToPushSToSA = 'Do you want to push "%s" to "%s"'^M+
+                           'and setup tracking information? I will do:'^M^M+
+                           'git push --set-upstream %1:s %0:s';
+  rsYesDoIt = 'yes, do it';
+  rsPushingToRemoteS = 'Pushing to remote: %s';
+  rsFetchingFromRemote = 'Fetching from remote: ';
+  rsPullingFromRemote = 'pulling from remote: ';
+  rsExecutingACustomCommand = 'Executing a custom command';
+  rsYouAreAboutToExecute = 'You are about to execute %s: '^M^M+
+                           'command: %s'^M^M+
+                           'Do you want to proceed?';
+  rsMERGING = 'MERGING';
+  rsMERGINGCONFLICT = 'MERGING CONFLICT';
+  rsDCommitsAhead = '%d commits ahead';
+  rsDCommitsBehind = '%d commits behind';
+  rsOf = 'of';
+  rsNoTagAvailable = 'No Tag available';
+  rsAtTag = 'At tag';
+  rsDCommitsSince = '%d commits since';
 
 const
   MENU_INVALID                = -1;
@@ -366,7 +413,7 @@ begin
   if fGit.AddToIgnoreFile(ignored, false, true) then
     fGitMgr.UpdateStatus
   else
-    ShowMessage(Format('''%s'' is already in ignored list',[ignored]));
+    ShowMessage(Format(rsSIsAlreadyInIgnoredList, [ignored]));
 end;
 
 procedure TfrmMain.OnIgnoreTypeClick(Sender: TObject);
@@ -379,7 +426,7 @@ begin
   if fGit.AddToIgnoreFile(ignored, true, true) then
     fGitMgr.UpdateStatus
   else
-    ShowMessage(Format('The type ''*%s'' is already in the ignored list',[ExtractFileExt(ignored)]));
+    ShowMessage(Format(rsTheTypeSIsAlreadyInTheIgnoredList, [ExtractFileExt(ignored)]));
 end;
 
 procedure TfrmMain.OnReloadBranchMenu(Data: PtrInt);
@@ -401,7 +448,7 @@ begin
   if Length(entryArray)=1 then
     aFile := MakePathList(entryArray, false)
   else
-    aFile := format('%d files',[Length(entryArray)]);
+    aFile := format(rsDFiles, [Length(entryArray)]);
 
   // this is necessary because we normally hide lists selection
   // when they are unfocused, but in this case the next dialog
@@ -410,7 +457,7 @@ begin
   fListAlwaysDrawSelection := true;
 
   res := QuestionDlg(rsRestoringWorkFiles, format(rsRestoringWorkFilesWarning, [aFile]), mtWarning,
-    [mrYes, 'Discard changes', mrCancel, 'Cancel'], 0 );
+    [mrYes, rsDiscardChanges, mrCancel, rsCancel], 0 );
 
   fListAlwaysDrawSelection := false;
 
@@ -505,13 +552,13 @@ var
   procedure AddViewItems;
   begin
     if isUnstaged then begin
-      mi := AddPopItem(popLists, 'View Untracked Files', @OnPopupItemClick, MENU_LIST_VIEW_UNTRACKED);
+      mi := AddPopItem(popLists, rsViewUntrackedFiles, @OnPopupItemClick, MENU_LIST_VIEW_UNTRACKED);
       mi.AutoCheck := true;
       mi.Checked := fConfig.ViewUntrackedFiles;
-      mi := AddPopItem(popLists, 'View Ignored Files', @OnPopupItemClick, MENU_LIST_VIEW_IGNORED);
+      mi := AddPopItem(popLists, rsViewIgnoredFiles, @OnPopupItemClick, MENU_LIST_VIEW_IGNORED);
       mi.AutoCheck := true;
       mi.Checked := fConfig.ViewIgnoredFiles;
-      mi := AddPopItem(popLists, 'View Tracked Files', @OnPopupItemClick, MENU_LIST_VIEW_TRACKED);
+      mi := AddPopItem(popLists, rsViewTrackedFiles, @OnPopupItemClick, MENU_LIST_VIEW_TRACKED);
       mi.AutoCheck := true;
       mi.Checked := fConfig.ViewTrackedFiles;
     end;
@@ -519,23 +566,23 @@ var
 
   procedure AddStageFile;
   begin
-    AddPopItem(popLists, format('Stage ''%s''',[aFile]), @OnStageItemClick, aIndex);
+    AddPopItem(popLists, format(rsStageS, [aFile]), @OnStageItemClick, aIndex);
   end;
 
   procedure AddUnstageFile;
   begin
-    AddPopItem(popLists, format('Unstage ''%s''',[aFile]), @OnUnstageItemClick, aIndex);
+    AddPopItem(popLists, format(rsUnstageS, [aFile]), @OnUnstageItemClick, aIndex);
   end;
 
   procedure AddStageAll;
   begin
-    AddPopItem(popLists, 'Stage Changed', @OnStageAllClick, MENU_LIST_STAGE_CHANGED);
-    AddPopItem(popLists, 'Stage All', @OnStageAllClick, MENU_LIST_STAGE_ALL);
+    AddPopItem(popLists, rsStageChanged, @OnStageAllClick, MENU_LIST_STAGE_CHANGED);
+    AddPopItem(popLists, rsStageAll, @OnStageAllClick, MENU_LIST_STAGE_ALL);
   end;
 
   procedure AddUnstageAll;
   begin
-    AddPopItem(popLists, 'Unstage All', @OnStageAllClick, MENU_LIST_UNSTAGE_ALL);
+    AddPopItem(popLists, rsUnstageAll, @OnStageAllClick, MENU_LIST_UNSTAGE_ALL);
   end;
 
   procedure AddIgnoreUntracked;
@@ -543,10 +590,10 @@ var
     ext: string;
   begin
     AddPopItem(popLists, '-', nil, 0);
-    AddPopItem(popLists, format('Add ''%s'' to ignore list', [aFile]), @OnIgnoreFileClick, aIndex);
+    AddPopItem(popLists, format(rsAddSToIgnoreList, [aFile]), @OnIgnoreFileClick, aIndex);
     ext :=ExtractFileExt(aFile);
     if ext<>'' then
-      AddPopItem(popLists, format('Add ''*%s'' Files to ignore list', [ext]), @OnIgnoreTypeClick, aIndex);
+      AddPopItem(popLists, format(rsAddSFilesToIgnoreList, [ext]), @OnIgnoreTypeClick, aIndex);
   end;
 
   procedure AddRestoreFiles;
@@ -559,11 +606,11 @@ var
       if ((aIndex>=0)and(Entry^.EntryTypeUnStaged in ChangedInWorktreeSet)) or
          AreAllSelectedItemsOfEntryType(lstUnstaged, true, ChangedInWorktreeSet)
       then
-        AddPopItem(popLists, format('Restore ''%s''', [aFile]), @OnRestoreFileClick, aIndex);
+        AddPopItem(popLists, format(rsRestoreS, [aFile]), @OnRestoreFileClick, aIndex);
       // we need an option for all changed
       n := CountListItemsOfEntryType(lstUnstaged, true, false, ChangedInWorktreeSet);
       if n > 0 then
-        AddPopItem(popLists, 'Restore All Changed', @OnRestoreFileClick, LIST_TAG_ALL_CHANGED);
+        AddPopItem(popLists, rsRestoreAllChanged, @OnRestoreFileClick, LIST_TAG_ALL_CHANGED);
     end;
   end;
 
@@ -621,7 +668,7 @@ begin
       aIndex := GetSelectedIndex(lb);
       Entry := PFileEntry(lb.Items.Objects[aIndex])
     end else begin
-      aFile := format('%d files',[selCount]);
+      aFile := format(rsDFiles, [selCount]);
       aIndex := LIST_TAG_ALL_SELECTED;
       Entry := nil;
     end;
@@ -678,7 +725,7 @@ begin
       //  begin
       //  end
       else
-        ShowMessage('Not yet implemented for Unstaged: '+cmdOut);
+        ShowMessageFmt(rsNotYetImplementedForUnstagedS, [cmdOut]);
     end;
   end else begin
     WriteStr(cmdOut, Entry^.EntryTypeStaged);
@@ -694,7 +741,7 @@ begin
           txtDiff.Text := fGit.LogError;
         end;
       else
-        ShowMessage('Not yet implemented for Staged: '+cmdOut);
+        ShowMessageFmt(rsNotYetImplementedForStagedS, [cmdOut]);
     end;
   end;
 end;
@@ -789,7 +836,7 @@ var
 begin
 
   if not FileExists(filename) then begin
-    StoreString(format('%s does not exists', [filename]));
+    StoreString(format(rsSDoesNotExists, [filename]));
     exit;
   end;
 
@@ -804,7 +851,7 @@ begin
   GetMem(buffer, BIN_BUFSIZE);
   readBytes := F.Read(buffer^, BIN_BUFSIZE);
   if IsBinBuffer(buffer, readBytes) then begin
-    StoreString(format('The file ''%s'' is binary, %d bytes',[filename, F.Size]));
+    StoreString(format(rsTheFileSIsBinaryDBytes, [filename, F.Size]));
     F.Free;
   end else
     stream := F;
@@ -823,7 +870,7 @@ end;
 
 procedure TfrmMain.ComingSoon;
 begin
-  ShowMessage('This feature will be implemented ASAP');
+  ShowMessage(rsThisFeatureWillBeImplementedASAP);
 end;
 
 function TfrmMain.MakeMenuItemUnstagedEntryArray(mi: TMenuItem): TPFileEntryArray;
@@ -1302,7 +1349,7 @@ begin
   aDir := ExpandFileName(aDir);
   fGit.OpenDir(aDir);
   if fGit.TopLevelDir='' then begin
-    ShowMessage('Couldn''t get toplevel directory of '+aDir);
+    ShowMessageFmt(rsCouldnTGetToplevelDirectoryOfS, [aDir]);
     Application.Terminate;
     exit;
   end;
@@ -1319,11 +1366,11 @@ end;
 procedure TfrmMain.DoCommit;
 begin
   if lstStaged.Count=0 then begin
-    ShowMessage('You have to stage something in order to commit');
+    ShowMessage(rsYouHaveToStageSomething);
     exit;
   end;
   if Trim(txtComment.Text)='' then begin
-    ShowMessage('Your commit message is empty!');
+    ShowMessage(rsYourCommitMessageIsEmpt);
     exit;
   end;
   if fGit.Commit(txtComment.Text,'')>0 then
@@ -1380,7 +1427,7 @@ procedure TfrmMain.DoPush;
 var
   res: TModalResult;
   L: TStringList;
-  cmd: string;
+  cmd, aRemote: string;
 begin
   //if fConfig.ReadBoolean('FetchBeforePush', false) then
   //  doFetch;
@@ -1391,31 +1438,30 @@ begin
       exit;
   end;
 
+  aRemote := '';
+
   if (fGitMgr.Upstream='') then begin
     L := fGit.GetRemotesList;
     try
       if L.Count=0 then begin
-        ShowMessage('This repository has no remotes defined'^M+
-                    'I''m not yet prepared to handle this');
+        ShowMessage(rsThisRepositoryHasNoRemotes);
         exit;
       end;
+
       if L.Count>1 then begin
-        ShowMessage(fGitMgr.Branch + ' has no tracking and there are '^M+
-                    IntToStr(l.Count)+' remotes ('+L.CommaText+')'^M+
-                    'I''m not yet prepared to handle this');
+        ShowMessageFmt(rsSHasNoTrackingAndThere, [fGitMgr.Branch, l.Count, L.CommaText]);
        exit;
       end;
 
-      res := QuestionDlg(
-        'Pushing branch without tracking information',
-        'Do you want to push "'+fGitMgr.Branch+'" to "'+L[0]+'"'+LineEnding+
-        'And setup tracking information? I will do:'^M+LineEnding+LineEnding+
-        'git push --set-upstream '+L[0]+' '+fGitMgr.Branch, mtConfirmation,
-        [mrYes, 'yes, do it', mrCancel, 'Cancel'], 0 );
+      aRemote := L[0];
+
+      res := QuestionDlg( rsPushingBranchWithout,
+               format(rsDoYouWantToPushSToSA, [fGitMgr.Branch, aRemote]), mtConfirmation,
+               [mrYes, rsYesDoIt, mrCancel, rsCancel], 0 );
       if res<>mrYes then
         exit;
 
-      cmd := ' push --progress --set-upstream '+L[0]+' '+fGitMgr.Branch;
+      cmd := ' push --progress --set-upstream '+aRemote+' '+fGitMgr.Branch;
 
     finally
       L.Free;
@@ -1424,19 +1470,19 @@ begin
   end else
     cmd := ' push --progress';
 
-  RunInteractive(fGit.Exe + cmd, fGit.TopLevelDir, 'Pushing to remote: ', 'Push');
+  RunInteractive(fGit.Exe + cmd, fGit.TopLevelDir, format(rsPushingToRemoteS, [aRemote]), 'Push');
   fGitMgr.UpdateStatus;
 end;
 
 procedure TfrmMain.DoFetch;
 begin
-  RunInteractive(fGit.Exe + ' -c color.ui=always fetch', fGit.TopLevelDir, 'Fetching from remote: ', 'Fetch');
+  RunInteractive(fGit.Exe + ' -c color.ui=always fetch', fGit.TopLevelDir, rsFetchingFromRemote, 'Fetch');
   fGitMgr.UpdateStatus;
 end;
 
 procedure TfrmMain.DoPull;
 begin
-  RunInteractive(fGit.Exe + ' -c color.ui=always pull', fGit.TopLevelDir, 'pulling from remote: ', 'Pull');
+  RunInteractive(fGit.Exe + ' -c color.ui=always pull', fGit.TopLevelDir, rsPullingFromRemote, 'Pull');
   fGitMgr.UpdateStatus;
 end;
 
@@ -1450,18 +1496,16 @@ begin
   cmd := fCustomCommands[c.Tag];
   if cmd.Ask then begin
     res := QuestionDlg(
-      'Executing a custom command',
-      'You are about to execute ' + QuotedStr(cmd.description) + ': ' + LineEnding + LineEnding +
-      'command: ' + cmd.command + LineEnding + LineEnding +
-      'Do you want to proceed?', mtConfirmation,
-      [mrYes, 'yes, do it', mrCancel, 'Cancel'], 0 );
+      rsExecutingACustomCommand,
+      format(rsYouAreAboutToExecute, [QuotedStr(cmd.description), cmd.command]),
+      mtConfirmation, [mrYes, rsYesDoIt, mrCancel, rsCancel], 0 );
     if res<>mrYes then
       exit;
   end;
   if pos('git ', cmd.command)=1 then begin
     s := StringReplace(cmd.command, 'git', fGit.Exe, []);
     if cmd.RunInDlg then
-      RunInteractive(s, fGit.TopLevelDir, 'Executing a custom command', cmd.description)
+      RunInteractive(s, fGit.TopLevelDir, rsExecutingACustomCommand, cmd.description)
     else
       RunInThread(s, fGit.TopLevelDir, nil, nil);
     if cmd.updatestatus then
@@ -1578,17 +1622,18 @@ begin
 
   s := '';
   if fGitMgr.Merging then begin
-    s += '(MERGING';
-    if fGitMgr.MergingConflict then s += ' CONFLICT';
+    s += '(';
+    if fGitMgr.MergingConflict then s += rsMERGINGCONFLICT
+    else                            s += rsMERGING;
     s += ')';
   end;
   lblMerging.Caption := s;
 
   s := '';
-  if ahead then s += format('%d commits ahead', [fGitMgr.CommitsAhead]);
+  if ahead then s += format(rsDCommitsAhead, [fGitMgr.CommitsAhead]);
   if ahead and behind then s += ', ';
-  if behind then s += format('%d commits behind', [-fGitMgr.CommitsBehind]);
-  if ahead or behind then s += ' of';
+  if behind then s += format(rsDCommitsBehind, [ - fGitMgr.CommitsBehind]);
+  if ahead or behind then s += ' ' + rsOf;
 
   if s='' then s:=' ';
   lblAheadBehind.Caption := s;
@@ -1598,15 +1643,15 @@ begin
 
   if fConfig.ShowTags then begin
     if fGitMgr.LastTag='' then begin
-      lblTag.Caption :='No Tag available';
+      lblTag.Caption := rsNoTagAvailable;
       lblTag.Hint := '';
       label3.Caption := '';
     end else begin
       lblTag.Caption := fGitMgr.LastTag;
       if fGitMgr.LastTagCommits=0 then
-        label3.Caption := 'At tag'
+        label3.Caption := rsAtTag
       else
-        label3.Caption := format('%d commits since',[fGitMgr.LastTagCommits]);
+        label3.Caption := format(rsDCommitsSince, [fGitMgr.LastTagCommits]);
       lblTag.Hint := fGitMgr.LastTagOID;
     end;
   end else begin
