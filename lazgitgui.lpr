@@ -37,13 +37,15 @@ uses
   unitdbindex, unitgitutils, unitdrafts, unitframelog, unitgitmgr, unitgittypes,
   unitcheckouttag, unitcommitbrowser, unitvfs, unithighlighterhelper,
   unitgraphbuild, unitfilehistory, unitformlog, unitcustcmdform, unitcustomcmds,
-  unitreset;
+  unitreset, LCLTranslator;
 
 {$R *.res}
 
 {.$define drafts}
 
 begin
+  SetDefaultLang('', 'languages', '', false);
+
   Application.Scaled := True;
 
   {$ifdef drafts}

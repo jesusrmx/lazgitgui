@@ -75,6 +75,13 @@ const
   ARROWLEN_X                  = GRAPH_NODE_RADIUS;
   ARROWLEN_Y                  = GRAPH_NODE_RADIUS;
 
+  COLTAG_INDEX                = 0;
+  COLTAG_GRAPH                = 1;
+  COLTAG_SUBJECT              = 2;
+  COLTAG_AUTHOR               = 3;
+  COLTAG_DATE                 = 4;
+  COLTAG_SHA1                 = 5;
+
 type
 
   TDummyDirNode = class(TTreeNode)
@@ -181,6 +188,7 @@ type
     function  GetAllCommitInfo: string;
     procedure CreateDummyDirNodeClass(Sender: TCustomTreeView; var NodeClass: TTreeNodeClass);
     procedure UpdateMode(Data: PtrInt);
+    function  ColumnByTag(aTag: Integer): TGridColumn;
   public
     procedure Clear;
     procedure UpdateGridRows;
@@ -271,15 +279,15 @@ begin
     end;
     if db.LoadItem(aIndex, aItem) then begin
       x := aRect.Left + 7;
-      case gridLog.Columns[aCol].Title.Caption of
-        'RecNo':
+      case gridLog.Columns[aCol].tag of
+        COLTAG_INDEX:
           begin
             if fLogCache.RangeStart>=0 then
               s := format('%4d %4d',[aRow-1, aRow+fLogCache.RangeStart-1])
             else
               s := IntToStr(aRow-1);
           end;
-        'Graph':
+        COLTAG_GRAPH:
           if (Length(fItemIndices)>0) and (aIndex<Length(fItemIndices)) then begin
 
             with fItemIndices[aIndex] do begin
@@ -340,7 +348,7 @@ begin
             end;
           end;
 
-        'Subject':
+        COLTAG_SUBJECT:
           begin
             s := aItem.Subject;
             if (fGit.RefsMap<>nil) and fGit.RefsMap.Find(aItem.CommitOID, n ) then begin
@@ -387,9 +395,9 @@ begin
 
             end;
           end;
-        'Author': s := aItem.Author;
-        'SHA1': s := aItem.CommitOID;
-        'Date': s := DateTimeToStr(UnixToDateTime(aItem.CommiterDate, false));
+        COLTAG_AUTHOR: s := aItem.Author;
+        COLTAG_SHA1: s := aItem.CommitOID;
+        COLTAG_DATE: s := DateTimeToStr(UnixToDateTime(aItem.CommiterDate, false));
         else  s := '';
       end;
 
@@ -409,7 +417,7 @@ var
 begin
   if isColumn then begin
     col := gridLog.Columns[Index];
-    fConfig.WriteInteger('frmlog.grid.'+col.Title.caption+'.width', col.Width, SECTION_GEOMETRY);
+    fConfig.WriteInteger('frmlog.grid.coltag'+IntToStr(col.tag)+'.width', col.Width, SECTION_GEOMETRY);
   end;
 end;
 
@@ -820,7 +828,7 @@ begin
   fItemIndices := thread.IndexArray;
   fGraphColumns := thread.MaxColumns;
 
-  col := gridLog.Columns.ColumnByTitle('Graph');
+  col := ColumnByTag(COLTAG_GRAPH);
   i := gridLog.Columns.IndexOf(col);
   gridLog.Columns[i].Width := GRAPH_LEFT_PADDING + (fGraphColumns-1)*GRAPH_COLUMN_SEPARATOR + GRAPH_RIGHT_PADDING;
 
@@ -1233,6 +1241,18 @@ var
 begin
   aMode := CommitBrowserModeFromGui;
   UpdateCommitBrowser(aMode);
+end;
+
+function TframeLog.ColumnByTag(aTag: Integer): TGridColumn;
+var
+  i: Integer;
+begin
+  result := nil;
+  for i:=0 to gridLog.Columns.Count-1 do
+    if gridLog.Columns[i].Tag=aTag then begin
+      result := gridLog.Columns[i];
+      break;
+    end;
 end;
 
 procedure TframeLog.Clear;

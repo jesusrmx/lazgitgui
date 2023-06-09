@@ -80,7 +80,13 @@ procedure TfrmLog.FormCreate(Sender: TObject);
 var
   col: TCollectionItem;
   gcol: TGridColumn;
+  i: Integer;
 begin
+  // assign tags to columns, they are used instead of column titles to locate columns
+  // as titles are translatable, we don't use columns index as columns can be moved
+  for i:=0 to fLog.gridLog.Columns.Count-1 do
+    fLog.gridLog.Columns[i].Tag := i;
+
   fConfig.OpenConfig;
   fLog.Config := fConfig;
   fConfig.ReadWindow(Self, 'frmlog', SECTION_GEOMETRY);
@@ -89,9 +95,10 @@ begin
   for col in fLog.gridLog.Columns do begin
     gcol := TGridColumn(col);
     if gcol.SizePriority=0 then
-      gcol.Width := fConfig.ReadInteger('frmlog.grid.'+gcol.Title.caption+'.width', gcol.width, SECTION_GEOMETRY);
+      gcol.Width := fConfig.ReadInteger('frmlog.grid.coltag'+IntToStr(gCol.Tag)+'.width', gcol.width, SECTION_GEOMETRY);
   end;
   fConfig.CloseConfig;
+
 end;
 
 procedure TfrmLog.FormDestroy(Sender: TObject);
