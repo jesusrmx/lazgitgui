@@ -1595,7 +1595,7 @@ begin
 
   txtDiff.Clear;
 
-  Caption := 'LazGitGUI - [git '+fGit.Version+'](' + fGit.TopLevelDir + ')';
+  Caption := 'LazGitGUI v1.0 (git '+fGit.Version+') - ' + fGit.TopLevelDir;
 end;
 
 procedure TfrmMain.RestoreGui;
