@@ -37,7 +37,7 @@ uses
   unitdbindex, unitgitutils, unitdrafts, unitframelog, unitgitmgr, unitgittypes,
   unitcheckouttag, unitcommitbrowser, unitvfs, unithighlighterhelper,
   unitgraphbuild, unitfilehistory, unitformlog, unitcustcmdform, unitcustomcmds,
-  unitreset, LCLTranslator;
+  unitreset, LCLTranslator, unitcommon;
 
 {$R *.res}
 

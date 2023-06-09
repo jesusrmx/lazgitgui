@@ -31,7 +31,7 @@ uses
   StdCtrls, ExtCtrls, ActnList, synEditTypes, SynEdit, StrUtils, FileUtil,
   lclType, Menus, Buttons, Grids, ComCtrls, Types, fgl,
   unitgittypes, unitifaces, unitconfig, unitprocess, unithighlighterhelper,
-  unitentries, unitgitutils, {unitgit,}
+  unitentries, unitgitutils, unitcommon,
   unitnewbranch, unitruncmd, unitansiescapes,
   unitnewtag, unitlogcache, unitlog, LConvEncoding, unitdbindex,
   unitframelog, unitgitmgr, unitcheckouttag, unitformlog, unitcustomcmds,
@@ -196,68 +196,6 @@ var
 implementation
 
 {$R *.lfm}
-
-resourcestring
-  rsNewBranch = 'New Branch';
-  rsNewTag = 'Create a tag at this point';
-  rsReload = 'Reload';
-  rsPushingYourCommits = 'Pushing your commits';
-  rsThereAreCommitsBehind = 'There are commits behind, are you sure you want to push?';
-  rsRestoringWorkFiles = 'Restoring working files';
-  rsRestoringWorkFilesWarning =
-    'You are about to discard changes in %s,'^M^M+
-    'data will be lost and this action cannot be undone'^M^M+
-    'Are you sure to continue?';
-  rsSIsAlreadyInIgnoredList = '''%s'' is already in ignored list';
-  rsTheTypeSIsAlreadyInTheIgnoredList = 'The type ''*%s'' is already in the ignored list';
-  rsDFiles = '%d files';
-  rsDiscardChanges = 'Discard changes';
-  rsCancel = 'Cancel';
-  rsViewUntrackedFiles = 'View Untracked Files';
-  rsViewIgnoredFiles = 'View Ignored Files';
-  rsViewTrackedFiles = 'View Tracked Files';
-  rsStageS = 'Stage ''%s''';
-  rsUnstageS = 'Unstage ''%s''';
-  rsStageChanged = 'Stage Changed';
-  rsStageAll = 'Stage All';
-  rsUnstageAll = 'Unstage All';
-  rsAddSToIgnoreList = 'Add ''%s'' to ignore list';
-  rsAddSFilesToIgnoreList = 'Add ''*%s'' Files to ignore list';
-  rsRestoreS = 'Restore ''%s''';
-  rsRestoreAllChanged = 'Restore All Changed';
-  rsNotYetImplementedForUnstagedS = 'Not yet implemented for Unstaged: %s';
-  rsNotYetImplementedForStagedS = 'Not yet implemented for Staged: %s';
-  rsSDoesNotExists = '%s does not exists';
-  rsTheFileSIsBinaryDBytes = 'The file ''%s'' is binary, %d bytes';
-  rsThisFeatureWillBeImplementedASAP = 'This feature will be implemented ASAP';
-  rsCouldnTGetToplevelDirectoryOfS = 'Couldn''t get toplevel directory of %s';
-  rsYouHaveToStageSomething = 'You have to stage something in order to commit';
-  rsYourCommitMessageIsEmpt = 'Your commit message is empty!';
-  rsThisRepositoryHasNoRemotes = 'This repository has no remotes defined'^M+
-                                 'I''m not yet prepared to handle this';
-  rsSHasNoTrackingAndThere = '%s has no tracking and there are '^M+
-                             '%d remotes (%s)'^M+
-                             'I''m not yet prepared to handle this';
-  rsPushingBranchWithout = 'Pushing branch without tracking information';
-  rsDoYouWantToPushSToSA = 'Do you want to push "%s" to "%s"'^M+
-                           'and setup tracking information? I will do:'^M^M+
-                           'git push --set-upstream %1:s %0:s';
-  rsYesDoIt = 'yes, do it';
-  rsPushingToRemoteS = 'Pushing to remote: %s';
-  rsFetchingFromRemote = 'Fetching from remote: ';
-  rsPullingFromRemote = 'pulling from remote: ';
-  rsExecutingACustomCommand = 'Executing a custom command';
-  rsYouAreAboutToExecute = 'You are about to execute %s: '^M^M+
-                           'command: %s'^M^M+
-                           'Do you want to proceed?';
-  rsMERGING = 'MERGING';
-  rsMERGINGCONFLICT = 'MERGING CONFLICT';
-  rsDCommitsAhead = '%d commits ahead';
-  rsDCommitsBehind = '%d commits behind';
-  rsOf = 'of';
-  rsNoTagAvailable = 'No Tag available';
-  rsAtTag = 'At tag';
-  rsDCommitsSince = '%d commits since';
 
 const
   MENU_INVALID                = -1;
