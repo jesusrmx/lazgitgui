@@ -13,13 +13,14 @@ object frmRunCommand: TfrmRunCommand
   LCLVersion = '2.3.0.0'
   object lblCaption: TLabel
     Left = 19
-    Height = 15
+    Height = 17
     Top = 4
-    Width = 5
+    Width = 4
     BorderSpacing.Bottom = 5
     Caption = '-'
   end
   object lblResult: TLabel
+    AnchorSideLeft.Control = chkCloseOk
     AnchorSideLeft.Side = asrBottom
     AnchorSideTop.Side = asrBottom
     AnchorSideRight.Side = asrBottom
@@ -30,6 +31,7 @@ object frmRunCommand: TfrmRunCommand
     Alignment = taCenter
     Anchors = [akLeft, akRight, akBottom]
     AutoSize = False
+    BorderSpacing.Left = 5
     Caption = '-'
     Color = clForm
     ParentColor = False
@@ -37,8 +39,8 @@ object frmRunCommand: TfrmRunCommand
   end
   object ButtonPanel1: TButtonPanel
     Left = 6
-    Height = 34
-    Top = 234
+    Height = 35
+    Top = 233
     Width = 690
     OKButton.Name = 'OKButton'
     OKButton.DefaultCaption = True
@@ -55,9 +57,9 @@ object frmRunCommand: TfrmRunCommand
     AnchorSideTop.Side = asrBottom
     AnchorSideRight.Side = asrBottom
     Left = 16
-    Height = 19
-    Top = 213
-    Width = 111
+    Height = 21
+    Top = 211
+    Width = 121
     Anchors = [akLeft, akBottom]
     Caption = 'Close on Succeed'
     Enabled = False
