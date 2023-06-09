@@ -29,7 +29,7 @@ interface
 uses
   Classes, SysUtils, Math, StrUtils, Forms, Controls, Graphics, Dialogs, Grids,
   ExtCtrls, SynEdit,
-  unitconfig, unitifaces, unitgitmgr, unithighlighterhelper;
+  unitcommon, unitconfig, unitifaces, unitgitmgr, unithighlighterhelper;
 
 type
 
@@ -223,7 +223,7 @@ var
   end;
 
 begin
-  Caption := 'History of ' + fFilePath;
+  Caption := format(rsHistoryOfS, [fFilePath]);
   L := TStringList.Create;
   try
     // parse this: .....

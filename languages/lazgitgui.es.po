@@ -776,16 +776,60 @@ msgctxt "unitcommon.rsattag"
 msgid "At tag"
 msgstr "En la etiqueta"
 
+#: unitcommon.rsbranchnamealreadyexists
+msgid "Branch name already exists"
+msgstr "El nombre de rama ya existe"
+
+#: unitcommon.rsbranchnameisempty
+msgid "Branch name is empty"
+msgstr "Nombre de rama vacío"
+
+#: unitcommon.rsbranchsalredyexists
+#, object-pascal-format
+msgid "Branch '%s' alredy exists"
+msgstr "La rama '%s' ya existe"
+
+#: unitcommon.rsbuildinggraph
+msgid "Building graph.."
+msgstr "Construyendo gráfico ..."
+
 #: unitcommon.rscancel
 msgctxt "unitcommon.rscancel"
 msgid "Cancel"
 msgstr "Cancelar"
+
+#: unitcommon.rscommandds
+#, object-pascal-format
+msgid "command %d: %s"
+msgstr "comando %d: %s"
+
+#: unitcommon.rscommandmuststartwithgit
+msgid "Command must start with 'git '"
+msgstr "El comando debe comenzar con 'git '"
+
+#: unitcommon.rscommit
+msgctxt "unitcommon.rscommit"
+msgid "Commit"
+msgstr "Cambio"
+
+#: unitcommon.rscommits
+#, object-pascal-format
+msgid "Commit: %s"
+msgstr "Cambio: %s"
 
 #: unitcommon.rscouldntgettopleveldirectoryofs
 #, object-pascal-format
 msgctxt "unitcommon.rscouldntgettopleveldirectoryofs"
 msgid "Couldn't get toplevel directory of %s"
 msgstr "No pude obtener el directorio base de %s"
+
+#: unitcommon.rscreateabranchatthiscommit
+msgid "Create a branch at this commit"
+msgstr "Crear una rama en este cambio"
+
+#: unitcommon.rscreateatagatthiscommit
+msgid "Create a tag at this commit"
+msgstr "Crear una etiqueta en este cambio"
 
 #: unitcommon.rsdcommitsahead
 #, object-pascal-format
@@ -804,6 +848,29 @@ msgstr "%d revisiones detrás"
 msgctxt "unitcommon.rsdcommitssince"
 msgid "%d commits since"
 msgstr "%d revisiones desde"
+
+#: unitcommon.rsdeletebranchs
+#, object-pascal-format
+msgid "Delete branch %s"
+msgstr "Eliminar rama %s"
+
+#: unitcommon.rsdeleteremotebranchs
+#, object-pascal-format
+msgid "Delete remote branch %s"
+msgstr "Eliminar rama remota %s"
+
+#: unitcommon.rsdeletetags
+#, object-pascal-format
+msgid "Delete tag %s"
+msgstr "Eliminar etiqueta %s"
+
+#: unitcommon.rsdeletingremotebranch
+msgid "Deleting remote branch"
+msgstr "Eliminar rama remota"
+
+#: unitcommon.rsdescriptionisempty
+msgid "Description is empty"
+msgstr "La descripción esta vacía"
 
 #: unitcommon.rsdfiles
 #, object-pascal-format
@@ -830,20 +897,66 @@ msgstr ""
 "\n"
 "git push --set-upstream %1:s %0:s"
 
+#: unitcommon.rserrorwhilegettinglistofbranches
+msgid "Error while getting list of branches"
+msgstr "Error mientras se obtenía la lista de ramas"
+
 #: unitcommon.rsexecutingacustomcommand
 msgctxt "unitcommon.rsexecutingacustomcommand"
 msgid "Executing a custom command"
 msgstr "Ejecutando un comando de usuario"
+
+#: unitcommon.rsfailed
+msgid "Failed"
+msgstr "Ha fallado"
 
 #: unitcommon.rsfetchingfromremote
 msgctxt "unitcommon.rsfetchingfromremote"
 msgid "Fetching from remote: "
 msgstr "Obteniendo cambios (fetch) del origen: "
 
+#: unitcommon.rshistoryofs
+#, object-pascal-format
+msgid "History of %s"
+msgstr "Historial de %s"
+
+#: unitcommon.rsincompletecommand
+msgid "Incomplete command"
+msgstr "Comando incompleto"
+
+#: unitcommon.rsinvalid
+msgid "Invalid"
+msgstr "Inválido"
+
+#: unitcommon.rsinvalidcharacterinbranchname
+msgid "Invalid character in branch name"
+msgstr "Carácter inválido en nombre de rama"
+
+#: unitcommon.rsinvalidcharacterintagname
+msgid "Invalid character in tag name"
+msgstr "Carácter inválido en nombre de etiqueta"
+
+#: unitcommon.rsinvaliddescription
+msgid "Invalid description"
+msgstr "Descripción inválida"
+
+#: unitcommon.rslocalbranches
+msgid "Local Branches"
+msgstr "Ramas locales"
+
+#: unitcommon.rsmergestos
+#, object-pascal-format
+msgid "Merge %s to %s"
+msgstr "Fusionar %s con %s"
+
 #: unitcommon.rsmerging
 msgctxt "unitcommon.rsmerging"
 msgid "MERGING"
 msgstr "FUSIÓNANDO"
+
+#: unitcommon.rsmergingbranches
+msgid "Merging branches"
+msgstr "Fusionando ramas"
 
 #: unitcommon.rsmergingconflict
 msgctxt "unitcommon.rsmergingconflict"
@@ -860,10 +973,26 @@ msgctxt "unitcommon.rsnewtag"
 msgid "Create a tag at this point"
 msgstr "Crear etiqueta aquí"
 
+#: unitcommon.rsnocommitset
+msgid "No commit set"
+msgstr "Cambio Id no ajustado"
+
+#: unitcommon.rsnoreferingbranchselected
+msgid "No refering branch selected"
+msgstr "No se ha seleccionado rama de referencia"
+
+#: unitcommon.rsnoreferingtagselected
+msgid "No refering tag selected"
+msgstr "No se ha seleccionado etiqueta de referencia"
+
 #: unitcommon.rsnotagavailable
 msgctxt "unitcommon.rsnotagavailable"
 msgid "No Tag available"
 msgstr "No hay etiqueta"
+
+#: unitcommon.rsnotreferstoatrackingbranch
+msgid "Not refers to a tracking branch"
+msgstr "No se refiere a una rama de seguimiento"
 
 #: unitcommon.rsnotyetimplementedforstageds
 #, object-pascal-format
@@ -907,6 +1036,64 @@ msgstr "Subiendo tus cambios"
 msgctxt "unitcommon.rsreload"
 msgid "Reload"
 msgstr "Actualizar"
+
+#: unitcommon.rsresetabranch
+msgid "Reset a branch"
+msgstr "Restaurar rama"
+
+#: unitcommon.rsresetbranchs
+#, object-pascal-format
+msgid "Reset branch %s"
+msgstr "Restaurar rama %s"
+
+#: unitcommon.rsresethard
+msgid ""
+"Reset index and working copy.\n"
+"LOCAL CHANGES WILL BE LOST!\n"
+"\n"
+"\n"
+"git doc: \n"
+"Resets the index and working tree. Any changes to tracked files in the working tree since <commit> are discarded. Any untracked files or directories in the way of writing any tracked files are simply deleted."
+msgstr ""
+"Restaurar el Índice y la copia de trabajo.\n"
+"¡LOS CAMBIOS LOCALES SE PERDERÁN!\n"
+"\n"
+"\n"
+"git doc: \n"
+"Resets the index and working tree. Any changes to tracked files in the working tree since <commit> are discarded. Any untracked files or directories in the way of writing any tracked files are simply deleted."
+
+#: unitcommon.rsresetmixed
+msgid ""
+"Reset index, don't touch working copy.\n"
+"\n"
+"\n"
+"git doc: \n"
+"Resets the index but not the working tree (i.e., the changed files are preserved but not marked for commit) and reports what has not been updated. This is the default action."
+msgstr ""
+"Restaurar el Índice, no toca la copia de trabajo.\n"
+"\n"
+"\n"
+"git doc: \n"
+"Resets the index but not the working tree (i.e., the changed files are preserved but not marked for commit) and reports what has not been updated. This is the default action."
+
+#: unitcommon.rsresetsoft
+msgid ""
+"Neither the working copy nor the index are altered.\n"
+"\n"
+"\n"
+"git doc:\n"
+"Does not touch the index file or the working tree at all (but resets the head to <commit>, just like all modes do). This leaves all your changed files \"Changes to be committed\", as git status would put it."
+msgstr ""
+"No se altera el Índice ni la copia de trabajo..\n"
+"\n"
+"\n"
+"git doc:\n"
+"Does not touch the index file or the working tree at all (but resets the head to <commit>, just like all modes do). This leaves all your changed files \"Changes to be committed\", as git status would put it."
+
+#: unitcommon.rsresetstothiscommit
+#, object-pascal-format
+msgid "Reset %s to this commit"
+msgstr "Restaurar %s a como estaba éste cambio"
 
 #: unitcommon.rsrestoreallchanged
 msgctxt "unitcommon.rsrestoreallchanged"
@@ -980,6 +1167,37 @@ msgctxt "unitcommon.rsstages"
 msgid "Stage '%s'"
 msgstr "Prepara '%s'"
 
+#: unitcommon.rsstartingcommandpleasewait
+msgid "Starting command, please wait ...."
+msgstr "Comenzando comando, por favor espere ...."
+
+#: unitcommon.rssucceed
+msgid "Succeed"
+msgstr "Éxito"
+
+#: unitcommon.rsswitchtos
+#, object-pascal-format
+msgid "Switch to %s"
+msgstr "Cambiar a %s"
+
+#: unitcommon.rsswitchtotags
+#, object-pascal-format
+msgid "Switch to tag %s"
+msgstr "Cambiar a la etiqueta %s"
+
+#: unitcommon.rstagnameisempty
+msgid "Tag name is empty"
+msgstr "El nombre de la etiqueta esta vacío"
+
+#: unitcommon.rstags
+msgid "Tags"
+msgstr "Etiquetas"
+
+#: unitcommon.rstags2
+#, object-pascal-format
+msgid "Tag: %s"
+msgstr "Etiqueta: %s"
+
 #: unitcommon.rsthefilesisbinarydbytes
 #, object-pascal-format
 msgctxt "unitcommon.rsthefilesisbinarydbytes"
@@ -1011,6 +1229,14 @@ msgstr ""
 "Este repositorio aún no ha definido fuentes remotas\n"
 "Aún no se como manejar esta situación"
 
+#: unitcommon.rstrackingbranches
+msgid "Tracking Branches"
+msgstr "Ramas con seguimiento"
+
+#: unitcommon.rsunabletolocatedbindex
+msgid "Unable to locate db index"
+msgstr "No es posible localizar el índice de db"
+
 #: unitcommon.rsunstageall
 msgctxt "unitcommon.rsunstageall"
 msgid "Unstage All"
@@ -1037,6 +1263,30 @@ msgctxt "unitcommon.rsviewuntrackedfiles"
 msgid "View Untracked Files"
 msgstr "Mostrar Archivos sin Seguimiento"
 
+#: unitcommon.rswilldogitcheckoutbss
+#, object-pascal-format
+msgid "will do: git checkout -b %s %s"
+msgstr "Haré: git checkout -b %s %s"
+
+#: unitcommon.rswilldogitcheckoutsdetached
+#, object-pascal-format
+msgid ""
+"will do: git checkout %s\n"
+"Repo will be left in detached HEAD state"
+msgstr ""
+"Haré: git checkout %s\n"
+"El repositorio quedará con HEAD desconectado"
+
+#: unitcommon.rsworking
+msgctxt "unitcommon.rsworking"
+msgid "Working ...."
+msgstr "Procesando ...."
+
+#: unitcommon.rsworktrees
+#, object-pascal-format
+msgid "worktree: %s"
+msgstr "árbol de trabajo: %s"
+
 #: unitcommon.rsyesdoit
 msgctxt "unitcommon.rsyesdoit"
 msgid "yes, do it"
@@ -1056,6 +1306,17 @@ msgstr ""
 "\n"
 "comando: %s\n"
 "\n"
+"¿Quieres proceder?"
+
+#: unitcommon.rsyouareresettingbranch
+#, object-pascal-format
+msgid ""
+"You are resetting branch %s to revision %s:\n"
+"%s\n"
+"Do you want to proceed?"
+msgstr ""
+"Estás restaurando %s a la revisión %s:\n"
+"%s\n"
 "¿Quieres proceder?"
 
 #: unitcommon.rsyouhavetostagesomething

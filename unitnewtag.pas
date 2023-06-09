@@ -28,7 +28,7 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, ExtCtrls,
-  ButtonPanel, unitgitutils;
+  ButtonPanel, unitgitutils, unitcommon;
 
 type
 
@@ -87,11 +87,11 @@ begin
   ButtonPanel1.OKButton.Enabled := false;
   s := Trim(txtName.Text);
   if s='' then begin
-    lblHint.Caption := 'Tag name is empty';
+    lblHint.Caption := rsTagNameIsEmpty;
     exit;
   end;
   if PosAny([' ','\','~','^',':','*','[','@'], s)>0 then begin
-    lblHint.Caption := 'Invalid character in tag name';
+    lblHint.Caption := rsInvalidCharacterInTagName;
     exit;
   end;
   ButtonPanel1.OKButton.Enabled := true;

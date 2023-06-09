@@ -746,15 +746,59 @@ msgctxt "unitcommon.rsattag"
 msgid "At tag"
 msgstr ""
 
+#: unitcommon.rsbranchnamealreadyexists
+msgid "Branch name already exists"
+msgstr ""
+
+#: unitcommon.rsbranchnameisempty
+msgid "Branch name is empty"
+msgstr ""
+
+#: unitcommon.rsbranchsalredyexists
+#, object-pascal-format
+msgid "Branch '%s' alredy exists"
+msgstr ""
+
+#: unitcommon.rsbuildinggraph
+msgid "Building graph.."
+msgstr ""
+
 #: unitcommon.rscancel
 msgctxt "unitcommon.rscancel"
 msgid "Cancel"
+msgstr ""
+
+#: unitcommon.rscommandds
+#, object-pascal-format
+msgid "command %d: %s"
+msgstr ""
+
+#: unitcommon.rscommandmuststartwithgit
+msgid "Command must start with 'git '"
+msgstr ""
+
+#: unitcommon.rscommit
+msgctxt "unitcommon.rscommit"
+msgid "Commit"
+msgstr ""
+
+#: unitcommon.rscommits
+#, object-pascal-format
+msgid "Commit: %s"
 msgstr ""
 
 #: unitcommon.rscouldntgettopleveldirectoryofs
 #, object-pascal-format
 msgctxt "unitcommon.rscouldntgettopleveldirectoryofs"
 msgid "Couldn't get toplevel directory of %s"
+msgstr ""
+
+#: unitcommon.rscreateabranchatthiscommit
+msgid "Create a branch at this commit"
+msgstr ""
+
+#: unitcommon.rscreateatagatthiscommit
+msgid "Create a tag at this commit"
 msgstr ""
 
 #: unitcommon.rsdcommitsahead
@@ -773,6 +817,29 @@ msgstr ""
 #, object-pascal-format
 msgctxt "unitcommon.rsdcommitssince"
 msgid "%d commits since"
+msgstr ""
+
+#: unitcommon.rsdeletebranchs
+#, object-pascal-format
+msgid "Delete branch %s"
+msgstr ""
+
+#: unitcommon.rsdeleteremotebranchs
+#, object-pascal-format
+msgid "Delete remote branch %s"
+msgstr ""
+
+#: unitcommon.rsdeletetags
+#, object-pascal-format
+msgid "Delete tag %s"
+msgstr ""
+
+#: unitcommon.rsdeletingremotebranch
+msgid "Deleting remote branch"
+msgstr ""
+
+#: unitcommon.rsdescriptionisempty
+msgid "Description is empty"
 msgstr ""
 
 #: unitcommon.rsdfiles
@@ -796,9 +863,17 @@ msgid ""
 "git push --set-upstream %1:s %0:s"
 msgstr ""
 
+#: unitcommon.rserrorwhilegettinglistofbranches
+msgid "Error while getting list of branches"
+msgstr ""
+
 #: unitcommon.rsexecutingacustomcommand
 msgctxt "unitcommon.rsexecutingacustomcommand"
 msgid "Executing a custom command"
+msgstr ""
+
+#: unitcommon.rsfailed
+msgid "Failed"
 msgstr ""
 
 #: unitcommon.rsfetchingfromremote
@@ -806,9 +881,47 @@ msgctxt "unitcommon.rsfetchingfromremote"
 msgid "Fetching from remote: "
 msgstr ""
 
+#: unitcommon.rshistoryofs
+#, object-pascal-format
+msgid "History of %s"
+msgstr ""
+
+#: unitcommon.rsincompletecommand
+msgid "Incomplete command"
+msgstr ""
+
+#: unitcommon.rsinvalid
+msgid "Invalid"
+msgstr ""
+
+#: unitcommon.rsinvalidcharacterinbranchname
+msgid "Invalid character in branch name"
+msgstr ""
+
+#: unitcommon.rsinvalidcharacterintagname
+msgid "Invalid character in tag name"
+msgstr ""
+
+#: unitcommon.rsinvaliddescription
+msgid "Invalid description"
+msgstr ""
+
+#: unitcommon.rslocalbranches
+msgid "Local Branches"
+msgstr ""
+
+#: unitcommon.rsmergestos
+#, object-pascal-format
+msgid "Merge %s to %s"
+msgstr ""
+
 #: unitcommon.rsmerging
 msgctxt "unitcommon.rsmerging"
 msgid "MERGING"
+msgstr ""
+
+#: unitcommon.rsmergingbranches
+msgid "Merging branches"
 msgstr ""
 
 #: unitcommon.rsmergingconflict
@@ -826,9 +939,25 @@ msgctxt "unitcommon.rsnewtag"
 msgid "Create a tag at this point"
 msgstr ""
 
+#: unitcommon.rsnocommitset
+msgid "No commit set"
+msgstr ""
+
+#: unitcommon.rsnoreferingbranchselected
+msgid "No refering branch selected"
+msgstr ""
+
+#: unitcommon.rsnoreferingtagselected
+msgid "No refering tag selected"
+msgstr ""
+
 #: unitcommon.rsnotagavailable
 msgctxt "unitcommon.rsnotagavailable"
 msgid "No Tag available"
+msgstr ""
+
+#: unitcommon.rsnotreferstoatrackingbranch
+msgid "Not refers to a tracking branch"
 msgstr ""
 
 #: unitcommon.rsnotyetimplementedforstageds
@@ -872,6 +1001,48 @@ msgstr ""
 #: unitcommon.rsreload
 msgctxt "unitcommon.rsreload"
 msgid "Reload"
+msgstr ""
+
+#: unitcommon.rsresetabranch
+msgid "Reset a branch"
+msgstr ""
+
+#: unitcommon.rsresetbranchs
+#, object-pascal-format
+msgid "Reset branch %s"
+msgstr ""
+
+#: unitcommon.rsresethard
+msgid ""
+"Reset index and working copy.\n"
+"LOCAL CHANGES WILL BE LOST!\n"
+"\n"
+"\n"
+"git doc: \n"
+"Resets the index and working tree. Any changes to tracked files in the working tree since <commit> are discarded. Any untracked files or directories in the way of writing any tracked files are simply deleted."
+msgstr ""
+
+#: unitcommon.rsresetmixed
+msgid ""
+"Reset index, don't touch working copy.\n"
+"\n"
+"\n"
+"git doc: \n"
+"Resets the index but not the working tree (i.e., the changed files are preserved but not marked for commit) and reports what has not been updated. This is the default action."
+msgstr ""
+
+#: unitcommon.rsresetsoft
+msgid ""
+"Neither the working copy nor the index are altered.\n"
+"\n"
+"\n"
+"git doc:\n"
+"Does not touch the index file or the working tree at all (but resets the head to <commit>, just like all modes do). This leaves all your changed files \"Changes to be committed\", as git status would put it."
+msgstr ""
+
+#: unitcommon.rsresetstothiscommit
+#, object-pascal-format
+msgid "Reset %s to this commit"
 msgstr ""
 
 #: unitcommon.rsrestoreallchanged
@@ -938,6 +1109,37 @@ msgctxt "unitcommon.rsstages"
 msgid "Stage '%s'"
 msgstr ""
 
+#: unitcommon.rsstartingcommandpleasewait
+msgid "Starting command, please wait ...."
+msgstr ""
+
+#: unitcommon.rssucceed
+msgid "Succeed"
+msgstr ""
+
+#: unitcommon.rsswitchtos
+#, object-pascal-format
+msgid "Switch to %s"
+msgstr ""
+
+#: unitcommon.rsswitchtotags
+#, object-pascal-format
+msgid "Switch to tag %s"
+msgstr ""
+
+#: unitcommon.rstagnameisempty
+msgid "Tag name is empty"
+msgstr ""
+
+#: unitcommon.rstags
+msgid "Tags"
+msgstr ""
+
+#: unitcommon.rstags2
+#, object-pascal-format
+msgid "Tag: %s"
+msgstr ""
+
 #: unitcommon.rsthefilesisbinarydbytes
 #, object-pascal-format
 msgctxt "unitcommon.rsthefilesisbinarydbytes"
@@ -967,6 +1169,14 @@ msgid ""
 "I'm not yet prepared to handle this"
 msgstr ""
 
+#: unitcommon.rstrackingbranches
+msgid "Tracking Branches"
+msgstr ""
+
+#: unitcommon.rsunabletolocatedbindex
+msgid "Unable to locate db index"
+msgstr ""
+
 #: unitcommon.rsunstageall
 msgctxt "unitcommon.rsunstageall"
 msgid "Unstage All"
@@ -993,6 +1203,28 @@ msgctxt "unitcommon.rsviewuntrackedfiles"
 msgid "View Untracked Files"
 msgstr ""
 
+#: unitcommon.rswilldogitcheckoutbss
+#, object-pascal-format
+msgid "will do: git checkout -b %s %s"
+msgstr ""
+
+#: unitcommon.rswilldogitcheckoutsdetached
+#, object-pascal-format
+msgid ""
+"will do: git checkout %s\n"
+"Repo will be left in detached HEAD state"
+msgstr ""
+
+#: unitcommon.rsworking
+msgctxt "unitcommon.rsworking"
+msgid "Working ...."
+msgstr ""
+
+#: unitcommon.rsworktrees
+#, object-pascal-format
+msgid "worktree: %s"
+msgstr ""
+
 #: unitcommon.rsyesdoit
 msgctxt "unitcommon.rsyesdoit"
 msgid "yes, do it"
@@ -1006,6 +1238,14 @@ msgid ""
 "\n"
 "command: %s\n"
 "\n"
+"Do you want to proceed?"
+msgstr ""
+
+#: unitcommon.rsyouareresettingbranch
+#, object-pascal-format
+msgid ""
+"You are resetting branch %s to revision %s:\n"
+"%s\n"
 "Do you want to proceed?"
 msgstr ""
 

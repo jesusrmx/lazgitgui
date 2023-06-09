@@ -28,7 +28,7 @@ interface
 
 uses
   Classes, SysUtils, Math, Forms, Controls, Graphics, Dialogs, StdCtrls, ButtonPanel,
-  Buttons, ExtCtrls, EditBtn, unitifaces, unitconfig, unitcustomcmds;
+  Buttons, ExtCtrls, EditBtn, unitifaces, unitconfig, unitcustomcmds, unitcommon;
 
 type
 
@@ -215,7 +215,7 @@ end;
 procedure TfrmCustomCommands.Changed;
   procedure Error(i: Integer; msg:string);
   begin
-    lblInfo.Caption := format('command %d: %s',[i+1, msg]);
+    lblInfo.Caption := format(rsCommandDS, [i + 1, msg]);
   end;
 
 var
@@ -226,19 +226,19 @@ begin
   for i:=0 to fNewCommands.Count-1 do begin
     cmd := fNewCommands[i];
     if cmd.description='' then begin
-      Error(i, 'Description is empty');
+      Error(i, rsDescriptionIsEmpty);
       exit;
     end;
     if cmd.description=NEWCOMMAND_DESC then begin
-      Error(i, 'Invalid description');
+      Error(i, rsInvalidDescription);
       exit;
     end;
     if pos('git ', cmd.command)<>1 then begin
-      Error(i, 'Command must start with ''git ''');
+      Error(i, rsCommandMustStartWithGit);
       exit;
     end;
     if cmd.command='git ' then begin
-      Error(i, 'Incomplete command');
+      Error(i, rsIncompleteCommand);
       exit;
     end;
 

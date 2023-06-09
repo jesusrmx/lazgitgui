@@ -31,7 +31,8 @@ interface
 
 uses
   Classes, SysUtils, Math, LazLogger, SynEdit, Forms, Controls, Graphics,
-  Dialogs, StdCtrls, ButtonPanel, unitifaces, unitconfig, unitprocess, unitansiescapes;
+  Dialogs, StdCtrls, ButtonPanel,
+  unitcommon, unitifaces, unitconfig, unitprocess, unitansiescapes;
 
 type
   TLineEnding = string[3];
@@ -356,7 +357,7 @@ end;
 
 procedure TfrmRunCommand.FormShow(Sender: TObject);
 begin
-  lblResult.Caption := 'Starting command, please wait ....';
+  lblResult.Caption := rsStartingCommandPleaseWait;
   txtOutput.Clear;
   Application.ProcessMessages;
 
@@ -406,7 +407,7 @@ var
   thread: TRunThread absolute sender;
 begin
   fAnsiHandler.ProcessLine(thread.Line, thread.LineEnding);
-  lblResult.Caption := 'Working ....';
+  lblResult.Caption := rsWorking;
 end;
 
 procedure TfrmRunCommand.OnDone(Sender: TObject);
@@ -417,13 +418,13 @@ begin
   if fRunThread.Result<=0 then begin
     lblResult.Color := clGreen;
     lblResult.Font.Color := clWhite;
-    lblResult.Caption := 'Succeed';
+    lblResult.Caption := rsSucceed;
     if chkCloseOk.Checked then Close;
   end else begin
     txtOutput.Append(fRunThread.ErrorLog);
     lblResult.Color := clRed;
     lblResult.Font.Color := clWhite;
-    lblResult.Caption := 'Failed';
+    lblResult.Caption := rsFailed;
   end;
 end;
 

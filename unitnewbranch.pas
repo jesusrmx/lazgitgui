@@ -29,7 +29,7 @@ interface
 uses
   Classes, SysUtils, LazLogger, Forms, Controls, Graphics, Dialogs, StdCtrls, ComCtrls,
   ButtonPanel, ExtCtrls, unitconfig, unitgittypes, unitifaces, unitprocess, unitgitutils,
-  unitgitmgr;
+  unitgitmgr, unitcommon;
 
 type
 
@@ -113,6 +113,11 @@ const
 procedure TfrmNewBranch.FormCreate(Sender: TObject);
 begin
   fConfig.ReadWindow(Self, 'newbranchform', SECTION_GEOMETRY);
+  // it looks like tabcontrol tabs are not translated automatically, do it here
+  tabSource.Tabs[0] := rsLocalBranches;
+  tabSource.Tabs[1] := rsTrackingBranches;
+  tabSource.Tabs[2] := rsTags;
+  tabSource.Tabs[3] := rsCommit;
 end;
 
 procedure TfrmNewBranch.FormShow(Sender: TObject);
@@ -237,7 +242,7 @@ var
 
   procedure AlreadyExisting;
   begin
-    lblHint.caption := format('Branch ''%s'' alredy exists',[fBranchName]);
+    lblHint.caption := format(rsBranchSAlredyExists, [fBranchName]);
   end;
 
 begin
@@ -263,12 +268,12 @@ begin
             exit;
           end;
           if aIndex<0 then begin
-            lblHint.caption := 'No refering branch selected';
+            lblHint.caption := rsNoReferingBranchSelected;
             exit;
           end;
           fType := BT_NEWLOCAL_BRANCH
         end else begin
-          lblHint.Caption := 'Branch name is empty';
+          lblHint.Caption := rsBranchNameIsEmpty;
           exit;
         end;
       end;
@@ -276,12 +281,12 @@ begin
     TABINDEX_TRACKING: // branch based on a tracking branch tab
       begin
         if aIndex<0 then begin
-          lblHint.caption := 'No refering branch selected';
+          lblHint.caption := rsNoReferingBranchSelected;
           exit;
         end;
         if fBranchName='' then begin
           if info=nil then begin
-            lblHint.caption := 'Not refers to a tracking branch';
+            lblHint.caption := rsNotRefersToATrackingBranch;
             exit;
           end;
           p := pos('/', fReference);
@@ -302,12 +307,12 @@ begin
             exit;
           end;
           if aIndex<0 then begin
-            lblHint.caption := 'No refering tag selected';
+            lblHint.caption := rsNoReferingTagSelected;
             exit;
           end;
           fType := BT_NEWLOCAL_TAG;
         end else begin
-          lblHint.Caption := 'Branch name is empty';
+          lblHint.Caption := rsBranchNameIsEmpty;
           exit;
         end;
       end;
@@ -316,13 +321,13 @@ begin
       begin
         if fBranchName<>'' then begin
           if fCommit='' then begin
-            lblHint.Caption := 'No commit set';
+            lblHint.Caption := rsNoCommitSet;
             exit;
           end;
           fType := BT_NEWLOCAL_COMMIT;
           fReference := fCommit;
         end else begin
-          lblHint.Caption := 'Branch name is empty';
+          lblHint.Caption := rsBranchNameIsEmpty;
           exit;
         end;
       end;
@@ -358,17 +363,17 @@ begin
       s := s + ' -> ' + info^.upstream;
     txtInfo.Lines.Add(s);
     if info^.worktreepath<>'' then
-      txtInfo.Lines.Add('worktree: '+info^.worktreepath);
+      txtInfo.Lines.Add(rsWorktreeS, [info^.worktreepath]);
 
     txtInfo.Lines.Add('');
     if (info^.objType=rotTag) and (info^.refered<>nil) then begin
-      txtInfo.Lines.Add('Tag: %s',[info^.objName]);
+      txtInfo.Lines.Add(rsTagS2, [info^.objName]);
       txtInfo.Lines.Add('%s (%s)',[info^.authorName, DateTimeToGitFmt(info^.authorDate)]);
       txtInfo.Lines.Add(info^.subject);
       txtInfo.Lines.Add('');
       info := info^.refered;
     end;
-    txtInfo.Lines.Add('Commit: %s',[info^.objName]);
+    txtInfo.Lines.Add(rsCommitS, [info^.objName]);
     txtInfo.Lines.Add('%s (%s)',[info^.authorName, DateTimeToGitFmt(info^.authorDate)]);
     txtInfo.Lines.Add(info^.subject);
   finally
@@ -385,7 +390,7 @@ begin
       begin
         if Data>0 then begin
           //DebugLn(fGit.ErrorLog);
-          ShowMessage('Error while getting list of branches');
+          ShowMessage(rsErrorWhileGettingListOfBranches);
           Close;
           exit;
         end;
@@ -396,7 +401,7 @@ end;
 function TfrmNewBranch.GetBranchCommandOptions: string;
 begin
   if fType = BT_INVALID then begin
-    result := 'Invalid';
+    result := rsInvalid;
     exit;
   end;
 

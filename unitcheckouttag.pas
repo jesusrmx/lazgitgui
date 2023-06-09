@@ -29,7 +29,7 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, ButtonPanel,
-  unitgitutils, unitgitmgr;
+  unitgitutils, unitgitmgr, unitcommon;
 
 type
 
@@ -91,22 +91,22 @@ begin
   if chkCreateBranch.Checked then begin
     s := Trim(txtBranchName.Text);
     if s='' then begin
-      lblHint.Caption := 'Branch name is empty';
+      lblHint.Caption := rsBranchNameIsEmpty;
       exit;
     end;
     if PosAny([' ','\','~','^',':','*','[','@'], s)>0 then begin
-      lblHint.Caption := 'Invalid character in branch name';
+      lblHint.Caption := rsInvalidCharacterInBranchName;
       exit;
     end;
     if fGitMgr.IndexOfLocalBranch(s)>=0 then begin
-      lblHint.Caption := 'Branch name already exists';
+      lblHint.Caption := rsBranchNameAlreadyExists;
       exit;
     end;
 
-    lblHint.Caption := format('will do: git checkout -b %s %s',[s, lblTag.Caption]);
+    lblHint.Caption := format(rsWillDoGitCheckoutBSS, [s, lblTag.Caption]);
 
   end else begin
-    lblHint.Caption := format('will do: git checkout %s'^M'Repo will be left in detached HEAD state',[lblTag.Caption]);
+    lblHint.Caption := format(rsWillDoGitCheckoutSDetached, [lblTag.Caption]);
   end;
   ButtonPanel1.OKButton.Enabled := true;
 end;

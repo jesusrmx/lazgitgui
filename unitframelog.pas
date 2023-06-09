@@ -63,7 +63,7 @@ uses
   Grids, ExtCtrls, ComCtrls, Menus, Types, Clipbrd, ActnList, Buttons, StdCtrls,
   unitgittypes, unitlogcache, unitdbindex, unitgitutils, unitifaces, unitruncmd,
   unitgitmgr, unitcommitbrowser, unitvfs, unithighlighterhelper, unitgraphbuild,
-  unitfilehistory, unitnewbranch, unitreset;
+  unitfilehistory, unitnewbranch, unitreset, unitcommon;
 
 const
   GRAPH_LEFT_PADDING          = 12;
@@ -687,7 +687,7 @@ begin
 
       cmd +=  ' ' + fCurrentItem.CommitOID;
 
-      if RunInteractive(fGit.Exe + ' reset ' + cmd, fGit.TopLevelDir, 'Reset a branch', fGitMgr.Branch)>0 then
+      if RunInteractive(fGit.Exe + ' reset ' + cmd, fGit.TopLevelDir, rsResetABranch, fGitMgr.Branch) > 0 then
         //
       else begin
         fGitMgr.ForceTagDescription;
@@ -744,7 +744,7 @@ begin
   if info<>nil then begin
 
     s := 'git merge ' + info^.refName;
-    if RunInteractive(fGit.Exe + ' merge '+ info^.refName, fGit.TopLevelDir, 'Merging branches', s)>0 then begin
+    if RunInteractive(fGit.Exe + ' merge ' + info^.refName, fGit.TopLevelDir, rsMergingBranches, s) > 0 then begin
       // an error occurred
     end else begin
       // queue update status
@@ -760,7 +760,7 @@ procedure TframeLog.OnContextPopLogClick(Sender: TObject);
 var
   mi: TMenuItem absolute Sender;
 begin
-  ShowMessage(format('You really got me: %s',[mi.Caption]));
+  ShowMessageFmt('You really got me: %s',[mi.Caption]);
 end;
 
 procedure TframeLog.OnCreateBranchClick(Sender: TObject);
@@ -807,7 +807,7 @@ begin
   info := {%H-}PRefInfo(mi.Tag);
   if info<>nil then begin
     cmd := stringReplace(info^.refName, '/', ' -d ', []);
-    if RunInteractive(fGit.Exe + ' push ' + cmd, fGit.TopLevelDir, 'Deleting remote branch', info^.refName)>0 then
+    if RunInteractive(fGit.Exe + ' push ' + cmd, fGit.TopLevelDir, rsDeletingRemoteBranch, info^.refName) > 0 then
       //
     else begin
       fGitMgr.ForceTagDescription;
@@ -934,7 +934,7 @@ begin
   popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
 
   mi := TMenuItem.Create(Self.Owner);
-  mi.Caption := 'Create a branch at this commit';
+  mi.Caption := rsCreateABranchAtThisCommit;
   mi.OnClick := @OnCreateBranchClick;
   mi.Tag := 0;
   popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
@@ -942,19 +942,19 @@ begin
   refItems := fGit.RefsFilter(fCurrentItem.CommitOID, @FilterLocal);
   for i := 0 to Length(refItems)-1 do begin
     mi := TMenuItem.Create(Self.Owner);
-    mi.Caption := format('Merge %s to %s',[QuotedStr(refItems[i]^.refName), QuotedStr(fGitMgr.Branch)]);
+    mi.Caption := format(rsMergeSToS, [QuotedStr(refItems[i]^.refName), QuotedStr(fGitMgr.Branch)]);
     mi.OnClick := @OnMergeBranchClick;
     mi.Tag := PtrInt(refItems[i]);
     popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
 
     mi := TMenuItem.Create(Self.Owner);
-    mi.Caption := format('Switch to %s',[QuotedStr(refItems[i]^.refName)]);
+    mi.Caption := format(rsSwitchToS, [QuotedStr(refItems[i]^.refName)]);
     mi.OnClick := @OnSwitchBranchClick;
     mi.Tag := PtrInt(refItems[i]);
     popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
 
     mi := TMenuItem.Create(Self.Owner);
-    mi.Caption := format('Delete branch %s',[QuotedStr(refItems[i]^.refName)]);
+    mi.Caption := format(rsDeleteBranchS, [QuotedStr(refItems[i]^.refName)]);
     mi.OnClick := @OnDeleteBranchClick;
     mi.Tag := PtrInt(refItems[i]);
     popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
@@ -971,7 +971,7 @@ begin
       continue;
 
     mi := TMenuItem.Create(Self.Owner);
-    mi.Caption := format('Delete remote branch %s',[QuotedStr(refItems[i]^.refName)]);
+    mi.Caption := format(rsDeleteRemoteBranchS, [QuotedStr(refItems[i]^.refName)]);
     mi.OnClick := @OnDeleteRemoteBranchClick;
     mi.Tag := PtrInt(refItems[i]);
     popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
@@ -995,7 +995,7 @@ begin
   curCommit := OIDToQWord(fCurrentItem.CommitOID);
 
   mi := TMenuItem.Create(Self.Owner);
-  mi.Caption := 'Create a tag at this commit';
+  mi.Caption := rsCreateATagAtThisCommit;
   mi.OnClick := @OnCreateTagClick;
   mi.Tag := 0;
   popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
@@ -1004,13 +1004,13 @@ begin
   for i := 0 to Length(refItems)-1 do begin
 
     mi := TMenuItem.Create(Self.Owner);
-    mi.Caption := format('Switch to %s',[QuotedStr(refItems[i]^.refName)]);
+    mi.Caption := format(rsSwitchToTagS, [QuotedStr(refItems[i]^.refName)]);
     mi.OnClick := @OnSwitchTagClick;
     mi.Tag := PtrInt(refItems[i]);
     popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
 
     mi := TMenuItem.Create(Self.Owner);
-    mi.Caption := format('Delete tag %s',[QuotedStr(refItems[i]^.refName)]);
+    mi.Caption := format(rsDeleteTagS, [QuotedStr(refItems[i]^.refName)]);
     mi.OnClick := @OnDeleteTagClick;
     mi.Tag := PtrInt(refItems[i]);
     popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
@@ -1035,7 +1035,7 @@ begin
   popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
 
   mi := TMenuItem.Create(Self.Owner);
-  mi.Caption := format('Reset %s to this commit',[QuotedStr(fGitMgr.Branch)]);
+  mi.Caption := format(rsResetSToThisCommit, [QuotedStr(fGitMgr.Branch)]);
   mi.OnClick := @OnResetBranchClick;
   mi.Tag := 0;
   popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
@@ -1125,7 +1125,7 @@ begin
 
   aIndex := aRow - gridLog.FixedRows;
   if not LocateItemIndex(aIndex) then begin
-    txtViewer.Lines.Text := 'Unable to locate db index';
+    txtViewer.Lines.Text := rsUnableToLocateDbIndex;
     exit;
   end;
 
@@ -1267,7 +1267,7 @@ var
 begin
   gridLog.RowCount := fLogCache.DbIndex.Count + gridLog.FixedRows;
 
-  lblInfo.Caption := 'Building graph..';
+  lblInfo.Caption := rsBuildingGraph;
   lblInfo.Font.Color := clBlue;
   lblInfo.Visible := true;
 
