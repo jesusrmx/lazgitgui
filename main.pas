@@ -27,14 +27,14 @@ unit main;
 interface
 
 uses
-  Classes, SysUtils, Math, LazLogger, Forms, Controls, Graphics, Dialogs,
-  StdCtrls, ExtCtrls, ActnList, synEditTypes, SynEdit, StrUtils, FileUtil,
-  lclType, Menus, Buttons, Grids, ComCtrls, Types, fgl,
+  Classes, SysUtils, LazLogger, Forms, Controls, Graphics, Dialogs,
+  StdCtrls, ExtCtrls, ActnList, SynEdit, StrUtils, FileUtil,
+  lclType, Menus, Buttons, ComCtrls, Types,
   unitgittypes, unitifaces, unitconfig, unitprocess, unithighlighterhelper,
   unitentries, unitgitutils, unitcommon,
-  unitnewbranch, unitruncmd, unitansiescapes,
+  unitnewbranch, unitruncmd,
   unitnewtag, unitlogcache, unitlog, LConvEncoding, unitdbindex,
-  unitframelog, unitgitmgr, unitcheckouttag, unitformlog, unitcustomcmds,
+  unitgitmgr, unitcheckouttag, unitformlog, unitcustomcmds,
   unitcustcmdform;
 
 type
@@ -116,33 +116,32 @@ type
     procedure actRescanExecute(Sender: TObject);
     procedure actRestoreCommitMsgExecute(Sender: TObject);
     procedure btnStopOldClick(Sender: TObject);
-    procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
+    procedure FormCloseQuery(Sender: TObject; var {%H-}CanClose: Boolean);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure lblBranchClick(Sender: TObject);
-    procedure lblBranchContextPopup(Sender: TObject; MousePos: TPoint;
-      var Handled: Boolean);
+    procedure lblBranchContextPopup(Sender: TObject; {%H-}MousePos: TPoint;
+      var {%H-}Handled: Boolean);
     procedure lblInfoOldClick(Sender: TObject);
     procedure lstUnstagedContextPopup(Sender: TObject; MousePos: TPoint;
-      var Handled: Boolean);
+      var {%H-}Handled: Boolean);
     procedure lstUnstagedDrawItem(Control: TWinControl; Index: Integer;
       ARect: TRect; State: TOwnerDrawState);
     procedure lstUnstagedMouseDown(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
+      {%H-}Shift: TShiftState; X, Y: Integer);
   private
     fGitMgr: TGitMgr;
     fGit: IGit;
     fClickedIndex: Integer;
     fDir: string;
-    fItemIndices: TItemIndexArray;
     fLogHandler: TLogHandler;
     fPopPoint: TPoint;
     fListAlwaysDrawSelection: boolean;
     fhlHelper: THighlighterHelper;
     fCustomCommands: TCustomCommandsMgr;
     procedure CreateBranch(const binfo: PBranchInfo);
-    procedure DelayedShowMenu(Data: PtrInt);
+    procedure DelayedShowMenu({%H-}Data: PtrInt);
     procedure DoGitDiff(Data: PtrInt);
     procedure DoItemAction(Data: PtrInt);
     procedure DoCommit;
@@ -152,13 +151,13 @@ type
     procedure DoFetch;
     procedure DoPull;
     procedure OnCustomCommandClick(Sender: TObject);
-    procedure OnLogEvent(sender: TObject; thread: TRunThread; event: Integer;
+    procedure OnLogEvent({%H-}sender: TObject; {%H-}thread: TRunThread; event: Integer;
       var interrupt: boolean);
     procedure OnPopupItemClick(Sender: TObject);
     procedure OnBranchSwitch(Data: PtrInt);
     procedure OnIgnoreFileClick(Sender: TObject);
     procedure OnIgnoreTypeClick(Sender: TObject);
-    procedure OnReloadBranchMenu(Data: PtrInt);
+    procedure OnReloadBranchMenu({%H-}Data: PtrInt);
     procedure OnRestoreFileClick(Sender: TObject);
     procedure OnStageAllClick(Sender: TObject);
     procedure OnStageItemClick(Sender: TObject);
@@ -211,14 +210,11 @@ const
   MENU_LIST_STAGE_CHANGED     = 17;
   MENU_LIST_STAGE_ALL         = 18;
   MENU_LIST_UNSTAGE_ALL       = 19;
-  MENU_LIST_STAGE_SELECTION   = 20;
-  MENU_LIST_UNSTAGE_SELECTION = 21;
 
   LIST_TAG_ALL_SELECTED       = -1;
   LIST_TAG_ALL_CHANGED        = -2;
 
-  VIEWER_BUFSIZE      = 1024*4;
-  BIN_BUFSIZE         = 1024;
+  BIN_BUFSIZE                 = 1024;
 
 
 function AddPopItem(pop: TPopupMenu; caption:string; onClick:TNotifyEvent; tag: Integer): TMenuItem;
@@ -636,7 +632,6 @@ procedure TfrmMain.ItemAction(sender: TListbox; aIndex: Integer);
 var
   Entry: PFileEntry;
   cmdOut: RawByteString;
-  res: Integer;
 begin
   Entry := PFileEntry(Sender.Items.Objects[aIndex]);
   if sender=lstUnstaged then begin
@@ -687,8 +682,7 @@ end;
 procedure TfrmMain.UpdateBranchMenu;
 var
   list, branchLine: TStringList;
-  n, i: integer;
-  p, q: pchar;
+  i: integer;
   mi: TMenuItem;
 begin
   InvalidateBranchMenu;
@@ -818,6 +812,7 @@ var
   entry: PFileEntry;
 begin
   n := 0;
+  result := nil;
   SetLength(result, lstUnstaged.Count);
 
   aIndex := mi.Tag;
@@ -843,6 +838,7 @@ var
   entry: PFileEntry;
 begin
   n := 0;
+  result := nil;
   SetLength(result, lstStaged.Count);
 
   aIndex := mi.Tag;
@@ -912,14 +908,14 @@ begin
       end;
     GITMGR_EVENT_NEWTAG:
       begin
-        info := PTagInfo(data);
+        info := {%H-}PTagInfo(data);
         ShowNewTagForm(info^.data);
         Finalize(info^.data);
         dispose(info);
       end;
     GITMGR_EVENT_SWITCHTOTAG:
       begin
-        info := PTagInfo(data);
+        info := {%H-}PTagInfo(data);
         ShowSwitchToTagForm(info^.data);
         finalize(info^.data);
         dispose(info);
@@ -927,7 +923,7 @@ begin
 
     GITMGR_EVENT_NEWBRANCH:
       begin
-        binfo := PBranchInfo(data);
+        binfo := {%H-}PBranchInfo(data);
         CreateBranch(binfo);
       end;
   end;
@@ -999,7 +995,7 @@ end;
 procedure TfrmMain.UpdateCommandsBar;
 var
   btn: TToolButton;
-  i, x: Integer;
+  i: Integer;
 begin
 
   // remove the current buttons
@@ -1324,8 +1320,6 @@ begin
 end;
 
 procedure TfrmMain.DoLog;
-var
-  cmd: string;
 begin
   if actLog.Checked then begin
     panLog.Visible := true;
