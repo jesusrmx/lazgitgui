@@ -1,16 +1,92 @@
 msgid ""
 msgstr ""
-"Content-Type: text/plain; charset=UTF-8\n"
 "Project-Id-Version: \n"
 "POT-Creation-Date: \n"
 "PO-Revision-Date: \n"
+"Last-Translator: Jesus Reyes Aguilar <jesusrmx@gmail.com>\n"
 "Language-Team: \n"
-"MIME-Version: 1.0\n"
-"Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.3\n"
-"Last-Translator: Jesus Reyes Aguilar <jesusrmx@gmai.com>\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "Language: es_MX\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.3.1\n"
+
+#: main.rsaddsfilestoignorelist
+#, object-pascal-format
+msgid "Add '*%s' Files to ignore list"
+msgstr "Añadir los archivos '*%s' a la lista de ignorados"
+
+#: main.rsaddstoignorelist
+#, object-pascal-format
+msgid "Add '%s' to ignore list"
+msgstr "Añadir '%s' a la lista de ignorados"
+
+#: main.rsattag
+msgid "At tag"
+msgstr "En la etiqueta"
+
+#: main.rscancel
+msgid "Cancel"
+msgstr "Cancelar"
+
+#: main.rscouldntgettopleveldirectoryofs
+#, object-pascal-format
+msgid "Couldn't get toplevel directory of %s"
+msgstr "No pude obtener el directorio base de %s"
+
+#: main.rsdcommitsahead
+#, object-pascal-format
+msgid "%d commits ahead"
+msgstr "%d revisiones por delante"
+
+#: main.rsdcommitsbehind
+#, object-pascal-format
+msgid "%d commits behind"
+msgstr "%d revisiones detrás"
+
+#: main.rsdcommitssince
+#, object-pascal-format
+msgid "%d commits since"
+msgstr "%d revisiones desde"
+
+#: main.rsdfiles
+#, object-pascal-format
+msgid "%d files"
+msgstr "%d archivos"
+
+#: main.rsdiscardchanges
+msgid "Discard changes"
+msgstr "Desechar cambios"
+
+#: main.rsdoyouwanttopushstosa
+#, object-pascal-format
+msgid ""
+"Do you want to push \"%s\" to \"%s\"\n"
+"and setup tracking information? I will do:\n"
+"\n"
+"git push --set-upstream %1:s %0:s"
+msgstr ""
+"¿Quieres subir \"%s\" a \"%s\"\n"
+"y configurar información de seguimiento? Ejecutaré:\n"
+"\n"
+"git push --set-upstream %1:s %0:s"
+
+#: main.rsexecutingacustomcommand
+msgid "Executing a custom command"
+msgstr "Ejecutando un comando de usuario"
+
+#: main.rsfetchingfromremote
+msgid "Fetching from remote: "
+msgstr "Obteniendo cambios (fetch) del origen: "
+
+#: main.rsmerging
+msgid "MERGING"
+msgstr "FUSIÓNANDO"
+
+#: main.rsmergingconflict
+msgid "MERGING CONFLICT"
+msgstr "CONFLICTO DE FUSIÓN"
 
 #: main.rsnewbranch
 msgid "New Branch"
@@ -20,13 +96,53 @@ msgstr "Nueva Rama"
 msgid "Create a tag at this point"
 msgstr "Crear etiqueta aquí"
 
+#: main.rsnotagavailable
+msgid "No Tag available"
+msgstr "No hay etiqueta"
+
+#: main.rsnotyetimplementedforstageds
+#, object-pascal-format
+msgid "Not yet implemented for Staged: %s"
+msgstr "Aún no implementado para Preparados: %s"
+
+#: main.rsnotyetimplementedforunstageds
+#, object-pascal-format
+msgid "Not yet implemented for Unstaged: %s"
+msgstr "Aún no implementado para No Preparados: %s"
+
+#: main.rsof
+msgid "of"
+msgstr "de"
+
+#: main.rspullingfromremote
+msgid "pulling from remote: "
+msgstr "Halando"
+
+#: main.rspushingbranchwithout
+msgid "Pushing branch without tracking information"
+msgstr "Subiendo rama sin información de seguimiento"
+
+#: main.rspushingtoremotes
+#, object-pascal-format
+msgid "Pushing to remote: %s"
+msgstr "Subiendo al destino remote: %s"
+
 #: main.rspushingyourcommits
 msgid "Pushing your commits"
 msgstr "Subiendo tus cambios"
 
 #: main.rsreload
 msgid "Reload"
-msgstr "Recargar"
+msgstr "Actualizar"
+
+#: main.rsrestoreallchanged
+msgid "Restore All Changed"
+msgstr "Restaurar todo lo que haya cambiado"
+
+#: main.rsrestores
+#, object-pascal-format
+msgid "Restore '%s'"
+msgstr "Restaurar '%s'"
 
 #: main.rsrestoringworkfiles
 msgid "Restoring working files"
@@ -47,9 +163,113 @@ msgstr ""
 "\n"
 "¿Aún deseas continuar?"
 
+#: main.rssdoesnotexists
+#, object-pascal-format
+msgid "%s does not exists"
+msgstr "%s no existe"
+
+#: main.rsshasnotrackingandthere
+#, object-pascal-format
+msgid ""
+"%s has no tracking and there are \n"
+"%d remotes (%s)\n"
+"I'm not yet prepared to handle this"
+msgstr ""
+"%s no tiene información de seguimiento y hay \n"
+"%d destinos remotos (%s)\n"
+"Aún no se como manejar esta situación"
+
+#: main.rssisalreadyinignoredlist
+#, object-pascal-format
+msgid "'%s' is already in ignored list"
+msgstr "'%s' ya esta en la lista de ignorados"
+
+#: main.rsstageall
+msgid "Stage All"
+msgstr "Prepara todo"
+
+#: main.rsstagechanged
+msgid "Stage Changed"
+msgstr "Prepara los modificados"
+
+#: main.rsstages
+#, object-pascal-format
+msgid "Stage '%s'"
+msgstr "Prepara '%s'"
+
+#: main.rsthefilesisbinarydbytes
+#, object-pascal-format
+msgid "The file '%s' is binary, %d bytes"
+msgstr "El archivo '%s' es binario, tiene %d bytes"
+
 #: main.rstherearecommitsbehind
 msgid "There are commits behind, are you sure you want to push?"
-msgstr "Hay cambios remotos sin integrar, ¿Estás seguro de subir los cambios?"
+msgstr "Hay cambios remotos sin integrar, ¿Estás seguro de subir los cambios locales?"
+
+#: main.rsthetypesisalreadyintheignoredlist
+#, object-pascal-format
+msgid "The type '*%s' is already in the ignored list"
+msgstr "El tipo de archivo '*%s' ya esta en la lista de ignorados"
+
+#: main.rsthisfeaturewillbeimplementedasap
+msgid "This feature will be implemented ASAP"
+msgstr "Esta función se implementará pronto"
+
+#: main.rsthisrepositoryhasnoremotes
+msgid ""
+"This repository has no remotes defined\n"
+"I'm not yet prepared to handle this"
+msgstr ""
+"Este repositorio aún no ha definido fuentes remotas\n"
+"Aún no se como manejar esta situación"
+
+#: main.rsunstageall
+msgid "Unstage All"
+msgstr "Des preparar Todo"
+
+#: main.rsunstages
+#, object-pascal-format
+msgid "Unstage '%s'"
+msgstr "Des preparar '%s'"
+
+#: main.rsviewignoredfiles
+msgid "View Ignored Files"
+msgstr "Mostrar Archivos Ignorados"
+
+#: main.rsviewtrackedfiles
+msgid "View Tracked Files"
+msgstr "Mostrar Archivos con Seguimiento"
+
+#: main.rsviewuntrackedfiles
+msgid "View Untracked Files"
+msgstr "Mostrar Archivos sin Seguimiento"
+
+#: main.rsyesdoit
+msgid "yes, do it"
+msgstr "Sí, hazlo"
+
+#: main.rsyouareabouttoexecute
+#, object-pascal-format
+msgid ""
+"You are about to execute %s: \n"
+"\n"
+"command: %s\n"
+"\n"
+"Do you want to proceed?"
+msgstr ""
+"Estás a punto de ejecutar %s: \n"
+"\n"
+"comando: %s\n"
+"\n"
+"¿Quieres proceder?"
+
+#: main.rsyouhavetostagesomething
+msgid "You have to stage something in order to commit"
+msgstr "Tienes que preparar algo para poder confirmar los cambios."
+
+#: main.rsyourcommitmessageisempt
+msgid "Your commit message is empty!"
+msgstr "¡El mensaje de confirmación esta vacío!"
 
 #: tframelog.actgotochild.caption
 msgid "Go to child"
@@ -220,7 +440,7 @@ msgstr "Archivo de imagen"
 
 #: tfrmfilehistory.caption
 msgid "frmFileHistory"
-msgstr "Historial de archivo"
+msgstr "frmFileHistory"
 
 #: tfrmfilehistory.grid.columns[0].title.caption
 msgctxt "tfrmfilehistory.grid.columns[0].title.caption"
@@ -277,7 +497,6 @@ msgid "SHA1"
 msgstr "SHA1"
 
 #: tfrmmain.actaddcmd.caption
-#, fuzzy
 msgctxt "tfrmmain.actaddcmd.caption"
 msgid "+"
 msgstr "+"
@@ -287,14 +506,13 @@ msgid "Add a custom command"
 msgstr "Agregar un comando de usuario"
 
 #: tfrmmain.actcommit.caption
-#, fuzzy
 msgctxt "tfrmmain.actcommit.caption"
 msgid "Commit"
-msgstr "Identificador"
+msgstr "Confirmar"
 
 #: tfrmmain.actfetch.caption
 msgid "Fetch"
-msgstr ""
+msgstr "Fetch"
 
 #: tfrmmain.actinsertbranchname.caption
 msgid "Insert Branch Name"
@@ -310,15 +528,15 @@ msgstr "NL"
 
 #: tfrmmain.actpull.caption
 msgid "Pull"
-msgstr ""
+msgstr "Pull"
 
 #: tfrmmain.actpush.caption
 msgid "Push"
-msgstr ""
+msgstr "Push"
 
 #: tfrmmain.actpushdialog.caption
 msgid "Push ..."
-msgstr ""
+msgstr "Push ..."
 
 #: tfrmmain.actquit.caption
 msgid "Quit"
@@ -337,7 +555,6 @@ msgid "barCustomCmds"
 msgstr "barCustomCmds"
 
 #: tfrmmain.btnstopold.caption
-#, fuzzy
 msgctxt "tfrmmain.btnstopold.caption"
 msgid "Stp"
 msgstr "Paso"
@@ -359,25 +576,21 @@ msgid "Tag:"
 msgstr "Etiqueta:"
 
 #: tfrmmain.lblaheadbehind.caption
-#, fuzzy
 msgctxt "tfrmmain.lblaheadbehind.caption"
 msgid "-"
 msgstr "-"
 
 #: tfrmmain.lblbranch.caption
-#, fuzzy
 msgctxt "tfrmmain.lblbranch.caption"
 msgid "-"
 msgstr "-"
 
 #: tfrmmain.lblinfoold.caption
-#, fuzzy
 msgctxt "tfrmmain.lblinfoold.caption"
 msgid "Working ...."
 msgstr "Procesando ...."
 
 #: tfrmmain.lblmerging.caption
-#, fuzzy
 msgctxt "tfrmmain.lblmerging.caption"
 msgid "-"
 msgstr "-"
@@ -387,7 +600,6 @@ msgid "."
 msgstr "."
 
 #: tfrmmain.lbltag.caption
-#, fuzzy
 msgctxt "tfrmmain.lbltag.caption"
 msgid "-"
 msgstr "-"
@@ -402,11 +614,11 @@ msgstr "panButtons"
 
 #: tfrmmain.panfilestate.caption
 msgid "Modified, Not Staged."
-msgstr "Modificado, no apartado."
+msgstr "Modificado, No Preparado."
 
 #: tfrmmain.panstaged.caption
 msgid "Staged Changes (will commit)"
-msgstr "Cambios apartados (se confirmará)"
+msgstr "Cambios Preparados (a confirmar)"
 
 #: tfrmmain.panstagedcontainer.caption
 msgid "panStagedContainer"
@@ -417,9 +629,8 @@ msgid "panStatus"
 msgstr "panStatus"
 
 #: tfrmmain.panunstaged.caption
-#, fuzzy
 msgid "Unstaged Changes"
-msgstr "Cambios no apartados"
+msgstr "Cambios No Preparados"
 
 #: tfrmnewbranch.caption
 msgid "Create a new branch"
@@ -503,29 +714,24 @@ msgid "File state missing description"
 msgstr "Estado de archivo sin descripción"
 
 #: unitentries.rslazgitguifiletypechangednotstaged
-#, fuzzy
 msgid "File type changed, not staged"
-msgstr "Cambió el tipo de archivo, sin apartar"
+msgstr "Cambió el tipo de archivo. No preparado"
 
 #: unitentries.rslazgitguifiletypechangedoldtypestagedforcommit
-#, fuzzy
 msgid "File type changed, old type staged for commit"
-msgstr "Cambió el tipo de archivo, se apartó el tipo anterior para confirmar"
+msgstr "Cambió el tipo de archivo, tipo anterior preparado para confirmar"
 
 #: unitentries.rslazgitguifiletypechangedstaged
-#, fuzzy
 msgid "File type changed, staged"
-msgstr "Cambió el tipo de archivo, apartado"
+msgstr "Cambió el tipo de archivo. Preparado"
 
 #: unitentries.rslazgitguifiletypechangefilemissing
-#, fuzzy
 msgid "File type change staged, Missing"
-msgstr "Apartado el cambio en tipo de archivo, no hallado."
+msgstr "Preparado el cambio en tipo de archivo. Pero no hallado."
 
 #: unitentries.rslazgitguifiletypechangestagedmodificationnotstaged
-#, fuzzy
 msgid "File type change staged, Modification not staged"
-msgstr "Apartado el cambio en tipo de archivo, modificaciones sin apartar"
+msgstr "Preparado el cambio en tipo de archivo. Cambios sin preparar"
 
 #: unitentries.rslazgitguiignored
 msgid "Ignored"
@@ -536,14 +742,12 @@ msgid "Missing"
 msgstr "No hallado"
 
 #: unitentries.rslazgitguimodifiednotstaged
-#, fuzzy
 msgid "Modified, not staged"
-msgstr "Con cambios, no apartado"
+msgstr "Con cambios, no preparado"
 
 #: unitentries.rslazgitguiportionsstagedforcommit
-#, fuzzy
 msgid "Portions staged for commit"
-msgstr "Se apartaron porciones para confirmar cambios."
+msgstr "Preparadas porciones para confirmar"
 
 #: unitentries.rslazgitguirequiresmergeresolution
 msgid "Requires merge resolution"
@@ -551,47 +755,47 @@ msgstr "Requiere resolución de fusión"
 
 #: unitentries.rslazgitguistagedforcommit
 msgid "Staged for commit"
-msgstr "Apartado para confirmar"
+msgstr "Preparado para confirmar"
 
 #: unitentries.rslazgitguistagedforcommitmissing
 msgid "Staged for commit, missing"
-msgstr "Apartado para confirmar, no hallado"
+msgstr "Preparado para confirmar, no hallado"
 
 #: unitentries.rslazgitguistagedforremoval
 msgid "Staged for removal"
-msgstr "Apartado para su eliminación"
+msgstr "Preparado para su eliminación"
 
 #: unitentries.rslazgitguistagedforremovalstillpresent
 msgid "Staged for removal, still present"
-msgstr "Apartado para su eliminación, aún existe."
+msgstr "Preparado para su eliminación, aún existe."
 
 #: unitentries.rslazgitguistagedforrename
 msgid "Staged for Rename"
-msgstr "Aparatado para cambio de nombre"
+msgstr "Preparado para cambio de nombre"
 
 #: unitentries.rslazgitguiunmergedaddedbythem
 msgid "Unmerged, Added by Them"
-msgstr "Sin fusionar, agregado por Ellos"
+msgstr "Sin fusionar, Agregado por Ellos"
 
 #: unitentries.rslazgitguiunmergedaddedbyus
 msgid "Unmerged, Added by Us"
-msgstr "Sin fusionar, agregado por Nosotros"
+msgstr "Sin fusionar, Agregado por Nosotros"
 
 #: unitentries.rslazgitguiunmergedbothadded
 msgid "Unmerged, Both added"
-msgstr "Sin fusionar, agregado por ambos"
+msgstr "Sin fusionar, Agregado por ambos"
 
 #: unitentries.rslazgitguiunmergedbothdeleted
 msgid "Unmerged, Both deleted"
-msgstr "Sin fusionar, eliminado por ambos"
+msgstr "Sin fusionar, Eliminado por ambos"
 
 #: unitentries.rslazgitguiunmergedbothmodified
 msgid "Unmerged, Both Modified"
-msgstr "Sin fusionar, modificado por ambos"
+msgstr "Sin fusionar, Modificado por ambos"
 
 #: unitentries.rslazgitguiunmergeddeletedbythem
 msgid "Unmerged, Deleted by Them"
-msgstr "Sin fusional, Eliminado por Ellos"
+msgstr "Sin fusionar, Eliminado por Ellos"
 
 #: unitentries.rslazgitguiunmergeddeletedbyus
 msgid "Unmerged, Deleted by Us"
@@ -603,4 +807,4 @@ msgstr "Sin modificar"
 
 #: unitentries.rslazgitguiuntrackednotstaged
 msgid "Untracked, not staged"
-msgstr "Sin seguimiento, no apartado"
+msgstr "Sin seguimiento, no preparado"

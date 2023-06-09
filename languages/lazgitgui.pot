@@ -1,6 +1,78 @@
 msgid ""
 msgstr "Content-Type: text/plain; charset=UTF-8"
 
+#: main.rsaddsfilestoignorelist
+#, object-pascal-format
+msgid "Add '*%s' Files to ignore list"
+msgstr ""
+
+#: main.rsaddstoignorelist
+#, object-pascal-format
+msgid "Add '%s' to ignore list"
+msgstr ""
+
+#: main.rsattag
+msgid "At tag"
+msgstr ""
+
+#: main.rscancel
+msgid "Cancel"
+msgstr ""
+
+#: main.rscouldntgettopleveldirectoryofs
+#, object-pascal-format
+msgid "Couldn't get toplevel directory of %s"
+msgstr ""
+
+#: main.rsdcommitsahead
+#, object-pascal-format
+msgid "%d commits ahead"
+msgstr ""
+
+#: main.rsdcommitsbehind
+#, object-pascal-format
+msgid "%d commits behind"
+msgstr ""
+
+#: main.rsdcommitssince
+#, object-pascal-format
+msgid "%d commits since"
+msgstr ""
+
+#: main.rsdfiles
+#, object-pascal-format
+msgid "%d files"
+msgstr ""
+
+#: main.rsdiscardchanges
+msgid "Discard changes"
+msgstr ""
+
+#: main.rsdoyouwanttopushstosa
+#, object-pascal-format
+msgid ""
+"Do you want to push \"%s\" to \"%s\"\n"
+"and setup tracking information? I will do:\n"
+"\n"
+"git push --set-upstream %1:s %0:s"
+msgstr ""
+
+#: main.rsexecutingacustomcommand
+msgid "Executing a custom command"
+msgstr ""
+
+#: main.rsfetchingfromremote
+msgid "Fetching from remote: "
+msgstr ""
+
+#: main.rsmerging
+msgid "MERGING"
+msgstr ""
+
+#: main.rsmergingconflict
+msgid "MERGING CONFLICT"
+msgstr ""
+
 #: main.rsnewbranch
 msgid "New Branch"
 msgstr ""
@@ -9,12 +81,52 @@ msgstr ""
 msgid "Create a tag at this point"
 msgstr ""
 
+#: main.rsnotagavailable
+msgid "No Tag available"
+msgstr ""
+
+#: main.rsnotyetimplementedforstageds
+#, object-pascal-format
+msgid "Not yet implemented for Staged: %s"
+msgstr ""
+
+#: main.rsnotyetimplementedforunstageds
+#, object-pascal-format
+msgid "Not yet implemented for Unstaged: %s"
+msgstr ""
+
+#: main.rsof
+msgid "of"
+msgstr ""
+
+#: main.rspullingfromremote
+msgid "pulling from remote: "
+msgstr ""
+
+#: main.rspushingbranchwithout
+msgid "Pushing branch without tracking information"
+msgstr ""
+
+#: main.rspushingtoremotes
+#, object-pascal-format
+msgid "Pushing to remote: %s"
+msgstr ""
+
 #: main.rspushingyourcommits
 msgid "Pushing your commits"
 msgstr ""
 
 #: main.rsreload
 msgid "Reload"
+msgstr ""
+
+#: main.rsrestoreallchanged
+msgid "Restore All Changed"
+msgstr ""
+
+#: main.rsrestores
+#, object-pascal-format
+msgid "Restore '%s'"
 msgstr ""
 
 #: main.rsrestoringworkfiles
@@ -31,8 +143,102 @@ msgid ""
 "Are you sure to continue?"
 msgstr ""
 
+#: main.rssdoesnotexists
+#, object-pascal-format
+msgid "%s does not exists"
+msgstr ""
+
+#: main.rsshasnotrackingandthere
+#, object-pascal-format
+msgid ""
+"%s has no tracking and there are \n"
+"%d remotes (%s)\n"
+"I'm not yet prepared to handle this"
+msgstr ""
+
+#: main.rssisalreadyinignoredlist
+#, object-pascal-format
+msgid "'%s' is already in ignored list"
+msgstr ""
+
+#: main.rsstageall
+msgid "Stage All"
+msgstr ""
+
+#: main.rsstagechanged
+msgid "Stage Changed"
+msgstr ""
+
+#: main.rsstages
+#, object-pascal-format
+msgid "Stage '%s'"
+msgstr ""
+
+#: main.rsthefilesisbinarydbytes
+#, object-pascal-format
+msgid "The file '%s' is binary, %d bytes"
+msgstr ""
+
 #: main.rstherearecommitsbehind
 msgid "There are commits behind, are you sure you want to push?"
+msgstr ""
+
+#: main.rsthetypesisalreadyintheignoredlist
+#, object-pascal-format
+msgid "The type '*%s' is already in the ignored list"
+msgstr ""
+
+#: main.rsthisfeaturewillbeimplementedasap
+msgid "This feature will be implemented ASAP"
+msgstr ""
+
+#: main.rsthisrepositoryhasnoremotes
+msgid ""
+"This repository has no remotes defined\n"
+"I'm not yet prepared to handle this"
+msgstr ""
+
+#: main.rsunstageall
+msgid "Unstage All"
+msgstr ""
+
+#: main.rsunstages
+#, object-pascal-format
+msgid "Unstage '%s'"
+msgstr ""
+
+#: main.rsviewignoredfiles
+msgid "View Ignored Files"
+msgstr ""
+
+#: main.rsviewtrackedfiles
+msgid "View Tracked Files"
+msgstr ""
+
+#: main.rsviewuntrackedfiles
+msgid "View Untracked Files"
+msgstr ""
+
+#: main.rsyesdoit
+msgid "yes, do it"
+msgstr ""
+
+#: main.rsyouareabouttoexecute
+#, object-pascal-format
+msgid ""
+"You are about to execute %s: \n"
+"\n"
+"command: %s\n"
+"\n"
+"Do you want to proceed?"
+msgstr ""
+
+#: main.rsyouhavetostagesomething
+msgid "You have to stage something in order to commit"
+msgstr ""
+
+#: main.rsyourcommitmessageisempt
+msgid "Your commit message is empty!"
 msgstr ""
 
 #: tframelog.actgotochild.caption
