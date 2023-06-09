@@ -33,7 +33,7 @@ msgid "Restoring working files"
 msgstr "Restaurando archivos de trabajo"
 
 #: main.rsrestoringworkfileswarning
-#, fuzzy, object-pascal-format
+#, object-pascal-format
 msgid ""
 "You are about to discard changes in %s,\n"
 "\n"
@@ -45,7 +45,7 @@ msgstr ""
 "\n"
 "La información se perderá y esta acción no se puede deshacer\n"
 "\n"
-"¿Estás seguro de continuar?"
+"¿Aún deseas continuar?"
 
 #: main.rstherearecommitsbehind
 msgid "There are commits behind, are you sure you want to push?"
@@ -61,7 +61,7 @@ msgstr "Ir al cambio actual"
 
 #: tframelog.actgotoparent.caption
 msgid "Go to Parent"
-msgstr "Ir al padre de este cambio"
+msgstr "Ir al padre de éste cambio"
 
 #: tframelog.actreload.caption
 msgid "R"
@@ -153,25 +153,25 @@ msgstr "Rama:"
 
 #: tfrmcheckoutag.lbltag.caption
 msgid "lblTag"
-msgstr ""
+msgstr "lblTag"
 
 #: tfrmcustomcommands.btnadd.caption
 msgctxt "tfrmcustomcommands.btnadd.caption"
 msgid "+"
-msgstr ""
+msgstr "+"
 
 #: tfrmcustomcommands.btndel.caption
 msgctxt "tfrmcustomcommands.btndel.caption"
 msgid "-"
-msgstr ""
+msgstr "-"
 
 #: tfrmcustomcommands.btndown.caption
 msgid "v"
-msgstr ""
+msgstr "v"
 
 #: tfrmcustomcommands.btnup.caption
 msgid "^"
-msgstr ""
+msgstr "^"
 
 #: tfrmcustomcommands.caption
 msgid "Custom Commands"
@@ -179,15 +179,15 @@ msgstr "Comandos del usuario"
 
 #: tfrmcustomcommands.chkask.caption
 msgid "Ask confirmation before excution."
-msgstr "Pedir confirmación antes de ejecutar"
+msgstr "Pedir confirmación antes de ejecutar."
 
 #: tfrmcustomcommands.chkindialog.caption
 msgid "Run in a dialog window."
-msgstr "Ejecutar en una ventana"
+msgstr "Ejecutar en una ventana."
 
 #: tfrmcustomcommands.chkstatus.caption
 msgid "Rescan after execution."
-msgstr "Actualizar después de ejecutar"
+msgstr "Actualizar después de ejecutar."
 
 #: tfrmcustomcommands.groupbox1.caption
 msgid "Command properties"
@@ -196,7 +196,7 @@ msgstr "Propiedades del comando"
 #: tfrmcustomcommands.lblinfo.caption
 msgctxt "tfrmcustomcommands.lblinfo.caption"
 msgid "-"
-msgstr ""
+msgstr "-"
 
 #: tfrmcustomcommands.txtcommand.hint
 msgid "Command (make sure it starts with 'git')"
@@ -216,7 +216,7 @@ msgstr "Descripción"
 
 #: tfrmcustomcommands.txtimage.texthint
 msgid "Image filename"
-msgstr "Nombre de imágen"
+msgstr "Archivo de imagen"
 
 #: tfrmfilehistory.caption
 msgid "frmFileHistory"
@@ -276,17 +276,162 @@ msgctxt "tfrmlog.flog.gridlog.columns[5].title.caption"
 msgid "SHA1"
 msgstr "SHA1"
 
+#: tfrmmain.actaddcmd.caption
+#, fuzzy
+msgctxt "tfrmmain.actaddcmd.caption"
+msgid "+"
+msgstr "+"
+
+#: tfrmmain.actaddcmd.hint
+msgid "Add a custom command"
+msgstr "Agregar un comando de usuario"
+
+#: tfrmmain.actcommit.caption
+#, fuzzy
+msgctxt "tfrmmain.actcommit.caption"
+msgid "Commit"
+msgstr "Identificador"
+
+#: tfrmmain.actfetch.caption
+msgid "Fetch"
+msgstr ""
+
+#: tfrmmain.actinsertbranchname.caption
+msgid "Insert Branch Name"
+msgstr "Insertar Nombre de Rama"
+
+#: tfrmmain.actlog.caption
+msgid "L"
+msgstr "L"
+
+#: tfrmmain.actnewlog.caption
+msgid "NL"
+msgstr "NL"
+
+#: tfrmmain.actpull.caption
+msgid "Pull"
+msgstr ""
+
+#: tfrmmain.actpush.caption
+msgid "Push"
+msgstr ""
+
+#: tfrmmain.actpushdialog.caption
+msgid "Push ..."
+msgstr ""
+
+#: tfrmmain.actquit.caption
+msgid "Quit"
+msgstr "Salir"
+
+#: tfrmmain.actrescan.caption
+msgid "Rescan"
+msgstr "Actualizar"
+
+#: tfrmmain.actrestorecommitmsg.caption
+msgid "Restore Commit Msg"
+msgstr "Restaurar Mensaje"
+
+#: tfrmmain.barcustomcmds.caption
+msgid "barCustomCmds"
+msgstr "barCustomCmds"
+
+#: tfrmmain.btnstopold.caption
+#, fuzzy
+msgctxt "tfrmmain.btnstopold.caption"
+msgid "Stp"
+msgstr "Paso"
+
+#: tfrmmain.caption
+msgid "frmMain"
+msgstr "frmMain"
+
+#: tfrmmain.label1.caption
+msgid "Branch:"
+msgstr "Rama:"
+
+#: tfrmmain.label2.caption
+msgid "Upstream:"
+msgstr "Origen: "
+
+#: tfrmmain.label3.caption
+msgid "Tag:"
+msgstr "Etiqueta:"
+
+#: tfrmmain.lblaheadbehind.caption
+#, fuzzy
+msgctxt "tfrmmain.lblaheadbehind.caption"
+msgid "-"
+msgstr "-"
+
+#: tfrmmain.lblbranch.caption
+#, fuzzy
+msgctxt "tfrmmain.lblbranch.caption"
+msgid "-"
+msgstr "-"
+
+#: tfrmmain.lblinfoold.caption
+#, fuzzy
+msgctxt "tfrmmain.lblinfoold.caption"
+msgid "Working ...."
+msgstr "Procesando ...."
+
+#: tfrmmain.lblmerging.caption
+#, fuzzy
+msgctxt "tfrmmain.lblmerging.caption"
+msgid "-"
+msgstr "-"
+
+#: tfrmmain.lblremote.caption
+msgid "."
+msgstr "."
+
+#: tfrmmain.lbltag.caption
+#, fuzzy
+msgctxt "tfrmmain.lbltag.caption"
+msgid "-"
+msgstr "-"
+
+#: tfrmmain.menuitem1.caption
+msgid "File"
+msgstr "Archivo"
+
+#: tfrmmain.pancommit.caption
+msgid "panButtons"
+msgstr "panButtons"
+
+#: tfrmmain.panfilestate.caption
+msgid "Modified, Not Staged."
+msgstr "Modificado, no apartado."
+
+#: tfrmmain.panstaged.caption
+msgid "Staged Changes (will commit)"
+msgstr "Cambios apartados (se confirmará)"
+
+#: tfrmmain.panstagedcontainer.caption
+msgid "panStagedContainer"
+msgstr "panStagedContainer"
+
+#: tfrmmain.panstatus.caption
+msgid "panStatus"
+msgstr "panStatus"
+
+#: tfrmmain.panunstaged.caption
+#, fuzzy
+msgid "Unstaged Changes"
+msgstr "Cambios no apartados"
+
 #: tfrmnewbranch.caption
 msgid "Create a new branch"
 msgstr "Crear nueva rama"
 
 #: tfrmnewbranch.chkfetch.caption
 msgid "Fetch Tracked Branch"
-msgstr "Recibir rama"
+msgstr "Obtener (fetch) cambios remotos"
 
 #: tfrmnewbranch.chkswitchto.caption
 msgid "Switch to the new branch"
-msgstr "Cargar la nueva rama"
+msgstr "Cambiar a la nueva rama"
 
 #: tfrmnewbranch.label1.caption
 msgid "Options"
@@ -307,7 +452,7 @@ msgstr "Nueva etiqueta"
 
 #: tfrmnewtag.chkannotated.caption
 msgid "Annotated tag."
-msgstr "Etiqueta con propiedades"
+msgstr "Etiqueta con propiedades."
 
 #: tfrmnewtag.label1.caption
 msgctxt "tfrmnewtag.label1.caption"
@@ -317,7 +462,7 @@ msgstr "Nombre"
 #: tfrmnewtag.lblinfo.caption
 msgctxt "tfrmnewtag.lblinfo.caption"
 msgid "-"
-msgstr ""
+msgstr "-"
 
 #: tfrmnewtag.lblmsg.caption
 msgid "Message:"
@@ -346,109 +491,116 @@ msgstr "Cerrar en caso de ejecución exitosa"
 #: tfrmruncommand.lblcaption.caption
 msgctxt "tfrmruncommand.lblcaption.caption"
 msgid "-"
-msgstr ""
+msgstr "-"
 
 #: tfrmruncommand.lblresult.caption
 msgctxt "tfrmruncommand.lblresult.caption"
 msgid "-"
-msgstr ""
+msgstr "-"
 
 #: unitentries.rslazgitguifilestatemissingdescription
 msgid "File state missing description"
-msgstr ""
+msgstr "Estado de archivo sin descripción"
 
 #: unitentries.rslazgitguifiletypechangednotstaged
+#, fuzzy
 msgid "File type changed, not staged"
-msgstr ""
+msgstr "Cambió el tipo de archivo, sin apartar"
 
 #: unitentries.rslazgitguifiletypechangedoldtypestagedforcommit
+#, fuzzy
 msgid "File type changed, old type staged for commit"
-msgstr ""
+msgstr "Cambió el tipo de archivo, se apartó el tipo anterior para confirmar"
 
 #: unitentries.rslazgitguifiletypechangedstaged
+#, fuzzy
 msgid "File type changed, staged"
-msgstr ""
+msgstr "Cambió el tipo de archivo, apartado"
 
 #: unitentries.rslazgitguifiletypechangefilemissing
+#, fuzzy
 msgid "File type change staged, Missing"
-msgstr ""
+msgstr "Apartado el cambio en tipo de archivo, no hallado."
 
 #: unitentries.rslazgitguifiletypechangestagedmodificationnotstaged
+#, fuzzy
 msgid "File type change staged, Modification not staged"
-msgstr ""
+msgstr "Apartado el cambio en tipo de archivo, modificaciones sin apartar"
 
 #: unitentries.rslazgitguiignored
 msgid "Ignored"
-msgstr ""
+msgstr "Ignorados"
 
 #: unitentries.rslazgitguimissing
 msgid "Missing"
-msgstr ""
+msgstr "No hallado"
 
 #: unitentries.rslazgitguimodifiednotstaged
+#, fuzzy
 msgid "Modified, not staged"
-msgstr ""
+msgstr "Con cambios, no apartado"
 
 #: unitentries.rslazgitguiportionsstagedforcommit
+#, fuzzy
 msgid "Portions staged for commit"
-msgstr ""
+msgstr "Se apartaron porciones para confirmar cambios."
 
 #: unitentries.rslazgitguirequiresmergeresolution
 msgid "Requires merge resolution"
-msgstr ""
+msgstr "Requiere resolución de fusión"
 
 #: unitentries.rslazgitguistagedforcommit
 msgid "Staged for commit"
-msgstr ""
+msgstr "Apartado para confirmar"
 
 #: unitentries.rslazgitguistagedforcommitmissing
 msgid "Staged for commit, missing"
-msgstr ""
+msgstr "Apartado para confirmar, no hallado"
 
 #: unitentries.rslazgitguistagedforremoval
 msgid "Staged for removal"
-msgstr ""
+msgstr "Apartado para su eliminación"
 
 #: unitentries.rslazgitguistagedforremovalstillpresent
 msgid "Staged for removal, still present"
-msgstr ""
+msgstr "Apartado para su eliminación, aún existe."
 
 #: unitentries.rslazgitguistagedforrename
 msgid "Staged for Rename"
-msgstr ""
+msgstr "Aparatado para cambio de nombre"
 
 #: unitentries.rslazgitguiunmergedaddedbythem
 msgid "Unmerged, Added by Them"
-msgstr ""
+msgstr "Sin fusionar, agregado por Ellos"
 
 #: unitentries.rslazgitguiunmergedaddedbyus
 msgid "Unmerged, Added by Us"
-msgstr ""
+msgstr "Sin fusionar, agregado por Nosotros"
 
 #: unitentries.rslazgitguiunmergedbothadded
 msgid "Unmerged, Both added"
-msgstr ""
+msgstr "Sin fusionar, agregado por ambos"
 
 #: unitentries.rslazgitguiunmergedbothdeleted
 msgid "Unmerged, Both deleted"
-msgstr ""
+msgstr "Sin fusionar, eliminado por ambos"
 
 #: unitentries.rslazgitguiunmergedbothmodified
 msgid "Unmerged, Both Modified"
-msgstr ""
+msgstr "Sin fusionar, modificado por ambos"
 
 #: unitentries.rslazgitguiunmergeddeletedbythem
 msgid "Unmerged, Deleted by Them"
-msgstr ""
+msgstr "Sin fusional, Eliminado por Ellos"
 
 #: unitentries.rslazgitguiunmergeddeletedbyus
 msgid "Unmerged, Deleted by Us"
-msgstr ""
+msgstr "Sin fusionar, Eliminado por Nosotros"
 
 #: unitentries.rslazgitguiunmodified
 msgid "Unmodified"
-msgstr ""
+msgstr "Sin modificar"
 
 #: unitentries.rslazgitguiuntrackednotstaged
 msgid "Untracked, not staged"
-msgstr ""
+msgstr "Sin seguimiento, no apartado"
