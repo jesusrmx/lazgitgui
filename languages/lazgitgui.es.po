@@ -10,7 +10,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.3.1\n"
+"X-Generator: Poedit 2.3\n"
 
 #: main.rsnewbranch
 msgctxt "main.rsnewbranch"
@@ -547,7 +547,7 @@ msgstr "El comando debe comenzar con 'git '"
 #: unitcommon.rscommit
 msgctxt "unitcommon.rscommit"
 msgid "Commit"
-msgstr "Cambio"
+msgstr "Revisión"
 
 #: unitcommon.rscommits
 #, object-pascal-format
@@ -1165,4 +1165,3 @@ msgstr "Sin modificar"
 #: unitentries.rslazgitguiuntrackednotstaged
 msgid "Untracked, not staged"
 msgstr "Sin seguimiento, no preparado"
-
