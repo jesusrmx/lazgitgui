@@ -323,15 +323,15 @@ msgstr "¡El mensaje de confirmación esta vacío!"
 
 #: tframelog.actgotochild.caption
 msgid "Go to child"
-msgstr "Ir al hijo de este cambio"
+msgstr "Ir al hijo de esta revisión"
 
 #: tframelog.actgotohead.caption
 msgid "Go to head"
-msgstr "Ir al cambio actual"
+msgstr "Ir a la revisión actual"
 
 #: tframelog.actgotoparent.caption
 msgid "Go to Parent"
-msgstr "Ir al padre de éste cambio"
+msgstr "Ir al padre de esta revisión"
 
 #: tframelog.actreload.caption
 msgid "R"
@@ -353,7 +353,7 @@ msgstr "Paso"
 #: tframelog.gridlog.columns[0].title.caption
 msgctxt "tframelog.gridlog.columns[0].title.caption"
 msgid "RecNo"
-msgstr "RegNo"
+msgstr "Núm"
 
 #: tframelog.gridlog.columns[1].title.caption
 msgctxt "tframelog.gridlog.columns[1].title.caption"
@@ -519,7 +519,7 @@ msgstr "Historial"
 #: tfrmlog.flog.gridlog.columns[0].title.caption
 msgctxt "tfrmlog.flog.gridlog.columns[0].title.caption"
 msgid "RecNo"
-msgstr "RegNo"
+msgstr "Núm"
 
 #: tfrmlog.flog.gridlog.columns[1].title.caption
 msgctxt "tfrmlog.flog.gridlog.columns[1].title.caption"
@@ -815,7 +815,7 @@ msgstr "Cambio"
 #: unitcommon.rscommits
 #, object-pascal-format
 msgid "Commit: %s"
-msgstr "Cambio: %s"
+msgstr "Revisión: %s"
 
 #: unitcommon.rscouldntgettopleveldirectoryofs
 #, object-pascal-format
@@ -825,11 +825,11 @@ msgstr "No pude obtener el directorio base de %s"
 
 #: unitcommon.rscreateabranchatthiscommit
 msgid "Create a branch at this commit"
-msgstr "Crear una rama en este cambio"
+msgstr "Crear una rama en esta revisión"
 
 #: unitcommon.rscreateatagatthiscommit
 msgid "Create a tag at this commit"
-msgstr "Crear una etiqueta en este cambio"
+msgstr "Crear una etiqueta en esta revisión"
 
 #: unitcommon.rsdcommitsahead
 #, object-pascal-format
@@ -975,7 +975,7 @@ msgstr "Crear etiqueta aquí"
 
 #: unitcommon.rsnocommitset
 msgid "No commit set"
-msgstr "Cambio Id no ajustado"
+msgstr "Falta Id revisión"
 
 #: unitcommon.rsnoreferingbranchselected
 msgid "No refering branch selected"
@@ -1093,7 +1093,7 @@ msgstr ""
 #: unitcommon.rsresetstothiscommit
 #, object-pascal-format
 msgid "Reset %s to this commit"
-msgstr "Restaurar %s a como estaba éste cambio"
+msgstr "Restaurar %s a esta revisión"
 
 #: unitcommon.rsrestoreallchanged
 msgctxt "unitcommon.rsrestoreallchanged"
@@ -1351,7 +1351,7 @@ msgstr "Preparado el cambio en tipo de archivo. Pero no hallado."
 
 #: unitentries.rslazgitguifiletypechangestagedmodificationnotstaged
 msgid "File type change staged, Modification not staged"
-msgstr "Preparado el cambio en tipo de archivo. Cambios sin preparar"
+msgstr "Cambio en tipo de archivo ya preparada. Modificaciones sin preparar"
 
 #: unitentries.rslazgitguiignored
 msgid "Ignored"
@@ -1363,7 +1363,7 @@ msgstr "No hallado"
 
 #: unitentries.rslazgitguimodifiednotstaged
 msgid "Modified, not staged"
-msgstr "Con cambios, no preparado"
+msgstr "Modificado, no preparado"
 
 #: unitentries.rslazgitguiportionsstagedforcommit
 msgid "Portions staged for commit"
