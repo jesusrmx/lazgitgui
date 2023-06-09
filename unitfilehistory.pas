@@ -83,6 +83,12 @@ implementation
 
 {$R *.lfm}
 
+const
+  COLTAG_DATE                 = 0;
+  COLTAG_AUTHOR               = 1;
+  COLTAG_SUBJECT              = 2;
+  COLTAG_SHA1                 = 3;
+
 { TfrmFileHistory }
 
 procedure TfrmFileHistory.FormCloseQuery(Sender: TObject; var CanClose: Boolean
@@ -107,14 +113,18 @@ procedure TfrmFileHistory.FormShow(Sender: TObject);
 var
   col: TCollectionItem;
   gcol: TGridColumn;
+  i: Integer;
 begin
+  for i:=0 to grid.Columns.Count-1 do
+    grid.Columns[i].Tag := i;
+
   fConfig.OpenConfig;
   fConfig.ReadWindow(Self, 'frmFileHistory', SECTION_GEOMETRY);
   fConfig.ReadInteger('frmFileHistory.grid.height', grid.Height, SECTION_GEOMETRY);
   for col in grid.Columns do begin
     gcol := TGridColumn(col);
     if gcol.SizePriority=0 then
-      gcol.Width := fConfig.ReadInteger('frmFileHistory.grid.'+gcol.Title.caption+'.width', gcol.width, SECTION_GEOMETRY);
+      gcol.Width := fConfig.ReadInteger('frmFileHistory.grid.coltag'+IntToStr(gcol.tag)+'.width', gcol.width, SECTION_GEOMETRY);
   end;
   fConfig.CloseConfig;
 end;
@@ -129,11 +139,11 @@ begin
     exit;
   aIndex := aRow - grid.FixedRows;
   x := aRect.Left + 7;
-  case grid.Columns[aCol].Title.Caption of
-    'Date':     s := fHistory[aIndex].Date;
-    'Author':   s := fHistory[aIndex].Author;
-    'Subject':  s := fHistory[aIndex].Subject;
-    'Commit':   s := fHistory[aIndex].CommitOID;
+  case grid.Columns[aCol].tag of
+    COLTAG_DATE:    s := fHistory[aIndex].Date;
+    COLTAG_AUTHOR:  s := fHistory[aIndex].Author;
+    COLTAG_SUBJECT: s := fHistory[aIndex].Subject;
+    COLTAG_SHA1:    s := fHistory[aIndex].CommitOID;
   end;
   grid.Canvas.Brush.Style := bsClear;
   grid.Canvas.TextOut(x, aRect.Top, s);
@@ -147,7 +157,7 @@ var
 begin
   if isColumn then begin
     col := grid.Columns[Index];
-    fConfig.WriteInteger('frmFileHistory.grid.'+col.Title.caption+'.width', col.Width, SECTION_GEOMETRY);
+    fConfig.WriteInteger('frmFileHistory.grid.coltag'+IntToStr(col.Tag)+'.width', col.Width, SECTION_GEOMETRY);
   end;
 end;
 
