@@ -157,6 +157,7 @@ type
   private
     fActive: boolean;
     fConfig: IConfig;
+    fFiltered: boolean;
     fGit: IGit;
     fGitMgr: TGitMgr;
     fhlHelper: THighlighterHelper;
@@ -190,6 +191,7 @@ type
     procedure AddTagsMenu;
     procedure AddExtraMenus;
     procedure SetActive(AValue: boolean);
+    procedure SetFiltered(AValue: boolean);
     procedure SetGitMgr(AValue: TGitMgr);
     procedure ObservedChanged(Sender:TObject; what: Integer; data: PtrInt);
     procedure ShowChanges(aRow: Integer);
@@ -205,6 +207,8 @@ type
     procedure SearchOrFilter(txt: string);
     procedure SearchLog(txt: string; forward: boolean; startRow:Integer=-1);
     procedure FilterLog(txt: string);
+  protected
+    property Filtered: boolean read fFiltered write SetFiltered;
   public
     procedure Clear;
     procedure UpdateGridRows;
@@ -1245,6 +1249,29 @@ begin
 
 end;
 
+procedure TframeLog.SetFiltered(AValue: boolean);
+var
+  col: TGridColumn;
+begin
+  if fFiltered = AValue then Exit;
+  fFiltered := AValue;
+
+  if fFiltered then begin
+    btnFilter.Tag := gridLog.Row;
+  end else
+    fLogCache.DbIndex.SetFilter(nil);
+
+  gridLog.RowCount := fLogCache.DbIndex.Count + gridLog.FixedRows;
+
+  col := ColumnByTag(COLTAG_GRAPH);
+  col.Visible := fFiltered=false;
+
+  if not fFiltered then begin
+    LaunchGraphBuildingThread;
+    gridLog.Row := btnFilter.Tag;
+  end;
+end;
+
 procedure TframeLog.SetGitMgr(AValue: TGitMgr);
 begin
   if fGitMgr = AValue then Exit;
@@ -1498,8 +1525,58 @@ begin
 end;
 
 procedure TframeLog.FilterLog(txt: string);
+var
+  L: TStringList;
+  i, aIndex, count: Integer;
+  aItem: TLogItem;
+  found: boolean;
+  filterArray: TIntArray;
 begin
 
+  if txt='' then begin
+    if Filtered then
+      Filtered := false;
+    exit;
+  end;
+
+  L := TStringList.Create;
+  try
+    L.DelimitedText := lowercase(txt);
+
+    count := 0;
+    filterArray := nil;
+    SetLength(filterArray, fLogCache.DbIndex.Count(true));
+
+    aIndex := 0;
+    while aIndex<fLogCache.DbIndex.Count(true) do begin
+      fLogCache.DbIndex.LoadItem(aIndex, aItem, true);
+
+      for i:=0 to L.Count-1 do begin
+
+        found := pos(L[i], aItem.CommitOID)>0;
+        if not found then
+          found := pos(L[i], lowercase(aItem.author))>0;
+        if not found then
+          found := pos(L[i], lowercase(aItem.Subject))>0;
+
+        if found then begin
+          filterArray[count] := aIndex;
+          inc(count);
+        end;
+      end;
+
+      aIndex += 1;
+    end;
+
+    SetLength(filterArray, count);
+    if count=0 then
+      exit;
+
+    fLogCache.DbIndex.SetFilter(filterArray);
+    Filtered := true;
+  finally
+    L.Free;
+  end;
 end;
 
 procedure TframeLog.Clear;
