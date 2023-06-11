@@ -6,7 +6,7 @@ uses
   {$IFDEF UNIX}
   cthreads,
   {$ENDIF}
-  SysUtils, Classes, DateUtils, LazLogger, unitLogCache, unitdbindex, unitgit,
+  SysUtils, Classes, DateUtils, LazLogger, unitdbindex, unitgit,
   unitifaces, unitprocess, unitentries
   { you can add units after this };
 
@@ -40,9 +40,9 @@ var
   withRecNum: boolean = true;
   withHeaders: boolean = true;
   withIncOffsets: boolean = true;
-  withInheritance: boolean = true;
+  withInheritance: boolean = false;
   withIntervals: boolean = true;
-  withInOrder: boolean = true;
+  withInOrder: boolean = false;
   withTopo: boolean = true;
   withReindex: boolean = false;
 
@@ -617,6 +617,7 @@ procedure DoIntervals(db: TDbIndex);
 var
   i: Integer;
   next: Int64;
+  aItem: TLogItem;
 begin
   if withIntervals then begin
     if withHeaders then begin
@@ -625,14 +626,14 @@ begin
     end;
     next := MAXINT;
     for i:=0 to db.Count-1 do begin
-      db.LoadItem(i);
-      if (Next=MAXINT) or (i=db.Count-1) or (Next<db.Item.CommiterDate) then begin
-        aDir := GetItemStr(db.Item);
+      db.LoadItem(i, aItem);
+      if (Next=MAXINT) or (i=db.Count-1) or (Next<aItem.CommiterDate) then begin
+        aDir := GetItemStr(aItem);
         if withRecNum then
           DbgOut('%8d%s',[i+1,SEP]);
         DebugLn('%s',[aDir]);
       end;
-      Next := db.Item.CommiterDate;
+      Next := aItem.CommiterDate;
     end;
   end;
 end;
@@ -641,6 +642,7 @@ procedure DoInheritance(db: TDbIndex);
 var
   i: Integer;
   nextoid, aDir: string;
+  aItem: TLogItem;
 begin
   if withInheritance then begin
     if withHeaders then begin
@@ -649,14 +651,14 @@ begin
     end;
     nextoid := '';
     for i:=0 to db.Count-1 do begin
-      db.LoadItem(i);
-      if (i=0) or (i=db.Count-1) or (Nextoid<>db.Item.CommitOID) then begin
-        aDir := GetItemStr(db.Item);
+      db.LoadItem(i, aItem);
+      if (i=0) or (i=db.Count-1) or (Nextoid<>aItem.CommitOID) then begin
+        aDir := GetItemStr(aItem);
         if withRecNum then
           DbgOut('%8d%s',[i+1,SEP]);
         DebugLn('%s',[aDir]);
       end;
-      nextoid := db.Item.ParentOID;
+      nextoid := aItem.ParentOID;
     end;
   end;
 end;
@@ -665,6 +667,7 @@ procedure DoInOrder(db: TDbIndex);
 var
   i: Integer;
   aDir: string;
+  aItem: TLogItem;
 begin
   if withInOrder then begin
     if withHeaders then begin
@@ -672,8 +675,8 @@ begin
       DebugLn('Listing in index order');
     end;
     for i:=0 to db.Count-1 do begin
-      db.LoadItem(i);
-      aDir := GetItemStr(db.Item);
+      db.LoadItem(i, aItem);
+      aDir := GetItemStr(aItem);
       if withRecNum then
         DbgOut('%8d%s',[i+1,SEP]);
       DebugLn('%s',[aDir]);
