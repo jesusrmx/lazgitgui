@@ -66,6 +66,38 @@ msgstr ""
 msgid "FH"
 msgstr ""
 
+#: tframelog.btnfilter.caption
+msgid "Y"
+msgstr ""
+
+#: tframelog.btnfilter.hint
+msgid "Filter"
+msgstr ""
+
+#: tframelog.btnnext.caption
+msgid ">"
+msgstr ""
+
+#: tframelog.btnnext.hint
+msgid "Next"
+msgstr ""
+
+#: tframelog.btnprev.caption
+msgid "<"
+msgstr ""
+
+#: tframelog.btnprev.hint
+msgid "Previous"
+msgstr ""
+
+#: tframelog.btnsearch.caption
+msgid "S"
+msgstr ""
+
+#: tframelog.btnsearch.hint
+msgid "Search"
+msgstr ""
+
 #: tframelog.btnstop.caption
 msgctxt "tframelog.btnstop.caption"
 msgid "Stp"
@@ -124,6 +156,10 @@ msgstr ""
 
 #: tframelog.radtree.caption
 msgid "Tree"
+msgstr ""
+
+#: tframelog.txtsearch.texthint
+msgid "Search all fields"
 msgstr ""
 
 #: tfrmcheckoutag.caption

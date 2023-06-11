@@ -98,6 +98,9 @@ type
     actShowChanges: TAction;
     actLstLog: TActionList;
     btnStop: TSpeedButton;
+    btnPrev: TSpeedButton;
+    btnNext: TSpeedButton;
+    txtSearch: TEdit;
     gridLog: TDrawGrid;
     lblInfo: TLabel;
     MenuItem1: TMenuItem;
@@ -118,6 +121,8 @@ type
     radTree: TRadioButton;
     radPatch: TRadioButton;
     btnShowFileHistory: TSpeedButton;
+    btnFilter: TSpeedButton;
+    btnSearch: TSpeedButton;
     splitChanges: TSplitter;
     Splitter2: TSplitter;
     treeFiles: TTreeView;
@@ -128,6 +133,10 @@ type
     procedure actReloadExecute(Sender: TObject);
     procedure actShowChangesExecute(Sender: TObject);
     procedure actShowFileHistoryExecute(Sender: TObject);
+    procedure btnFilterClick(Sender: TObject);
+    procedure btnNextClick(Sender: TObject);
+    procedure btnPrevClick(Sender: TObject);
+    procedure btnSearchClick(Sender: TObject);
     procedure btnStopClick(Sender: TObject);
     procedure gridLogContextPopup(Sender: TObject; MousePos: TPoint;
       var Handled: Boolean);
@@ -143,6 +152,8 @@ type
     procedure treeFilesExpanding(Sender: TObject; Node: TTreeNode;
       var AllowExpansion: Boolean);
     procedure treeFilesSelectionChanged(Sender: TObject);
+    procedure txtSearchChange(Sender: TObject);
+    procedure txtSearchKeyPress(Sender: TObject; var Key: char);
   private
     fActive: boolean;
     fConfig: IConfig;
@@ -155,6 +166,7 @@ type
     fWithArrows: boolean;
     fCommitBrowser: TCommitBrowser;
     fCurrentItem: TLogItem;
+    procedure CheckSearchButtons;
     procedure OnContextPopLogClick(Sender: TObject);
     procedure OnCreateBranchClick(Sender: TObject);
     procedure OnDeleteBranchClick(Sender: TObject);
@@ -189,6 +201,9 @@ type
     procedure CreateDummyDirNodeClass(Sender: TCustomTreeView; var NodeClass: TTreeNodeClass);
     procedure UpdateMode(Data: PtrInt);
     function  ColumnByTag(aTag: Integer): TGridColumn;
+    procedure SearchOrFilter(txt: string);
+    procedure SearchLog(txt: string; forward: boolean; startRow:Integer=-1);
+    procedure FilterLog(txt: string);
   public
     procedure Clear;
     procedure UpdateGridRows;
@@ -617,6 +632,26 @@ begin
   f.Show;
 end;
 
+procedure TframeLog.btnFilterClick(Sender: TObject);
+begin
+  CheckSearchButtons;
+end;
+
+procedure TframeLog.btnNextClick(Sender: TObject);
+begin
+  SearchLog(txtSearch.Text, true);
+end;
+
+procedure TframeLog.btnPrevClick(Sender: TObject);
+begin
+  SearchLog(txtSearch.Text, false);
+end;
+
+procedure TframeLog.btnSearchClick(Sender: TObject);
+begin
+  CheckSearchButtons;
+end;
+
 procedure TframeLog.btnStopClick(Sender: TObject);
 begin
   btnStop.Tag := 1;
@@ -690,6 +725,19 @@ begin
       end;
     end;
     actShowFileHistory.Enabled := not isTree;
+  end;
+end;
+
+procedure TframeLog.txtSearchChange(Sender: TObject);
+begin
+  CheckSearchButtons;
+end;
+
+procedure TframeLog.txtSearchKeyPress(Sender: TObject; var Key: char);
+begin
+  if key=#13 then begin
+    SearchOrFilter(txtSearch.Text);
+    key := #0;
   end;
 end;
 
@@ -864,6 +912,12 @@ var
   mi: TMenuItem absolute Sender;
 begin
   ShowMessageFmt('You really got me: %s',[mi.Caption]);
+end;
+
+procedure TframeLog.CheckSearchButtons;
+begin
+  btnPrev.Enabled := btnSearch.Down and (Length(txtSearch.Text)>0);
+  btnNext.Enabled := btnPrev.Enabled;
 end;
 
 procedure TframeLog.OnCreateBranchClick(Sender: TObject);
@@ -1356,6 +1410,80 @@ begin
       result := gridLog.Columns[i];
       break;
     end;
+end;
+
+procedure TframeLog.SearchOrFilter(txt: string);
+begin
+  if btnSearch.Down then  SearchLog(txt, true)
+  else                    FilterLog(txt);
+end;
+
+procedure TframeLog.SearchLog(txt: string; forward: boolean; startRow:Integer=-1);
+var
+  L: TStringList;
+  i, delta, aRow, aIndex, anyRow, count: Integer;
+  aItem: TLogItem;
+  found: boolean;
+begin
+  L := TStringList.Create;
+  try
+    L.DelimitedText := lowercase(txt);
+    if forward then delta := 1 else delta := -1;
+    if startRow<0 then aRow := gridLog.Row
+    else               aRow := startRow;
+
+    anyRow := -1;
+    aRow := aRow + delta;
+    while (aRow >= gridLog.FixedRows) and (aRow <= gridLog.RowCount-1) do begin
+      aIndex := aRow - gridLog.FixedRows;
+      fLogCache.DbIndex.LoadItem(aIndex, aItem);
+
+      count := 0;
+      for i:=0 to L.Count-1 do begin
+
+        found := pos(L[i], aItem.CommitOID)>0;
+        if not found then
+          found := pos(L[i], lowercase(aItem.author))>0;
+        if not found then
+          found := pos(L[i], lowercase(aItem.Subject))>0;
+
+        if found then begin
+          if (anyRow<0) then
+            anyRow := aIndex;
+          inc(count);
+        end;
+
+      end;
+
+      if count=L.Count then begin
+        // found all terms
+        gridLog.Row := aRow;
+        btnNext.Enabled := true;
+        btnPrev.Enabled := true;
+        exit;
+      end;
+
+      aRow := aRow + delta;
+    end;
+
+    // not found, but check anyRow
+    if anyRow>=gridLog.FixedRows then begin
+      // partial find
+      gridLog.Row := aRow;
+      btnNext.Enabled := true;
+      btnPrev.Enabled := true;
+    end;
+
+    ShowMessageFmt('Could''t find "%s"',[txt]);
+
+  finally
+    L.Free;
+  end;
+end;
+
+procedure TframeLog.FilterLog(txt: string);
+begin
+
 end;
 
 procedure TframeLog.Clear;

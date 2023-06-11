@@ -82,6 +82,38 @@ msgstr "SC"
 msgid "FH"
 msgstr "FH"
 
+#: tframelog.btnfilter.caption
+msgid "Y"
+msgstr ""
+
+#: tframelog.btnfilter.hint
+msgid "Filter"
+msgstr ""
+
+#: tframelog.btnnext.caption
+msgid ">"
+msgstr ""
+
+#: tframelog.btnnext.hint
+msgid "Next"
+msgstr ""
+
+#: tframelog.btnprev.caption
+msgid "<"
+msgstr ""
+
+#: tframelog.btnprev.hint
+msgid "Previous"
+msgstr ""
+
+#: tframelog.btnsearch.caption
+msgid "S"
+msgstr ""
+
+#: tframelog.btnsearch.hint
+msgid "Search"
+msgstr ""
+
 #: tframelog.btnstop.caption
 msgctxt "tframelog.btnstop.caption"
 msgid "Stp"
@@ -141,6 +173,10 @@ msgstr "Parche"
 #: tframelog.radtree.caption
 msgid "Tree"
 msgstr "Archivos"
+
+#: tframelog.txtsearch.texthint
+msgid "Search all fields"
+msgstr ""
 
 #: tfrmcheckoutag.caption
 msgid "Check out a Tag"
@@ -1165,3 +1201,4 @@ msgstr "Sin modificar"
 #: unitentries.rslazgitguiuntrackednotstaged
 msgid "Untracked, not staged"
 msgstr "Sin seguimiento, no preparado"
+
