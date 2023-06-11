@@ -167,6 +167,7 @@ type
     fCommitBrowser: TCommitBrowser;
     fCurrentItem: TLogItem;
     procedure CheckSearchButtons;
+    procedure LaunchGraphBuildingThread;
     procedure OnContextPopLogClick(Sender: TObject);
     procedure OnCreateBranchClick(Sender: TObject);
     procedure OnDeleteBranchClick(Sender: TObject);
@@ -920,6 +921,21 @@ begin
   btnNext.Enabled := btnPrev.Enabled;
 end;
 
+procedure TframeLog.LaunchGraphBuildingThread;
+var
+  gBuild: TGraphBuilderThread;
+begin
+  lblInfo.Caption := rsBuildingGraph;
+  lblInfo.Font.Color := clBlue;
+  lblInfo.Visible := true;
+
+  gBuild := TGraphBuilderThread.Create(fLogCache.DbIndex);
+  gBuild.WithColumns := true;
+  gBuild.FreeOnTerminate := true;
+  gBuild.OnTerminate := @OnGraphBuilderDone;
+  gBuild.Start;
+end;
+
 procedure TframeLog.OnCreateBranchClick(Sender: TObject);
 var
   f: TfrmNewBranch;
@@ -1493,20 +1509,10 @@ begin
 end;
 
 procedure TframeLog.UpdateGridRows;
-var
-  gBuild: TGraphBuilderThread;
 begin
   gridLog.RowCount := fLogCache.DbIndex.Count + gridLog.FixedRows;
 
-  lblInfo.Caption := rsBuildingGraph;
-  lblInfo.Font.Color := clBlue;
-  lblInfo.Visible := true;
-
-  gBuild := TGraphBuilderThread.Create(fLogCache.DbIndex);
-  gBuild.WithColumns := true;
-  gBuild.FreeOnTerminate := true;
-  gBuild.OnTerminate := @OnGraphBuilderDone;
-  gBuild.Start;
+  LaunchGraphBuildingThread;
 end;
 
 end.
