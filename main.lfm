@@ -8,10 +8,12 @@ object frmMain: TfrmMain
   ClientWidth = 973
   DoubleBuffered = False
   Font.Style = [fsBold]
+  KeyPreview = True
   Menu = mnuMain
   OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
   OnDestroy = FormDestroy
+  OnKeyDown = FormKeyDown
   OnShow = FormShow
   ParentDoubleBuffered = False
   ShowHint = True

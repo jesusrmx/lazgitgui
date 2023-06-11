@@ -27,7 +27,8 @@ unit unitformlog;
 interface
 
 uses
-  Classes, SysUtils, Forms, Controls, Graphics, Dialogs, ComCtrls, grids,
+  Classes, SysUtils, LCLType,
+  Forms, Controls, Graphics, Dialogs, ComCtrls, grids,
   unitifaces, unitconfig, unithighlighterhelper, unitgitmgr, unitframelog;
 
 type
@@ -41,6 +42,7 @@ type
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
+    procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure FormShow(Sender: TObject);
   private
     fGitMgr: TGitMgr;
@@ -105,6 +107,13 @@ procedure TfrmLog.FormDestroy(Sender: TObject);
 begin
   fLog.Clear;
   GitMgr := nil;
+end;
+
+procedure TfrmLog.FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState
+  );
+begin
+  if key=VK_ESCAPE then
+    close;
 end;
 
 procedure TfrmLog.FormShow(Sender: TObject);

@@ -119,6 +119,7 @@ type
     procedure FormCloseQuery(Sender: TObject; var {%H-}CanClose: Boolean);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
+    procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure FormShow(Sender: TObject);
     procedure lblBranchClick(Sender: TObject);
     procedure lblBranchContextPopup(Sender: TObject; {%H-}MousePos: TPoint;
@@ -1276,6 +1277,13 @@ begin
   fhlHelper.Free;
   fLogHandler.Free;
   fGitMgr.Free;
+end;
+
+procedure TfrmMain.FormKeyDown(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+begin
+  if key=VK_ESCAPE then
+    close;
 end;
 
 procedure TfrmMain.OpenDirectory(aDir: string);

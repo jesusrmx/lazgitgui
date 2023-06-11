@@ -6,9 +6,11 @@ object frmFileHistory: TfrmFileHistory
   Caption = 'frmFileHistory'
   ClientHeight = 540
   ClientWidth = 777
+  KeyPreview = True
   OnClose = FormClose
   OnCloseQuery = FormCloseQuery
   OnDestroy = FormDestroy
+  OnKeyDown = FormKeyDown
   OnShow = FormShow
   LCLVersion = '2.3.0.0'
   object grid: TDrawGrid

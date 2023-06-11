@@ -27,7 +27,8 @@ unit unitnewbranch;
 interface
 
 uses
-  Classes, SysUtils, LazLogger, Forms, Controls, Graphics, Dialogs, StdCtrls, ComCtrls,
+  Classes, SysUtils, LCLType, LazLogger,
+  Forms, Controls, Graphics, Dialogs, StdCtrls, ComCtrls,
   ButtonPanel, ExtCtrls, unitconfig, unitgittypes, unitifaces, unitprocess, unitgitutils,
   unitgitmgr, unitcommon;
 
@@ -50,6 +51,7 @@ type
     lstSource: TListBox;
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure FormCreate(Sender: TObject);
+    procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure FormShow(Sender: TObject);
     procedure lstSourceClick(Sender: TObject);
     procedure tabSourceChange(Sender: TObject);
@@ -118,6 +120,13 @@ begin
   tabSource.Tabs[1] := rsTrackingBranches;
   tabSource.Tabs[2] := rsTags;
   tabSource.Tabs[3] := rsCommit;
+end;
+
+procedure TfrmNewBranch.FormKeyDown(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+begin
+  if key=VK_ESCAPE then
+    close;
 end;
 
 procedure TfrmNewBranch.FormShow(Sender: TObject);

@@ -27,7 +27,8 @@ unit unitfilehistory;
 interface
 
 uses
-  Classes, SysUtils, Math, StrUtils, Forms, Controls, Graphics, Dialogs, Grids,
+  Classes, SysUtils, Math, StrUtils,
+  LCLType, Forms, Controls, Graphics, Dialogs, Grids,
   ExtCtrls, SynEdit,
   unitcommon, unitconfig, unitifaces, unitgitmgr, unithighlighterhelper;
 
@@ -51,6 +52,7 @@ type
     procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure FormDestroy(Sender: TObject);
+    procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure FormShow(Sender: TObject);
     procedure gridDrawCell(Sender: TObject; aCol, aRow: Integer; aRect: TRect;
       aState: TGridDrawState);
@@ -107,6 +109,13 @@ end;
 procedure TfrmFileHistory.FormDestroy(Sender: TObject);
 begin
   GitMgr := nil;
+end;
+
+procedure TfrmFileHistory.FormKeyDown(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+begin
+  if key=VK_ESCAPE then
+    close;
 end;
 
 procedure TfrmFileHistory.FormShow(Sender: TObject);
