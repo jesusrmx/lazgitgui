@@ -145,6 +145,7 @@ type
     procedure TopoSort;
     function FindCommitSha(sha: string; startAt:Integer=-1): Integer;
     function Count(unfiltered: boolean = false): Integer;
+    function GetIndex(aIndex: Integer): Integer;
 
     //property Item: TLogItem read fItem;
     property Info: string read GetInfo;
@@ -696,6 +697,11 @@ begin
     result := fMaxRecords;
 end;
 
+function TDbIndex.GetIndex(aIndex: Integer): Integer;
+begin
+  result := GetRealIndex(aIndex, fFilter=nil);
+end;
+
 function TDbIndex.LoadItem(aIndex: Integer; out aItem: TLogItem;
   unfiltered: boolean): boolean;
 begin
@@ -718,7 +724,7 @@ begin
   else begin
     if (fIndexStream=nil) or (fIndexStream.Size=0) then
       raise Exception.Create('Trying to set a filter while the db is not initialized');
-    maxIndex := Count - 1;
+    maxIndex := Count(true) - 1;
     // check that indices are within the range of the index
     for i:=0 to Length(arr)-1 do
       if (arr[i]<0) or (arr[i]>maxIndex) then

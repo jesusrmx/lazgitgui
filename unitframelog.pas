@@ -106,8 +106,8 @@ type
     MenuItem1: TMenuItem;
     MenuItem2: TMenuItem;
     MenuItem3: TMenuItem;
-    MenuItem4: TMenuItem;
-    MenuItem5: TMenuItem;
+    mnuGotoParent: TMenuItem;
+    mnuGotoChild: TMenuItem;
     mnuGotoHead: TMenuItem;
     panBrowser: TPanel;
     panMode: TPanel;
@@ -571,6 +571,10 @@ begin
   // do not show the context popup if the grid is invalid
   Handled := (gridLog.RowCount=gridLog.FixedRows) or (aIndex<0) or not LocateItemIndex(aIndex);
 
+  actGotoParent.Enabled := not Filtered;
+  actGotoHead.Enabled := not Filtered;
+  actGotoChild.Enabled := not Filtered;
+
   if not Handled then begin
     mIndex := mnuSeparatorFirst.Tag + 1;
     mnuSeparatorFirst.Tag := mIndex;
@@ -640,6 +644,8 @@ end;
 procedure TframeLog.btnFilterClick(Sender: TObject);
 begin
   CheckSearchButtons;
+  if (not Filtered) and (btnFilter.Down) and (txtSearch.Text<>'') then
+    FilterLog(txtSearch.Text);
 end;
 
 procedure TframeLog.btnNextClick(Sender: TObject);
@@ -1256,6 +1262,7 @@ begin
   if fFiltered = AValue then Exit;
   fFiltered := AValue;
 
+  // todo: save only the row the first time is filtered
   if fFiltered then begin
     btnFilter.Tag := gridLog.Row;
   end else
@@ -1527,15 +1534,15 @@ end;
 procedure TframeLog.FilterLog(txt: string);
 var
   L: TStringList;
-  i, aIndex, count: Integer;
+  i, aIndex, count, total: Integer;
   aItem: TLogItem;
   found: boolean;
   filterArray: TIntArray;
+  needle: String;
 begin
 
   if txt='' then begin
-    if Filtered then
-      Filtered := false;
+    Filtered := false;
     exit;
   end;
 
@@ -1543,36 +1550,41 @@ begin
   try
     L.DelimitedText := lowercase(txt);
 
-    count := 0;
     filterArray := nil;
-    SetLength(filterArray, fLogCache.DbIndex.Count(true));
+    SetLength(filterArray, fLogCache.DbIndex.Count{(true)});
 
+    total := 0;
     aIndex := 0;
-    while aIndex<fLogCache.DbIndex.Count(true) do begin
-      fLogCache.DbIndex.LoadItem(aIndex, aItem, true);
+    while aIndex<fLogCache.DbIndex.Count{(true)} do begin
+      fLogCache.DbIndex.LoadItem(aIndex, aItem{, true});
 
+      count := 0;
       for i:=0 to L.Count-1 do begin
-
-        found := pos(L[i], aItem.CommitOID)>0;
+        needle := L[i];
+        found := pos(needle, aItem.CommitOID)>0;
         if not found then
-          found := pos(L[i], lowercase(aItem.author))>0;
+          found := pos(needle, lowercase(aItem.author))>0;
         if not found then
-          found := pos(L[i], lowercase(aItem.Subject))>0;
+          found := pos(needle, lowercase(aItem.Subject))>0;
 
-        if found then begin
-          filterArray[count] := aIndex;
+        if found then
           inc(count);
-        end;
+      end;
+
+      if L.Count=count then begin
+        filterArray[total] := fLogCache.DbIndex.GetIndex(aIndex);
+        inc(total);
       end;
 
       aIndex += 1;
     end;
 
-    SetLength(filterArray, count);
-    if count=0 then
+    SetLength(filterArray, total);
+    if total=0 then
       exit;
 
     fLogCache.DbIndex.SetFilter(filterArray);
+    fFiltered := false;
     Filtered := true;
   finally
     L.Free;

@@ -804,10 +804,10 @@ object frameLog: TframeLog
     object mnuGotoHead: TMenuItem
       Action = actGotoHead
     end
-    object MenuItem4: TMenuItem
+    object mnuGotoParent: TMenuItem
       Action = actGotoParent
     end
-    object MenuItem5: TMenuItem
+    object mnuGotoChild: TMenuItem
       Action = actGotoChild
     end
     object mnuSeparatorFirst: TMenuItem
