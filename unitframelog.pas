@@ -357,11 +357,10 @@ begin
   // just as an example, find the n random word in the text and
   // and assume it's a link
   j := WordCount(aItem.Subject, [' ']);
-  j := Random(j);
+  j := Random(j) + 1;
   s := ExtractWordPos(j, aItem.Subject, [' '], w);
 
   if s<>'' then begin
-    x := item.r.right;
     item.Text := copy(aItem.Subject, 1, w-1);
     item.itemType := tcitNone;
     item.r := rect(x, aRect.Top+1, x + canvas.TextWidth(item.Text), aRect.Bottom-1);
@@ -379,14 +378,16 @@ begin
     result[j] := item;
 
     s := copy(aItem.Subject, w + Length(s), MAXINT);
-    x := item.r.right;
-    item.itemType := tcitNone;
-    item.r := rect(x, aRect.Top+1, aRect.Right, aRect.Bottom-1);
-    item.fontColor := clBlack;
-    j := Length(result);
-    SetLength(result, j+1);
-    result[j] := item;
-
+    if s<>'' then begin
+      x := item.r.right;
+      item.itemType := tcitNone;
+      item.r := rect(x, aRect.Top+1, aRect.Right, aRect.Bottom-1);
+      item.text := s;
+      item.fontColor := clBlack;
+      j := Length(result);
+      SetLength(result, j+1);
+      result[j] := item;
+    end;
   end else begin
     item.text := aItem.Subject;
     item.r := rect(x, aRect.Top+1, aRect.Right, aRect.Bottom-1);
