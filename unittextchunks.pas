@@ -5,7 +5,7 @@ unit unittextchunks;
 interface
 
 uses
-  Classes, SysUtils, Graphics, StrUtils,
+  Classes, SysUtils, Graphics, StrUtils, RegExpr,
   unitcommon, unitgittypes, unitgitutils, unitconfig, unitdbindex;
 
 type
@@ -20,6 +20,7 @@ type
     penWidth: Integer;
     fontColor: TColor;
     text: string;
+    linkIndex: Integer;
   end;
   TTextChunks = array of TTextChunksItem;
 
@@ -31,13 +32,22 @@ type
   end;
   TTextLinksArray = array of TTextLinkItem;
 
+  PTextPos = ^TTextPos;
+  TTextPos = record
+    pos: Integer;
+    Len: Integer;
+  end;
+
   { TTextLinks }
 
   TTextLinks = class
   private
     fLinks: TTextLinksArray;
+    function GetCount: Integer;
   public
     procedure LoadFromConfig(section: string);
+    procedure FindLinks(canvas:TCanvas; x: Integer; text:string; var chunks: TTextChunks);
+    property count: Integer read GetCount;
   end;
 
   function GetTextChunks(canvas: TCanvas; aRect:TRect; x: integer; refsMap: TRefsMap; aItem: TLogItem): TTextChunks;
@@ -112,41 +122,9 @@ begin
   item.penWidth := 1;
   item.fontColor := clBlack;
 
-  // just as an example, find the n random word in the text and
-  // and assume it's a link
-  j := WordCount(aItem.Subject, [' ']);
-  j := Random(j) + 1;
-  s := ExtractWordPos(j, aItem.Subject, [' '], w);
-
-  if s<>'' then begin
-    item.Text := copy(aItem.Subject, 1, w-1);
-    item.itemType := tcitNone;
-    item.r := rect(x, aRect.Top+1, x + canvas.TextWidth(item.Text), aRect.Bottom-1);
-    j := Length(result);
-    SetLength(result, j+1);
-    result[j] := item;
-
-    x := item.r.right;
-    item.Text := s;
-    item.itemType := tcitLink;
-    item.r := rect(x, aRect.Top+1, x + canvas.TextWidth(s), aRect.Bottom-1);
-    item.fontColor := clBlue;
-    j := Length(result);
-    SetLength(result, j+1);
-    result[j] := item;
-
-    s := copy(aItem.Subject, w + Length(s), MAXINT);
-    if s<>'' then begin
-      x := item.r.right;
-      item.itemType := tcitNone;
-      item.r := rect(x, aRect.Top+1, aRect.Right, aRect.Bottom-1);
-      item.text := s;
-      item.fontColor := clBlack;
-      j := Length(result);
-      SetLength(result, j+1);
-      result[j] := item;
-    end;
-  end else begin
+  if (fTextLinks<>nil) and (fTextLinks.Count>0) then
+    fTextLinks.FindLinks(canvas, x, aItem.Subject, result)
+  else begin
     item.text := aItem.Subject;
     item.r := rect(x, aRect.Top+1, aRect.Right, aRect.Bottom-1);
     item.itemType := tcitNone;
@@ -158,6 +136,11 @@ begin
 end;
 
 { TTextLinks }
+
+function TTextLinks.GetCount: Integer;
+begin
+  result := Length(fLinks);
+end;
 
 procedure TTextLinks.LoadFromConfig(section: string);
 var
@@ -184,6 +167,44 @@ begin
 
   finally
     fConfig.CloseConfig;
+    L.Free;
+  end;
+end;
+
+function CompareTextPositions(a, b: Pointer): Integer;
+var
+  aPos: PTextPos absolute a;
+  bPos: PTextPos absolute b;
+begin
+  result := aPos^.pos - bPos^.pos;
+end;
+
+procedure TTextLinks.FindLinks(canvas: TCanvas; x: Integer; text: string;
+  var chunks: TTextChunks);
+var
+  L: TfpList;
+  reg: TRegExpr;
+  txtPos: PTextPos;
+  i, offset: Integer;
+begin
+  L := TfpList.Create;
+  reg := TRegExpr.create;
+  try
+    for i:=0 to Count-1 do begin
+      reg.Expression := fLinks[i].Pattern;
+      offset := 1;
+      while reg.Exec(offset) do begin
+        new(txtPos);
+        txtPos^.pos := reg.MatchPos[0];
+        txtPos^.Len := reg.MatchLen[0];
+        L.Add(txtPos);
+        offset := reg.MatchLen[0] + 1;
+      end;
+    end;
+    L.Sort(@CompareTextPositions);
+
+  finally
+    reg.free;
     L.Free;
   end;
 end;
