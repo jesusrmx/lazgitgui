@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, Graphics, StrUtils,
-  unitgittypes, unitdbindex;
+  unitcommon, unitgittypes, unitgitutils, unitconfig, unitdbindex;
 
 type
   TTextChunksItemType = (tcitNone, tcitBox, tcitLink);
@@ -23,7 +23,27 @@ type
   end;
   TTextChunks = array of TTextChunksItem;
 
+  TTextLinkItem = record
+    Name: string;
+    Pattern: string;
+    Replace: string;
+    action: string;
+  end;
+  TTextLinksArray = array of TTextLinkItem;
+
+  { TTextLinks }
+
+  TTextLinks = class
+  private
+    fLinks: TTextLinksArray;
+  public
+    procedure LoadFromConfig(section: string);
+  end;
+
   function GetTextChunks(canvas: TCanvas; aRect:TRect; x: integer; refsMap: TRefsMap; aItem: TLogItem): TTextChunks;
+
+var
+  fTextLinks: TTextLinks = nil;
 
 implementation
 
@@ -135,6 +155,37 @@ begin
     result[j] := item;
   end;
 
+end;
+
+{ TTextLinks }
+
+procedure TTextLinks.LoadFromConfig(section: string);
+var
+  n, i: Integer;
+  s: string;
+  L: TStringList;
+begin
+  L := TStringList.Create;
+  fConfig.OpenConfig;
+  try
+    n := fConfig.ReadInteger('links', 0, section);
+    SetLength(fLinks, n);
+
+    for i:=1 to n do begin
+      s := fConfig.ReadString('link'+IntToStr(i), '', section);
+      DecodeDelimitedText( s, CMDSEP, L);
+      if L.Count>=4 then begin
+        fLinks[i].name := L[0];
+        fLinks[i].pattern := L[1];
+        fLinks[i].replace := L[2];
+        fLinks[i].action := L[3];
+      end;
+    end;
+
+  finally
+    fConfig.CloseConfig;
+    L.Free;
+  end;
 end;
 
 end.

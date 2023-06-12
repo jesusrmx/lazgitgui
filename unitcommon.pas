@@ -7,6 +7,9 @@ interface
 uses
   Classes, SysUtils;
 
+const
+  CMDSEP = '&sep;';
+
 resourcestring
   rsNewBranch = 'New Branch';
   rsNewTag = 'Create a tag at this point';

@@ -29,7 +29,7 @@ interface
 
 uses
   Classes, SysUtils,
-  unitgitutils, unitconfig;
+  unitcommon, unitgitutils, unitconfig;
 
 const
   NEWCOMMAND_DESC = '<New Command>';
@@ -70,9 +70,6 @@ type
   end;
 
 implementation
-
-const
-  CMDSEP = '&sep;';
 
 { TCustomCommandsMgr }
 

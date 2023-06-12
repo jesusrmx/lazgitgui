@@ -35,7 +35,7 @@ uses
   unitnewbranch, unitruncmd,
   unitnewtag, unitlogcache, unitlog, LConvEncoding, unitdbindex,
   unitgitmgr, unitcheckouttag, unitformlog, unitcustomcmds,
-  unitcustcmdform;
+  unitcustcmdform, unittextchunks;
 
 type
 
@@ -1172,6 +1172,9 @@ begin
   fCustomCommands := TCustomCommandsMgr.create;
   fCustomCommands.LoadFromConfig;
 
+  fTextLinks := TTextLinks.Create;
+  fTextLinks.LoadFromConfig(fGit.TopLevelDir);
+
   fConfig.CloseConfig;
 
   gblInvalidateCache := Application.HasOption('ClearCache');
@@ -1277,6 +1280,7 @@ begin
   fhlHelper.Free;
   fLogHandler.Free;
   fGitMgr.Free;
+  fTextLinks.Free;
 end;
 
 procedure TfrmMain.FormKeyDown(Sender: TObject; var Key: Word;
