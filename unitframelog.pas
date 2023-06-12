@@ -167,6 +167,7 @@ type
     fWithArrows: boolean;
     fCommitBrowser: TCommitBrowser;
     fCurrentItem: TLogItem;
+    fLastSelectedCommit: QWord;
     procedure CheckSearchButtons;
     procedure LaunchGraphBuildingThread;
     procedure OnContextPopLogClick(Sender: TObject);
@@ -547,10 +548,20 @@ end;
 procedure TframeLog.gridLogSelection(Sender: TObject; aCol, aRow: Integer);
 var
   aIndex: Integer;
+  inRange: Boolean;
+  aItem: TLogItem;
 begin
   aIndex := gridLog.Row - gridLog.FixedRows;
-  actGotoParent.Enabled := (aIndex>=0) and (aIndex<Length(fItemIndices)) and (Length(fItemIndices[aIndex].parents)>0);
-  actGotoChild.Enabled := (aIndex>=0) and (aIndex<Length(fItemIndices)) and (Length(fItemIndices[aIndex].childs)>0);
+  inRange := (aIndex>=0) and (aIndex<Length(fItemIndices));
+  actGotoParent.Enabled := not filtered and inRange and (Length(fItemIndices[aIndex].parents)>0);
+  actGotoChild.Enabled := not filtered and inRange and (Length(fItemIndices[aIndex].childs)>0);
+  if filtered then begin
+    // fItemIndices[aIndex].commit won't help here because when it's
+    // filtered fItemIndices is not valid for the current records
+    fLogCache.DbIndex.LoadItem(aIndex, aItem);
+    if inRange then fLastSelectedCommit := OIDToQWord(aItem.CommitOID)
+    else            fLastSelectedCommit := 0;
+  end;
 
   if panBrowser.Visible then
     ShowChanges(aRow)
@@ -1275,7 +1286,8 @@ begin
 
   if not fFiltered then begin
     LaunchGraphBuildingThread;
-    gridLog.Row := btnFilter.Tag;
+    if fLastSelectedCommit>0 then LocateCommit(fLastSelectedCommit)
+    else                          gridLog.Row := btnFilter.Tag;
   end;
 end;
 
