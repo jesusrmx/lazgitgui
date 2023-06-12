@@ -63,6 +63,7 @@ object frameLog: TframeLog
     OnContextPopup = gridLogContextPopup
     OnDrawCell = gridLogDrawCell
     OnHeaderSized = gridLogHeaderSized
+    OnMouseMove = gridLogMouseMove
     OnSelection = gridLogSelection
     ColWidths = (
       70
@@ -122,9 +123,9 @@ object frameLog: TframeLog
           AnchorSideTop.Control = panMode
           AnchorSideTop.Side = asrCenter
           Left = 5
-          Height = 19
-          Top = 2
-          Width = 48
+          Height = 21
+          Top = 1
+          Width = 54
           BorderSpacing.Left = 5
           Caption = 'Patch'
           Checked = True
@@ -135,9 +136,9 @@ object frameLog: TframeLog
         object radTree: TRadioButton
           AnchorSideTop.Control = radPatch
           Left = 69
-          Height = 19
-          Top = 2
-          Width = 40
+          Height = 21
+          Top = 1
+          Width = 48
           Caption = 'Tree'
           OnMouseUp = radPatchMouseUp
           TabOrder = 1
@@ -711,10 +712,10 @@ object frameLog: TframeLog
       AnchorSideTop.Control = panLogTools
       AnchorSideTop.Side = asrCenter
       AnchorSideRight.Control = btnStop
-      Left = 575
-      Height = 15
-      Top = 6
-      Width = 60
+      Left = 573
+      Height = 17
+      Top = 5
+      Width = 61
       Anchors = [akTop, akRight]
       BorderSpacing.Right = 5
       Caption = 'Working ....'
@@ -722,10 +723,10 @@ object frameLog: TframeLog
     end
     object btnStop: TSpeedButton
       AnchorSideRight.Control = btnReload
-      Left = 640
-      Height = 19
+      Left = 639
+      Height = 21
       Top = 2
-      Width = 21
+      Width = 22
       Anchors = [akTop, akRight]
       AutoSize = True
       Caption = 'Stp'
@@ -762,8 +763,8 @@ object frameLog: TframeLog
       AnchorSideTop.Control = panLogTools
       AnchorSideTop.Side = asrCenter
       Left = 64
-      Height = 13
-      Top = 7
+      Height = 19
+      Top = 4
       Width = 336
       BorderStyle = bsNone
       Font.Height = -11

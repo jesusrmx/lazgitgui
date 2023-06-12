@@ -87,6 +87,20 @@ type
   TDummyDirNode = class(TTreeNode)
   end;
 
+  TTextChunksItemType = (tcitNone, tcitBox, tcitLink);
+  TTextChunksItem = record
+    itemType: TTextChunksItemType;
+    r: TRect;
+    brushStyle: TBrushStyle;
+    brushColor: TColor;
+    penStyle: TPenStyle;
+    penColor: TColor;
+    penWidth: Integer;
+    fontColor: TColor;
+    text: string;
+  end;
+  TTextChunks = array of TTextChunksItem;
+
   { TframeLog }
 
   TframeLog = class(TFrame, IObserver)
@@ -144,6 +158,8 @@ type
       aRect: TRect; aState: TGridDrawState);
     procedure gridLogHeaderSized(Sender: TObject; IsColumn: Boolean;
       Index: Integer);
+    procedure gridLogMouseMove(Sender: TObject; Shift: TShiftState; X,
+      Y: Integer);
     procedure gridLogSelection(Sender: TObject; aCol, aRow: Integer);
     procedure MenuItem2Click(Sender: TObject);
     procedure MenuItem3Click(Sender: TObject);
@@ -162,12 +178,14 @@ type
     fGitMgr: TGitMgr;
     fhlHelper: THighlighterHelper;
     fItemIndices: TItemIndexArray;
+    fLastHoverRow: LongInt;
     fLogCache: TLogCache;
     fGraphColumns: Integer;
     fWithArrows: boolean;
     fCommitBrowser: TCommitBrowser;
     fCurrentItem: TLogItem;
     fLastSelectedCommit: QWord;
+    fRowTextChunks: TTextChunks;
     procedure CheckSearchButtons;
     procedure LaunchGraphBuildingThread;
     procedure OnContextPopLogClick(Sender: TObject);
@@ -244,6 +262,8 @@ const
     'Message: ' + LineEnding+LineEnding+
     '%s';
 
+  LOGCELL_LEFTMARGIN = 7;
+
 procedure DrawLine(canvas: TCanvas; x1, y1, x2, y2: Integer; withArrow, destNode:boolean);
 var
   x, y, o: Integer;
@@ -273,21 +293,6 @@ begin
     canvas.pen.width := o;
   end;
 end;
-
-type
-  TTextChunksItemType = (tcitNone, tcitBox, tcitLink);
-  TTextChunksItem = record
-    itemType: TTextChunksItemType;
-    r: TRect;
-    brushStyle: TBrushStyle;
-    brushColor: TColor;
-    penStyle: TPenStyle;
-    penColor: TColor;
-    penWidth: Integer;
-    fontColor: TColor;
-    text: string;
-  end;
-  TTextChunks = array of TTextChunksItem;
 
 function GetTextChunks(canvas: TCanvas; aRect:TRect; x: integer; fGit: IGit; aItem: TLogItem): TTextChunks;
 var
@@ -427,7 +432,7 @@ begin
       exit;
     end;
     if db.LoadItem(aIndex, aItem) then begin
-      x := aRect.Left + 7;
+      x := aRect.Left + LOGCELL_LEFTMARGIN;
       case gridLog.Columns[aCol].tag of
         COLTAG_INDEX:
           begin
@@ -587,6 +592,46 @@ begin
     col := gridLog.Columns[Index];
     fConfig.WriteInteger('frmlog.grid.coltag'+IntToStr(col.tag)+'.width', col.Width, SECTION_GEOMETRY);
   end;
+end;
+
+procedure TframeLog.gridLogMouseMove(Sender: TObject; Shift: TShiftState; X,
+  Y: Integer);
+var
+  col: TGridColumn;
+  aCol, aRow: Longint;
+  aIndex, i: Integer;
+  aItem: TLogItem;
+  aRect: TRect;
+  aType: TTextChunksItemType;
+  aCursor: TCursor;
+begin
+  gridLog.MouseToCell(x, y, aCol, aRow);
+  col := gridLog.Columns[aCol];
+  if (aRow>=gridLog.FixedRows) and (col<>nil) and (col.Tag=COLTAG_SUBJECT) then begin
+    if aRow<>fLastHoverRow then begin
+      aIndex := aRow - gridLog.FixedRows;
+      fLogCache.DbIndex.LoadItem(aIndex, aItem);
+      aRect := gridLog.CellRect(aCol, aRow);
+      fRowTextChunks := GetTextChunks(gridLog.Canvas, aRect, aRect.Left + LOGCELL_LEFTMARGIN, fGit, aItem);
+    end;
+
+    for i:=0 to Length(fRowTextChunks)-1 do
+    with fRowTextChunks[i] do begin
+      if r.Contains(Point(x, y)) then begin
+        case itemType of
+          tcitNone: aCursor := crDefault;
+          tcitBox:  aCursor := crNoDrop;
+          tcitLink: aCursor := crHandPoint;
+        end;
+        if gridLog.Cursor<>aCursor then
+          gridLog.Cursor := aCursor;
+        exit;
+      end;
+    end;
+    fLastHoverRow := aRow;
+  end;
+  if gridLog.Cursor<>crDefault then
+    gridLog.Cursor := crDefault;
 end;
 
 procedure TframeLog.gridLogSelection(Sender: TObject; aCol, aRow: Integer);
