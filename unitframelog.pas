@@ -63,7 +63,7 @@ uses
   Grids, ExtCtrls, ComCtrls, Menus, Types, Clipbrd, ActnList, Buttons, StdCtrls,
   unitgittypes, unitlogcache, unitdbindex, unitgitutils, unitifaces, unitruncmd,
   unitgitmgr, unitcommitbrowser, unitvfs, unithighlighterhelper, unitgraphbuild,
-  unitfilehistory, unitnewbranch, unitreset, unitcommon;
+  unitfilehistory, unitnewbranch, unitreset, unitcommon, unittextchunks;
 
 const
   GRAPH_LEFT_PADDING          = 12;
@@ -86,20 +86,6 @@ type
 
   TDummyDirNode = class(TTreeNode)
   end;
-
-  TTextChunksItemType = (tcitNone, tcitBox, tcitLink);
-  TTextChunksItem = record
-    itemType: TTextChunksItemType;
-    r: TRect;
-    brushStyle: TBrushStyle;
-    brushColor: TColor;
-    penStyle: TPenStyle;
-    penColor: TColor;
-    penWidth: Integer;
-    fontColor: TColor;
-    text: string;
-  end;
-  TTextChunks = array of TTextChunksItem;
 
   { TframeLog }
 
@@ -294,116 +280,6 @@ begin
   end;
 end;
 
-function GetTextChunks(canvas: TCanvas; aRect:TRect; x: integer; fGit: IGit; aItem: TLogItem): TTextChunks;
-var
-  n, i, j, w: Integer;
-  arr: TRefInfoArray;
-  item: TTextChunksItem;
-  s: String;
-begin
-
-  j := 0;
-  result := nil;
-
-  // Get refs items into chunksitems
-  if (fGit.RefsMap<>nil) and fGit.RefsMap.Find(aItem.CommitOID, n ) then begin
-    arr := fGit.RefsMap.Data[n];
-
-    for i:=0 to Length(arr)-1 do begin
-
-      w := canvas.TextWidth(arr[i]^.refName) + 6;
-
-      case arr[i]^.subType of
-        rostLocal:
-          begin
-            if arr[i]^.head then item.brushColor := clRed
-            else                 item.brushColor := clGreen;
-            item.fontColor := clWhite;
-          end;
-        rostTracking:
-          begin
-            item.brushColor := $AADDFF;
-            item.fontColor := clBlack;
-          end;
-        rostTag:
-          begin
-            item.brushColor := clYellow;
-            item.fontColor := clBlack;
-          end;
-      end;
-
-      item.r := Rect(x, aRect.Top+1, x + w, aRect.Bottom-1);
-      item.penWidth := 1;
-      item.brushStyle := bsSolid;
-      item.penStyle := psSolid;
-      item.penColor := clBlack;
-      item.text := arr[i]^.refName;
-      item.itemType := tcitBox;
-
-      j := Length(result);
-      SetLength(result, j+1);
-      result[j] := item;
-
-      x += w + 2;
-      if i=Length(arr)-1 then
-        x += 5;
-    end;
-
-  end;
-
-  // Get textchunks derived from the subject
-  item.brushStyle := bsClear;
-  item.brushColor := clWhite;
-  item.penStyle := psClear;
-  item.penColor := clBlack;
-  item.penWidth := 1;
-  item.fontColor := clBlack;
-
-  // just as an example, find the n random word in the text and
-  // and assume it's a link
-  j := WordCount(aItem.Subject, [' ']);
-  j := Random(j) + 1;
-  s := ExtractWordPos(j, aItem.Subject, [' '], w);
-
-  if s<>'' then begin
-    item.Text := copy(aItem.Subject, 1, w-1);
-    item.itemType := tcitNone;
-    item.r := rect(x, aRect.Top+1, x + canvas.TextWidth(item.Text), aRect.Bottom-1);
-    j := Length(result);
-    SetLength(result, j+1);
-    result[j] := item;
-
-    x := item.r.right;
-    item.Text := s;
-    item.itemType := tcitLink;
-    item.r := rect(x, aRect.Top+1, x + canvas.TextWidth(s), aRect.Bottom-1);
-    item.fontColor := clBlue;
-    j := Length(result);
-    SetLength(result, j+1);
-    result[j] := item;
-
-    s := copy(aItem.Subject, w + Length(s), MAXINT);
-    if s<>'' then begin
-      x := item.r.right;
-      item.itemType := tcitNone;
-      item.r := rect(x, aRect.Top+1, aRect.Right, aRect.Bottom-1);
-      item.text := s;
-      item.fontColor := clBlack;
-      j := Length(result);
-      SetLength(result, j+1);
-      result[j] := item;
-    end;
-  end else begin
-    item.text := aItem.Subject;
-    item.r := rect(x, aRect.Top+1, aRect.Right, aRect.Bottom-1);
-    item.itemType := tcitNone;
-    j := Length(result);
-    SetLength(result, j+1);
-    result[j] := item;
-  end;
-
-end;
-
 { TframeLog }
 
 procedure TframeLog.gridLogDrawCell(Sender: TObject; aCol, aRow: Integer;
@@ -504,7 +380,7 @@ begin
 
         COLTAG_SUBJECT:
           begin
-            Chunks := GetTextChunks(gridLog.Canvas, aRect, x, fGit, aItem);
+            Chunks := GetTextChunks(gridLog.Canvas, aRect, x, fGit.RefsMap, aItem);
             for chunk in Chunks do begin
               gridLog.Canvas.Brush.Style := chunk.brushStyle;
               gridLog.Canvas.Brush.Color := chunk.brushColor;
@@ -522,52 +398,8 @@ begin
             end;
             gridLog.Canvas.Brush.Style := bsSolid;
             gridLog.Canvas.Pen.Style := psSolid;
-
-            //s := aItem.Subject;
-            //if (fGit.RefsMap<>nil) and fGit.RefsMap.Find(aItem.CommitOID, n ) then begin
-            //  arr := fGit.RefsMap.Data[n];
-            //
-            //  for i:=0 to Length(arr)-1 do begin
-            //    w := gridLog.Canvas.TextWidth(arr[i]^.refName) + 6;
-            //
-            //    case arr[i]^.subType of
-            //      rostLocal:
-            //        begin
-            //          if arr[i]^.head then aBrushColor := clRed
-            //          else                 aBrushColor := clGreen; //$00C300;
-            //          aFontColor := clWhite;
-            //        end;
-            //      rostTracking:
-            //        begin
-            //          aBrushColor := $AADDFF;
-            //          aFontColor := clBlack;
-            //        end;
-            //      rostTag:
-            //        begin
-            //          aBrushColor := clYellow;
-            //          aFontColor := clBlack;
-            //        end;
-            //    end;
-            //
-            //    r := Rect(x, aRect.Top+1, x + w, aRect.Bottom-1);
-            //
-            //    gridLog.Canvas.Brush.Style := bsSolid;
-            //    gridLog.Canvas.Pen.Color := clBlack;
-            //    gridLog.Canvas.Brush.Color := aBrushColor;
-            //    gridLog.Canvas.Rectangle(r);
-            //    gridLog.Canvas.Font.Color := aFontColor;
-            //    gridLog.Canvas.Brush.Style := bsClear;
-            //    gridLog.Canvas.TextOut(r.Left + 3, r.Top-1, arr[i]^.refName);
-            //
-            //    x += w + 2;
-            //    if i=Length(arr)-1 then
-            //      x += 5;
-            //  end;
-            //  gridLog.Canvas.Font.Color := gridLog.Font.Color;
-            //  gridLog.Canvas.Brush.Color := gridlog.Color;
-            //end;
-
           end;
+
         COLTAG_AUTHOR: s := aItem.Author;
         COLTAG_SHA1: s := aItem.CommitOID;
         COLTAG_DATE: s := DateTimeToStr(UnixToDateTime(aItem.CommiterDate, false));
@@ -612,7 +444,7 @@ begin
       aIndex := aRow - gridLog.FixedRows;
       fLogCache.DbIndex.LoadItem(aIndex, aItem);
       aRect := gridLog.CellRect(aCol, aRow);
-      fRowTextChunks := GetTextChunks(gridLog.Canvas, aRect, aRect.Left + LOGCELL_LEFTMARGIN, fGit, aItem);
+      fRowTextChunks := GetTextChunks(gridLog.Canvas, aRect, aRect.Left + LOGCELL_LEFTMARGIN, fGit.RefsMap, aItem);
     end;
 
     for i:=0 to Length(fRowTextChunks)-1 do
