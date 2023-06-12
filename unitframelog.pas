@@ -414,6 +414,7 @@ var
   aItem: TLogItem;
   Chunks: TTextChunks;
   chunk: TTextChunksItem;
+  aStyle: TFontStyles;
 begin
 
   if fGitMgr=nil then
@@ -508,6 +509,10 @@ begin
               if chunk.itemType=tcitBox then gridLog.Canvas.Rectangle(chunk.r);
               gridLog.Canvas.Brush.Style := bsClear;
               gridLog.Canvas.Font.Color := chunk.fontColor;
+              aStyle := gridLog.Canvas.Font.Style;
+              if chunk.itemType=tcitLink then Include(aStyle, fsUnderline)
+              else                            Exclude(aStyle, fsUnderline);
+              gridLog.Canvas.Font.Style := aStyle;
               gridLog.Canvas.TextOut(chunk.r.Left + 3, chunk.r.Top, chunk.text);
             end;
             gridLog.Canvas.Brush.Style := bsSolid;
