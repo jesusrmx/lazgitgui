@@ -59,7 +59,7 @@ interface
 
 uses
   Classes, SysUtils, dateUtils, fgl, LazLogger, SynEdit, SynHighlighterDiff,
-  SynHighlighterPas, SynHighlighterXML, Graphics, Forms, Dialogs, Controls,
+  SynHighlighterPas, SynHighlighterXML, Graphics, Forms, Dialogs, Controls, StrUtils,
   Grids, ExtCtrls, ComCtrls, Menus, Types, Clipbrd, ActnList, Buttons, StdCtrls,
   unitgittypes, unitlogcache, unitdbindex, unitgitutils, unitifaces, unitruncmd,
   unitgitmgr, unitcommitbrowser, unitvfs, unithighlighterhelper, unitgraphbuild,
@@ -275,7 +275,9 @@ begin
 end;
 
 type
+  TTextChunksItemType = (tcitNone, tcitBox, tcitLink);
   TTextChunksItem = record
+    itemType: TTextChunksItemType;
     r: TRect;
     brushStyle: TBrushStyle;
     brushColor: TColor;
@@ -284,7 +286,6 @@ type
     penWidth: Integer;
     fontColor: TColor;
     text: string;
-    boxed: boolean;
   end;
   TTextChunks = array of TTextChunksItem;
 
@@ -293,6 +294,7 @@ var
   n, i, j, w: Integer;
   arr: TRefInfoArray;
   item: TTextChunksItem;
+  s: String;
 begin
 
   j := 0;
@@ -331,7 +333,7 @@ begin
       item.penStyle := psSolid;
       item.penColor := clBlack;
       item.text := arr[i]^.refName;
-      item.boxed := true;
+      item.itemType := tcitBox;
 
       j := Length(result);
       SetLength(result, j+1);
@@ -351,13 +353,49 @@ begin
   item.penColor := clBlack;
   item.penWidth := 1;
   item.fontColor := clBlack;
-  item.text := aItem.Subject;
-  item.r := rect(x, aRect.Top+1, x + aRect.Right, aRect.Bottom-1);
-  item.boxed := false;
 
-  j := Length(result);
-  SetLength(result, j+1);
-  result[j] := item;
+  // just as an example, find the n random word in the text and
+  // and assume it's a link
+  j := WordCount(aItem.Subject, [' ']);
+  j := Random(j);
+  s := ExtractWordPos(j, aItem.Subject, [' '], w);
+
+  if s<>'' then begin
+    x := item.r.right;
+    item.Text := copy(aItem.Subject, 1, w-1);
+    item.itemType := tcitNone;
+    item.r := rect(x, aRect.Top+1, x + canvas.TextWidth(item.Text), aRect.Bottom-1);
+    j := Length(result);
+    SetLength(result, j+1);
+    result[j] := item;
+
+    x := item.r.right;
+    item.Text := s;
+    item.itemType := tcitLink;
+    item.r := rect(x, aRect.Top+1, x + canvas.TextWidth(s), aRect.Bottom-1);
+    item.fontColor := clBlue;
+    j := Length(result);
+    SetLength(result, j+1);
+    result[j] := item;
+
+    s := copy(aItem.Subject, w + Length(s), MAXINT);
+    x := item.r.right;
+    item.itemType := tcitNone;
+    item.r := rect(x, aRect.Top+1, aRect.Right, aRect.Bottom-1);
+    item.fontColor := clBlack;
+    j := Length(result);
+    SetLength(result, j+1);
+    result[j] := item;
+
+  end else begin
+    item.text := aItem.Subject;
+    item.r := rect(x, aRect.Top+1, aRect.Right, aRect.Bottom-1);
+    item.itemType := tcitNone;
+    j := Length(result);
+    SetLength(result, j+1);
+    result[j] := item;
+  end;
+
 end;
 
 { TframeLog }
@@ -466,7 +504,7 @@ begin
               gridLog.Canvas.Pen.Style := chunk.penStyle;
               gridLog.Canvas.Pen.Color := chunk.penColor;
               gridLog.Canvas.Pen.Width := chunk.penWidth;
-              if chunk.boxed then gridLog.Canvas.Rectangle(chunk.r);
+              if chunk.itemType=tcitBox then gridLog.Canvas.Rectangle(chunk.r);
               gridLog.Canvas.Brush.Style := bsClear;
               gridLog.Canvas.Font.Color := chunk.fontColor;
               gridLog.Canvas.TextOut(chunk.r.Left + 3, chunk.r.Top, chunk.text);
