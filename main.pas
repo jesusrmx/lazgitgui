@@ -269,6 +269,7 @@ end;
 procedure TfrmMain.FormShow(Sender: TObject);
 begin
   OpenDirectory(targetDir);
+  fTextLinks.LoadFromConfig(fGit.TopLevelDir);
   UpdateCommandsBar;
 end;
 
@@ -1173,7 +1174,6 @@ begin
   fCustomCommands.LoadFromConfig;
 
   fTextLinks := TTextLinks.Create;
-  fTextLinks.LoadFromConfig(fGit.TopLevelDir);
 
   fConfig.CloseConfig;
 

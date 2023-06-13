@@ -144,8 +144,14 @@ type
       aRect: TRect; aState: TGridDrawState);
     procedure gridLogHeaderSized(Sender: TObject; IsColumn: Boolean;
       Index: Integer);
+    procedure gridLogMouseDown(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
     procedure gridLogMouseMove(Sender: TObject; Shift: TShiftState; X,
       Y: Integer);
+    procedure gridLogMouseUp(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
+    procedure gridLogSelectCell(Sender: TObject; aCol, aRow: Integer;
+      var CanSelect: Boolean);
     procedure gridLogSelection(Sender: TObject; aCol, aRow: Integer);
     procedure MenuItem2Click(Sender: TObject);
     procedure MenuItem3Click(Sender: TObject);
@@ -158,6 +164,7 @@ type
     procedure txtSearchKeyPress(Sender: TObject; var Key: char);
   private
     fActive: boolean;
+    fClickingLink: Boolean;
     fConfig: IConfig;
     fFiltered: boolean;
     fGit: IGit;
@@ -167,6 +174,7 @@ type
     fLastHoverRow: LongInt;
     fLogCache: TLogCache;
     fGraphColumns: Integer;
+    fPointedChunkIndex: Integer;
     fWithArrows: boolean;
     fCommitBrowser: TCommitBrowser;
     fCurrentItem: TLogItem;
@@ -426,6 +434,22 @@ begin
   end;
 end;
 
+procedure TframeLog.gridLogMouseDown(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
+var
+  s: string;
+begin
+  fClickingLink := (gridLog.Cursor=crHandPoint) and
+                   (fPointedChunkIndex>=0) and (fPointedChunkIndex<Length(fRowTextChunks));
+  if fClickingLink then begin
+    DebugLn('Clicked over: ');
+    with fRowTextChunks[fPointedChunkIndex] do begin
+      WriteStr(s, itemType);
+      DebugLn('%d: %s %s -> %s (%s)',[linkIndex, s, text, linkDest, linkAction ]);
+    end;
+  end;
+end;
+
 procedure TframeLog.gridLogMouseMove(Sender: TObject; Shift: TShiftState; X,
   Y: Integer);
 var
@@ -438,8 +462,10 @@ var
   aCursor: TCursor;
 begin
   gridLog.MouseToCell(x, y, aCol, aRow);
+  if aRow<=gridLog.FixedRows then
+    exit;
   col := gridLog.Columns[aCol];
-  if (aRow>=gridLog.FixedRows) and (col<>nil) and (col.Tag=COLTAG_SUBJECT) then begin
+  if (col<>nil) and (col.Tag=COLTAG_SUBJECT) then begin
     if aRow<>fLastHoverRow then begin
       aIndex := aRow - gridLog.FixedRows;
       fLogCache.DbIndex.LoadItem(aIndex, aItem);
@@ -455,8 +481,10 @@ begin
           tcitBox:  aCursor := crNoDrop;
           tcitLink: aCursor := crHandPoint;
         end;
-        if gridLog.Cursor<>aCursor then
+        if gridLog.Cursor<>aCursor then begin
           gridLog.Cursor := aCursor;
+          fPointedChunkIndex := i;
+        end;
         exit;
       end;
     end;
@@ -464,6 +492,18 @@ begin
   end;
   if gridLog.Cursor<>crDefault then
     gridLog.Cursor := crDefault;
+end;
+
+procedure TframeLog.gridLogMouseUp(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
+begin
+  fClickingLink := false;
+end;
+
+procedure TframeLog.gridLogSelectCell(Sender: TObject; aCol, aRow: Integer;
+  var CanSelect: Boolean);
+begin
+  CanSelect := not fClickingLink;
 end;
 
 procedure TframeLog.gridLogSelection(Sender: TObject; aCol, aRow: Integer);

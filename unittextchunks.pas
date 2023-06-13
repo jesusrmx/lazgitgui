@@ -23,6 +23,7 @@ type
     linkIndex: Integer;
     linkDest: string;
     linkAction: string;
+    linkColor: string;
   end;
   TTextChunks = array of TTextChunksItem;
 
@@ -31,6 +32,7 @@ type
     Pattern: string;
     Replace: string;
     action: string;
+    color: string;
   end;
   TTextLinksArray = array of TTextLinkItem;
 
@@ -40,6 +42,7 @@ type
     Len: Integer;
     text: string;
     action: string;
+    color: string;
   end;
 
   { TTextLinks }
@@ -120,22 +123,38 @@ begin
   end;
 
   // Get textchunks derived from the subject
-  item.brushStyle := bsClear;
-  item.brushColor := clWhite;
-  item.penStyle := psClear;
-  item.penColor := clBlack;
-  item.penWidth := 1;
-  item.fontColor := clBlack;
 
-  if (fTextLinks<>nil) and (fTextLinks.Count>0) then
-    fTextLinks.FindLinks(aItem.Subject, result)
-  else begin
+  if (fTextLinks<>nil) and (fTextLinks.Count>0) then begin
+
+    // links were configured, find links in the subject
+    n := length(result);
+    fTextLinks.FindLinks(aItem.Subject, result);
+
+    // for each found link, calc it's physical coords and setup color properties
+    for i:=n to Length(result)-1 do begin
+      //WriteStr(s, result[i].itemType);
+      //DebugLn('Chunk %2d: type=%s %s -> %s (%s)',[i, s, result[i].Text, result[i].linkDest, result[i].linkAction]);
+      result[i].r := Rect(x, aRect.Top+1, x + canvas.TextWidth(result[i].text), aRect.Bottom-1);
+      result[i].brushStyle := bsClear;
+      result[i].PenStyle := psClear;
+      if result[i].itemType=tcitNone then result[i].FontColor := clBlack
+      else                                result[i].FontColor := StringToColorDef(result[i].linkColor, clRed);
+      x := result[i].r.Right;
+    end;
+
+  end else begin
+
+    // no links are were configured, whole subject is a 'none' fragment
+    item.brushStyle := bsClear;
+    item.penStyle := psClear;
+    item.fontColor := clBlack;
     item.text := aItem.Subject;
     item.r := rect(x, aRect.Top+1, aRect.Right, aRect.Bottom-1);
     item.itemType := tcitNone;
     j := Length(result);
     SetLength(result, j+1);
     result[j] := item;
+
   end;
 
 end;
@@ -162,11 +181,12 @@ begin
     for i:=1 to n do begin
       s := fConfig.ReadString('link'+IntToStr(i), '', section);
       DecodeDelimitedText( s, CMDSEP, L);
-      if L.Count>=4 then begin
+      if L.Count>=5 then begin
         fLinks[i-1].name := L[0];
         fLinks[i-1].pattern := L[1];
         fLinks[i-1].replace := L[2];
         fLinks[i-1].action := L[3];
+        fLinks[i-1].color := L[4];
       end;
     end;
 
@@ -192,7 +212,7 @@ var
   i, j, offset: Integer;
   s: string;
 
-  procedure Add(start, len, aIndex: Integer; linkText, linkAction: string);
+  procedure Add(start, len, aIndex: Integer; linkText, linkAction, linkColor: string);
   var
     n: Integer;
   begin
@@ -203,11 +223,13 @@ var
       chunks[n].itemType := tcitNone;
       chunks[n].linkIndex := -1;
       chunks[n].linkDest := '';
+      chunks[n].linkColor := linkColor;
     end else begin
       chunks[n].itemType := tcitLink;
       chunks[n].linkIndex := n;
       chunks[n].linkDest := linkText;
       chunks[n].linkAction := linkAction;
+      chunks[n].linkColor := linkColor;
     end;
   end;
 
@@ -216,41 +238,54 @@ begin
   reg := TRegExpr.create;
   reg.InputString := text;
   try
+    // for each configured link try to find matching chunks
     for i:=0 to Count-1 do begin
       s := fLinks[i].Pattern;
       //DebugLn('Trying %d %s',[i+1, s]);
       reg.Expression := s;
       offset := 1;
       while reg.Exec(offset) do begin
+        // a link has been matched, record its position, length, replacement and action
         new(txtPos);
         txtPos^.pos := reg.MatchPos[0];
         txtPos^.Len := reg.MatchLen[0];
         if fLinks[i].Replace<>'' then
           txtPos^.text := reg.Substitute(fLinks[i].Replace);
         txtPos^.action := fLinks[i].action;
+        txtPos^.color  := fLinks[i].color;
         L.Add(txtPos);
+        // try match more links past the previous one.
         offset :=  txtPos^.pos + txtPos^.Len;
       end;
     end;
-    L.Sort(@CompareTextPositions);
-    {
-    DebugLn('For %s found %d links',[QuotedStr(text), L.Count]);
-    for i:=0 to L.Count-1 do begin
-      txtPos := L[i];
-      DebugLn('%d: at %d: %s',[i+1, txtPos^.pos, copy(text, txtPos^.pos, txtPos^.Len)]);
-    end;
-    }
-    offset := 1;
-    for i:=0 to L.Count-1 do begin
-      txtPos := L[i];
-      if txtPos^.pos - offset>0 then
-        Add(offset,  txtPos^.pos - offset, -1, '', '');
-      Add(txtPos^.pos, txtPos^.Len, i, txtPos^.text, txtPos^.action);
-      offset := txtPos^.Pos + txtPos^.Len;
-    end;
-    if offset<Length(text) then
-      Add(offset, MAXINT, -1, '', '');
 
+    // if any chunks were found, split 'text' according to their position
+    if L.Count>0 then begin
+      // matched chunks can be in any order depending on how the links
+      // were declared, sort them by position.
+      L.Sort(@CompareTextPositions);
+      {
+      DebugLn('For %s found %d links',[QuotedStr(text), L.Count]);
+      for i:=0 to L.Count-1 do begin
+        txtPos := L[i];
+        DebugLn('%d: at %d: %s',[i+1, txtPos^.pos, copy(text, txtPos^.pos, txtPos^.Len)]);
+      end;
+      }
+      // for any found chunk, check if there is any previous 'none' fragment, report both
+      offset := 1;
+      for i:=0 to L.Count-1 do begin
+        txtPos := L[i];
+        if txtPos^.pos - offset>0 then
+          Add(offset,  txtPos^.pos - offset, -1, '', '', '');
+        Add(txtPos^.pos, txtPos^.Len, i, txtPos^.text, txtPos^.action, txtPos^.color);
+        offset := txtPos^.Pos + txtPos^.Len;
+      end;
+      // check if there is a 'none' fragment at the end
+      if offset<Length(text) then
+        Add(offset, MAXINT, -1, '', '', '');
+    end else
+      // if no chunks were found, report the whole 'text' as a none fragment
+      Add(1, MAXINT, -1, '', '', '');
   finally
     reg.free;
     L.Free;
