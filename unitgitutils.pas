@@ -46,6 +46,7 @@ type
   end;
 
   TSetOfChar = set of char;
+  TSetOfByte = set of byte;
 
   function OIDToQWord(oid: string): QWord;
   function OIDToParents(oid: string; oidlen: Integer): TQWordArray;

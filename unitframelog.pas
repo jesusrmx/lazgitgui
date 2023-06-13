@@ -58,7 +58,7 @@ c4109375a599264d818df2d265dab104ff8271a4
 interface
 
 uses
-  Classes, SysUtils, dateUtils, fgl, LazLogger, SynEdit, SynHighlighterDiff,
+  Classes, SysUtils, dateUtils, fgl, lclIntf, LazLogger, SynEdit, SynHighlighterDiff,
   SynHighlighterPas, SynHighlighterXML, Graphics, Forms, Dialogs, Controls, StrUtils,
   Grids, ExtCtrls, ComCtrls, Menus, Types, Clipbrd, ActnList, Buttons, StdCtrls,
   unitgittypes, unitlogcache, unitdbindex, unitgitutils, unitifaces, unitruncmd,
@@ -218,7 +218,7 @@ type
     procedure UpdateMode(Data: PtrInt);
     function  ColumnByTag(aTag: Integer): TGridColumn;
     procedure SearchOrFilter(txt: string);
-    procedure SearchLog(txt: string; forward: boolean; startRow:Integer=-1);
+    procedure SearchLog(txt: string; forward: boolean; startRow:Integer=-1; searchIn:TSetOfByte=[]);
     procedure FilterLog(txt: string);
   protected
     property Filtered: boolean read fFiltered write SetFiltered;
@@ -256,7 +256,11 @@ const
     'Message: ' + LineEnding+LineEnding+
     '%s';
 
-  LOGCELL_LEFTMARGIN = 7;
+  LOGCELL_LEFTMARGIN  = 7;
+
+  SEARCHIN_COMMIT     = 1;
+  SEARCHIN_AUTHOR     = 2;
+  SEARCHIN_SUBJECT    = 3;
 
 procedure DrawLine(canvas: TCanvas; x1, y1, x2, y2: Integer; withArrow, destNode:boolean);
 var
@@ -436,18 +440,9 @@ end;
 
 procedure TframeLog.gridLogMouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
-var
-  s: string;
 begin
   fClickingLink := (gridLog.Cursor=crHandPoint) and
                    (fPointedChunkIndex>=0) and (fPointedChunkIndex<Length(fRowTextChunks));
-  if fClickingLink then begin
-    DebugLn('Clicked over: ');
-    with fRowTextChunks[fPointedChunkIndex] do begin
-      WriteStr(s, itemType);
-      DebugLn('%d: %s %s -> %s (%s)',[linkIndex, s, text, linkDest, linkAction ]);
-    end;
-  end;
 end;
 
 procedure TframeLog.gridLogMouseMove(Sender: TObject; Shift: TShiftState; X,
@@ -496,8 +491,25 @@ end;
 
 procedure TframeLog.gridLogMouseUp(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
+var
+  s: string;
 begin
-  fClickingLink := false;
+  if fClickingLink then begin
+    fClickingLink := false;
+    with fRowTextChunks[fPointedChunkIndex] do begin
+      case linkaction of
+
+        'goto': // linkDest is a sha1 to locate
+          SearchLog(linkDest, true, 0, [SEARCHIN_COMMIT]);
+
+        'open':
+          begin
+            if linkDest='' then OpenURL(text)
+            else                OpenURL(linkDest);
+          end;
+      end;
+    end;
+  end;
 end;
 
 procedure TframeLog.gridLogSelectCell(Sender: TObject; aCol, aRow: Integer;
@@ -1441,13 +1453,18 @@ begin
   else                    FilterLog(txt);
 end;
 
-procedure TframeLog.SearchLog(txt: string; forward: boolean; startRow:Integer=-1);
+procedure TframeLog.SearchLog(txt: string; forward: boolean; startRow: Integer;
+  searchIn: TSetOfByte);
 var
   L: TStringList;
   i, delta, aRow, aIndex, anyRow, count: Integer;
   aItem: TLogItem;
   found: boolean;
 begin
+
+  if SearchIn=[] then
+    SearchIn := [SEARCHIN_COMMIT, SEARCHIN_AUTHOR, SEARCHIN_SUBJECT];
+
   L := TStringList.Create;
   try
     L.DelimitedText := lowercase(txt);
@@ -1464,11 +1481,11 @@ begin
       count := 0;
       for i:=0 to L.Count-1 do begin
 
-        found := pos(L[i], aItem.CommitOID)>0;
+        found := (SEARCHIN_COMMIT in SearchIn) and (pos(L[i], aItem.CommitOID)>0);
         if not found then
-          found := pos(L[i], lowercase(aItem.author))>0;
+          found := (SEARCHIN_AUTHOR in SearchIn) and (pos(L[i], lowercase(aItem.author))>0);
         if not found then
-          found := pos(L[i], lowercase(aItem.Subject))>0;
+          found := (SEARCHIN_SUBJECT in SearchIn) and (pos(L[i], lowercase(aItem.Subject))>0);
 
         if found then begin
           if (anyRow<0) then
