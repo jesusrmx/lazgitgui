@@ -169,18 +169,19 @@ end;
 procedure TTextLinks.LoadFromConfig(section: string);
 var
   n, i: Integer;
-  s: string;
+  s, del: string;
   L: TStringList;
 begin
   L := TStringList.Create;
   fConfig.OpenConfig;
   try
+    del := fConfig.ReadString('delimiter', CMDSEP, section);
     n := fConfig.ReadInteger('links', 0, section);
     SetLength(fLinks, n);
 
     for i:=1 to n do begin
       s := fConfig.ReadString('link'+IntToStr(i), '', section);
-      DecodeDelimitedText( s, CMDSEP, L);
+      DecodeDelimitedText( s, del, L);
       if L.Count>=5 then begin
         fLinks[i-1].name := L[0];
         fLinks[i-1].pattern := L[1];
