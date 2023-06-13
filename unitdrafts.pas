@@ -212,7 +212,7 @@ begin
   {
   Example config:
   links=2
-  link1=Bug tracker links&sep;#\d{1,5}&sep;https://sitio/$1&sep;open
+  link1=Bug tracker links&sep;#(\d{1,5})&sep;https://sitio/$1&sep;open
   link2=url links&sep;(?:https?):\/\/(?:[^\s])+&sep;&sep;open
   }
   fConfig := TConfig.Create;
