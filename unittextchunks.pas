@@ -5,7 +5,7 @@ unit unittextchunks;
 interface
 
 uses
-  Classes, SysUtils, Graphics, StrUtils, RegExpr,
+  Classes, SysUtils, LazLogger, Graphics, StrUtils, RegExpr,
   unitcommon, unitgittypes, unitgitutils, unitconfig, unitdbindex;
 
 type
@@ -21,6 +21,8 @@ type
     fontColor: TColor;
     text: string;
     linkIndex: Integer;
+    linkDest: string;
+    linkAction: string;
   end;
   TTextChunks = array of TTextChunksItem;
 
@@ -36,6 +38,8 @@ type
   TTextPos = record
     pos: Integer;
     Len: Integer;
+    text: string;
+    action: string;
   end;
 
   { TTextLinks }
@@ -46,7 +50,8 @@ type
     function GetCount: Integer;
   public
     procedure LoadFromConfig(section: string);
-    procedure FindLinks(canvas:TCanvas; x: Integer; text:string; var chunks: TTextChunks);
+    procedure FindLinks(text:string; var chunks: TTextChunks);
+    procedure Dump;
     property count: Integer read GetCount;
   end;
 
@@ -123,7 +128,7 @@ begin
   item.fontColor := clBlack;
 
   if (fTextLinks<>nil) and (fTextLinks.Count>0) then
-    fTextLinks.FindLinks(canvas, x, aItem.Subject, result)
+    fTextLinks.FindLinks(aItem.Subject, result)
   else begin
     item.text := aItem.Subject;
     item.r := rect(x, aRect.Top+1, aRect.Right, aRect.Bottom-1);
@@ -158,10 +163,10 @@ begin
       s := fConfig.ReadString('link'+IntToStr(i), '', section);
       DecodeDelimitedText( s, CMDSEP, L);
       if L.Count>=4 then begin
-        fLinks[i].name := L[0];
-        fLinks[i].pattern := L[1];
-        fLinks[i].replace := L[2];
-        fLinks[i].action := L[3];
+        fLinks[i-1].name := L[0];
+        fLinks[i-1].pattern := L[1];
+        fLinks[i-1].replace := L[2];
+        fLinks[i-1].action := L[3];
       end;
     end;
 
@@ -179,33 +184,86 @@ begin
   result := aPos^.pos - bPos^.pos;
 end;
 
-procedure TTextLinks.FindLinks(canvas: TCanvas; x: Integer; text: string;
-  var chunks: TTextChunks);
+procedure TTextLinks.FindLinks(text: string; var chunks: TTextChunks);
 var
   L: TfpList;
   reg: TRegExpr;
   txtPos: PTextPos;
-  i, offset: Integer;
+  i, j, offset: Integer;
+  s: string;
+
+  procedure Add(start, len, aIndex: Integer; linkText, linkAction: string);
+  var
+    n: Integer;
+  begin
+    n := Length(chunks);
+    SetLength(chunks, n+1);
+    chunks[n].text := copy(text, start, len);
+    if aIndex<0 then begin
+      chunks[n].itemType := tcitNone;
+      chunks[n].linkIndex := -1;
+      chunks[n].linkDest := '';
+    end else begin
+      chunks[n].itemType := tcitLink;
+      chunks[n].linkIndex := n;
+      chunks[n].linkDest := linkText;
+      chunks[n].linkAction := linkAction;
+    end;
+  end;
+
 begin
   L := TfpList.Create;
   reg := TRegExpr.create;
+  reg.InputString := text;
   try
     for i:=0 to Count-1 do begin
-      reg.Expression := fLinks[i].Pattern;
+      s := fLinks[i].Pattern;
+      //DebugLn('Trying %d %s',[i+1, s]);
+      reg.Expression := s;
       offset := 1;
       while reg.Exec(offset) do begin
         new(txtPos);
         txtPos^.pos := reg.MatchPos[0];
         txtPos^.Len := reg.MatchLen[0];
+        if fLinks[i].Replace<>'' then
+          txtPos^.text := reg.Substitute(fLinks[i].Replace);
+        txtPos^.action := fLinks[i].action;
         L.Add(txtPos);
-        offset := reg.MatchLen[0] + 1;
+        offset :=  txtPos^.pos + txtPos^.Len;
       end;
     end;
     L.Sort(@CompareTextPositions);
+    {
+    DebugLn('For %s found %d links',[QuotedStr(text), L.Count]);
+    for i:=0 to L.Count-1 do begin
+      txtPos := L[i];
+      DebugLn('%d: at %d: %s',[i+1, txtPos^.pos, copy(text, txtPos^.pos, txtPos^.Len)]);
+    end;
+    }
+    offset := 1;
+    for i:=0 to L.Count-1 do begin
+      txtPos := L[i];
+      if txtPos^.pos - offset>0 then
+        Add(offset,  txtPos^.pos - offset, -1, '', '');
+      Add(txtPos^.pos, txtPos^.Len, i, txtPos^.text, txtPos^.action);
+      offset := txtPos^.Pos + txtPos^.Len;
+    end;
+    if offset<Length(text) then
+      Add(offset, MAXINT, -1, '', '');
 
   finally
     reg.free;
     L.Free;
+  end;
+end;
+
+procedure TTextLinks.Dump;
+var
+  i: Integer;
+begin
+  for i:=0 to Count-1 do begin
+    DebugLn('%d: Name=%s Pattern=%s Replace=%s Action=%s',
+      [i, QuotedStr(fLinks[i].Name), QuotedStr(fLinks[i].Pattern), QuotedStr(fLinks[i].Replace), QuotedStr(fLinks[i].Action)]);
   end;
 end;
 

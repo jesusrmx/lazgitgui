@@ -28,11 +28,13 @@ unit unitdrafts;
 interface
 
 uses
-  Classes, SysUtils, StrUtils, LazLogger, lazfileutils, unitprocess, unitvfs;
+  Classes, SysUtils, StrUtils, LazLogger, lazfileutils,
+  unitconfig, unitprocess, unitvfs, unittextchunks;
 
   procedure AnalizeColumns;
   procedure TestParams;
   procedure TestVfs;
+  procedure TestLinks;
 
 implementation
 
@@ -198,6 +200,43 @@ begin
   finally
     vfs.Free;
   end;
+end;
+
+procedure TestLinks;
+var
+  fLinks: TTextLinks;
+  chunks: TTextChunks;
+  chunk: TTextChunksItem;
+  s, aDest: string;
+begin
+  {
+  Example config:
+  links=2
+  link1=Bug tracker links&sep;#\d{1,5}&sep;https://sitio/$1&sep;open
+  link2=url links&sep;(?:https?):\/\/(?:[^\s])+&sep;&sep;open
+  }
+  fConfig := TConfig.Create;
+  fLinks := TTextLinks.Create;
+  fLinks.LoadFromConfig('/home/prog/dev/lazarus/');
+  fLinks.Dump;
+  chunks := nil;
+  //s := '#12345 es uno de los bugs: #65432, #98760 mencionados en https://sitio.org/path/x.html y mas';
+  //s := 'one bug #65432, #98760 mencionados en https://sitio.org/path/x.html y #12345';
+  s := 'https://sitio.org/path/x.html Uno de los bugs #12345, #65432, #98760 mencionados';
+  DebugLn('TEXT: ',s);
+  fLinks.FindLinks(s, chunks);
+  for chunk in chunks do begin
+    WriteStr(s, chunk.itemType);
+    if (chunk.itemType=tcitLink) then begin
+      aDest := chunk.linkDest;
+      if aDest='' then
+        aDest := chunk.text;
+      DebugLn('LinkIndex=%2d type=%s %s -> %s (%s)',[chunk.linkIndex, QuotedStr(s), QuotedStr(chunk.text),aDest, chunk.linkAction])
+    end else
+      DebugLn('LinkIndex=%2d type=%s %s',[chunk.linkIndex, QuotedStr(s), QuotedStr(chunk.text)]);
+  end;
+  fLinks.Free;
+  fConfig.Free;
 end;
 
 end.

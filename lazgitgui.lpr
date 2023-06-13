@@ -51,7 +51,8 @@ begin
   {$ifdef drafts}
   //TestParams;
   //AnalizeColumns;
-  TestVfs;
+  //TestVfs;
+  TestLinks;
   {$else}
 
   fConfig := TConfig.Create;
