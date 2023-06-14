@@ -28,13 +28,14 @@ unit unitdrafts;
 interface
 
 uses
-  Classes, SysUtils, StrUtils, LazLogger, lazfileutils,
+  Classes, SysUtils, StrUtils, LazLogger, lazfileutils, RegExpr,
   unitconfig, unitprocess, unitvfs, unittextchunks;
 
   procedure AnalizeColumns;
   procedure TestParams;
   procedure TestVfs;
   procedure TestLinks;
+  procedure TestRegExpr;
 
 implementation
 
@@ -239,6 +240,74 @@ begin
   end;
   fLinks.Free;
   fConfig.Free;
+end;
+
+procedure TestRegExpr;
+var
+  s, expression, replace, sample: string;
+  L: TStringList;
+  i: Integer;
+  reg: TRegExpr;
+  offset, apos, alen: Integer;
+  DEL:Char;
+begin
+  L := TStringList.Create;
+  L.StrictDelimiter:=true;
+  DEL := '|';
+  //DEL := #2;
+  L.Delimiter:=DEL;
+  reg := TRegExpr.Create;
+  try
+    s := 'Commit Ids'+DEL+'\s([0-9a-fA-F]{6,})'+DEL+'$1'+DEL+'goto'+DEL+'clFuchsia';
+    L.DelimitedText:=s;
+    for i:=0 to L.Count-1 do
+      DebugLn('%d: %s',[i, L[i]]);
+    expression := L[1];
+    replace := L[2];
+    sample := 'Docs: LCL/lclintf. Adds a deprecation notice to the OffsetRect topic for changes in f3afdc8d.';
+    DebugLn('Testing %s', [s]);
+    DebugLn('With: %s',[sample]);
+    DebugLn('Replace: %s',[replace]);
+    reg.InputString:=sample;
+    reg.Expression:=expression;
+    offset := 1;
+    while reg.Exec(offset) do begin
+      apos := reg.MatchPos[0];
+      aLen := reg.MatchLen[0];
+      if replace<>'' then
+        s := reg.Substitute(replace)
+      else
+        s := '';
+      DebugLn('Match %s found at %d len=%d replace=%s',[QuotedStr(reg.Match[0]), aPos, aLen, Quotedstr(s)]);
+      // try match more links past the previous one.
+      offset :=  apos + aLen;
+    end;
+    {  RESULTS UNDER MACOS (M1)
+    0: Commit Ids
+    1: \s([0-9a-fA-F]{6,})
+    2: $1
+    3: goto
+    4: clFuchsia
+    Testing Commit Ids|\s([0-9a-fA-F]{6,})|$1|goto|clFuchsia
+    With: Docs: LCL/lclintf. Adds a deprecation notice to the OffsetRect topic for changes in f3afdc8d.
+    Replace: $1
+    Match ' ' found at 6 len=1 replace=''
+    Match ' Add' found at 19 len=4 replace='Add'
+    Match ' a' found at 24 len=2 replace='a'
+    Match ' de' found at 26 len=3 replace='de'
+    Match ' ' found at 38 len=1 replace=''
+    Match ' ' found at 45 len=1 replace=''
+    Match ' ' found at 48 len=1 replace=''
+    Match ' ' found at 52 len=1 replace=''
+    Match ' ' found at 63 len=1 replace=''
+    Match ' f' found at 69 len=2 replace='f'
+    Match ' c' found at 73 len=2 replace='c'
+    Match ' ' found at 81 len=1 replace=''
+    Match ' f3afdc8d' found at 84 len=9 replace='f3afdc8d'
+    }
+  finally
+    L.Free;
+  end;
 end;
 
 end.

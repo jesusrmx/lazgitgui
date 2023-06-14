@@ -52,7 +52,8 @@ begin
   //TestParams;
   //AnalizeColumns;
   //TestVfs;
-  TestLinks;
+  //TestLinks;
+  TestRegExpr;
   {$else}
 
   fConfig := TConfig.Create;
