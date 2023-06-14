@@ -90,7 +90,7 @@ var
   aCommit, aSubject: RawByteString;
 begin
   fGrid.MouseToCell(x, y, aCol, aRow);
-  if aRow<=fGrid.FixedRows then
+  if aRow<fGrid.FixedRows then
     exit;
   col := fGrid.Columns[aCol];
   if (col<>nil) and (col.Tag=fColTag) then begin
