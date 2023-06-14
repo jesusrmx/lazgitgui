@@ -63,7 +63,7 @@ uses
   Grids, ExtCtrls, ComCtrls, Menus, Types, Clipbrd, ActnList, Buttons, StdCtrls,
   unitgittypes, unitlogcache, unitdbindex, unitgitutils, unitifaces, unitruncmd,
   unitgitmgr, unitcommitbrowser, unitvfs, unithighlighterhelper, unitgraphbuild,
-  unitfilehistory, unitnewbranch, unitreset, unitcommon, unittextchunks;
+  unitfilehistory, unitnewbranch, unitreset, unitcommon, unittextchunks, unitlinkmgr;
 
 const
   GRAPH_LEFT_PADDING          = 12;
@@ -144,14 +144,6 @@ type
       aRect: TRect; aState: TGridDrawState);
     procedure gridLogHeaderSized(Sender: TObject; IsColumn: Boolean;
       Index: Integer);
-    procedure gridLogMouseDown(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
-    procedure gridLogMouseMove(Sender: TObject; Shift: TShiftState; X,
-      Y: Integer);
-    procedure gridLogMouseUp(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
-    procedure gridLogSelectCell(Sender: TObject; aCol, aRow: Integer;
-      var CanSelect: Boolean);
     procedure gridLogSelection(Sender: TObject; aCol, aRow: Integer);
     procedure MenuItem2Click(Sender: TObject);
     procedure MenuItem3Click(Sender: TObject);
@@ -164,22 +156,19 @@ type
     procedure txtSearchKeyPress(Sender: TObject; var Key: char);
   private
     fActive: boolean;
-    fClickingLink: Boolean;
     fConfig: IConfig;
     fFiltered: boolean;
     fGit: IGit;
     fGitMgr: TGitMgr;
     fhlHelper: THighlighterHelper;
     fItemIndices: TItemIndexArray;
-    fLastHoverRow: LongInt;
     fLogCache: TLogCache;
     fGraphColumns: Integer;
-    fPointedChunkIndex: Integer;
     fWithArrows: boolean;
     fCommitBrowser: TCommitBrowser;
     fCurrentItem: TLogItem;
     fLastSelectedCommit: QWord;
-    fRowTextChunks: TTextChunks;
+    fLinkMgr: TLinkMgr;
     procedure CheckSearchButtons;
     procedure LaunchGraphBuildingThread;
     procedure OnContextPopLogClick(Sender: TObject);
@@ -187,6 +176,7 @@ type
     procedure OnDeleteBranchClick(Sender: TObject);
     procedure OnDeleteRemoteBranchClick(Sender: TObject);
     procedure OnGraphBuilderDone(Sender: TObject);
+    procedure OnLinkClick(sender: TObject; link: TTextChunksItem);
     procedure OnLogEvent(sender: TObject; thread: TLogThread; event: Integer; var interrupt: boolean);
     procedure OnDeleteTagClick(sender: TObject);
     procedure OnResetBranchClick(Sender: TObject);
@@ -255,8 +245,6 @@ const
     'Commit Date: %s' + LineEnding +
     'Message: ' + LineEnding+LineEnding+
     '%s';
-
-  LOGCELL_LEFTMARGIN  = 7;
 
   SEARCHIN_COMMIT     = 1;
   SEARCHIN_AUTHOR     = 2;
@@ -436,86 +424,6 @@ begin
     col := gridLog.Columns[Index];
     fConfig.WriteInteger('frmlog.grid.coltag'+IntToStr(col.tag)+'.width', col.Width, SECTION_GEOMETRY);
   end;
-end;
-
-procedure TframeLog.gridLogMouseDown(Sender: TObject; Button: TMouseButton;
-  Shift: TShiftState; X, Y: Integer);
-begin
-  fClickingLink := (gridLog.Cursor=crHandPoint) and
-                   (fPointedChunkIndex>=0) and (fPointedChunkIndex<Length(fRowTextChunks));
-end;
-
-procedure TframeLog.gridLogMouseMove(Sender: TObject; Shift: TShiftState; X,
-  Y: Integer);
-var
-  col: TGridColumn;
-  aCol, aRow: Longint;
-  aIndex, i: Integer;
-  aItem: TLogItem;
-  aRect: TRect;
-  aType: TTextChunksItemType;
-  aCursor: TCursor;
-begin
-  gridLog.MouseToCell(x, y, aCol, aRow);
-  if aRow<=gridLog.FixedRows then
-    exit;
-  col := gridLog.Columns[aCol];
-  if (col<>nil) and (col.Tag=COLTAG_SUBJECT) then begin
-    if aRow<>fLastHoverRow then begin
-      aIndex := aRow - gridLog.FixedRows;
-      fLogCache.DbIndex.LoadItem(aIndex, aItem);
-      aRect := gridLog.CellRect(aCol, aRow);
-      fRowTextChunks := GetTextChunks(gridLog.Canvas, aRect, aRect.Left + LOGCELL_LEFTMARGIN, fGit.RefsMap, aItem);
-    end;
-
-    for i:=0 to Length(fRowTextChunks)-1 do
-    with fRowTextChunks[i] do begin
-      if r.Contains(Point(x, y)) then begin
-        case itemType of
-          tcitNone: aCursor := crDefault;
-          tcitBox:  aCursor := crNoDrop;
-          tcitLink: aCursor := crHandPoint;
-        end;
-        if gridLog.Cursor<>aCursor then begin
-          gridLog.Cursor := aCursor;
-          fPointedChunkIndex := i;
-        end;
-        exit;
-      end;
-    end;
-    fLastHoverRow := aRow;
-  end;
-  if gridLog.Cursor<>crDefault then
-    gridLog.Cursor := crDefault;
-end;
-
-procedure TframeLog.gridLogMouseUp(Sender: TObject; Button: TMouseButton;
-  Shift: TShiftState; X, Y: Integer);
-var
-  s: string;
-begin
-  if fClickingLink then begin
-    fClickingLink := false;
-    with fRowTextChunks[fPointedChunkIndex] do begin
-      case linkaction of
-
-        'goto': // linkDest is a sha1 to locate
-          SearchLog(linkDest, true, 0, [SEARCHIN_COMMIT]);
-
-        'open':
-          begin
-            if linkDest='' then OpenURL(text)
-            else                OpenURL(linkDest);
-          end;
-      end;
-    end;
-  end;
-end;
-
-procedure TframeLog.gridLogSelectCell(Sender: TObject; aCol, aRow: Integer;
-  var CanSelect: Boolean);
-begin
-  CanSelect := not fClickingLink;
 end;
 
 procedure TframeLog.gridLogSelection(Sender: TObject; aCol, aRow: Integer);
@@ -1002,6 +910,20 @@ begin
   gridLog.Invalidate;
 end;
 
+procedure TframeLog.OnLinkClick(sender: TObject; link: TTextChunksItem);
+begin
+  case link.linkAction of
+    'goto':
+        SearchLog(link.linkDest, true, 0,[SEARCHIN_COMMIT]);
+
+    'open':
+      begin
+        if link.linkDest='' then  OpenURL(link.text)
+        else                      OpenURL(link.linkDest);
+      end;
+  end;
+end;
+
 procedure TframeLog.CopyToClipboard(what: Integer);
 var
   s: String;
@@ -1228,6 +1150,13 @@ begin
         UpdateGridRows;
         Application.ProcessMessages;
       end;
+    end;
+
+    if fLinkMgr=nil then begin
+      fLinkMgr := TLinkMgr.Create(gridLog, COLTAG_SUBJECT);
+      fLinkMgr.LogCache := fLogCache;
+      fLinkMgr.Git := fGit;
+      fLinkMgr.OnLinkClick := @OnLinkClick;
     end;
 
   end;
@@ -1585,6 +1514,7 @@ procedure TframeLog.Clear;
 begin
   FreeAndNil(fLogCache);
   FreeAndNil(fCommitBrowser);
+  FreeAndNil(fLinkMgr);
 end;
 
 procedure TframeLog.UpdateGridRows;
