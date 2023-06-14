@@ -246,10 +246,6 @@ const
     'Message: ' + LineEnding+LineEnding+
     '%s';
 
-  SEARCHIN_COMMIT     = 1;
-  SEARCHIN_AUTHOR     = 2;
-  SEARCHIN_SUBJECT    = 3;
-
 procedure DrawLine(canvas: TCanvas; x1, y1, x2, y2: Integer; withArrow, destNode:boolean);
 var
   x, y, o: Integer;
@@ -380,7 +376,7 @@ begin
 
         COLTAG_SUBJECT:
           begin
-            Chunks := GetTextChunks(gridLog.Canvas, aRect, x, fGit.RefsMap, aItem);
+            Chunks := GetTextChunks(gridLog.Canvas, aRect, x, fGit.RefsMap, aItem.CommitOID, aItem.Subject);
             for chunk in Chunks do begin
               gridLog.Canvas.Brush.Style := chunk.brushStyle;
               gridLog.Canvas.Brush.Color := chunk.brushColor;

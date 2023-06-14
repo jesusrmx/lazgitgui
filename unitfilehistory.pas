@@ -27,10 +27,10 @@ unit unitfilehistory;
 interface
 
 uses
-  Classes, SysUtils, Math, StrUtils,
-  LCLType, Forms, Controls, Graphics, Dialogs, Grids,
-  ExtCtrls, SynEdit,
-  unitcommon, unitconfig, unitifaces, unitgitmgr, unithighlighterhelper;
+  Classes, SysUtils, LCLIntf, LCLType,
+  Forms, Controls, Graphics, Dialogs, Grids, ExtCtrls, SynEdit,
+  unitcommon, unitconfig, unitifaces, unitgitutils, unitgitmgr,
+  unithighlighterhelper, unittextchunks, unitlinkmgr;
 
 type
 
@@ -66,12 +66,17 @@ type
     fhlHelper: THighlighterHelper;
     fHistory: array of THistoryItem;
     fLastRow: Integer;
+    fLinkMgr: TLinkMgr;
+    procedure OnGetLogItemData(sender: TObject; aIndex: Integer; out aCommit,
+      aSubject: RawByteString);
+    procedure OnLinkClick(sender: TObject; link: TTextChunksItem);
     procedure ProcessFilePath;
     procedure SetFilePath(AValue: string);
     procedure SetGitMgr(AValue: TGitMgr);
     procedure ObservedChanged(Sender:TObject; what: Integer; data: PtrInt);
     procedure SetHlHelper(AValue: THighlighterHelper);
     procedure DoRowSelection(aRow: Integer);
+    procedure SearchLog(txt: string; forward: boolean; startRow:Integer=-1; searchIn:TSetOfByte=[]);
   public
     property FilePath: string read fFilePath write SetFilePath;
     property GitMgr: TGitMgr read fGitMgr write SetGitMgr;
@@ -109,6 +114,7 @@ end;
 procedure TfrmFileHistory.FormDestroy(Sender: TObject);
 begin
   GitMgr := nil;
+  fLinkMgr.Free;
 end;
 
 procedure TfrmFileHistory.FormKeyDown(Sender: TObject; var Key: Word;
@@ -136,6 +142,11 @@ begin
       gcol.Width := fConfig.ReadInteger('frmFileHistory.grid.coltag'+IntToStr(gcol.tag)+'.width', gcol.width, SECTION_GEOMETRY);
   end;
   fConfig.CloseConfig;
+
+  fLinkMgr := TLinkMgr.Create(grid, COLTAG_SUBJECT);
+  fLinkMgr.Git := fGit;
+  fLinkMgr.OnLinkClick := @OnLinkClick;
+  fLinkMgr.OnGetLogItemData := @OnGetLogItemData;
 end;
 
 procedure TfrmFileHistory.gridDrawCell(Sender: TObject; aCol, aRow: Integer;
@@ -143,6 +154,9 @@ procedure TfrmFileHistory.gridDrawCell(Sender: TObject; aCol, aRow: Integer;
 var
   s: RawByteString;
   aIndex, x: Integer;
+  Chunks: TTextChunks;
+  chunk: TTextChunksItem;
+  aStyle: TFontStyles;
 begin
   if (fGitMgr=nil) or (aRow<grid.FixedRows) then
     exit;
@@ -151,7 +165,28 @@ begin
   case grid.Columns[aCol].tag of
     COLTAG_DATE:    s := fHistory[aIndex].Date;
     COLTAG_AUTHOR:  s := fHistory[aIndex].Author;
-    COLTAG_SUBJECT: s := fHistory[aIndex].Subject;
+    COLTAG_SUBJECT:
+      begin
+        Chunks := GetTextChunks(grid.Canvas, aRect, x, fGit.RefsMap, fHistory[aIndex].CommitOID, fHistory[aIndex].Subject);
+        for chunk in Chunks do begin
+          grid.Canvas.Brush.Style := chunk.brushStyle;
+          grid.Canvas.Brush.Color := chunk.brushColor;
+          grid.Canvas.Pen.Style := chunk.penStyle;
+          grid.Canvas.Pen.Color := chunk.penColor;
+          grid.Canvas.Pen.Width := chunk.penWidth;
+          if chunk.itemType=tcitBox then grid.Canvas.Rectangle(chunk.r);
+          grid.Canvas.Brush.Style := bsClear;
+          grid.Canvas.Font.Color := chunk.fontColor;
+          aStyle := grid.Canvas.Font.Style;
+          if chunk.itemType=tcitLink then Include(aStyle, fsUnderline)
+          else                            Exclude(aStyle, fsUnderline);
+          grid.Canvas.Font.Style := aStyle;
+          grid.Canvas.TextOut(chunk.r.Left + 3, chunk.r.Top, chunk.text);
+        end;
+        grid.Canvas.Brush.Style := bsSolid;
+        grid.Canvas.Pen.Style := psSolid;
+        exit;
+      end;
     COLTAG_SHA1:    s := fHistory[aIndex].CommitOID;
   end;
   grid.Canvas.Brush.Style := bsClear;
@@ -318,6 +353,27 @@ begin
   end;
 end;
 
+procedure TfrmFileHistory.OnLinkClick(sender: TObject; link: TTextChunksItem);
+begin
+  case link.linkAction of
+    'goto':
+        SearchLog(link.linkDest, true, 0,[SEARCHIN_COMMIT]);
+
+    'open':
+      begin
+        if link.linkDest='' then  OpenURL(link.text)
+        else                      OpenURL(link.linkDest);
+      end;
+  end;
+end;
+
+procedure TfrmFileHistory.OnGetLogItemData(sender: TObject; aIndex: Integer;
+  out aCommit, aSubject: RawByteString);
+begin
+  aCommit := fHistory[aIndex].CommitOID;
+  aSubject := fHistory[aIndex].Subject;
+end;
+
 procedure TfrmFileHistory.ObservedChanged(Sender: TObject; what: Integer;
   data: PtrInt);
 begin
@@ -360,6 +416,72 @@ begin
       L.Free;
     end;
     fLastRow := aRow;
+  end;
+end;
+
+procedure TfrmFileHistory.SearchLog(txt: string; forward: boolean;
+  startRow: Integer; searchIn: TSetOfByte);
+var
+  L: TStringList;
+  i, delta, aRow, aIndex, anyRow, count: Integer;
+  found: boolean;
+begin
+
+  if SearchIn=[] then
+    SearchIn := [SEARCHIN_COMMIT, SEARCHIN_AUTHOR, SEARCHIN_SUBJECT];
+
+  L := TStringList.Create;
+  try
+    L.DelimitedText := lowercase(txt);
+    if forward then delta := 1 else delta := -1;
+    if startRow<0 then aRow := grid.Row
+    else               aRow := startRow;
+
+    anyRow := -1;
+    aRow := aRow + delta;
+    while (aRow >= grid.FixedRows) and (aRow <= grid.RowCount-1) do begin
+      aIndex := aRow - grid.FixedRows;
+
+      count := 0;
+      for i:=0 to L.Count-1 do begin
+
+        found := (SEARCHIN_COMMIT in SearchIn) and (pos(L[i], fHistory[aIndex].CommitOID)>0);
+        if not found then
+          found := (SEARCHIN_AUTHOR in SearchIn) and (pos(L[i], lowercase(fHistory[aIndex].author))>0);
+        if not found then
+          found := (SEARCHIN_SUBJECT in SearchIn) and (pos(L[i], lowercase(fHistory[aIndex].Subject))>0);
+
+        if found then begin
+          if (anyRow<0) then
+            anyRow := aIndex;
+          inc(count);
+        end;
+
+      end;
+
+      if count=L.Count then begin
+        // found all terms
+        grid.Row := aRow;
+        //btnNext.Enabled := true;
+        //btnPrev.Enabled := true;
+        exit;
+      end;
+
+      aRow := aRow + delta;
+    end;
+
+    // not found, but check anyRow
+    if anyRow>=grid.FixedRows then begin
+      // partial find
+      grid.Row := aRow;
+      //btnNext.Enabled := true;
+      //btnPrev.Enabled := true;
+    end;
+
+    ShowMessageFmt('Could''t find "%s"',[txt]);
+
+  finally
+    L.Free;
   end;
 end;
 

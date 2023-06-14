@@ -58,14 +58,14 @@ type
     property count: Integer read GetCount;
   end;
 
-  function GetTextChunks(canvas: TCanvas; aRect:TRect; x: integer; refsMap: TRefsMap; aItem: TLogItem): TTextChunks;
+  function GetTextChunks(canvas: TCanvas; aRect:TRect; x: integer; refsMap: TRefsMap; aCommit, aSubject: RawByteString): TTextChunks;
 
 var
   fTextLinks: TTextLinks = nil;
 
 implementation
 
-function GetTextChunks(canvas: TCanvas; aRect:TRect; x: integer; refsMap: TRefsMap; aItem: TLogItem): TTextChunks;
+function GetTextChunks(canvas: TCanvas; aRect:TRect; x: integer; refsMap: TRefsMap; aCommit, aSubject: RawByteString): TTextChunks;
 var
   n, i, j, w: Integer;
   arr: TRefInfoArray;
@@ -77,7 +77,7 @@ begin
   result := nil;
 
   // Get refs items into chunksitems
-  if (refsMap<>nil) and refsMap.Find(aItem.CommitOID, n ) then begin
+  if (refsMap<>nil) and refsMap.Find(aCommit, n ) then begin
     arr := refsMap.Data[n];
 
     for i:=0 to Length(arr)-1 do begin
@@ -128,7 +128,7 @@ begin
 
     // links were configured, find links in the subject
     n := length(result);
-    fTextLinks.FindLinks(aItem.Subject, result);
+    fTextLinks.FindLinks(aSubject, result);
 
     // for each found link, calc it's physical coords and setup color properties
     for i:=n to Length(result)-1 do begin
@@ -148,7 +148,7 @@ begin
     item.brushStyle := bsClear;
     item.penStyle := psClear;
     item.fontColor := clBlack;
-    item.text := aItem.Subject;
+    item.text := aSubject;
     item.r := rect(x, aRect.Top+1, aRect.Right, aRect.Bottom-1);
     item.itemType := tcitNone;
     j := Length(result);

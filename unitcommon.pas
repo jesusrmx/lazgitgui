@@ -10,6 +10,10 @@ uses
 const
   CMDSEP = '&sep;';
 
+  SEARCHIN_COMMIT     = 1;
+  SEARCHIN_AUTHOR     = 2;
+  SEARCHIN_SUBJECT    = 3;
+
 resourcestring
   rsNewBranch = 'New Branch';
   rsNewTag = 'Create a tag at this point';

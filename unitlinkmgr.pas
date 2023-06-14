@@ -14,6 +14,7 @@ const
 type
 
   TLinkClickEvent = procedure(sender:TObject; link: TTextChunksItem) of object;
+  TGetLogItemDataEvent = procedure(sender:TObject; aIndex:Integer; out aCommit, aSubject:RawByteString) of object;
 
   { TLinkMgr }
 
@@ -23,6 +24,7 @@ type
     fGit: IGit;
     fGrid: TDrawGrid;
     fLogCache: TLogCache;
+    fOnGetLogItemData: TGetLogItemDataEvent;
     fOnLinkClick: TLinkClickEvent;
     fRowTextChunks: TTextChunks;
     fLastHoverRow: LongInt;
@@ -35,12 +37,15 @@ type
       Shift: TShiftState; X, Y: Integer);
     procedure GridSelectCell(Sender: TObject; aCol, aRow: Integer;
       var CanSelect: Boolean);
+    procedure GetLogItemData(aIndex: Integer; out aCommit, aSubject: RawByteString);
   public
     constructor create(aGrid: TDrawGrid; aColTag: Integer);
+    destructor destroy; override;
 
     property LogCache: TLogCache read fLogCache write fLogCache;
     property Git: IGit read fGit write fGit;
     property OnLinkClick: TLinkClickEvent read fOnLinkClick write fOnLinkClick;
+    property OnGetLogItemData: TGetLogItemDataEvent read fOnGetLogItemData write fOnGetLogItemData;
   end;
 
 implementation
@@ -56,6 +61,13 @@ begin
   fGrid.OnMouseUp   := @GridMouseUp;
   fGrid.OnSelectCell := @GridSelectCell;
   fColTag := aColTag;
+end;
+
+destructor TLinkMgr.destroy;
+begin
+  fGit := nil;
+  fRowTextChunks := nil;
+  inherited destroy;
 end;
 
 procedure TLinkMgr.GridMouseDown(Sender: TObject; Button: TMouseButton;
@@ -75,6 +87,7 @@ var
   aRect: TRect;
   aType: TTextChunksItemType;
   aCursor: TCursor;
+  aCommit, aSubject: RawByteString;
 begin
   fGrid.MouseToCell(x, y, aCol, aRow);
   if aRow<=fGrid.FixedRows then
@@ -83,9 +96,9 @@ begin
   if (col<>nil) and (col.Tag=fColTag) then begin
     if aRow<>fLastHoverRow then begin
       aIndex := aRow - fGrid.FixedRows;
-      fLogCache.DbIndex.LoadItem(aIndex, aItem);
       aRect := fGrid.CellRect(aCol, aRow);
-      fRowTextChunks := GetTextChunks(fGrid.Canvas, aRect, aRect.Left + LOGCELL_LEFTMARGIN, fGit.RefsMap, aItem);
+      GetLogItemData(aIndex, aCommit, aSubject);
+      fRowTextChunks := GetTextChunks(fGrid.Canvas, aRect, aRect.Left + LOGCELL_LEFTMARGIN, fGit.RefsMap, aCommit, aSubject);
     end;
 
     for i:=0 to Length(fRowTextChunks)-1 do
@@ -125,6 +138,20 @@ procedure TLinkMgr.GridSelectCell(Sender: TObject; aCol, aRow: Integer;
   var CanSelect: Boolean);
 begin
   CanSelect := not fClickingLink;
+end;
+
+procedure TLinkMgr.GetLogItemData(aIndex: Integer; out aCommit,
+  aSubject: RawByteString);
+var
+  aItem: TLogItem;
+begin
+  if Assigned(fOnGetLogItemData) then
+    fOnGetLogItemData(self, aIndex, aCommit, aSubject)
+  else begin
+    fLogCache.DbIndex.LoadItem(aIndex, aItem);
+    aCommit := aItem.CommitOID;
+    aSubject := aItem.Subject;
+  end;
 end;
 
 end.
