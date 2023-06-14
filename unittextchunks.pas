@@ -289,6 +289,10 @@ begin
       Add(1, MAXINT, -1, '', '', '');
   finally
     reg.free;
+    for i:=0 to L.Count-1 do begin
+      txtPos := L[i];
+      Dispose(txtPos);
+    end;
     L.Free;
   end;
 end;
