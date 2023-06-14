@@ -267,6 +267,7 @@ begin
     sample := 'Docs: LCL/lclintf. Adds a deprecation notice to the OffsetRect topic for changes in f3afdc8d.';
     DebugLn('Testing %s', [s]);
     DebugLn('With: %s',[sample]);
+    DebugLn('Expression: %s', [expression]);
     DebugLn('Replace: %s',[replace]);
     reg.InputString:=sample;
     reg.Expression:=expression;
@@ -282,6 +283,7 @@ begin
       // try match more links past the previous one.
       offset :=  apos + aLen;
     end;
+
     {  RESULTS UNDER MACOS (M1)
     0: Commit Ids
     1: \s([0-9a-fA-F]{6,})
@@ -290,6 +292,7 @@ begin
     4: clFuchsia
     Testing Commit Ids|\s([0-9a-fA-F]{6,})|$1|goto|clFuchsia
     With: Docs: LCL/lclintf. Adds a deprecation notice to the OffsetRect topic for changes in f3afdc8d.
+    Expression: \s([0-9a-fA-F]{6,})
     Replace: $1
     Match ' ' found at 6 len=1 replace=''
     Match ' Add' found at 19 len=4 replace='Add'
@@ -305,6 +308,7 @@ begin
     Match ' ' found at 81 len=1 replace=''
     Match ' f3afdc8d' found at 84 len=9 replace='f3afdc8d'
     }
+
     { RESULTS UNDER WINDOWS
     // Lazarus 2.3.0 (rev Unversioned directory) FPC 3.2.2 i386-win32-win32/win64
     0: Commit Ids
@@ -314,6 +318,21 @@ begin
     4: clFuchsia
     Testing Commit Ids|\s([0-9a-fA-F]{6,})|$1|goto|clFuchsia
     With: Docs: LCL/lclintf. Adds a deprecation notice to the OffsetRect topic for changes in f3afdc8d.
+    Expression: \s([0-9a-fA-F]{6,})
+    Replace: $1
+    Match ' f3afdc8d' found at 84 len=9 replace='f3afdc8d'
+    }
+
+    { RESULTS UNDER MACOS intel
+    // Lazarus 2.3.0 (rev main-2_3-3608-gd939016d4e) FPC 3.2.2 x86_64-darwin-cocoa
+    0: Commit Ids
+    1: \s([0-9a-fA-F]{6,})
+    2: $1
+    3: goto
+    4: clFuchsia
+    Testing Commit Ids|\s([0-9a-fA-F]{6,})|$1|goto|clFuchsia
+    With: Docs: LCL/lclintf. Adds a deprecation notice to the OffsetRect topic for changes in f3afdc8d.
+    Expression: \s([0-9a-fA-F]{6,})
     Replace: $1
     Match ' f3afdc8d' found at 84 len=9 replace='f3afdc8d'
     }
