@@ -305,6 +305,18 @@ begin
     Match ' ' found at 81 len=1 replace=''
     Match ' f3afdc8d' found at 84 len=9 replace='f3afdc8d'
     }
+    { RESULTS UNDER WINDOWS
+    // Lazarus 2.3.0 (rev Unversioned directory) FPC 3.2.2 i386-win32-win32/win64
+    0: Commit Ids
+    1: \s([0-9a-fA-F]{6,})
+    2: $1
+    3: goto
+    4: clFuchsia
+    Testing Commit Ids|\s([0-9a-fA-F]{6,})|$1|goto|clFuchsia
+    With: Docs: LCL/lclintf. Adds a deprecation notice to the OffsetRect topic for changes in f3afdc8d.
+    Replace: $1
+    Match ' f3afdc8d' found at 84 len=9 replace='f3afdc8d'
+    }
   finally
     L.Free;
   end;
