@@ -211,9 +211,11 @@ var
 begin
   {
   Example config:
-  links=2
-  link1=Bug tracker links&sep;#(\d{1,5})&sep;https://sitio/$1&sep;open
-  link2=url links&sep;(?:https?):\/\/(?:[^\s])+&sep;&sep;open
+  delimiter=|
+  links=3
+  link1=Bug tracker links|#(\d{1,5})|https://gitlab.com/freepascal.org/lazarus/lazarus/-/issues/$1|open|clBlue
+  link2=url links|(?:https?):\/\/(?:[^\s])+||open|clBlue
+  link3=Commit Ids|\s([0-9a-fA-F]{6,})|$1|goto|clFuchsia
   }
   fConfig := TConfig.Create;
   fLinks := TTextLinks.Create;
