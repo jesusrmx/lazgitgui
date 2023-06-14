@@ -336,6 +336,19 @@ begin
     Replace: $1
     Match ' f3afdc8d' found at 84 len=9 replace='f3afdc8d'
     }
+    { RESULTS UNDER LINUX intel
+    // Lazarus 2.3.0 (rev main-2_3-3997-gee82f625c3) FPC 3.2.3 x86_64-linux-gtk2
+    0: Commit Ids
+    1: \s([0-9a-fA-F]{6,})
+    2: $1
+    3: goto
+    4: clFuchsia
+    Testing Commit Ids|\s([0-9a-fA-F]{6,})|$1|goto|clFuchsia
+    With: Docs: LCL/lclintf. Adds a deprecation notice to the OffsetRect topic for changes in f3afdc8d.
+    Expression: \s([0-9a-fA-F]{6,})
+    Replace: $1
+    Match ' f3afdc8d' found at 84 len=9 replace='f3afdc8d'
+    }
   finally
     L.Free;
   end;
