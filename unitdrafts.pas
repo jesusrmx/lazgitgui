@@ -285,6 +285,7 @@ begin
     end;
 
     {  RESULTS UNDER MACOS (M1)
+    // Lazarus 2.3.0 (rev main-2_3-3436-gda12f4b7d5) FPC 3.2.2 aarch64-darwin-cocoa
     0: Commit Ids
     1: \s([0-9a-fA-F]{6,})
     2: $1
