@@ -581,9 +581,9 @@ begin
         AddUnstageFile;
         AddUnstageAll;
       end;
+      AddRestoreFiles;
       if Entry^.EntryKind in [ekUntracked, ekIgnored] then
         AddIgnoreUntracked;
-      AddRestoreFiles;
       AddPopItem(popLists, '-', nil, 0);
     end else
     if lb.Count>0 then begin
@@ -613,10 +613,10 @@ begin
       AddStageFile;
       AddStageAll;
 
+      AddRestoreFiles;
+
       if (Entry<>nil) and (Entry^.EntryKind in [ekUntracked, ekIgnored]) then
         AddIgnoreUntracked;
-
-      AddRestoreFiles;
 
       AddPopItem(popLists, '-', nil, 0);
       AddViewItems;
