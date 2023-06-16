@@ -1210,7 +1210,6 @@ begin
   col.Visible := fFiltered=false;
 
   if not fFiltered then begin
-    LaunchGraphBuildingThread;
     if fLastSelectedCommit>0 then LocateCommit(fLastSelectedCommit)
     else                          gridLog.Row := btnFilter.Tag;
   end;
