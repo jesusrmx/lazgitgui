@@ -13,6 +13,7 @@ const
   SEARCHIN_COMMIT     = 1;
   SEARCHIN_AUTHOR     = 2;
   SEARCHIN_SUBJECT    = 3;
+  SEARCHIN_DATE       = 4;
 
 resourcestring
   rsNewBranch = 'New Branch';

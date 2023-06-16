@@ -215,6 +215,7 @@ type
     procedure SearchLog(txt: string; forward: boolean; startRow:Integer=-1; searchIn:TSetOfByte=[]);
     procedure FilterLog(txt: string);
     procedure LayoutLabels;
+    function UnixTimestampToStr(ts: Int64): string;
   protected
     property Filtered: boolean read fFiltered write SetFiltered;
   public
@@ -403,7 +404,7 @@ begin
 
         COLTAG_AUTHOR: s := aItem.Author;
         COLTAG_SHA1: s := aItem.CommitOID;
-        COLTAG_DATE: s := DateTimeToStr(UnixToDateTime(aItem.CommiterDate, false));
+        COLTAG_DATE: s := UnixTimestampToStr(aItem.CommiterDate);
         else  s := '';
       end;
 
@@ -1414,7 +1415,7 @@ var
 begin
 
   if SearchIn=[] then
-    SearchIn := [SEARCHIN_COMMIT, SEARCHIN_AUTHOR, SEARCHIN_SUBJECT];
+    SearchIn := [SEARCHIN_COMMIT, SEARCHIN_AUTHOR, SEARCHIN_SUBJECT, SEARCHIN_DATE];
 
   L := TStringList.Create;
   try
@@ -1437,6 +1438,8 @@ begin
           found := (SEARCHIN_AUTHOR in SearchIn) and (pos(L[i], lowercase(aItem.author))>0);
         if not found then
           found := (SEARCHIN_SUBJECT in SearchIn) and (pos(L[i], lowercase(aItem.Subject))>0);
+        if not found then
+          found := (SEARCHIN_DATE in SearchIn) and (pos(L[i], lowercase(UnixTimestampToStr(aItem.CommiterDate)))>0);
 
         if found then begin
           if (anyRow<0) then
@@ -1507,6 +1510,8 @@ begin
           found := pos(needle, lowercase(aItem.author))>0;
         if not found then
           found := pos(needle, lowercase(aItem.Subject))>0;
+        if not found then
+          found := pos(needle, lowercase(UnixTimestampToStr(aItem.CommiterDate)))>0;
 
         if found then
           inc(count);
@@ -1550,6 +1555,12 @@ begin
     lblGraphBuild.AnchorSideRight.Control := aControl;
   end;
 
+end;
+
+function TframeLog.UnixTimestampToStr(ts: Int64): string;
+begin
+  // TODO: an option to pick user date time format
+  result := DateTimeToStr(UnixToDateTime(ts, false));
 end;
 
 procedure TframeLog.Clear;
