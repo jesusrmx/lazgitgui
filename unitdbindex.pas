@@ -158,6 +158,9 @@ type
 
 var
   gblInvalidateCache: boolean = false;
+  gblRecordsToUpdate: Integer = 25;
+  gblCacheScreens: Integer = 11;
+  gblRecordsToRowCount: Integer = 10;
 
 implementation
 
@@ -205,7 +208,7 @@ end;
 
 function TDbIndex.GetInfo: string;
 begin
-  result := format('%d',[Count]);
+  result := format('%d',[Count(true)]);
 end;
 
 procedure TDbIndex.ReIndex;

@@ -156,6 +156,7 @@ type
     procedure txtSearchKeyPress(Sender: TObject; var Key: char);
   private
     fActive: boolean;
+    fCachingScreen: Boolean;
     fConfig: IConfig;
     fFiltered: boolean;
     fGit: IGit;
@@ -164,6 +165,8 @@ type
     fItemIndices: TItemIndexArray;
     fLogCache: TLogCache;
     fGraphColumns: Integer;
+    fRecvCount: Integer;
+    fScreenRows: Integer;
     fWithArrows: boolean;
     fCommitBrowser: TCommitBrowser;
     fCurrentItem: TLogItem;
@@ -652,24 +655,44 @@ begin
       begin
         btnStop.Visible := true;
         btnStop.Tag := 0;
+        fRecvCount := 0;
+        fScreenRows := gridLog.height div gridLog.DefaultRowHeight - 1;
+        if fLogCache.LogState=lsGetFirst then lblInfo.Font.Color := clGreen
+        else                                  lblInfo.Font.Color := clRed;
+        lblInfo.Caption := 'start';
       end;
 
     LOGEVENT_RECORD:
       begin
-        if fLogCache.LogState=lsGetFirst then lblInfo.Font.Color := clGreen
-        else                                  lblInfo.Font.Color := clRed;
-        lblInfo.Caption := format('%s',[fLogCache.DbIndex.Info]);
         lblInfo.Visible := true;
-        interrupt := btnStop.Visible and (btnStop.Tag=1);
 
-        if fLogCache.DbIndex.Count<gridLog.height div gridLog.DefaultRowHeight then begin
-          if fLogCache.DbIndex.Count mod 3 = 0 then
-            gridLog.Invalidate;
+        if (fRecvCount=0) or (fRecvCount mod gblRecordsToUpdate = 0) then begin
+          lblInfo.Caption := format('%s',[fLogCache.DbIndex.Info]);
+          interrupt := btnStop.Visible and (btnStop.Tag=1);
         end;
+
+        if (fRecvCount<fScreenRows*gblCacheScreens) and (gridLog.RowCount<fRecvCount) then begin
+          fCachingScreen := true;
+          if fRecvCount mod gblRecordsToRowCount = 0 then begin
+            gridLog.RowCount := fLogCache.DbIndex.Count + gridLog.FixedRows;
+            //if gridLog.RowCount>fScreenRows then
+            //  LaunchGraphBuildingThread;
+          end;
+        end else
+        if fCachingScreen then begin
+          if gridLog.RowCount>fScreenRows then begin
+            fCachingScreen := false;
+            LaunchGraphBuildingThread;
+          end;
+        end;
+
+        inc(fRecvCount);
       end;
 
     LOGEVENT_END:
       begin
+        lblInfo.Caption := format('%s',[fLogCache.DbIndex.Info]);
+        sleep(250);
         btnStop.Visible := false;
         lblInfo.Visible := false;
 

@@ -157,6 +157,7 @@ type
     flogEvent: TLogThreadEvent;
     fInterrupted: boolean;
     fLimits: TCacheLimits;
+    fExistingCache: boolean;
     function GetRangeEnd: Integer;
     function GetRangeStart: Integer;
     procedure OnLogThreadDone(Sender: TObject);
