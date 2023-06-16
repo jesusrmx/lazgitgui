@@ -532,7 +532,8 @@ begin
   if fDbIndex.LoadItem(-1, aItem, true) then begin
     fOldDate := aItem.CommiterDate;
     Finalize(aItem);
-  end;
+  end else
+    fNeedOlderRecords := true; // invalidate config value
 
   EnterLogState(lsGetFirst);
 end;

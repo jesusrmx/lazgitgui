@@ -100,6 +100,7 @@ type
     btnStop: TSpeedButton;
     btnPrev: TSpeedButton;
     btnNext: TSpeedButton;
+    lblGraphBuild: TLabel;
     txtSearch: TEdit;
     gridLog: TDrawGrid;
     lblInfo: TLabel;
@@ -213,6 +214,7 @@ type
     procedure SearchOrFilter(txt: string);
     procedure SearchLog(txt: string; forward: boolean; startRow:Integer=-1; searchIn:TSetOfByte=[]);
     procedure FilterLog(txt: string);
+    procedure LayoutLabels;
   protected
     property Filtered: boolean read fFiltered write SetFiltered;
   public
@@ -657,15 +659,15 @@ begin
         btnStop.Tag := 0;
         fRecvCount := 0;
         fScreenRows := gridLog.height div gridLog.DefaultRowHeight - 1;
+        lblInfo.Caption := 'start';
+        lblInfo.Visible := true;
         if fLogCache.LogState=lsGetFirst then lblInfo.Font.Color := clGreen
         else                                  lblInfo.Font.Color := clRed;
-        lblInfo.Caption := 'start';
+        LayoutLabels;
       end;
 
     LOGEVENT_RECORD:
       begin
-        lblInfo.Visible := true;
-
         if (fRecvCount=0) or (fRecvCount mod gblRecordsToUpdate = 0) then begin
           lblInfo.Caption := format('%s',[fLogCache.DbIndex.Info]);
           interrupt := btnStop.Visible and (btnStop.Tag=1);
@@ -695,7 +697,7 @@ begin
         sleep(250);
         btnStop.Visible := false;
         lblInfo.Visible := false;
-
+        LayoutLabels;
         if fLogCache.DbIndex.Updated then begin
           UpdateGridRows;
           LocateHead;
@@ -846,9 +848,10 @@ procedure TframeLog.LaunchGraphBuildingThread;
 var
   gBuild: TGraphBuilderThread;
 begin
-  lblInfo.Caption := rsBuildingGraph;
-  lblInfo.Font.Color := clBlue;
-  lblInfo.Visible := true;
+  lblGraphBuild.Caption := rsBuildingGraph;
+  lblGraphBuild.Font.Color := clBlue;
+  lblGraphBuild.Visible := true;
+  LayoutLabels;
 
   gBuild := TGraphBuilderThread.Create(fLogCache.DbIndex);
   gBuild.WithColumns := true;
@@ -917,7 +920,8 @@ var
   col: TGridColumn;
   i: Integer;
 begin
-  lblInfo.Visible := false;
+  lblGraphBuild.Visible := false;
+  LayoutLabels;
 
   fItemIndices := thread.IndexArray;
   fGraphColumns := thread.MaxColumns;
@@ -1527,6 +1531,26 @@ begin
   finally
     L.Free;
   end;
+end;
+
+procedure TframeLog.LayoutLabels;
+var
+  aControl: TControl;
+begin
+
+  if lblInfo.Visible then begin
+    if btnStop.Visible then aControl := btnStop
+    else                    aControl := btnReload;
+    lblInfo.AnchorSideRight.Control := aControl;
+  end;
+
+  if lblGraphBuild.Visible then begin
+    if lblInfo.Visible then aControl := lblInfo else
+    if btnStop.Visible then aControl := btnStop
+    else                    aControl := btnReload;
+    lblGraphBuild.AnchorSideRight.Control := aControl;
+  end;
+
 end;
 
 procedure TframeLog.Clear;

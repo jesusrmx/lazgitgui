@@ -133,6 +133,10 @@ msgctxt "tframelog.gridlog.columns[5].title.caption"
 msgid "SHA1"
 msgstr ""
 
+#: tframelog.lblgraphbuild.caption
+msgid "Graph Building"
+msgstr ""
+
 #: tframelog.lblinfo.caption
 msgctxt "tframelog.lblinfo.caption"
 msgid "Working ...."

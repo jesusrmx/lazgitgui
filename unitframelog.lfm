@@ -797,6 +797,18 @@ object frameLog: TframeLog
       Enabled = False
       OnClick = btnNextClick
     end
+    object lblGraphBuild: TLabel
+      AnchorSideRight.Control = lblInfo
+      Left = 486
+      Height = 17
+      Top = 5
+      Width = 83
+      Alignment = taRightJustify
+      Anchors = [akTop, akRight]
+      BorderSpacing.Right = 4
+      Caption = 'Graph Building'
+      Visible = False
+    end
   end
   object popLog: TPopupMenu
     Left = 173

@@ -18,6 +18,7 @@
 {"hash":60,"name":"tframelog.btnprev.caption","sourcebytes":[60],"value":"<"},
 {"hash":347380,"name":"tframelog.btnnext.hint","sourcebytes":[78,101,120,116],"value":"Next"},
 {"hash":62,"name":"tframelog.btnnext.caption","sourcebytes":[62],"value":">"},
+{"hash":58986551,"name":"tframelog.lblgraphbuild.caption","sourcebytes":[71,114,97,112,104,32,66,117,105,108,100,105,110,103],"value":"Graph Building"},
 {"hash":304761,"name":"tframelog.menuitem1.caption","sourcebytes":[67,111,112,121],"value":"Copy"},
 {"hash":48693327,"name":"tframelog.menuitem2.caption","sourcebytes":[65,108,108,32,105,110,102,111],"value":"All info"},
 {"hash":23009,"name":"tframelog.menuitem3.caption","sourcebytes":[83,104,97],"value":"Sha"},
