@@ -1407,18 +1407,21 @@ begin
 
   RunInteractive(fGit.Exe + cmd, fGit.TopLevelDir, format(rsPushingToRemoteS, [aRemote]), 'Push');
   fGitMgr.UpdateStatus;
+  fGitMgr.UpdateRefList;
 end;
 
 procedure TfrmMain.DoFetch;
 begin
   RunInteractive(fGit.Exe + ' -c color.ui=always fetch', fGit.TopLevelDir, rsFetchingFromRemote, 'Fetch');
   fGitMgr.UpdateStatus;
+  fGitMgr.UpdateRefList;
 end;
 
 procedure TfrmMain.DoPull;
 begin
   RunInteractive(fGit.Exe + ' -c color.ui=always pull', fGit.TopLevelDir, rsPullingFromRemote, 'Pull');
   fGitMgr.UpdateStatus;
+  fGitMgr.UpdateRefList;
 end;
 
 procedure TfrmMain.OnCustomCommandClick(Sender: TObject);
@@ -1443,8 +1446,10 @@ begin
       RunInteractive(s, fGit.TopLevelDir, rsExecutingACustomCommand, cmd.description)
     else
       RunInThread(s, fGit.TopLevelDir, nil, nil);
-    if cmd.updatestatus then
+    if cmd.updatestatus then begin
       fGitMgr.UpdateStatus;
+      fGitMgr.UpdateRefList;
+    end;
   end;
 end;
 
