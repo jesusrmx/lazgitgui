@@ -15,6 +15,8 @@ const
   SEARCHIN_SUBJECT    = 3;
   SEARCHIN_DATE       = 4;
 
+  SECTION_MRECOMMANDS = 'MRECommands';
+
 resourcestring
   rsNewBranch = 'New Branch';
   rsNewTag = 'Create a tag at this point';
@@ -143,6 +145,7 @@ resourcestring
   rsWorking = 'Working ....';
   rsSucceed = 'Succeed';
   rsFailed = 'Failed';
+  rsTheCommandIsEmpty = 'The command is empty';
 
 implementation
 

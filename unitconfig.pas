@@ -27,7 +27,8 @@ unit unitconfig;
 interface
 
 uses
-  Classes, SysUtils, FileUtil, IniFiles, LazLogger, Graphics, Forms, unitifaces;
+  Classes, SysUtils, FileUtil, IniFiles, LazLogger, Graphics, Menus, Forms,
+  unitifaces;
 
 const
   SECTION_FONTS = 'fonts';
@@ -56,6 +57,7 @@ type
     procedure ReadWindow(aForm: TForm; aKey:string; section:string=SECTION_DEFAULT);
     procedure WriteWindow(aForm: TForm; aKey:string; section:string=SECTION_DEFAULT);
     procedure ReadFont(aFont: TFont; aKey:string; defPitch:TFontPitch=fpFixed; section:string=SECTION_DEFAULT);
+    function MenuMRE(aMRE: TComponent; save: boolean; onclick:TNotifyEvent; aCaption: string; section:string=SECTION_DEFAULT): TMenuItem;
     function ReadString(aKey:string; default:string=''; section:string=SECTION_DEFAULT): string;
     function ReadBoolean(aKey:string; default:boolean=false; section:string=SECTION_DEFAULT): boolean;
     function ReadInteger(aKey:string; default:Integer=0; section:string=SECTION_DEFAULT): Integer;
@@ -183,6 +185,60 @@ begin
     else
       Quality := fqNonAntialiased;
   end;
+end;
+
+function TConfig.MenuMRE(aMRE: TComponent; save: boolean;
+  onclick: TNotifyEvent; aCaption: string; section: string): TMenuItem;
+var
+  i, n: Integer;
+  menu: TMenuItem;
+
+  procedure NewMRE(newCaption:string);
+  begin
+    result := TMenuItem.Create(aMRE.Owner);
+    result.Caption := newCaption;
+    result.OnClick := onclick;
+    menu.Insert(0, result);
+  end;
+
+begin
+
+  if save and (aCaption='') then
+    exit(nil);
+
+  if (not (aMRE is TMenuItem)) and (not (aMRE is TMenu)) then
+    raise Exception.Create('aMRE must be either a T[Pop]Menu or a TMenuItem');
+
+  if aMRE is TMenu then
+    menu := TMenu(aMRE).Items
+  else
+    menu := TMenuItem(aMRE);
+
+  OpenConfig;
+  if Save then begin
+
+    i := menu.IndexOfCaption(aCaption);
+    if i<0 then
+      NewMRE(aCaption)
+    else
+      result := menu.Items[i];
+
+    result.MenuIndex := 0;
+
+    WriteInteger('MRECount', menu.Count, section);
+
+    for i:=1 to menu.Count do
+      WriteString(IntToStr(i), menu.Items[i-1].Caption, section);
+
+  end else begin
+
+    n := ReadInteger('MRECount', 0, section);
+    menu.Clear;
+    for i:=n downto 1 do
+      NewMRE(ReadString(IntToStr(i), '' , section));
+
+  end;
+  CloseConfig;
 end;
 
 function TConfig.ReadString(aKey: string; default: string; section: string

@@ -35,7 +35,7 @@ uses
   unitnewbranch, unitruncmd,
   unitnewtag, LConvEncoding, unitdbindex,
   unitgitmgr, unitcheckouttag, unitformlog, unitcustomcmds,
-  unitcustcmdform, unittextchunks;
+  unitcustcmdform, unittextchunks, unitgitcmd;
 
 type
 
@@ -46,6 +46,7 @@ type
     actFetch: TAction;
     actInsertBranchName: TAction;
     actAddCmd: TAction;
+    actGitCmd: TAction;
     actRestoreCommitMsg: TAction;
     actNewLog: TAction;
     actPushDialog: TAction;
@@ -86,10 +87,12 @@ type
     panStaged: TPanel;
     popBranch: TPopupMenu;
     popLists: TPopupMenu;
+    popCommands: TPopupMenu;
     prgBar: TProgressBar;
     splitterMain: TSplitter;
     barCustomCmds: TToolBar;
-    ToolButton1: TToolButton;
+    btnGitCmd: TToolButton;
+    btnAddCustomCmd: TToolButton;
     txtComment: TMemo;
     panLeft: TPanel;
     panContent: TPanel;
@@ -101,6 +104,7 @@ type
     procedure actAddCmdExecute(Sender: TObject);
     procedure actCommitExecute(Sender: TObject);
     procedure actFetchExecute(Sender: TObject);
+    procedure actGitCmdExecute(Sender: TObject);
     procedure actInsertBranchNameExecute(Sender: TObject);
     procedure actNewLogExecute(Sender: TObject);
     procedure actPullExecute(Sender: TObject);
@@ -109,6 +113,7 @@ type
     procedure actQuitExecute(Sender: TObject);
     procedure actRescanExecute(Sender: TObject);
     procedure actRestoreCommitMsgExecute(Sender: TObject);
+    procedure btnGitCmdArrowClick(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var {%H-}CanClose: Boolean);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
@@ -143,6 +148,7 @@ type
     procedure DoFetch;
     procedure DoPull;
     procedure OnCustomCommandClick(Sender: TObject);
+    procedure OnMRECommand(Sender: TObject);
     procedure OnPopupItemClick(Sender: TObject);
     procedure OnBranchSwitch(Data: PtrInt);
     procedure OnIgnoreFileClick(Sender: TObject);
@@ -990,9 +996,10 @@ var
 begin
 
   // remove the current buttons
-  while barCustomCmds.ButtonCount>1 do
-    barCustomCmds.Buttons[1].Free;
+  while barCustomCmds.ButtonCount>2 do
+    barCustomCmds.Buttons[2].Free;
 
+  // add a divider
   if fCustomCommands.Count>0 then begin
     btn := TToolButton.Create(self);
     btn.Style := tbsDivider;
@@ -1015,6 +1022,7 @@ begin
       end;
     end;
 
+  // layout buttons, this trick makes them appear in order
   for i:=barCustomCmds.ButtonCount-1 downto 0 do
     barCustomCmds.Buttons[i].Left := 0;
 
@@ -1157,6 +1165,8 @@ begin
 
   fTextLinks := TTextLinks.Create;
 
+  fConfig.MenuMRE(popCommands, false, @OnMRECommand, '', SECTION_MRECOMMANDS);
+
   fConfig.CloseConfig;
 
   gblInvalidateCache := Application.HasOption('ClearCache');
@@ -1188,6 +1198,11 @@ begin
   end;
 end;
 
+procedure TfrmMain.btnGitCmdArrowClick(Sender: TObject);
+begin
+  ShowMessage('Arrow click');
+end;
+
 procedure TfrmMain.actCommitExecute(Sender: TObject);
 begin
   DoCommit;
@@ -1211,6 +1226,25 @@ end;
 procedure TfrmMain.actFetchExecute(Sender: TObject);
 begin
   DoFetch;
+end;
+
+procedure TfrmMain.actGitCmdExecute(Sender: TObject);
+var
+  F: TfrmGitCmd;
+  s: string;
+begin
+  F := TfrmGitCmd.Create(Self);
+  try
+    if F.ShowModal=mrOk then begin
+      s := StringReplace(F.txtGitCmd.Text, 'git', fGit.Exe, []);
+      if RunInteractive(s, fGit.TopLevelDir, 'Run a git command', F.txtGitCmd.Text)<=0 then begin
+        if F.chkRemember.Checked then
+          fConfig.MenuMRE(popCommands, true, @OnMRECommand, F.txtGitCmd.Text, SECTION_MRECOMMANDS);
+      end
+    end;
+  finally
+    F.Free;
+  end;
 end;
 
 procedure TfrmMain.actInsertBranchNameExecute(Sender: TObject);
@@ -1410,6 +1444,15 @@ begin
     if cmd.updatestatus then
       fGitMgr.UpdateStatus;
   end;
+end;
+
+procedure TfrmMain.OnMRECommand(Sender: TObject);
+var
+  mi: TMenuItem absolute Sender;
+  s: string;
+begin
+  s := StringReplace(mi.Caption, 'git', fGit.Exe, []);
+  RunInteractive(s, fGit.TopLevelDir, 'Run a git command', mi.Caption);
 end;
 
 procedure TfrmMain.DoGitDiff(Data: PtrInt);

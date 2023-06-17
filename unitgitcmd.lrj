@@ -1,0 +1,5 @@
+{"version":1,"strings":[
+{"hash":192410180,"name":"tfrmgitcmd.caption","sourcebytes":[82,117,110,32,97,32,103,105,116,32,99,111,109,109,97,110,100],"value":"Run a git command"},
+{"hash":163710937,"name":"tfrmgitcmd.txtgitcmd.texthint","sourcebytes":[84,121,112,101,32,97,32,103,105,116,32,99,111,109,109,97,110,100,32,40,109,117,115,116,32,115,116,97,114,116,32,119,105,116,104,32,103,105,116,41],"value":"Type a git command (must start with git)"},
+{"hash":240052132,"name":"tfrmgitcmd.chkremember.caption","sourcebytes":[82,101,109,101,109,98,101,114,32,116,104,105,115,32,99,111,109,109,97,110,100],"value":"Remember this command"}
+]}

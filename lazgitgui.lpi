@@ -199,6 +199,12 @@
         <Filename Value="unitlinkmgr.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit>
+      <Unit>
+        <Filename Value="unitgitcmd.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="frmGitCmd"/>
+        <ResourceBaseClass Value="Form"/>
+      </Unit>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
