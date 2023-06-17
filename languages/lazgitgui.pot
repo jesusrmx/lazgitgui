@@ -365,11 +365,6 @@ msgstr ""
 msgid "barCustomCmds"
 msgstr ""
 
-#: tfrmmain.btnstopold.caption
-msgctxt "tfrmmain.btnstopold.caption"
-msgid "Stp"
-msgstr ""
-
 #: tfrmmain.caption
 msgid "frmMain"
 msgstr ""
@@ -394,11 +389,6 @@ msgstr ""
 #: tfrmmain.lblbranch.caption
 msgctxt "tfrmmain.lblbranch.caption"
 msgid "-"
-msgstr ""
-
-#: tfrmmain.lblinfoold.caption
-msgctxt "tfrmmain.lblinfoold.caption"
-msgid "Working ...."
 msgstr ""
 
 #: tfrmmain.lblmerging.caption

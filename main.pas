@@ -33,7 +33,7 @@ uses
   unitgittypes, unitifaces, unitconfig, unitprocess, unithighlighterhelper,
   unitentries, unitgitutils, unitcommon,
   unitnewbranch, unitruncmd,
-  unitnewtag, unitlogcache, unitlog, LConvEncoding, unitdbindex,
+  unitnewtag, LConvEncoding, unitdbindex,
   unitgitmgr, unitcheckouttag, unitformlog, unitcustomcmds,
   unitcustcmdform, unittextchunks;
 
@@ -66,7 +66,6 @@ type
     Label1: TLabel;
     Label2: TLabel;
     Label3: TLabel;
-    lblInfoOld: TLabel;
     lblTag: TLabel;
     lblMerging: TLabel;
     lblRemote: TLabel;
@@ -80,21 +79,17 @@ type
     panCommitState: TPanel;
     panBranch: TPanel;
     panPush: TPanel;
-    panLog: TPanel;
     panStatus: TPanel;
     panFileState: TPanel;
     panUnstaged: TPanel;
     panStagedContainer: TPanel;
     panStaged: TPanel;
     popBranch: TPopupMenu;
-    btnLog: TSpeedButton;
     popLists: TPopupMenu;
-    btnStopOld: TSpeedButton;
     prgBar: TProgressBar;
     splitterMain: TSplitter;
     barCustomCmds: TToolBar;
     ToolButton1: TToolButton;
-    txtLog: TSynEdit;
     txtComment: TMemo;
     panLeft: TPanel;
     panContent: TPanel;
@@ -107,7 +102,6 @@ type
     procedure actCommitExecute(Sender: TObject);
     procedure actFetchExecute(Sender: TObject);
     procedure actInsertBranchNameExecute(Sender: TObject);
-    procedure actLogExecute(Sender: TObject);
     procedure actNewLogExecute(Sender: TObject);
     procedure actPullExecute(Sender: TObject);
     procedure actPushDialogExecute(Sender: TObject);
@@ -115,7 +109,6 @@ type
     procedure actQuitExecute(Sender: TObject);
     procedure actRescanExecute(Sender: TObject);
     procedure actRestoreCommitMsgExecute(Sender: TObject);
-    procedure btnStopOldClick(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var {%H-}CanClose: Boolean);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
@@ -136,7 +129,6 @@ type
     fGit: IGit;
     fClickedIndex: Integer;
     fDir: string;
-    fLogHandler: TLogHandler;
     fPopPoint: TPoint;
     fListAlwaysDrawSelection: boolean;
     fhlHelper: THighlighterHelper;
@@ -146,14 +138,11 @@ type
     procedure DoGitDiff(Data: PtrInt);
     procedure DoItemAction(Data: PtrInt);
     procedure DoCommit;
-    procedure DoLog;
     procedure DoNewLog;
     procedure DoPush;
     procedure DoFetch;
     procedure DoPull;
     procedure OnCustomCommandClick(Sender: TObject);
-    procedure OnLogEvent({%H-}sender: TObject; {%H-}thread: TRunThread; event: Integer;
-      var interrupt: boolean);
     procedure OnPopupItemClick(Sender: TObject);
     procedure OnBranchSwitch(Data: PtrInt);
     procedure OnIgnoreFileClick(Sender: TObject);
@@ -1147,17 +1136,10 @@ begin
   txtDiff.Clear;
 
   fConfig.ReadFont(txtDiff.Font, 'viewer', fpFixed, SECTION_FONTS);
-  fConfig.ReadFont(txtLog.Font, 'log', fpFixed, SECTION_FONTS);
 
   panFileState.Caption := '';
 
   RestoreGui;
-
-  txtLog.Color := clBlack;
-  txtLog.Font.Color := clWhite;
-
-  fLogHandler := TLogHandler.Create(txtLog, @OnLogEvent);
-  fLogHandler.GitMgr := fGitMgr;
 
   fConfig.ReadPreferences;
   fGitMgr.ViewUntrackedFiles := fConfig.ViewUntrackedFiles;
@@ -1206,11 +1188,6 @@ begin
   end;
 end;
 
-procedure TfrmMain.btnStopOldClick(Sender: TObject);
-begin
-  btnStopOld.Tag := 1;
-end;
-
 procedure TfrmMain.actCommitExecute(Sender: TObject);
 begin
   DoCommit;
@@ -1239,11 +1216,6 @@ end;
 procedure TfrmMain.actInsertBranchNameExecute(Sender: TObject);
 begin
   txtComment.SelText := fGitMgr.Branch + ': ';
-end;
-
-procedure TfrmMain.actLogExecute(Sender: TObject);
-begin
-  DoLog;
 end;
 
 procedure TfrmMain.actNewLogExecute(Sender: TObject);
@@ -1278,7 +1250,6 @@ begin
   fGit := nil;
   fGitMgr.RemoveObserver(Self);
   fhlHelper.Free;
-  fLogHandler.Free;
   fGitMgr.Free;
   fTextLinks.Free;
 end;
@@ -1328,22 +1299,6 @@ begin
     fGitMgr.UpdateRefList;
     txtDiff.Clear;
     txtComment.Clear;
-  end;
-end;
-
-procedure TfrmMain.DoLog;
-begin
-  if actLog.Checked then begin
-    panLog.Visible := true;
-    panStatus.Visible := false;
-    btnStopOld.Visible := true;
-    btnStopOld.Tag := 0;
-
-    fLogHandler.ShowLog;
-
-  end else begin
-    panLog.Visible := false;
-    panStatus.Visible := true;
   end;
 end;
 
@@ -1454,18 +1409,6 @@ begin
       RunInThread(s, fGit.TopLevelDir, nil, nil);
     if cmd.updatestatus then
       fGitMgr.UpdateStatus;
-  end;
-end;
-
-procedure TfrmMain.OnLogEvent(sender: TObject; thread: TRunThread;
-  event: Integer; var interrupt: boolean);
-begin
-  case event of
-    LOGEVENT_OUTPUT:
-      interrupt := btnStopOld.Visible and (btnStopOld.Tag=1);
-
-    LOGEVENT_DONE:
-      btnStopOld.Visible := false;
   end;
 end;
 

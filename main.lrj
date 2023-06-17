@@ -14,8 +14,6 @@
 {"hash":45,"name":"tfrmmain.lblmerging.caption","sourcebytes":[45],"value":"-"},
 {"hash":370602,"name":"tfrmmain.label3.caption","sourcebytes":[84,97,103,58],"value":"Tag:"},
 {"hash":45,"name":"tfrmmain.lbltag.caption","sourcebytes":[45],"value":"-"},
-{"hash":23216,"name":"tfrmmain.btnstopold.caption","sourcebytes":[83,116,112],"value":"Stp"},
-{"hash":24486670,"name":"tfrmmain.lblinfoold.caption","sourcebytes":[87,111,114,107,105,110,103,32,46,46,46,46],"value":"Working ...."},
 {"hash":65490803,"name":"tfrmmain.barcustomcmds.caption","sourcebytes":[98,97,114,67,117,115,116,111,109,67,109,100,115],"value":"barCustomCmds"},
 {"hash":93100414,"name":"tfrmmain.actrescan.caption","sourcebytes":[82,101,115,99,97,110],"value":"Rescan"},
 {"hash":78005252,"name":"tfrmmain.actcommit.caption","sourcebytes":[67,111,109,109,105,116],"value":"Commit"},

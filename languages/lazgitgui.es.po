@@ -117,7 +117,7 @@ msgstr ""
 #: tframelog.btnstop.caption
 msgctxt "tframelog.btnstop.caption"
 msgid "Stp"
-msgstr "Paso"
+msgstr "Detener"
 
 #: tframelog.gridlog.columns[0].title.caption
 msgctxt "tframelog.gridlog.columns[0].title.caption"
@@ -381,11 +381,6 @@ msgstr "Restaurar Mensaje"
 msgid "barCustomCmds"
 msgstr "barCustomCmds"
 
-#: tfrmmain.btnstopold.caption
-msgctxt "tfrmmain.btnstopold.caption"
-msgid "Stp"
-msgstr "Paso"
-
 #: tfrmmain.caption
 msgid "frmMain"
 msgstr "frmMain"
@@ -411,11 +406,6 @@ msgstr "-"
 msgctxt "tfrmmain.lblbranch.caption"
 msgid "-"
 msgstr "-"
-
-#: tfrmmain.lblinfoold.caption
-msgctxt "tfrmmain.lblinfoold.caption"
-msgid "Working ...."
-msgstr "Procesando ...."
 
 #: tfrmmain.lblmerging.caption
 msgctxt "tfrmmain.lblmerging.caption"

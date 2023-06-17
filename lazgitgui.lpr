@@ -33,7 +33,7 @@ uses
   {$ENDIF}
   SysUtils, Classes, Interfaces, // this includes the LCL widgetset
   Forms, main, unitconfig, unitprocess, unitentries, unitgit, unitnewbranch,
-  unitruncmd, unitansiescapes, unitnewtag, unitlog, unitdebug, unitlogcache,
+  unitruncmd, unitansiescapes, unitnewtag, unitdebug, unitlogcache,
   unitdbindex, unitgitutils, unitdrafts, unitframelog, unitgitmgr, unitgittypes,
   unitcheckouttag, unitcommitbrowser, unitvfs, unithighlighterhelper,
   unitgraphbuild, unitfilehistory, unitformlog, unitcustcmdform, unitcustomcmds,
