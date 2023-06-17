@@ -1243,6 +1243,11 @@ begin
       if fActive then begin
         // reflist has changed, update the grid to reflect annotations.
         gridLog.Invalidate;
+
+        // force cache invalidation
+        if ssShift in KeyboardStateToShiftState then
+          gblInvalidateCache := true;
+
         // queue a cache update
         fLogCache.UpdateCache;
       end;
