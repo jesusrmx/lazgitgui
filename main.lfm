@@ -937,7 +937,7 @@ object frmMain: TfrmMain
       TabOrder = 1
       Wrapable = False
       object btnGitCmd: TToolButton
-        Left = 24
+        Left = 1
         Top = 0
         Action = actGitCmd
         DropdownMenu = popCommands
@@ -945,7 +945,7 @@ object frmMain: TfrmMain
         Style = tbsDropDown
       end
       object btnAddCustomCmd: TToolButton
-        Left = 1
+        Left = 36
         Top = 0
         Action = actAddCmd
       end

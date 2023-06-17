@@ -1023,6 +1023,8 @@ begin
     end;
 
   // layout buttons, this trick makes them appear in order
+  btnAddCustomCmd.Left := 0;
+  btnGitCmd.Left := 0;
   for i:=barCustomCmds.ButtonCount-1 downto 0 do
     barCustomCmds.Buttons[i].Left := 0;
 
