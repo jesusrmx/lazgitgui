@@ -217,6 +217,7 @@
         <Filename Value="unitremotes.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="frmRemotes"/>
+        <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
       </Unit>
     </Units>

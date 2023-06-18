@@ -1,31 +1,35 @@
 object frmRemotes: TfrmRemotes
-  Left = 266
-  Height = 240
-  Top = 231
-  Width = 585
+  Left = 172
+  Height = 200
+  Top = 265
+  Width = 598
   Caption = 'Remotes Form'
-  ClientHeight = 240
-  ClientWidth = 585
+  ClientHeight = 200
+  ClientWidth = 598
+  Constraints.MinHeight = 200
   OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
   OnShow = FormShow
   ShowHint = True
   LCLVersion = '2.3.0.0'
   object lstRemotes: TListBox
-    Left = 9
-    Height = 174
+    Left = 8
+    Height = 113
     Top = 10
     Width = 159
     Anchors = [akTop, akLeft, akBottom]
     ItemHeight = 0
+    OnDrawItem = lstRemotesDrawItem
     OnSelectionChange = lstRemotesSelectionChange
-    TabOrder = 0
+    Style = lbOwnerDrawFixed
+    TabOrder = 4
+    TopIndex = -1
   end
   object panBtns: TButtonPanel
     Left = 6
-    Height = 34
-    Top = 200
-    Width = 573
+    Height = 35
+    Top = 159
+    Width = 586
     OKButton.Name = 'OKButton'
     OKButton.DefaultCaption = True
     HelpButton.Name = 'HelpButton'
@@ -34,7 +38,7 @@ object frmRemotes: TfrmRemotes
     CloseButton.DefaultCaption = True
     CancelButton.Name = 'CancelButton'
     CancelButton.DefaultCaption = True
-    TabOrder = 1
+    TabOrder = 5
     ShowButtons = [pbOK, pbCancel]
     object lblInfo: TLabel
       AnchorSideTop.Control = panBtns
@@ -47,50 +51,63 @@ object frmRemotes: TfrmRemotes
   end
   object txtFetch: TEdit
     Left = 183
-    Height = 23
+    Height = 26
     Hint = 'Fetch URL'
-    Top = 56
-    Width = 385
+    Top = 48
+    Width = 401
     Anchors = [akTop, akLeft, akRight]
     OnChange = txtFetchChange
-    TabOrder = 2
+    TabOrder = 1
     TextHint = 'Fetch URL'
   end
   object txtPush: TEdit
     Left = 183
-    Height = 23
+    Height = 26
     Hint = 'Push URL'
     Top = 88
-    Width = 384
+    Width = 401
     Anchors = [akTop, akLeft, akRight]
-    TabOrder = 3
+    TabOrder = 2
     TextHint = 'Push URL'
   end
   object chkSameURL: TCheckBox
-    Left = 183
-    Height = 19
-    Top = 24
-    Width = 196
+    Left = 184
+    Height = 21
+    Top = 128
+    Width = 211
     Caption = 'Fetch and Push URL Are the Same'
     Checked = True
     OnClick = chkSameURLClick
     State = cbChecked
-    TabOrder = 4
+    TabOrder = 3
   end
   object btnAdd: TSpeedButton
-    Left = 185
+    Left = 9
     Height = 22
-    Top = 127
+    Top = 130
     Width = 23
+    Anchors = [akLeft, akBottom]
     Caption = '+'
     OnClick = btnAddClick
   end
   object btnDel: TSpeedButton
-    Left = 185
+    Left = 32
     Height = 22
-    Top = 152
+    Top = 130
     Width = 23
+    Anchors = [akLeft, akBottom]
     Caption = '-'
     OnClick = btnDelClick
+  end
+  object txtName: TEdit
+    Left = 183
+    Height = 26
+    Hint = 'Remote name'
+    Top = 10
+    Width = 401
+    Anchors = [akTop, akLeft, akRight]
+    OnChange = txtNameChange
+    TabOrder = 0
+    TextHint = 'Remote Name'
   end
 end

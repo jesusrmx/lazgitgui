@@ -150,6 +150,8 @@ resourcestring
   rsTheTargetRemoteRepositoryIsNotSelected = 'The target remote repository is '
     +'not selected';
   rsInvalidTargetUrl = 'Invalid target url';
+  rsNewRemoteName = '<New Remote Name>';
+  rsInvalidRemoteName = 'Invalid remote name';
 
 implementation
 
