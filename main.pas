@@ -1318,6 +1318,7 @@ begin
   end;
   fDir := aDir;
   fGitMgr.UpdateStatus;
+  fGitMgr.UpdateRemotes;
   prgBar.Visible := true;
 end;
 
@@ -1371,8 +1372,8 @@ end;
 procedure TfrmMain.DoPush;
 var
   res: TModalResult;
-  L: TStringList;
   cmd, aRemote: string;
+  n: Integer;
 begin
   //if fConfig.ReadBoolean('FetchBeforePush', false) then
   //  doFetch;
@@ -1386,31 +1387,30 @@ begin
   aRemote := '';
 
   if (fGitMgr.Upstream='') then begin
-    L := fGit.GetRemotesList;
-    try
-      if L.Count=0 then begin
-        ShowMessage(rsThisRepositoryHasNoRemotes);
-        exit;
-      end;
 
-      if L.Count>1 then begin
-        ShowMessageFmt(rsSHasNoTrackingAndThere, [fGitMgr.Branch, l.Count, L.CommaText]);
-       exit;
-      end;
+    if fGitMgr.Remotes=nil then
+      fGitMgr.UpdateRemotes;
 
-      aRemote := L[0];
-
-      res := QuestionDlg( rsPushingBranchWithout,
-               format(rsDoYouWantToPushSToSA, [fGitMgr.Branch, aRemote]), mtConfirmation,
-               [mrYes, rsYesDoIt, mrCancel, rsCancel], 0 );
-      if res<>mrYes then
-        exit;
-
-      cmd := ' push --progress --set-upstream '+aRemote+' '+fGitMgr.Branch;
-
-    finally
-      L.Free;
+    if fGitMgr.Remotes=nil then begin
+      ShowMessage(rsThisRepositoryHasNoRemotes);
+      exit;
     end;
+
+    n := Length(fGitMgr.Remotes);
+    if n>1 then begin
+      ShowMessageFmt(rsSHasNoTrackingAndThere, [fGitMgr.Branch, n, fGitMgr.RemotesList]);
+     exit;
+    end;
+
+    aRemote := fGitMgr.Remotes[0].name;
+
+    res := QuestionDlg( rsPushingBranchWithout,
+             format(rsDoYouWantToPushSToSA, [fGitMgr.Branch, aRemote]), mtConfirmation,
+             [mrYes, rsYesDoIt, mrCancel, rsCancel], 0 );
+    if res<>mrYes then
+      exit;
+
+    cmd := ' push --progress --set-upstream '+aRemote+' '+fGitMgr.Branch;
 
   end else
     cmd := ' push --progress';
@@ -1559,6 +1559,7 @@ procedure TfrmMain.UpdateBranch;
 var
   s: string;
   ahead, behind: boolean;
+  i: Integer;
 begin
   ahead := fGitMgr.CommitsAhead>0;
   behind := fGitMgr.CommitsBehind<0;
@@ -1607,6 +1608,16 @@ begin
     label3.Caption := '';
   end;
 
+  i := fGitMgr.RemoteIndex;
+  if i>=0 then begin
+    with fGitMgr.Remotes[i] do begin
+      if Fetch=Push then
+        lblRemote.Hint := format('Url: %s',[Fetch])
+      else
+        lblRemote.Hint := format('Fetch Url: %s'^M'Push Url: %s', [Fetch, Push]);
+    end;
+  end else
+    lblRemote.Hint := '';
 
   txtDiff.Clear;
 

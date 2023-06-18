@@ -79,6 +79,14 @@ type
     fetch: boolean;
   end;
 
+  PRemoteInfo = ^TRemoteInfo;
+  TRemoteInfo = record
+    name: string;
+    fetch: string;
+    push: string;
+  end;
+  TRemotesArray = array of TRemoteInfo;
+
 implementation
 
 end.

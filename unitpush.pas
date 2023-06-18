@@ -29,7 +29,7 @@ interface
 uses
   Classes, SysUtils, LazLoggerBase,
   Forms, Controls, Graphics, Dialogs, ButtonPanel, StdCtrls, Buttons, ExtCtrls,
-  unitcommon, unitgittypes, unitifaces, unitconfig, unitgitmgr;
+  unitcommon, unitgittypes, unitifaces, unitconfig, unitgitmgr, unitremotes;
 
 type
 
@@ -38,7 +38,7 @@ type
   TfrmPush = class(TForm, IObserver)
     chkOptions: TCheckGroup;
     comboRemote: TComboBox;
-    SpeedButton1: TSpeedButton;
+    btnRemotes: TSpeedButton;
     txtURL: TEdit;
     gpoDest: TGroupBox;
     Label1: TLabel;
@@ -47,6 +47,7 @@ type
     panBtns: TButtonPanel;
     radUrl: TRadioButton;
     radRemote: TRadioButton;
+    procedure btnRemotesClick(Sender: TObject);
     procedure chkOptionsItemClick(Sender: TObject; Index: integer);
     procedure comboRemoteSelect(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
@@ -55,6 +56,7 @@ type
     procedure FormShow(Sender: TObject);
     procedure lstBranchesSelectionChange(Sender: TObject; User: boolean);
     procedure radRemoteClick(Sender: TObject);
+    procedure txtURLChange(Sender: TObject);
   private
     fGit: IGit;
     fGitMgr: TGitMgr;
@@ -63,7 +65,7 @@ type
     procedure LoadBranches;
     procedure ObservedChanged(Sender:TObject; what: Integer; data: PtrInt);
     procedure Invalid(msg: string);
-    procedure LoadOrigins;
+    procedure LoadRemotes;
   public
     property GitMgr: TGitMgr read fGitMgr write SetGitMgr;
   end;
@@ -87,6 +89,28 @@ begin
   UpdateInfo;
 end;
 
+procedure TfrmPush.btnRemotesClick(Sender: TObject);
+var
+  F: TfrmRemotes;
+  curRemote: TCaption;
+  i: Integer;
+begin
+  F := TfrmRemotes.Create(self);
+  F.GitMgr := GitMgr;
+  F.ReadOnly := false;
+  try
+    if F.ShowModal=mrOk then begin
+      curRemote := comboRemote.Text;
+      LoadRemotes;
+      i := comboRemote.Items.IndexOf(CurRemote);
+      comboRemote.ItemIndex := i;
+      UpdateInfo;
+    end;
+  finally
+    F.Free;
+  end;
+end;
+
 procedure TfrmPush.comboRemoteSelect(Sender: TObject);
 begin
   UpdateInfo;
@@ -105,8 +129,8 @@ end;
 procedure TfrmPush.FormShow(Sender: TObject);
 begin
   fGitMgr.UpdateRefList;
+  LoadRemotes;
   LoadBranches;
-  LoadOrigins;
 end;
 
 procedure TfrmPush.lstBranchesSelectionChange(Sender: TObject; User: boolean);
@@ -115,28 +139,35 @@ var
   i, j: Integer;
   origin: string;
 begin
-  i := lstBranches.ItemIndex;
-  if i>=0 then begin
-    info := PRefInfo(lstBranches.Items.Objects[i]);
-    if info^.upstream<>'' then begin
-      j := pos('/', info^.upstream);
-      if j>0 then begin
-        origin := copy(info^.upstream, 1, j-1);
-        j := comboRemote.Items.IndexOf(origin);
-        if j>=0 then
-          comboRemote.ItemIndex := j
-        else
-          // else just for the moment ...
-          comboRemote.ItemIndex := comboRemote.Items.Add(origin);
+  try
+    i := lstBranches.ItemIndex;
+    if i>=0 then begin
+      info := PRefInfo(lstBranches.Items.Objects[i]);
+      if info^.upstream<>'' then begin
+        j := pos('/', info^.upstream);
+        if j>0 then begin
+          origin := copy(info^.upstream, 1, j-1);
+          j := comboRemote.Items.IndexOf(origin);
+          if j>=0 then begin
+            comboRemote.ItemIndex := j;
+            exit;
+          end;
+        end;
       end;
-    end else
       comboRemote.ItemIndex := -1;
+    end;
+  finally
+    UpdateInfo;
   end;
 
-  UpdateInfo;
 end;
 
 procedure TfrmPush.radRemoteClick(Sender: TObject);
+begin
+  UpdateInfo;
+end;
+
+procedure TfrmPush.txtURLChange(Sender: TObject);
 begin
   UpdateInfo;
 end;
@@ -240,9 +271,15 @@ begin
   lblInfo.Caption := msg;
 end;
 
-procedure TfrmPush.LoadOrigins;
+procedure TfrmPush.LoadRemotes;
+var
+  i: Integer;
 begin
-  // todo
+  if fGitMgr.Remotes=nil then
+    fGitMgr.UpdateRemotes;
+  comboRemote.Clear;
+  for i:=0 to Length(fGitMgr.Remotes)-1 do
+    comboRemote.Items.Add(fGitMgr.Remotes[i].name);
 end;
 
 end.

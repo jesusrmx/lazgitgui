@@ -5,5 +5,6 @@
 {"hash":126633637,"name":"tfrmpush.radremote.caption","sourcebytes":[114,101,109,111,116,101],"value":"remote"},
 {"hash":23692,"name":"tfrmpush.radurl.caption","sourcebytes":[85,114,108],"value":"Url"},
 {"hash":70189228,"name":"tfrmpush.txturl.texthint","sourcebytes":[69,110,116,101,114,32,97,32,85,82,76],"value":"Enter a URL"},
+{"hash":82,"name":"tfrmpush.btnremotes.caption","sourcebytes":[82],"value":"R"},
 {"hash":108725763,"name":"tfrmpush.chkoptions.caption","sourcebytes":[79,112,116,105,111,110,115],"value":"Options"}
 ]}

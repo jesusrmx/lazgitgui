@@ -29,8 +29,8 @@ unit unitgitmgr;
 interface
 
 uses
-  Classes, SysUtils, unitgittypes, unitgit, unitifaces, unitruncmd, unitentries,
-  LazLogger;
+  Classes, SysUtils, LazLogger,
+  unitgittypes, unitgit, unitifaces, unitruncmd, unitentries;
 
 const
   GITMGR_EVENT_UPDATESTATUS         = 1;
@@ -77,10 +77,13 @@ type
     fLastDescribedTag: string;
     fUnstagedList, fStagedList: TStringList;
     fObserverMgr: TObserverMgr;
+    fRemotes: TRemotesArray;
     function GetGit: IGit;
+    function GetRemotesList: string;
     procedure OnCommandsDone(Sender: TObject);
     procedure SetConfig(AValue: IConfig);
     procedure OnCommandProgress(sender: TObject; item: TCommandItem; percent: single);
+    function  GetRemoteIndex: Integer;
   public
     constructor create;
     destructor destroy; override;
@@ -94,6 +97,7 @@ type
     procedure QueueSwitchTag(tagName: string);
     procedure QueueNewBranch(sender: TObject; branchName, command: string; switch, fetch:boolean);
     procedure ForceTagDescription;
+    procedure UpdateRemotes;
 
     property CommitsAhead: Integer read fCommitsAhead;
     property CommitsBehind: Integer read fCommitsBehind;
@@ -114,6 +118,9 @@ type
     property ViewTrackedFiles: boolean read fViewTrackedFiles write fViewTrackedFiles;
     property UnstagedList: TStringList read fUnstagedList;
     property StagedList: TStringList read fStagedList;
+    property Remotes: TRemotesArray read fRemotes;
+    property RemotesList: string read GetRemotesList;
+    property RemoteIndex: Integer read GetRemoteIndex;
   end;
 
 implementation
@@ -172,6 +179,17 @@ end;
 function TGitMgr.GetGit: IGit;
 begin
   result := fGit;
+end;
+
+function TGitMgr.GetRemotesList: string;
+var
+  r: TRemoteInfo;
+begin
+  result := '';
+  for r in fRemotes do begin
+    if result<>'' then result += ',';
+    result += r.name;
+  end;
 end;
 
 constructor TGitMgr.create;
@@ -249,6 +267,23 @@ begin
         fObserverMgr.NotifyObservers(self, GITMGR_EVENT_UPDATESTATUS, 0);
       end;
   end;
+end;
+
+function TGitMgr.GetRemoteIndex: Integer;
+var
+  arr: TStringArray;
+  i: Integer;
+begin
+  if (fUpstream<>'') and (fRemotes<>nil) then begin
+    arr := fUpstream.Split('/');
+    if arr<>nil then
+      for i:=0 to Length(fRemotes)-1 do
+        if fRemotes[i].name=arr[0] then begin
+          result := i;
+          exit;
+        end;
+  end;
+  result := -1;
 end;
 
 
@@ -371,6 +406,41 @@ end;
 procedure TGitMgr.ForceTagDescription;
 begin
   fDescribed := false;
+end;
+
+procedure TGitMgr.UpdateRemotes;
+var
+  cmdOut: RawByteString;
+  L: TStringList;
+  i, j: Integer;
+  arr: TStringArray;
+begin
+  if fGit.Any('remote -v show', cmdOut)<=0 then begin
+    fRemotes := nil;
+    L := TStringList.Create;
+    try
+      L.Text := cmdOut;
+      if L.Count div 2 > 0 then begin
+        i := 0;
+        while i<L.Count do begin
+
+          j := Length(fRemotes);
+          SetLength(fRemotes, j+1);
+
+          arr := L[i].Split([' ', #9]);
+          fRemotes[j].name := arr[0];
+          fRemotes[j].fetch := arr[1];
+          inc(i);
+
+          arr := L[i].Split([' ', #9]);
+          fRemotes[j].push := arr[1];
+          inc(i);
+        end;
+      end;
+    finally
+      L.Free;
+    end;
+  end;
 end;
 
 end.

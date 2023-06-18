@@ -13,8 +13,8 @@ object frmPush: TfrmPush
   LCLVersion = '2.3.0.0'
   object panBtns: TButtonPanel
     Left = 6
-    Height = 35
-    Top = 401
+    Height = 34
+    Top = 402
     Width = 484
     OKButton.Name = 'OKButton'
     OKButton.DefaultCaption = True
@@ -44,13 +44,12 @@ object frmPush: TfrmPush
     ItemHeight = 0
     OnSelectionChange = lstBranchesSelectionChange
     TabOrder = 1
-    TopIndex = -1
   end
   object Label1: TLabel
     Left = 8
-    Height = 17
+    Height = 15
     Top = 8
-    Width = 87
+    Width = 82
     Caption = 'Local branches:'
   end
   object gpoDest: TGroupBox
@@ -60,53 +59,58 @@ object frmPush: TfrmPush
     Width = 480
     Anchors = [akLeft, akRight, akBottom]
     Caption = 'Remote Repository'
-    ClientHeight = 77
+    ClientHeight = 76
     ClientWidth = 476
     TabOrder = 2
     object radRemote: TRadioButton
       Left = 11
-      Height = 21
+      Height = 19
       Top = 13
-      Width = 64
+      Width = 56
       Caption = 'remote'
       Checked = True
       OnClick = radRemoteClick
       TabOrder = 0
+      TabStop = True
     end
     object radUrl: TRadioButton
       Left = 11
-      Height = 21
+      Height = 19
       Top = 45
-      Width = 40
+      Width = 33
       Caption = 'Url'
       OnClick = radRemoteClick
       TabOrder = 1
     end
     object comboRemote: TComboBox
       Left = 96
-      Height = 26
+      Height = 23
       Top = 8
       Width = 344
       Anchors = [akTop, akLeft, akRight]
-      ItemHeight = 0
+      ItemHeight = 15
       OnSelect = comboRemoteSelect
+      Style = csDropDownList
       TabOrder = 2
     end
     object txtURL: TEdit
       Left = 96
-      Height = 26
+      Height = 23
       Top = 40
       Width = 344
       Anchors = [akTop, akLeft, akRight]
+      OnChange = txtURLChange
       TabOrder = 3
       TextHint = 'Enter a URL'
     end
-    object SpeedButton1: TSpeedButton
+    object btnRemotes: TSpeedButton
       Left = 448
       Height = 22
-      Top = 4
+      Top = 8
       Width = 23
       Anchors = [akTop, akRight]
+      Caption = 'R'
+      OnClick = btnRemotesClick
     end
   end
   object chkOptions: TCheckGroup
@@ -125,7 +129,7 @@ object frmPush: TfrmPush
     ChildSizing.ShrinkVertical = crsScaleChilds
     ChildSizing.Layout = cclLeftToRightThenTopToBottom
     ChildSizing.ControlsPerLine = 1
-    ClientHeight = 54
+    ClientHeight = 53
     ClientWidth = 474
     Items.Strings = (
       'Force'

@@ -92,7 +92,6 @@ type
     function DeleteTag(tagName: string): Integer;
     function AddToIgnoreFile(aFile:string; justType:boolean; global:boolean): boolean;
     function UpdateRefList: Integer;
-    function GetRemotesList: TStringList;
     function RefsFilter(commitOID: string; filter: TRefFilterProc): TRefInfoArray;
     function Show(obj: string; lines: TStrings): Integer;
     procedure ResetLogError;
@@ -789,15 +788,6 @@ begin
       ]);
 
   UpdateRefsMap;
-end;
-
-function TGit.GetRemotesList: TStringList;
-var
-  cmdOut: RawByteString;
-begin
-  result := TStringList.Create;
-  if cmdLine.RunProcess(fGitCommand + ' remote', fTopLevelDir, cmdOut)<=0 then
-    result.Text := cmdOut;
 end;
 
 function TGit.RefsFilter(commitOID: string; filter: TRefFilterProc

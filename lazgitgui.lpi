@@ -203,12 +203,20 @@
         <Filename Value="unitgitcmd.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="frmGitCmd"/>
+        <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
       </Unit>
       <Unit>
         <Filename Value="unitpush.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="frmPush"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unitremotes.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="frmRemotes"/>
         <ResourceBaseClass Value="Form"/>
       </Unit>
     </Units>

@@ -76,7 +76,6 @@ type
     function GetExe: string;
     function GetRefsMap: TRefsMap;
     function GetRefList: TStringList;
-    function GetRemotesList: TStringList;
     function GetTopLevelDir: string;
     function GetGitCommonDir: string;
     function GetVersion: string;
