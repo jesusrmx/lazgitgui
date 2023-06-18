@@ -381,6 +381,7 @@ msgid "Pull"
 msgstr "Pull"
 
 #: tfrmmain.actpush.caption
+msgctxt "tfrmmain.actpush.caption"
 msgid "Push"
 msgstr "Push"
 
@@ -485,6 +486,7 @@ msgid "Switch to the new branch"
 msgstr "Cambiar a la nueva rama"
 
 #: tfrmnewbranch.label1.caption
+msgctxt "tfrmnewbranch.label1.caption"
 msgid "Options"
 msgstr "Opciones"
 
@@ -519,6 +521,38 @@ msgstr "-"
 msgid "Message:"
 msgstr "Mensaje:"
 
+#: tfrmpush.caption
+#, fuzzy
+msgctxt "tfrmpush.caption"
+msgid "Push"
+msgstr "Push"
+
+#: tfrmpush.chkoptions.caption
+#, fuzzy
+msgctxt "tfrmpush.chkoptions.caption"
+msgid "Options"
+msgstr "Opciones"
+
+#: tfrmpush.gpodest.caption
+msgid "Remote Repository"
+msgstr ""
+
+#: tfrmpush.label1.caption
+msgid "Local branches:"
+msgstr ""
+
+#: tfrmpush.radremote.caption
+msgid "remote"
+msgstr ""
+
+#: tfrmpush.radurl.caption
+msgid "Url"
+msgstr ""
+
+#: tfrmpush.txturl.texthint
+msgid "Enter a URL"
+msgstr ""
+
 #: tfrmreset.caption
 msgid "Reset branch"
 msgstr "Restaurar rama"
@@ -548,6 +582,10 @@ msgstr "-"
 msgctxt "tfrmruncommand.lblresult.caption"
 msgid "-"
 msgstr "-"
+
+#: unitcommon.rsabranchisnotselected
+msgid "A branch is not selected"
+msgstr ""
 
 #: unitcommon.rsaddsfilestoignorelist
 #, object-pascal-format
@@ -729,6 +767,10 @@ msgstr "Carácter inválido en nombre de etiqueta"
 #: unitcommon.rsinvaliddescription
 msgid "Invalid description"
 msgstr "Descripción inválida"
+
+#: unitcommon.rsinvalidtargeturl
+msgid "Invalid target url"
+msgstr ""
 
 #: unitcommon.rslocalbranches
 msgid "Local Branches"
@@ -1002,6 +1044,10 @@ msgstr "El archivo '%s' es binario, tiene %d bytes"
 msgctxt "unitcommon.rstherearecommitsbehind"
 msgid "There are commits behind, are you sure you want to push?"
 msgstr "Hay cambios remotos sin integrar, ¿Estás seguro de subir los cambios locales?"
+
+#: unitcommon.rsthetargetremoterepositoryisnotselected
+msgid "The target remote repository is not selected"
+msgstr ""
 
 #: unitcommon.rsthetypesisalreadyintheignoredlist
 #, object-pascal-format

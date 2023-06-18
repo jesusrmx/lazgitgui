@@ -1,0 +1,9 @@
+{"version":1,"strings":[
+{"hash":359576,"name":"tfrmpush.caption","sourcebytes":[80,117,115,104],"value":"Push"},
+{"hash":255317690,"name":"tfrmpush.label1.caption","sourcebytes":[76,111,99,97,108,32,98,114,97,110,99,104,101,115,58],"value":"Local branches:"},
+{"hash":214826633,"name":"tfrmpush.gpodest.caption","sourcebytes":[82,101,109,111,116,101,32,82,101,112,111,115,105,116,111,114,121],"value":"Remote Repository"},
+{"hash":126633637,"name":"tfrmpush.radremote.caption","sourcebytes":[114,101,109,111,116,101],"value":"remote"},
+{"hash":23692,"name":"tfrmpush.radurl.caption","sourcebytes":[85,114,108],"value":"Url"},
+{"hash":70189228,"name":"tfrmpush.txturl.texthint","sourcebytes":[69,110,116,101,114,32,97,32,85,82,76],"value":"Enter a URL"},
+{"hash":108725763,"name":"tfrmpush.chkoptions.caption","sourcebytes":[79,112,116,105,111,110,115],"value":"Options"}
+]}

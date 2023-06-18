@@ -33,11 +33,12 @@ uses
   {$ENDIF}
   SysUtils, Classes, Interfaces, // this includes the LCL widgetset
   Forms, main, unitconfig, unitprocess, unitentries, unitgit, unitnewbranch,
-  unitruncmd, unitansiescapes, unitnewtag, unitdebug, unitlogcache,
-  unitdbindex, unitgitutils, unitdrafts, unitframelog, unitgitmgr, unitgittypes,
+  unitruncmd, unitansiescapes, unitnewtag, unitdebug, unitlogcache, unitdbindex,
+  unitgitutils, unitdrafts, unitframelog, unitgitmgr, unitgittypes,
   unitcheckouttag, unitcommitbrowser, unitvfs, unithighlighterhelper,
   unitgraphbuild, unitfilehistory, unitformlog, unitcustcmdform, unitcustomcmds,
-  unitreset, LCLTranslator, unitcommon, unittextchunks, unitlinkmgr, unitgitcmd;
+  unitreset, LCLTranslator, unitcommon, unittextchunks, unitlinkmgr, unitgitcmd,
+  unitpush;
 
 {$R *.res}
 

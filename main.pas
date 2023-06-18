@@ -35,7 +35,7 @@ uses
   unitnewbranch, unitruncmd,
   unitnewtag, LConvEncoding, unitdbindex,
   unitgitmgr, unitcheckouttag, unitformlog, unitcustomcmds,
-  unitcustcmdform, unittextchunks, unitgitcmd;
+  unitcustcmdform, unittextchunks, unitgitcmd, unitpush;
 
 type
 
@@ -1265,8 +1265,18 @@ begin
 end;
 
 procedure TfrmMain.actPushDialogExecute(Sender: TObject);
+var
+  F: TfrmPush;
 begin
-  ComingSoon;
+  F := TfrmPush.Create(Self);
+  F.GitMgr := fGitMgr;
+  try
+    if F.ShowModal=mrOk then begin
+      ShowMessage('Pushing with options');
+    end;
+  finally
+    F.Free;
+  end;
 end;
 
 procedure TfrmMain.actPushExecute(Sender: TObject);

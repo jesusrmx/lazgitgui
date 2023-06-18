@@ -205,6 +205,12 @@
         <ComponentName Value="frmGitCmd"/>
         <ResourceBaseClass Value="Form"/>
       </Unit>
+      <Unit>
+        <Filename Value="unitpush.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="frmPush"/>
+        <ResourceBaseClass Value="Form"/>
+      </Unit>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

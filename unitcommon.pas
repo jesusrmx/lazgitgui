@@ -146,6 +146,10 @@ resourcestring
   rsSucceed = 'Succeed';
   rsFailed = 'Failed';
   rsTheCommandIsEmpty = 'The command is empty';
+  rsABranchIsNotSelected = 'A branch is not selected';
+  rsTheTargetRemoteRepositoryIsNotSelected = 'The target remote repository is '
+    +'not selected';
+  rsInvalidTargetUrl = 'Invalid target url';
 
 implementation
 
