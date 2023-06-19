@@ -3,7 +3,7 @@ object frmRemotes: TfrmRemotes
   Height = 242
   Top = 265
   Width = 598
-  Caption = 'Remotes Form'
+  Caption = 'Remotes Editor'
   ClientHeight = 242
   ClientWidth = 598
   Constraints.MinHeight = 200
@@ -23,11 +23,12 @@ object frmRemotes: TfrmRemotes
     OnSelectionChange = lstRemotesSelectionChange
     Style = lbOwnerDrawFixed
     TabOrder = 5
+    TopIndex = -1
   end
   object panBtns: TButtonPanel
     Left = 6
-    Height = 34
-    Top = 202
+    Height = 35
+    Top = 201
     Width = 586
     OKButton.Name = 'OKButton'
     OKButton.DefaultCaption = True
@@ -50,7 +51,7 @@ object frmRemotes: TfrmRemotes
   end
   object txtFetch: TEdit
     Left = 184
-    Height = 23
+    Height = 26
     Hint = 'Fetch URL'
     Top = 64
     Width = 401
@@ -61,7 +62,7 @@ object frmRemotes: TfrmRemotes
   end
   object txtPush: TEdit
     Left = 184
-    Height = 23
+    Height = 26
     Hint = 'Push URL'
     Top = 88
     Width = 401
@@ -72,9 +73,9 @@ object frmRemotes: TfrmRemotes
   end
   object chkSameURL: TCheckBox
     Left = 184
-    Height = 19
+    Height = 21
     Top = 40
-    Width = 196
+    Width = 211
     Caption = 'Fetch and Push URL Are the Same'
     Checked = True
     OnClick = chkSameURLClick
@@ -101,7 +102,7 @@ object frmRemotes: TfrmRemotes
   end
   object txtName: TEdit
     Left = 183
-    Height = 23
+    Height = 26
     Hint = 'Remote name'
     Top = 10
     Width = 401
@@ -112,10 +113,10 @@ object frmRemotes: TfrmRemotes
   end
   object chkFetch: TCheckBox
     Left = 184
-    Height = 19
+    Height = 21
     Hint = 'Run git fetch after the remote information is set up. '
     Top = 120
-    Width = 88
+    Width = 97
     Caption = 'Fetch remote'
     Checked = True
     OnClick = chkFetchClick
@@ -124,20 +125,20 @@ object frmRemotes: TfrmRemotes
   end
   object chkImportTags: TCheckBox
     Left = 184
-    Height = 19
+    Height = 21
     Hint = 'With this option fetch with import all tags, without it, only tags of tracked branches will be imported.'
-    Top = 136
-    Width = 94
+    Top = 139
+    Width = 104
     Caption = 'Import all tags'
     OnClick = chkImportTagsClick
     TabOrder = 7
   end
   object chkOnlyBranches: TCheckBox
     Left = 184
-    Height = 19
+    Height = 21
     Hint = 'A ''git fetch'' will only track this branches'
-    Top = 152
-    Width = 145
+    Top = 158
+    Width = 157
     Caption = 'Only track this branches'
     OnClick = chkOnlyBranchesClick
     TabOrder = 8
@@ -145,10 +146,10 @@ object frmRemotes: TfrmRemotes
   object txtBranches: TEdit
     AnchorSideLeft.Control = chkOnlyBranches
     AnchorSideLeft.Side = asrBottom
-    Left = 332
-    Height = 23
-    Top = 148
-    Width = 252
+    Left = 344
+    Height = 26
+    Top = 155
+    Width = 240
     Anchors = [akTop, akLeft, akRight]
     BorderSpacing.Left = 3
     OnChange = txtBranchesChange

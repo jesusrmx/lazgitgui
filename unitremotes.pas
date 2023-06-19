@@ -110,7 +110,7 @@ implementation
 
 {
   NOTE. although the gui is designed for changing both the fetch and the push
-        urls, there is a not in the git remote documentation stating that
+        urls, there is a note in the git remote documentation stating that
         both urls must be always equal.
 
         see: https://git-scm.com/docs/git-remote set-url section.
@@ -120,7 +120,7 @@ implementation
 
 procedure TfrmRemotes.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
 begin
-  fConfig.ReadWindow(self, 'remotesfrm', SECTION_GEOMETRY);
+  fConfig.WriteWindow(self, 'remotesfrm', SECTION_GEOMETRY);
   if ModalResult=mrOk then
     CanClose := ExecuteActions;
 end;
@@ -217,6 +217,7 @@ end;
 procedure TfrmRemotes.FormShow(Sender: TObject);
 begin
   UpdateRemotesList;
+  UpdateInfo;
 end;
 
 procedure TfrmRemotes.lstRemotesDrawItem(Control: TWinControl; Index: Integer;
@@ -478,24 +479,29 @@ begin
   lblInfo.Caption := '';
   lblInfo.Font.Color := clBlack;
 
+  s := '';
   i := CurrentIndex;
   if (i>=0) then
     with fRemotes[i] do
       case action of
-        reaNew: lblInfo.Caption := 'git' + GetNewCmd(i);
-        reaDel: lblInfo.Caption := 'git remote remove ' + name;
+        reaNew: s := 'git' + GetNewCmd(i);
+        reaDel: s := 'git remote remove ' + name;
         reaChange:
           begin
-            s := '';
             if orgName<>name then
               s+= 'git remote rename ' + orgName + ' ' + Name;
             if orgFetch<>fetch then begin
               if s<>'' then s += ' | ';
               s += 'git remote set-url ' + name + ' ' + fetch;
             end;
-            lblInfo.Caption := s;
           end;
       end;
+
+  if s='' then
+    // no changes so far, no reason to ok button to be enabled
+    exit
+  else
+    lblInfo.Caption := s;
 
   panBtns.OkButton.Enabled := true;
 end;

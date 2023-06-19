@@ -1,5 +1,5 @@
 {"version":1,"strings":[
-{"hash":165187629,"name":"tfrmremotes.caption","sourcebytes":[82,101,109,111,116,101,115,32,70,111,114,109],"value":"Remotes Form"},
+{"hash":150840498,"name":"tfrmremotes.caption","sourcebytes":[82,101,109,111,116,101,115,32,69,100,105,116,111,114],"value":"Remotes Editor"},
 {"hash":177870508,"name":"tfrmremotes.txtfetch.hint","sourcebytes":[70,101,116,99,104,32,85,82,76],"value":"Fetch URL"},
 {"hash":177870508,"name":"tfrmremotes.txtfetch.texthint","sourcebytes":[70,101,116,99,104,32,85,82,76],"value":"Fetch URL"},
 {"hash":211443484,"name":"tfrmremotes.txtpush.hint","sourcebytes":[80,117,115,104,32,85,82,76],"value":"Push URL"},
