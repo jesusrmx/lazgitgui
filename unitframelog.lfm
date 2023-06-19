@@ -828,15 +828,15 @@ object frameLog: TframeLog
     object mnuSeparatorLast: TMenuItem
       Caption = '-'
     end
-    object MenuItem1: TMenuItem
+    object mnuCopy: TMenuItem
       Caption = 'Copy'
       object MenuItem2: TMenuItem
         Caption = 'All info'
         OnClick = MenuItem2Click
       end
-      object MenuItem3: TMenuItem
+      object mnuCopySha: TMenuItem
         Caption = 'Sha'
-        OnClick = MenuItem3Click
+        OnClick = mnuCopyShaClick
       end
     end
   end

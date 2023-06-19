@@ -104,9 +104,9 @@ type
     txtSearch: TEdit;
     gridLog: TDrawGrid;
     lblInfo: TLabel;
-    MenuItem1: TMenuItem;
+    mnuCopy: TMenuItem;
     MenuItem2: TMenuItem;
-    MenuItem3: TMenuItem;
+    mnuCopySha: TMenuItem;
     mnuGotoParent: TMenuItem;
     mnuGotoChild: TMenuItem;
     mnuGotoHead: TMenuItem;
@@ -147,7 +147,7 @@ type
       Index: Integer);
     procedure gridLogSelection(Sender: TObject; aCol, aRow: Integer);
     procedure MenuItem2Click(Sender: TObject);
-    procedure MenuItem3Click(Sender: TObject);
+    procedure mnuCopyShaClick(Sender: TObject);
     procedure radPatchMouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
     procedure treeFilesExpanding(Sender: TObject; Node: TTreeNode;
@@ -173,9 +173,11 @@ type
     fCurrentItem: TLogItem;
     fLastSelectedCommit: QWord;
     fLinkMgr: TLinkMgr;
+    fRangeFirstCommit: string;
     procedure CheckSearchButtons;
     procedure LaunchGraphBuildingThread;
     procedure OnContextPopLogClick(Sender: TObject);
+    procedure OnCopyCommitRange(Sender: TObject);
     procedure OnCreateBranchClick(Sender: TObject);
     procedure OnDeleteBranchClick(Sender: TObject);
     procedure OnDeleteRemoteBranchClick(Sender: TObject);
@@ -197,6 +199,7 @@ type
     procedure AddMergeBranchMenu;
     procedure AddTagsMenu;
     procedure AddExtraMenus;
+    procedure AddCopyExtraMenus;
     procedure SetActive(AValue: boolean);
     procedure SetFiltered(AValue: boolean);
     procedure SetGitMgr(AValue: TGitMgr);
@@ -242,6 +245,8 @@ const
 const
   COPY_ALL_INFO     = 1;
   COPY_SHA          = 2;
+  COPY_RANGE_FIRST  = 3;
+  COPY_RANGE_LAST   = 4;
 
   ALL_INFO_TEMPLATE =
     'parents: %s' + LineEnding +
@@ -482,6 +487,8 @@ begin
     AddMergeBranchMenu;
 
     AddExtraMenus;
+
+    AddCopyExtraMenus;
   end;
 end;
 
@@ -567,7 +574,7 @@ begin
   CopyToClipboard(COPY_ALL_INFO);
 end;
 
-procedure TframeLog.MenuItem3Click(Sender: TObject);
+procedure TframeLog.mnuCopyShaClick(Sender: TObject);
 begin
   CopyToClipboard(COPY_SHA)
 end;
@@ -839,6 +846,14 @@ begin
   ShowMessageFmt('You really got me: %s',[mi.Caption]);
 end;
 
+procedure TframeLog.OnCopyCommitRange(Sender: TObject);
+var
+  mi: TMenuItem absolute Sender;
+begin
+  if mi.Tag = 0 then CopyToClipboard(COPY_RANGE_FIRST)
+  else               CopyToClipboard(COPY_RANGE_LAST);
+end;
+
 procedure TframeLog.CheckSearchButtons;
 begin
   btnPrev.Enabled := btnSearch.Down and (Length(txtSearch.Text)>0);
@@ -959,6 +974,19 @@ begin
       s := GetAllCommitInfo;
     COPY_SHA:
       s := fCurrentItem.CommitOID;
+    COPY_RANGE_FIRST:
+      begin
+        // do not translate !
+        fRangeFirstCommit := fCurrentItem.CommitOID;
+        s := 'CommitStart=' + fRangeFirstCommit;
+      end;
+    COPY_RANGE_LAST:
+      begin
+        // do not translate !
+        s := format('CommitStart=%s'+ LineEnding +'CommitEnd=%s' ,
+          [fRangeFirstCommit, fCurrentItem.CommitOID]);
+        fRangeFirstCommit := '';
+      end;
   end;
 
   if s<>'' then
@@ -1152,6 +1180,31 @@ begin
   mi.OnClick := @OnResetBranchClick;
   mi.Tag := 0;
   popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
+end;
+
+procedure TframeLog.AddCopyExtraMenus;
+var
+  mi: TMenuItem;
+  mIndex: Integer;
+begin
+
+  // cleanup destination
+  mIndex := mnuCopy.Count-1;
+  while mIndex>mnuCopySha.MenuIndex do begin
+    mnuCopy.Delete(mIndex);
+    dec(mIndex);
+  end;
+
+  mi := TMenuItem.Create(Self.Owner);
+  if fRangeFirstCommit='' then begin
+    mi.Caption := 'Copy SHA''s range - First (newer)';
+    mi.Tag := 0;
+  end else begin
+    mi.Caption := 'Copy SHA''s range - Last (older)';
+    mi.Tag := 1;
+  end;
+  mi.OnClick := @OnCopyCommitRange;
+  mnuCopy.Insert(mnuCopySha.MenuIndex + 1, mi);
 end;
 
 procedure TframeLog.SetActive(AValue: boolean);
