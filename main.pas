@@ -1271,9 +1271,7 @@ begin
   F := TfrmPush.Create(Self);
   F.GitMgr := fGitMgr;
   try
-    if F.ShowModal=mrOk then begin
-      ShowMessage('Pushing with options');
-    end;
+    F.ShowModal;
   finally
     F.Free;
   end;

@@ -29,7 +29,8 @@ interface
 uses
   Classes, SysUtils, LazLoggerBase,
   Forms, Controls, Graphics, Dialogs, ButtonPanel, StdCtrls, Buttons, ExtCtrls,
-  unitcommon, unitgittypes, unitifaces, unitconfig, unitgitmgr, unitremotes;
+  unitcommon, unitgittypes, unitifaces, unitconfig, unitgitmgr, unitremotes,
+  unitruncmd;
 
 type
 
@@ -58,6 +59,7 @@ type
     procedure radRemoteClick(Sender: TObject);
     procedure txtURLChange(Sender: TObject);
   private
+    fCommand: String;
     fGit: IGit;
     fGitMgr: TGitMgr;
     procedure SetGitMgr(AValue: TGitMgr);
@@ -65,7 +67,7 @@ type
     procedure LoadBranches;
     procedure ObservedChanged(Sender:TObject; what: Integer; data: PtrInt);
     procedure Invalid(msg: string);
-    procedure LoadRemotes;
+    procedure LoadRemotes(forceUpdate: boolean = false);
   public
     property GitMgr: TGitMgr read fGitMgr write SetGitMgr;
   end;
@@ -82,6 +84,9 @@ implementation
 procedure TfrmPush.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
 begin
   fConfig.ReadWindow(self, 'pushfrm', SECTION_GEOMETRY);
+  if ModalResult=mrOk then begin
+    canClose := RunInteractive(fGit.Exe + ' ' + fCommand, fGit.TopLevelDir, 'Push with options', fCommand)<=0;
+  end;
 end;
 
 procedure TfrmPush.chkOptionsItemClick(Sender: TObject; Index: integer);
@@ -101,7 +106,7 @@ begin
   try
     if F.ShowModal=mrOk then begin
       curRemote := comboRemote.Text;
-      LoadRemotes;
+      LoadRemotes(true);
       i := comboRemote.Items.IndexOf(CurRemote);
       comboRemote.ItemIndex := i;
       UpdateInfo;
@@ -191,13 +196,13 @@ end;
 procedure TfrmPush.UpdateInfo;
 var
   i: Integer;
-  cmd, s: string;
+  s: string;
 begin
   panBtns.OKButton.Enabled := false;
-  cmd := 'git push';
+  fCommand := 'push';
 
-  if chkOptions.Checked[0] then cmd += ' --force';
-  if chkOptions.Checked[1] then cmd += ' --tags';
+  if chkOptions.Checked[0] then fCommand += ' --force';
+  if chkOptions.Checked[1] then fCommand += ' --tags';
 
   if radRemote.Checked then begin
     s := trim(comboRemote.Text);
@@ -212,7 +217,7 @@ begin
       exit;
     end;
   end;
-  cmd += ' ' + s;
+  fCommand += ' ' + s;
 
   // branch to push
   i := lstBranches.ItemIndex;
@@ -220,10 +225,10 @@ begin
     Invalid(rsABranchIsNotSelected);
     exit;
   end;
-  cmd += ' ' + lstBranches.Items[i];
+  fCommand += ' ' + lstBranches.Items[i];
 
   lblInfo.Font.Color := clBlack;
-  lblInfo.Caption := cmd;
+  lblInfo.Caption := 'git ' + fCommand;
 
   panBtns.OKButton.Enabled := true;
 end;
@@ -271,11 +276,11 @@ begin
   lblInfo.Caption := msg;
 end;
 
-procedure TfrmPush.LoadRemotes;
+procedure TfrmPush.LoadRemotes(forceUpdate: boolean);
 var
   i: Integer;
 begin
-  if fGitMgr.Remotes=nil then
+  if forceUpdate or (fGitMgr.Remotes=nil) then
     fGitMgr.UpdateRemotes;
   comboRemote.Clear;
   for i:=0 to Length(fGitMgr.Remotes)-1 do
