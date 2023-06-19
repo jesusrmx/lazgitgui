@@ -8,5 +8,12 @@
 {"hash":43,"name":"tfrmremotes.btnadd.caption","sourcebytes":[43],"value":"+"},
 {"hash":45,"name":"tfrmremotes.btndel.caption","sourcebytes":[45],"value":"-"},
 {"hash":170886229,"name":"tfrmremotes.txtname.hint","sourcebytes":[82,101,109,111,116,101,32,110,97,109,101],"value":"Remote name"},
-{"hash":170755157,"name":"tfrmremotes.txtname.texthint","sourcebytes":[82,101,109,111,116,101,32,78,97,109,101],"value":"Remote Name"}
+{"hash":170755157,"name":"tfrmremotes.txtname.texthint","sourcebytes":[82,101,109,111,116,101,32,78,97,109,101],"value":"Remote Name"},
+{"hash":97536640,"name":"tfrmremotes.chkfetch.hint","sourcebytes":[82,117,110,32,103,105,116,32,102,101,116,99,104,32,97,102,116,101,114,32,116,104,101,32,114,101,109,111,116,101,32,105,110,102,111,114,109,97,116,105,111,110,32,105,115,32,115,101,116,32,117,112,46,32],"value":"Run git fetch after the remote information is set up. "},
+{"hash":55095045,"name":"tfrmremotes.chkfetch.caption","sourcebytes":[70,101,116,99,104,32,114,101,109,111,116,101],"value":"Fetch remote"},
+{"hash":201612734,"name":"tfrmremotes.chkimporttags.hint","sourcebytes":[87,105,116,104,32,116,104,105,115,32,111,112,116,105,111,110,32,102,101,116,99,104,32,119,105,116,104,32,105,109,112,111,114,116,32,97,108,108,32,116,97,103,115,44,32,119,105,116,104,111,117,116,32,105,116,44,32,111,110,108,121,32,116,97,103,115,32,111,102,32,116,114,97,99,107,101,100,32,98,114,97,110,99,104,101,115,32,119,105,108,108,32,98,101,32,105,109,112,111,114,116,101,100,46],"value":"With this option fetch with import all tags, without it, only tags of tracked branches will be imported."},
+{"hash":93229475,"name":"tfrmremotes.chkimporttags.caption","sourcebytes":[73,109,112,111,114,116,32,97,108,108,32,116,97,103,115],"value":"Import all tags"},
+{"hash":46834995,"name":"tfrmremotes.chkonlybranches.hint","sourcebytes":[65,32,39,103,105,116,32,102,101,116,99,104,39,32,119,105,108,108,32,111,110,108,121,32,116,114,97,99,107,32,116,104,105,115,32,98,114,97,110,99,104,101,115],"value":"A 'git fetch' will only track this branches"},
+{"hash":209088083,"name":"tfrmremotes.chkonlybranches.caption","sourcebytes":[79,110,108,121,32,116,114,97,99,107,32,116,104,105,115,32,98,114,97,110,99,104,101,115],"value":"Only track this branches"},
+{"hash":257930083,"name":"tfrmremotes.txtbranches.texthint","sourcebytes":[67,111,109,109,97,32,115,101,112,97,114,97,116,101,100,32,108,105,115,116,32,111,102,32,98,114,97,110,99,104,101,115],"value":"Comma separated list of branches"}
 ]}

@@ -151,7 +151,11 @@ resourcestring
     +'not selected';
   rsInvalidTargetUrl = 'Invalid target url';
   rsNewRemoteName = '<New Remote Name>';
-  rsInvalidRemoteName = 'Invalid remote name';
+  rsInvalidRemoteName = 'remote %d has an invalid name';
+  rsInvalidFetchURL = '%s has an invalid Fetch URL';
+  rsInvalidPushURL = '%s has an invalid Push URL';
+  rsTheBranchesListIsEmpty = 'The branches list is empty';
+  rsSIsAnInvalidBranchName = '%s is an invalid branch name';
 
 implementation
 
