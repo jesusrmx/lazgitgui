@@ -29,8 +29,8 @@ interface
 uses
   Classes, SysUtils, LCLIntf, LCLType,
   Forms, Controls, Graphics, Dialogs, Grids, ExtCtrls, SynEdit,
-  unitcommon, unitconfig, unitifaces, unitgitutils, unitgitmgr,
-  unithighlighterhelper, unittextchunks, unitlinkmgr, unitsyneditextras;
+  unitcommon, unitgittypes, unitconfig, unitifaces, unitgitutils, unitgitmgr,
+  unithighlighterhelper, unittextchunks, unitlinkmgr;
 
 type
 
@@ -51,7 +51,6 @@ type
     txtDiff: TSynEdit;
     procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
-    procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure FormShow(Sender: TObject);
@@ -104,11 +103,6 @@ procedure TfrmFileHistory.FormCloseQuery(Sender: TObject; var CanClose: Boolean
 begin
   fConfig.WriteWindow(Self, 'frmFileHistory', SECTION_GEOMETRY);
   fConfig.WriteInteger('frmFileHistory.grid.height', grid.Height, SECTION_GEOMETRY);
-end;
-
-procedure TfrmFileHistory.FormCreate(Sender: TObject);
-begin
-  AddPopupMenu(txtDiff);
 end;
 
 procedure TfrmFileHistory.FormClose(Sender: TObject;

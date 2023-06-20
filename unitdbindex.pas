@@ -29,7 +29,8 @@ unit unitdbindex;
 interface
 
 uses
-  Classes, SysUtils, Math, DateUtils, LazLogger, unitifaces, fgl, unitgitutils;
+  Classes, SysUtils, Math, DateUtils, LazLogger,
+  unitgittypes, unitifaces, fgl, unitgitutils;
 
 const
   FIELD_DATE        = 0;
@@ -53,44 +54,6 @@ type
     Email,
     Subject: RawByteString;
   end;
-
-  PIndexRecord = ^TIndexRecord;
-  TIndexRecord = packed record
-    offset: Int64;
-    size: word;
-  end;
-
-  TIntArray = array of Integer;
-
-  TParentsItem = record
-    n: Integer;
-    parents: TQWordArray;
-    commit: QWord;
-  end;
-
-  TParentsArray = array of TParentsItem;
-
-  TParentsMap = specialize TFPGMap<QWord, PParentsMapItem>;
-
-  TLineItemFlag = (lifNode, lifToMerge, lifMerge, lifFirst, lifInternal, lifLast,  lifToBorn, lifBorn);
-  TLineItemFlags = set of TLineItemFlag;
-  TLineItem = record
-    column, columnIndex: Integer;
-    source: Integer;
-    Flags:  TLineItemFlags;
-  end;
-  TLinesArray = array of TLineItem;
-
-  TItemIndex = record
-    index: Integer;
-    commit: QWord;
-    parents, childs: TIntArray;
-    column, section: Integer;
-    lines: TLinesArray;
-    //first: boolean;
-    //last: boolean;
-  end;
-  TItemIndexArray = array of TItemIndex;
 
 const
   SIZEOF_INDEX = sizeof(TIndexRecord);
@@ -142,7 +105,6 @@ type
     procedure Open;
     function LoadItem(aIndex: Integer; out aItem: TLogItem; unfiltered:boolean=false): boolean;
     procedure SetFilter(arr: TIntArray);
-    procedure TopoSort;
     function FindCommitSha(sha: string; startAt:Integer=-1): Integer;
     function Count(unfiltered: boolean = false): Integer;
     function GetIndex(aIndex: Integer): Integer;
@@ -736,181 +698,6 @@ begin
     SetLength(fFilter, Length(arr));
     Move(arr[0], fFilter[0], Length(arr)*SizeOf(Integer));
   end;
-end;
-
-type
-  // ref: https://gist.github.com/mikebsg01/52ad3ae8277e9c424823a79e4f7b0cf6
-
-  TIntList = specialize TFpGList<Integer>;
-  TIntStack = TIntList;
-  TBoolArr = array of boolean;
-
-  { TGraph }
-
-  TGraph = class
-  private
-    fV: Integer;
-    fAdj: array of TIntList;
-    procedure TopologicalSortUtil(v: Integer; visited:TBoolArr; stack: TIntStack);
-  public
-    constructor Create(aV: Integer);
-    destructor Destroy; override;
-    procedure AddEdge(v, w: Integer);
-    function TopologicalSort: TIntStack;
-  end;
-
-{ TGraph }
-
-procedure TGraph.TopologicalSortUtil(v: Integer; visited: TBoolArr;
-  stack: TIntStack);
-var
-  i: Integer;
-begin
-  // Mark the current node as visited.
-  visited[v] := true;
-
-  // Recur for all the vertices adjacent to this vertex
-  for i := fAdj[v].First to fAdj[v].Last do
-    if not visited[i] then
-      TopologicalSortUtil(i, visited, stack);
-
-  // Push current vertex to stack which stores result
-  stack.Add(v);
-end;
-
-constructor TGraph.Create(aV: Integer);
-var
-  i: Integer;
-begin
-  inherited Create;
-  fV := aV;
-  SetLength(fAdj, aV);
-  for i:=0 to aV-1 do
-    fAdj[i] := TIntList.Create;
-end;
-
-destructor TGraph.Destroy;
-var
-  i: Integer;
-begin
-  for i:=0 to fV-1 do
-    fAdj[i].Free;
-  inherited Destroy;
-end;
-
-procedure TGraph.AddEdge(v, w: Integer);
-begin
-  fAdj[v].Add(w);
-end;
-
-function TGraph.TopologicalSort: TIntStack;
-var
-  stack: TIntStack;
-  visited: TBoolArr;
-  i: Integer;
-begin
-
-  result := TIntList.Create;
-  SetLength(visited, fV);
-
-  // Mark all the vertices as not visited
-  for i:=0 to fV-1 do visited[i] := false;
-
-  // Call the recursive helper function to store Topological Sort
-  // starting from all vertices one by one
-  for i:=0 to fV-1 do
-    if not visited[i] then
-      TopologicalSortUtil(i, visited, result);
-
-end;
-
-procedure TestGraph;
-var
-  graph: TGraph;
-  stack: TIntStack;
-  i: Integer;
-begin
-  graph  := TGraph.create(8);
-  graph.addEdge(7, 6);
-  graph.addEdge(7, 5);
-  graph.addEdge(6, 4);
-  graph.addEdge(6, 3);
-  graph.addEdge(5, 4);
-  graph.addEdge(5, 2);
-  graph.addEdge(3, 1);
-  graph.addEdge(2, 1);
-  graph.addEdge(1, 0);
-  stack := graph.TopologicalSort;
-  graph.free;
-
-  // Print contents of stack
-  for i:=stack.Count-1 downto 0 do
-    DbgOut('%d ',[stack[i]]);
-
-  stack.Free;
-end;
-
-procedure TDbIndex.TopoSort;
-var
-  graph: TGraph;
-  parArray: TParentsArray;
-  i, j, x, dummy: Integer;
-  arr: TIntArray;
-  stack: TIntStack;
-  indxArr: TItemIndexArray;
-begin
-  ////TestGraph
-  //
-  //SetFilter(nil);
-  //
-  //indxArr := GetItemIndexes(self, true, dummy);
-  //
-  //// this listing clearly shows list of indices and parent indices each index
-  //// it have
-  ////for i:=0 to Length(indxArr)-1 do begin
-  ////  DbgOut('%3d (%d): ',[i, length(indxArr[i].parents)]);
-  ////  for j:=0 to Length(indxArr[i].parents)-1 do
-  ////    DbgOut('%3d ',[indxArr[i].parents[j]]);
-  ////  DebugLn;
-  ////end;
-  //
-  ////for external tests...
-  ////DebugLn('graph := TGraph.Create(%d);',[Length(indxArr)]);
-  ////for i:=0 to Length(indxArr)-1 do begin
-  ////  with indxArr[i] do begin
-  ////    for x in parents do
-  ////      DebugLn('graph.AddEdge(%d, %d);',[x, index]);
-  ////  end;
-  ////end;
-  //
-  //
-  //graph := TGraph.Create(Count);
-  //try
-  //
-  //  for i:=0 to Length(indxArr)-1 do
-  //    with indxArr[i] do begin
-  //      for x in parents do
-  //        graph.AddEdge(x, index)
-  //    end;
-  //
-  //  stack := graph.TopologicalSort;
-  //  setLength(arr, stack.Count);
-  //
-  //  // This tests demonstrates that the data is already ordered
-  //  // topologically.
-  //  //DebugLn;
-  //  //x := 0;
-  //  //for i:=stack.Count-1 downto 0 do begin
-  //  //  DbgOut('%3d ',[stack[i]]);
-  //  //  if (x+1) mod 20 = 0 then DebugLn;
-  //  //  inc(x);
-  //  //end;
-  //
-  //  //SetFilter(arr);
-  //
-  //finally
-  //  graph.Free;
-  //end;
 end;
 
 function TDbIndex.FindCommitSha(sha: string; startAt: Integer): Integer;

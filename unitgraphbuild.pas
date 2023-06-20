@@ -39,7 +39,8 @@ unit unitgraphbuild;
 interface
 
 uses
-  Classes, SysUtils, Math, LazLogger, unitgittypes, unitgitutils, unitdbindex;
+  Classes, SysUtils, Math, LazLogger,
+  unitgittypes, unitgitutils, unitdbindex, unittoposort;
 
 type
   TColumnSection = record
@@ -72,6 +73,7 @@ type
     procedure AssignColumns(var columns: TColumnArray);
     procedure FindHeadsAndTails(var columns: TColumnArray);
     procedure MapLinesAndColumns(var columns: TColumnArray; out maxColumns: Integer);
+    procedure TopoSort(map: TParentsMap);
   public
     constructor Create(db: TDbIndex);
     procedure Execute; override;
@@ -769,6 +771,47 @@ begin
   {$ENDIF}
 end;
 
+procedure TGraphBuilderThread.TopoSort(map: TParentsMap);
+var
+  graph: TGraph;
+  parArray: TParentsArray;
+  i, j, x, dummy: Integer;
+  arr: TIntArray;
+  stack: TIntStack;
+  pmi: PParentsMapItem;
+  //indxArr: TItemIndexArray;
+begin
+
+  graph := TGraph.Create(map.Count);
+  try
+
+    for i:=0 to map.Count-1 do begin
+      pmi := map.Data[i];
+      for j:=0 to Length(pmi^.parents)-1 do
+        graph.AddEdge(pmi^.n, pmi^.parents[j].n);
+    end;
+
+    stack := graph.TopologicalSort;
+    setLength(arr, stack.Count);
+
+    //This tests demonstrates that the data is already ordered
+    //topologically. could it be right? ...
+    DebugLn;
+
+    x := 0;
+    for i:=stack.Count-1 downto 0 do begin
+      DbgOut('%3d ',[stack[i]]);
+      if (x+1) mod 20 = 0 then DebugLn;
+      inc(x);
+    end;
+
+    //SetFilter(arr);
+
+  finally
+    graph.Free;
+  end;
+end;
+
 constructor TGraphBuilderThread.Create(db: TDbIndex);
 begin
   inherited create(true);
@@ -788,6 +831,8 @@ begin
 
   fIndexArray := nil;
   FindRelativesMap(parMap);
+
+  TopoSort(parMap);
 
   // parMap is not needed anymore
   ClearParentsMap(parMap);

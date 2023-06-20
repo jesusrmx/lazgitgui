@@ -87,6 +87,61 @@ type
   end;
   TRemotesArray = array of TRemoteInfo;
 
+  TQWordArray = array of QWord;
+
+  TParentElement = record
+    n: Integer;
+    commit: Qword;
+  end;
+  TParentElementArray = array of TParentElement;
+
+  PParentsMapItem = ^TParentsMapItem;
+  TParentsMapItem = record
+    n: Integer;
+    parents: TParentElementArray;
+  end;
+
+  TSetOfChar = set of char;
+  TSetOfByte = set of byte;
+
+  PIndexRecord = ^TIndexRecord;
+  TIndexRecord = packed record
+    offset: Int64;
+    size: word;
+  end;
+
+  TIntArray = array of Integer;
+
+  TParentsItem = record
+    n: Integer;
+    parents: TQWordArray;
+    commit: QWord;
+  end;
+
+  TParentsArray = array of TParentsItem;
+
+  TParentsMap = specialize TFPGMap<QWord, PParentsMapItem>;
+
+  TLineItemFlag = (lifNode, lifToMerge, lifMerge, lifFirst, lifInternal, lifLast,  lifToBorn, lifBorn);
+  TLineItemFlags = set of TLineItemFlag;
+  TLineItem = record
+    column, columnIndex: Integer;
+    source: Integer;
+    Flags:  TLineItemFlags;
+  end;
+  TLinesArray = array of TLineItem;
+
+  TItemIndex = record
+    index: Integer;
+    commit: QWord;
+    parents, childs: TIntArray;
+    column, section: Integer;
+    lines: TLinesArray;
+    //first: boolean;
+    //last: boolean;
+  end;
+  TItemIndexArray = array of TItemIndex;
+
 implementation
 
 end.

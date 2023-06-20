@@ -28,25 +28,8 @@ unit unitgitutils;
 interface
 
 uses
-  Classes, SysUtils, DateUtils, LazLogger, unitentries;
-
-type
-  TQWordArray = array of QWord;
-
-  TParentElement = record
-    n: Integer;
-    commit: Qword;
-  end;
-  TParentElementArray = array of TParentElement;
-
-  PParentsMapItem = ^TParentsMapItem;
-  TParentsMapItem = record
-    n: Integer;
-    parents: TParentElementArray;
-  end;
-
-  TSetOfChar = set of char;
-  TSetOfByte = set of byte;
+  Classes, SysUtils, DateUtils, LazLogger,
+  unitgittypes, unitentries;
 
   function OIDToQWord(oid: string): QWord;
   function OIDToParents(oid: string; oidlen: Integer): TQWordArray;
