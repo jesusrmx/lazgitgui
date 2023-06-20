@@ -380,6 +380,14 @@ msgstr ""
 msgid "Quit"
 msgstr ""
 
+#: tfrmmain.actrepoinfo.caption
+msgid "I"
+msgstr ""
+
+#: tfrmmain.actrepoinfo.hint
+msgid "Repository Information"
+msgstr ""
+
 #: tfrmmain.actrescan.caption
 msgid "Rescan"
 msgstr ""

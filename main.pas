@@ -23,6 +23,7 @@
 unit main;
 
 {$mode objfpc}{$H+}
+{$ModeSwitch nestedprocvars}
 
 interface
 
@@ -47,6 +48,7 @@ type
     actInsertBranchName: TAction;
     actAddCmd: TAction;
     actGitCmd: TAction;
+    actRepoInfo: TAction;
     actRestoreCommitMsg: TAction;
     actNewLog: TAction;
     actPushDialog: TAction;
@@ -89,6 +91,7 @@ type
     popLists: TPopupMenu;
     popCommands: TPopupMenu;
     prgBar: TProgressBar;
+    btnRepoInfo: TSpeedButton;
     splitterMain: TSplitter;
     barCustomCmds: TToolBar;
     btnGitCmd: TToolButton;
@@ -111,6 +114,7 @@ type
     procedure actPushDialogExecute(Sender: TObject);
     procedure actPushExecute(Sender: TObject);
     procedure actQuitExecute(Sender: TObject);
+    procedure actRepoInfoExecute(Sender: TObject);
     procedure actRescanExecute(Sender: TObject);
     procedure actRestoreCommitMsgExecute(Sender: TObject);
     procedure btnGitCmdArrowClick(Sender: TObject);
@@ -147,13 +151,17 @@ type
     procedure DoPush;
     procedure DoFetch;
     procedure DoPull;
+    procedure DoRepoInfo;
     procedure OnCustomCommandClick(Sender: TObject);
+    procedure OnDebugLoggerInterceptor(Sender: TObject; S: string;
+      var Handled: Boolean);
     procedure OnMRECommand(Sender: TObject);
     procedure OnPopupItemClick(Sender: TObject);
     procedure OnBranchSwitch(Data: PtrInt);
     procedure OnIgnoreFileClick(Sender: TObject);
     procedure OnIgnoreTypeClick(Sender: TObject);
     procedure OnReloadBranchMenu({%H-}Data: PtrInt);
+    procedure OnRepoInfoStatusDone(Sender: TObject);
     procedure OnRestoreFileClick(Sender: TObject);
     procedure OnStageAllClick(Sender: TObject);
     procedure OnStageItemClick(Sender: TObject);
@@ -364,6 +372,82 @@ procedure TfrmMain.OnReloadBranchMenu(Data: PtrInt);
 begin
   UpdateBranchMenu;
   popBranch.PopUp(fPopPoint.x, fPopPoint.y);
+end;
+
+procedure TfrmMain.OnRepoInfoStatusDone(Sender: TObject);
+  function FilterLocal(info: PRefInfo): boolean;
+  begin
+    result := info^.subType=rostLocal;
+  end;
+  function FilterTracking(info: PRefInfo): boolean;
+  begin
+    result := info^.subType=rostTracking;
+  end;
+  function FilterTags(info: PRefInfo): boolean;
+  begin
+    result := info^.subType=rostTag;
+  end;
+
+var
+  i: Integer;
+  s: string;
+  log: TLazLoggerFile;
+  refItems: TRefInfoArray;
+begin
+  log := DebugLogger;
+  fGitMgr.UpdateRefList;
+  fGitMgr.UpdateRemotes;
+  txtDiff.Clear;
+  Log.OnDebugLn := @OnDebugLoggerInterceptor;
+  try
+    DebugLnEnter('Repository Information:');
+    DebugLn('Date: %s', [DateTimeToStr(Now)]);
+    DebugLn('Top Level Directory: %s', [fGit.TopLevelDir]);
+    DebugLn('Repo .git Directory: %s', [fGit.GitCommonDir]);
+    DebugLn('Git program: %s', [fGit.Exe]);
+    DebugLn('Git version: %s', [fGit.Version]);
+    DebugLnExit('');
+    DebugLnEnter('Status:');
+    DebugLn('Branch: %s',[fGitMgr.Branch]);
+    DebugLn('Tracking Branch: %s',[fGitMgr.Upstream]);
+    DebugLn('Commits Ahead: %d',[fGitMgr.CommitsAhead]);
+    DebugLn('Commits Behind: %d',[Abs(fGitMgr.CommitsBehind)]);
+    DebugLn('Branch Commit Sha: %s',[fGitMgr.BranchOID]);
+    DebugLn('Tag: %s',[fGitMgr.LastTag]);
+    DebugLn('Commits Since Tag %s: %d',[fGitMgr.LastTag, fGitMgr.LastTagCommits]);
+    DebugLn('Tag Commit Sha: %s',[fGitMgr.LastTagOID]);
+    DebugLn('Is Merging: %s',[dbgs(fGitMgr.Merging)]);
+    DebugLn('Has Merging Conflict: %s',[dbgs(fGitMgr.MergingConflict)]);
+    DebugLnExit('');
+    DebugLnEnter('Local Branches:');
+    refItems := fGit.RefsFilter('', @FilterLocal);
+    for i := 0 to Length(refItems)-1 do
+    with refItems[i]^ do begin
+      s := '';
+      if Head then s := ' (HEAD)';
+      if upstream<>'' then  DebugLn('%s %s -> %s%s', [objName, refName, upstream, s])
+      else                  DebugLn('%s %s%s',[objName, refName, s]);
+    end;
+    DebugLnExit('');
+    DebugLnEnter('Tracking branches:');
+    refItems := fGit.RefsFilter('', @FilterTracking);
+    for i := 0 to Length(refItems)-1 do
+    with refItems[i]^ do
+      DebugLn('%s %s',[objName, refName]);
+    DebugLnExit('');
+    DebugLnEnter('Tags:');
+    refItems := fGit.RefsFilter('', @FilterTags);
+    for i := 0 to Length(refItems)-1 do
+    with refItems[i]^ do
+      DebugLn('%s %s',[objName, refName]);
+    DebugLnExit('');
+    DebugLnEnter('Remotes:');
+    for i := 0 to Length(fGitMgr.Remotes)-1 do
+      DebugLn('%s %s', [fGitMgr.Remotes[i].name, fGitMgr.Remotes[i].fetch]);
+    DebugLnExit('');
+  finally
+    Log.OnDebugLn := nil;
+  end;
 end;
 
 procedure TfrmMain.OnRestoreFileClick(Sender: TObject);
@@ -1287,6 +1371,11 @@ begin
   Close;
 end;
 
+procedure TfrmMain.actRepoInfoExecute(Sender: TObject);
+begin
+  DoRepoInfo;
+end;
+
 procedure TfrmMain.FormDestroy(Sender: TObject);
 begin
   fCustomCommands.Free;
@@ -1432,6 +1521,11 @@ begin
   fGitMgr.UpdateRefList;
 end;
 
+procedure TfrmMain.DoRepoInfo;
+begin
+  fGitMgr.UpdateStatus(@OnRepoInfoStatusDone);
+end;
+
 procedure TfrmMain.OnCustomCommandClick(Sender: TObject);
 var
   c: TComponent absolute Sender;
@@ -1459,6 +1553,13 @@ begin
       fGitMgr.UpdateRefList;
     end;
   end;
+end;
+
+procedure TfrmMain.OnDebugLoggerInterceptor(Sender: TObject; S: string;
+  var Handled: Boolean);
+begin
+  txtDiff.Lines.Add(s);
+  handled := true;
 end;
 
 procedure TfrmMain.OnMRECommand(Sender: TObject);

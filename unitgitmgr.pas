@@ -88,7 +88,7 @@ type
     constructor create;
     destructor destroy; override;
     function Initialize: boolean;
-    procedure UpdateStatus;
+    procedure UpdateStatus(ondone: TNotifyEvent = nil);
     procedure UpdateRefList;
     procedure AddObserver(who: IObserver);
     procedure RemoveObserver(who: IObserver);
@@ -294,7 +294,7 @@ begin
 
 end;
 
-procedure TGitMgr.UpdateStatus;
+procedure TGitMgr.UpdateStatus(ondone: TNotifyEvent);
 var
   i: Integer;
   commands: TCommandsArray;
@@ -332,7 +332,10 @@ begin
   commands[i].RedirStdErr := false;
   commands[i].PreferredOutputType := cipotStream;
 
-  RunInThread(commands, fGit.TopLevelDir, @OnCommandProgress, @OnCommandsDone);
+  if ondone=nil then
+    ondone := @OnCommandsDone;
+
+  RunInThread(commands, fGit.TopLevelDir, @OnCommandProgress, ondone);
 
   //fObserverMgr.NotifyObservers(self, GITMGR_EVENT_UPDATESTATUS, res);
 end;
