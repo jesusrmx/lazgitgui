@@ -774,12 +774,10 @@ end;
 procedure TGraphBuilderThread.TopoSort(map: TParentsMap);
 var
   graph: TGraph;
-  parArray: TParentsArray;
-  i, j, x, dummy: Integer;
-  arr: TIntArray;
+  i, j, x: Integer;
   stack: TIntStack;
   pmi: PParentsMapItem;
-  //indxArr: TItemIndexArray;
+  //arr: TIntArray = nil;
 begin
 
   graph := TGraph.Create(map.Count);
@@ -788,24 +786,38 @@ begin
     for i:=0 to map.Count-1 do begin
       pmi := map.Data[i];
       for j:=0 to Length(pmi^.parents)-1 do
-        graph.AddEdge(pmi^.n, pmi^.parents[j].n);
+        if (pmi^.n>=0) and (pmi^.parents[j].n>=0) then
+          graph.AddEdge(pmi^.n, pmi^.parents[j].n);
     end;
 
     stack := graph.TopologicalSort;
-    setLength(arr, stack.Count);
+    //SetLength(arr, stack.Count);
 
-    //This tests demonstrates that the data is already ordered
-    //topologically. could it be right? ...
+    {$IFDEF DEBUG}
     DebugLn;
-
-    x := 0;
+    DebugLn('Topological Ordering:');
+    {$ENDIF}
     for i:=stack.Count-1 downto 0 do begin
+      x := (stack.Count-1) - i;
+      {$IFDEF DEBUG}
       DbgOut('%3d ',[stack[i]]);
       if (x+1) mod 20 = 0 then DebugLn;
-      inc(x);
+      {$ENDIF}
+      //arr[x] := stack[i];
     end;
+    {$IFDEF DEBUG}
+    //DebugLn;
+    //DebugLn('New Index ordering:');
+    //for i:=0 to Length(arr)-1 do begin
+    //  DbgOut('%3d ',[arr[i]]);
+    //  if (i+1) mod 20 = 0 then DebugLn;
+    //end;
+    DebugLn;
 
-    //SetFilter(arr);
+    ReportTicks('TopoSort');
+    {$ENDIF}
+
+    //fDb.SetFilter(arr);
 
   finally
     graph.Free;
