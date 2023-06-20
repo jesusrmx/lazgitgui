@@ -29,7 +29,8 @@ interface
 uses
   Classes, SysUtils, LCLType,
   Forms, Controls, Graphics, Dialogs, ComCtrls, grids,
-  unitifaces, unitconfig, unithighlighterhelper, unitgitmgr, unitframelog;
+  unitifaces, unitconfig, unithighlighterhelper, unitgitmgr, unitframelog,
+  unitsyneditextras;
 
 type
 
@@ -101,6 +102,7 @@ begin
   end;
   fConfig.CloseConfig;
 
+  AddPopupMenu(fLog.txtViewer);
 end;
 
 procedure TfrmLog.FormDestroy(Sender: TObject);

@@ -33,7 +33,7 @@ uses
   lclType, Menus, Buttons, ComCtrls, Types,
   unitgittypes, unitifaces, unitconfig, unitprocess, unithighlighterhelper,
   unitentries, unitgitutils, unitcommon,
-  unitnewbranch, unitruncmd,
+  unitnewbranch, unitruncmd, unitsyneditextras,
   unitnewtag, LConvEncoding, unitdbindex,
   unitgitmgr, unitcheckouttag, unitformlog, unitcustomcmds,
   unitcustcmdform, unittextchunks, unitgitcmd, unitpush;
@@ -1230,6 +1230,8 @@ begin
   txtDiff.Clear;
 
   fConfig.ReadFont(txtDiff.Font, 'viewer', fpFixed, SECTION_FONTS);
+
+  AddPopupMenu(txtDiff);
 
   panFileState.Caption := '';
 

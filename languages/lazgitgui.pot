@@ -717,6 +717,11 @@ msgstr ""
 msgid "Commit: %s"
 msgstr ""
 
+#: unitcommon.rscopy
+msgctxt "unitcommon.rscopy"
+msgid "Copy"
+msgstr ""
+
 #: unitcommon.rscouldntgettopleveldirectoryofs
 #, object-pascal-format
 msgctxt "unitcommon.rscouldntgettopleveldirectoryofs"
@@ -1029,6 +1034,10 @@ msgstr ""
 #, object-pascal-format
 msgctxt "unitcommon.rssdoesnotexists"
 msgid "%s does not exists"
+msgstr ""
+
+#: unitcommon.rsselectall
+msgid "Select All"
 msgstr ""
 
 #: unitcommon.rsshasnotrackingandthere

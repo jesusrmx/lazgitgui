@@ -9,6 +9,7 @@ object frmFileHistory: TfrmFileHistory
   KeyPreview = True
   OnClose = FormClose
   OnCloseQuery = FormCloseQuery
+  OnCreate = FormCreate
   OnDestroy = FormDestroy
   OnKeyDown = FormKeyDown
   OnShow = FormShow

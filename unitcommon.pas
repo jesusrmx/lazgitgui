@@ -156,6 +156,8 @@ resourcestring
   rsInvalidPushURL = '%s has an invalid Push URL';
   rsTheBranchesListIsEmpty = 'The branches list is empty';
   rsSIsAnInvalidBranchName = '%s is an invalid branch name';
+  rsCopy = 'Copy';
+  rsSelectAll = 'Select All';
 
 implementation
 

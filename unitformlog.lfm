@@ -104,6 +104,9 @@ object frmLog: TfrmLog
       inherited btnStop: TSpeedButton
         Left = 699
       end
+      inherited lblGraphBuild: TLabel
+        Left = 546
+      end
     end
   end
 end
