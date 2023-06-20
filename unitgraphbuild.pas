@@ -422,7 +422,7 @@ begin
             found := result.Data[aIndex];
             pmi^.parents[k].n := found^.n;
             {$IFDEF Debug}
-            DebugLn('At %d found missing parent %d (%.16x)',[lost[i], k, pmi^.parents[k].commit]);
+            DebugLn('At %d missing parent %d (%.16x) found to be at %d',[lost[i], k, pmi^.parents[k].commit, found^.n]);
             {$ENDIF}
           end;
         end;
