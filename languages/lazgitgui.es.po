@@ -85,36 +85,36 @@ msgstr "FH"
 
 #: tframelog.btnfilter.caption
 msgid "Y"
-msgstr ""
+msgstr "Y"
 
 #: tframelog.btnfilter.hint
 msgid "Filter"
-msgstr ""
+msgstr "Filtrar"
 
 #: tframelog.btnnext.caption
 msgctxt "tframelog.btnnext.caption"
 msgid ">"
-msgstr ""
+msgstr ">"
 
 #: tframelog.btnnext.hint
 msgid "Next"
-msgstr ""
+msgstr "Siguiente"
 
 #: tframelog.btnprev.caption
 msgid "<"
-msgstr ""
+msgstr "<"
 
 #: tframelog.btnprev.hint
 msgid "Previous"
-msgstr ""
+msgstr "Anterior"
 
 #: tframelog.btnsearch.caption
 msgid "S"
-msgstr ""
+msgstr "B"
 
 #: tframelog.btnsearch.hint
 msgid "Search"
-msgstr ""
+msgstr "Buscar"
 
 #: tframelog.btnstop.caption
 msgctxt "tframelog.btnstop.caption"
@@ -153,7 +153,7 @@ msgstr "SHA1"
 
 #: tframelog.lblgraphbuild.caption
 msgid "Graph Building"
-msgstr ""
+msgstr "Construcción del gráfico"
 
 #: tframelog.lblinfo.caption
 msgctxt "tframelog.lblinfo.caption"
@@ -165,13 +165,11 @@ msgid "All info"
 msgstr "Toda la información"
 
 #: tframelog.mnucopy.caption
-#, fuzzy
 msgctxt "tframelog.mnucopy.caption"
 msgid "Copy"
 msgstr "Copiar"
 
 #: tframelog.mnucopysha.caption
-#, fuzzy
 msgctxt "tframelog.mnucopysha.caption"
 msgid "Sha"
 msgstr "Sha"
@@ -186,7 +184,7 @@ msgstr "Archivos"
 
 #: tframelog.txtsearch.texthint
 msgid "Search all fields"
-msgstr ""
+msgstr "Buscar en todos los campos"
 
 #: tfrmcheckoutag.caption
 msgid "Check out a Tag"
@@ -297,16 +295,16 @@ msgstr "Identificador"
 
 #: tfrmgitcmd.caption
 msgid "Run a git command"
-msgstr ""
+msgstr "Ejecutar un comando git"
 
 #: tfrmgitcmd.chkremember.caption
 msgid "Remember this command"
-msgstr ""
+msgstr "Recordar este comando"
 
 #: tfrmgitcmd.txtgitcmd.texthint
 msgctxt "tfrmgitcmd.txtgitcmd.texthint"
 msgid "Type a git command (must start with git)"
-msgstr ""
+msgstr "Introduce un comando git (debe comenzar con git)"
 
 #: tfrmlog.caption
 msgid "frmLog"
@@ -363,11 +361,11 @@ msgstr "Fetch"
 #: tfrmmain.actgitcmd.caption
 msgctxt "tfrmmain.actgitcmd.caption"
 msgid ">"
-msgstr ""
+msgstr ">"
 
 #: tfrmmain.actgitcmd.hint
 msgid "Directly run a git command"
-msgstr ""
+msgstr "Ejecutar un comando git de forma directa."
 
 #: tfrmmain.actinsertbranchname.caption
 msgid "Insert Branch Name"
@@ -400,11 +398,11 @@ msgstr "Salir"
 
 #: tfrmmain.actrepoinfo.caption
 msgid "I"
-msgstr ""
+msgstr "I"
 
 #: tfrmmain.actrepoinfo.hint
 msgid "Repository Information"
-msgstr ""
+msgstr "Información del repositorio"
 
 #: tfrmmain.actrescan.caption
 msgid "Rescan"
@@ -428,7 +426,7 @@ msgstr "Rama:"
 
 #: tfrmmain.label2.caption
 msgid "Upstream:"
-msgstr "Origen: "
+msgstr "Origen:"
 
 #: tfrmmain.label3.caption
 msgid "Tag:"
@@ -535,118 +533,113 @@ msgid "Message:"
 msgstr "Mensaje:"
 
 #: tfrmpush.btnremotes.caption
-#, fuzzy
 msgctxt "tfrmpush.btnremotes.caption"
 msgid "R"
 msgstr "R"
 
 #: tfrmpush.caption
-#, fuzzy
 msgctxt "tfrmpush.caption"
 msgid "Push"
 msgstr "Push"
 
 #: tfrmpush.chkoptions.caption
-#, fuzzy
 msgctxt "tfrmpush.chkoptions.caption"
 msgid "Options"
 msgstr "Opciones"
 
 #: tfrmpush.gpodest.caption
 msgid "Remote Repository"
-msgstr ""
+msgstr "Repositorio Remoto"
 
 #: tfrmpush.label1.caption
 msgid "Local branches:"
-msgstr ""
+msgstr "Ramas locales:"
 
 #: tfrmpush.radremote.caption
 msgid "remote"
-msgstr ""
+msgstr "remoto"
 
 #: tfrmpush.radurl.caption
 msgid "Url"
-msgstr ""
+msgstr "Url"
 
 #: tfrmpush.txturl.texthint
 msgid "Enter a URL"
-msgstr ""
+msgstr "Introduzca un URL"
 
 #: tfrmremotes.btnadd.caption
-#, fuzzy
 msgctxt "tfrmremotes.btnadd.caption"
 msgid "+"
 msgstr "+"
 
 #: tfrmremotes.btndel.caption
-#, fuzzy
 msgctxt "tfrmremotes.btndel.caption"
 msgid "-"
 msgstr "-"
 
 #: tfrmremotes.caption
 msgid "Remotes Editor"
-msgstr ""
+msgstr "Editor de repositorios remotos"
 
 #: tfrmremotes.chkfetch.caption
 msgid "Fetch remote"
-msgstr ""
+msgstr "Hacer 'fetch' al guardar"
 
 #: tfrmremotes.chkfetch.hint
 msgid "Run git fetch after the remote information is set up. "
-msgstr ""
+msgstr "Ejecutar 'git fetch' despues de que la información del repositorio remoto sea configurada."
 
 #: tfrmremotes.chkimporttags.caption
 msgid "Import all tags"
-msgstr ""
+msgstr "Importar todas las etiquetas"
 
 #: tfrmremotes.chkimporttags.hint
 msgid "With this option fetch with import all tags, without it, only tags of tracked branches will be imported."
-msgstr ""
+msgstr "Con esta opción 'fetch' importará todos las etiquetas, sin la opción, solo se importarán las etiquetas en las ramas con seguimiento."
 
 #: tfrmremotes.chkonlybranches.caption
 msgid "Only track this branches"
-msgstr ""
+msgstr "Solo dar seguimiento a estas ramas"
 
 #: tfrmremotes.chkonlybranches.hint
 msgid "A 'git fetch' will only track this branches"
-msgstr ""
+msgstr "Un 'git fetch' solo dará seguimiento a estas ramas"
 
 #: tfrmremotes.chksameurl.caption
 msgid "Fetch and Push URL Are the Same"
-msgstr ""
+msgstr "Los URL 'fetch' y 'push' son iguales"
 
 #: tfrmremotes.txtbranches.texthint
 msgid "Comma separated list of branches"
-msgstr ""
+msgstr "Lista de ramas separada por comas"
 
 #: tfrmremotes.txtfetch.hint
 msgctxt "tfrmremotes.txtfetch.hint"
 msgid "Fetch URL"
-msgstr ""
+msgstr "URL para 'fetch'"
 
 #: tfrmremotes.txtfetch.texthint
 msgctxt "tfrmremotes.txtfetch.texthint"
 msgid "Fetch URL"
-msgstr ""
+msgstr "URL para 'fetch'"
 
 #: tfrmremotes.txtname.hint
 msgid "Remote name"
-msgstr ""
+msgstr "Nombre remoto"
 
 #: tfrmremotes.txtname.texthint
 msgid "Remote Name"
-msgstr ""
+msgstr "Nombre Remoto"
 
 #: tfrmremotes.txtpush.hint
 msgctxt "tfrmremotes.txtpush.hint"
 msgid "Push URL"
-msgstr ""
+msgstr "URL para 'push'"
 
 #: tfrmremotes.txtpush.texthint
 msgctxt "tfrmremotes.txtpush.texthint"
 msgid "Push URL"
-msgstr ""
+msgstr "URL para 'push'"
 
 #: tfrmreset.caption
 msgid "Reset branch"
@@ -680,7 +673,7 @@ msgstr "-"
 
 #: unitcommon.rsabranchisnotselected
 msgid "A branch is not selected"
-msgstr ""
+msgstr "No se ha seleccionado una rama"
 
 #: unitcommon.rsaddsfilestoignorelist
 #, object-pascal-format
@@ -743,7 +736,7 @@ msgstr "Revisión: %s"
 #: unitcommon.rscopy
 msgctxt "unitcommon.rscopy"
 msgid "Copy"
-msgstr ""
+msgstr "Copiar"
 
 #: unitcommon.rscouldntgettopleveldirectoryofs
 #, object-pascal-format
@@ -871,21 +864,21 @@ msgstr "Descripción inválida"
 #: unitcommon.rsinvalidfetchurl
 #, object-pascal-format
 msgid "%s has an invalid Fetch URL"
-msgstr ""
+msgstr "%s tiene un URL 'fetch' inválida"
 
 #: unitcommon.rsinvalidpushurl
 #, object-pascal-format
 msgid "%s has an invalid Push URL"
-msgstr ""
+msgstr "%s tiene un URL 'push' inválida"
 
 #: unitcommon.rsinvalidremotename
 #, object-pascal-format
 msgid "remote %d has an invalid name"
-msgstr ""
+msgstr "El repositorio remoto %d tiene un nombre inválido"
 
 #: unitcommon.rsinvalidtargeturl
 msgid "Invalid target url"
-msgstr ""
+msgstr "URL objetivo inválida"
 
 #: unitcommon.rslocalbranches
 msgid "Local Branches"
@@ -917,7 +910,7 @@ msgstr "Nueva Rama"
 
 #: unitcommon.rsnewremotename
 msgid "<New Remote Name>"
-msgstr ""
+msgstr "<Nuevo Nombre Remoto>"
 
 #: unitcommon.rsnewtag
 msgctxt "unitcommon.rsnewtag"
@@ -965,7 +958,7 @@ msgstr "de"
 #: unitcommon.rspullingfromremote
 msgctxt "unitcommon.rspullingfromremote"
 msgid "pulling from remote: "
-msgstr "Traer del origen remoto"
+msgstr "Traer y combinar del origen remoto:"
 
 #: unitcommon.rspushingbranchwithout
 msgctxt "unitcommon.rspushingbranchwithout"
@@ -1086,7 +1079,7 @@ msgstr "%s no existe"
 
 #: unitcommon.rsselectall
 msgid "Select All"
-msgstr ""
+msgstr "Seleccionar Todo"
 
 #: unitcommon.rsshasnotrackingandthere
 #, object-pascal-format
@@ -1109,7 +1102,7 @@ msgstr "'%s' ya esta en la lista de ignorados"
 #: unitcommon.rssisaninvalidbranchname
 #, object-pascal-format
 msgid "%s is an invalid branch name"
-msgstr ""
+msgstr "%s es un nombre de rama inválido"
 
 #: unitcommon.rsstageall
 msgctxt "unitcommon.rsstageall"
@@ -1160,11 +1153,11 @@ msgstr "Etiqueta: %s"
 
 #: unitcommon.rsthebrancheslistisempty
 msgid "The branches list is empty"
-msgstr ""
+msgstr "La lista de ramas esta vacía"
 
 #: unitcommon.rsthecommandisempty
 msgid "The command is empty"
-msgstr ""
+msgstr "El comando esta vacío"
 
 #: unitcommon.rsthefilesisbinarydbytes
 #, object-pascal-format
@@ -1179,7 +1172,7 @@ msgstr "Hay cambios remotos sin integrar, ¿Estás seguro de subir los cambios l
 
 #: unitcommon.rsthetargetremoterepositoryisnotselected
 msgid "The target remote repository is not selected"
-msgstr ""
+msgstr "El repositorio remoto objetivo no ha sido seleccionado"
 
 #: unitcommon.rsthetypesisalreadyintheignoredlist
 #, object-pascal-format
@@ -1400,4 +1393,3 @@ msgstr "Sin modificar"
 #: unitentries.rslazgitguiuntrackednotstaged
 msgid "Untracked, not staged"
 msgstr "Sin seguimiento, no preparado"
-
