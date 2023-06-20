@@ -999,10 +999,6 @@ object frmMain: TfrmMain
       Caption = 'Quit'
       OnExecute = actQuitExecute
     end
-    object actLog: TAction
-      AutoCheck = True
-      Caption = 'L'
-    end
     object actPushDialog: TAction
       Caption = 'Push ...'
       OnExecute = actPushDialogExecute
@@ -1010,6 +1006,7 @@ object frmMain: TfrmMain
     object actNewLog: TAction
       AutoCheck = True
       Caption = 'NL'
+      Hint = 'Show the log'
       OnExecute = actNewLogExecute
     end
     object actRestoreCommitMsg: TAction

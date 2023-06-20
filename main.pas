@@ -52,7 +52,6 @@ type
     actRestoreCommitMsg: TAction;
     actNewLog: TAction;
     actPushDialog: TAction;
-    actLog: TAction;
     actQuit: TAction;
     actPull: TAction;
     actPush: TAction;
