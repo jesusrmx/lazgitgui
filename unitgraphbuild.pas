@@ -309,6 +309,7 @@ begin
     fIndexArray[i].parents := nil;
     fIndexArray[i].childs := nil;
     fIndexArray[i].lines := nil;
+    fIndexArray[i].iflags := [];
   end;
 
   for m:=0 to parMap.Count-1 do begin
@@ -328,6 +329,20 @@ begin
         SetLength(fIndexArray[j].childs, k+1);
         fIndexArray[j].childs[k] := i;
       end;
+
+    if pmi^.lostandfound>=0 then begin
+      // a parent was lost because it was delivered by git log
+      // as sooner as it's child (some log entries have the same timestamp)
+      // so a lost&found parent should have an index less than the item.
+      if pmi^.lostandfound>=i then
+        DebugLn('Invalid order for item %d and lost&found %d',[i, pmi^.lostandfound])
+      else
+        for j:=pmi^.lostandfound to i do begin
+          include(fIndexArray[j].iflags, ifReorder);
+          if j=pmi^.lostandfound then Include(fIndexArray[j].iflags, ifFirstReorder);
+          if j=i then Include(fIndexArray[j].iflags, ifLastReorder);
+        end;
+    end;
   end;
 
   {$IFDEF Debug}

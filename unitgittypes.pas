@@ -99,6 +99,7 @@ type
   TParentsMapItem = record
     n: Integer;
     parents: TParentElementArray;
+    lostandfound: Integer;
   end;
 
   TSetOfChar = set of char;
@@ -131,12 +132,15 @@ type
   end;
   TLinesArray = array of TLineItem;
 
+  TItemFlag = (ifFirstReorder, ifReorder, ifLastReorder);
+  TItemFlags = set of TItemFlag;
   TItemIndex = record
     index: Integer;
     commit: QWord;
     parents, childs: TIntArray;
     column, section: Integer;
     lines: TLinesArray;
+    iflags: TItemFlags;
     //first: boolean;
     //last: boolean;
   end;

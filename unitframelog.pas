@@ -61,6 +61,7 @@ uses
   Classes, SysUtils, dateUtils, fgl, lclIntf, LazLogger, SynEdit, SynHighlighterDiff,
   SynHighlighterPas, SynHighlighterXML, Graphics, Forms, Dialogs, Controls, StrUtils,
   Grids, ExtCtrls, ComCtrls, Menus, Types, Clipbrd, ActnList, Buttons, StdCtrls,
+  graphutil,
   unitgittypes, unitlogcache, unitdbindex, unitgitutils, unitifaces, unitruncmd,
   unitgitmgr, unitcommitbrowser, unitvfs, unithighlighterhelper, unitgraphbuild,
   unitfilehistory, unitnewbranch, unitreset, unitcommon, unittextchunks, unitlinkmgr;
@@ -295,7 +296,7 @@ var
   aIndex, x, x1, x2, y, y1, y2, i, j, w, n: Integer;
   s: RawByteString;
   arr: TRefInfoArray;
-  aBrushColor, aFontColor: TColor;
+  aColor: TColor;
   r: TRect;
   db: TDbIndex;
   flags:  TLineItemFlags;
@@ -345,11 +346,16 @@ begin
                 //  n := lines[i].column; //fItemIndices[lines[i].source].column;
                 //  gridLog.Canvas.Pen.Style := psDash;
                 //end;
-                gridLog.Canvas.Pen.Color := GraphColumnsColors[ n mod GRAPH_MAX_COLORS];
-                gridLog.Canvas.Brush.Color := GraphColumnsColors[ n mod GRAPH_MAX_COLORS];
+                aColor := GraphColumnsColors[ n mod GRAPH_MAX_COLORS];
                 x := w + n * GRAPH_COLUMN_SEPARATOR;
 
                 if lifNode in flags then begin
+
+                  if ifReorder in iFlags then
+                    aColor := GetHighLightColor(aColor, 90);
+                  gridLog.Canvas.Pen.Color := aColor;
+                  gridLog.Canvas.Brush.Color := aColor;
+
                   if (lifFirst in flags) and (childs=nil) then y1 := y;
                   if (lifLast  in flags) and (parents=nil) then y2 := y;
 
@@ -362,6 +368,9 @@ begin
                     gridLog.canvas.EllipseC(x, y, GRAPH_NODE_RADIUS, GRAPH_NODE_RADIUS);
                   gridLog.canvas.Pen.Style := psSolid;
                 end else begin
+
+                  gridLog.Canvas.Pen.Color := aColor;
+                  gridLog.Canvas.Brush.Color := aColor;
 
                   if [lifInternal, lifToMerge, lifToBorn] * flags <> [] then
                     gridlog.Canvas.Line(x, y1, x, y2);

@@ -202,6 +202,7 @@ begin
       new(pmi);
       pmi^.n := i;
       pmi^.parents := nil;
+      pmi^.lostandfound := -1;
       result.Add(OIDToQWord(CommitOID), pmi);
 
       // convert the list of parents of the current commit (a space separated
@@ -253,6 +254,10 @@ begin
           // found, mark it as not lost
           found := result.Data[aIndex];
           pmi^.parents[k].n := found^.n;
+          if pmi^.lostandfound>=0 then
+            DebugLn('At %d lost parent %d (%.16x) lost&found at %d, found again at %d',
+              [pmi^.n, k, pmi^.parents[k].commit, pmi^.lostandfound, found^.n]);
+          pmi^.lostandfound := found^.n;
           {$IFDEF Debug}
           DebugLn('At %d lost parent %d (%.16x) found to be at %d',[pmi^.n, k, pmi^.parents[k].commit, found^.n]);
           {$ENDIF}
