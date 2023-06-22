@@ -855,81 +855,81 @@ var
   ok: Boolean;
   newFilter: TIntArray = nil;
 begin
+  if arr=nil then begin
+    fFilter := nil;
+    exit;
+  end;
 
-  if arr=nil then
-    fFilter := nil
-  else begin
-    if (fIndexStream=nil) or (fIndexStream.Size=0) then
-      raise Exception.Create('Trying to set a filter while the db is not initialized');
-    maxIndex := Count(true) - 1;
-    // check that indices are within the range of the index
-    for i:=0 to Length(arr)-1 do
-      if (arr[i]<0) or (arr[i]>maxIndex) then
-        raise Exception.CreateFmt('The filter has an invalid entry at %d',[i]);
-    // copy filter indices
-    SetLength(fFilter, Length(arr));
-    Move(arr[0], fFilter[0], Length(arr)*SizeOf(Integer));
+  if (fIndexStream=nil) or (fIndexStream.Size=0) then
+    raise Exception.Create('Trying to set a filter while the db is not initialized');
+  maxIndex := Count(true) - 1;
+  // check that indices are within the range of the index
+  for i:=0 to Length(arr)-1 do
+    if (arr[i]<0) or (arr[i]>maxIndex) then
+      raise Exception.CreateFmt('The filter has an invalid entry at %d',[i]);
+  // copy filter indices
+  SetLength(fFilter, Length(arr));
+  Move(arr[0], fFilter[0], Length(arr)*SizeOf(Integer));
 
-    {$IFDEF DEBUG}
-    DumpIntArray('Initial Ordering:', fFilter);
-    ResetTicks;
-    {$ENDIF}
+  {$IFDEF DEBUG}
+  DumpIntArray('Initial Ordering:', fFilter);
+  ResetTicks;
+  {$ENDIF}
 
-    map := GetParentsMap(Self);
+  map := GetParentsMap(Self);
 
-    {$IFDEF DEBUG}
-    //ReportGetParentsMap(map);
-    {$ENDIF}
+  {$IFDEF DEBUG}
+  //ReportGetParentsMap(map);
+  {$ENDIF}
 
-    graph := TGraph.Create(map.Count);
-    try
+  graph := TGraph.Create(map.Count);
+  try
 
-      for i:=0 to map.Count-1 do begin
-        pmi := map.Data[i];
-        for j:=0 to Length(pmi^.parents)-1 do
-          if (pmi^.n>=0) and (pmi^.parents[j].n>=0) then
-            graph.AddEdge(pmi^.parents[j].n, pmi^.n);
-      end;
-
-      {$IFDEF DEBUG}
-      with graph.Alg4List do begin
-        SaveToFile('pretopo.txt');
-        free;
-      end;
-      {$ENDIF}
-
-      stack := graph.TopologicalSort;
-      SetLength(newFilter, stack.count);
-
-      {$IFDEF DEBUG}
-      ok := Stack.Count=Length(fFilter);
-      DebugLn;
-      DebugLn('Topological Order: stack and filter sizes matches: %s',[dbgs(ok)]);
-      {$ENDIF}
-      for i:=stack.Count-1 downto 0 do begin
-        {$IFDEF DEBUG}
-        j := (stack.Count-1) - i;
-        if stack[j]<>j then DbgOut('*%3d ', [stack[j]])
-        else                DbgOut('%4d ', [stack[j]]);
-        if (j+1) mod 20 = 0 then DebugLn;
-        {$ENDIF}
-        newFilter[i] := fFilter[stack[i]];
-      end;
-      {$IFDEF DEBUG}
-      DebugLn;
-      {$ENDIF}
-
-      SetLength(fFilter, Length(newFilter));
-      Move(newFilter[0], fFilter[0], Length(newFilter)*SizeOf(Integer));
-
-      {$IFDEF DEBUG}
-      DumpIntArray('Final Ordering:', fFilter);
-      {$ENDIF}
-
-    finally
-      graph.Free;
-      ClearParentsMap(map)
+    for i:=0 to map.Count-1 do begin
+      pmi := map.Data[i];
+      for j:=0 to Length(pmi^.parents)-1 do
+        if (pmi^.n>=0) and (pmi^.parents[j].n>=0) then
+          graph.AddEdge(pmi^.parents[j].n, pmi^.n);
     end;
+
+    {$IFDEF DEBUG}
+    with graph.Alg4List do begin
+      SaveToFile('pretopo.txt');
+      free;
+    end;
+    {$ENDIF}
+
+    stack := graph.TopologicalSort;
+    SetLength(newFilter, stack.count);
+
+    {$IFDEF DEBUG}
+    ok := Stack.Count=Length(fFilter);
+    DebugLn;
+    DebugLn('Topological Order: stack and filter sizes matches: %s',[dbgs(ok)]);
+    {$ENDIF}
+    for i:=stack.Count-1 downto 0 do begin
+      {$IFDEF DEBUG}
+      j := (stack.Count-1) - i;
+      if stack[j]<>j then DbgOut('*%3d ', [stack[j]])
+      else                DbgOut('%4d ', [stack[j]]);
+      if (j+1) mod 20 = 0 then DebugLn;
+      {$ENDIF}
+      newFilter[i] := fFilter[stack[i]];
+    end;
+    {$IFDEF DEBUG}
+    DebugLn;
+    {$ENDIF}
+
+    SetLength(fFilter, Length(newFilter));
+    Move(newFilter[0], fFilter[0], Length(newFilter)*SizeOf(Integer));
+
+    {$IFDEF DEBUG}
+    DumpIntArray('Final Ordering:', fFilter);
+    {$ENDIF}
+
+  finally
+    graph.Free;
+    ClearParentsMap(map)
   end;
 end;
 
