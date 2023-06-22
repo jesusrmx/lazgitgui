@@ -24,6 +24,7 @@ type
   public
     constructor Create(aV: Integer);
     destructor Destroy; override;
+    function Alg4List: TStringList;
     procedure AddEdge(v, w: Integer);
     function TopologicalSort: TIntStack;
   end;
@@ -68,6 +69,24 @@ begin
   for i:=0 to fV-1 do
     fAdj[i].Free;
   inherited Destroy;
+end;
+
+function TGraph.Alg4List: TStringList;
+var
+  n, i, j: Integer;
+begin
+  // edges count
+  n := 0;
+  for i:=0 to fV-1 do
+    inc(n, fAdj[i].Count);
+
+  result := TStringList.Create;
+  result.AddObject('%d',[fV], nil);
+  result.AddObject('%d', [n], nil);
+  for i:=0 to fV-1 do
+    for j:=0 to fAdj[i].Count-1 do
+      result.AddObject('%d %d',[i, fAdj[i][j]], nil);
+
 end;
 
 procedure TGraph.AddEdge(v, w: Integer);

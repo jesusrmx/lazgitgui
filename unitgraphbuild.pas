@@ -65,8 +65,6 @@ type
     fIndexArray: TItemIndexArray;
     fMaxColumns: Integer;
     fWithColumns: boolean;
-    function GetParentsMap: TParentsMap;
-    procedure ClearParentsMap(map: TParentsMap);
     procedure FindRelativesMap(parMap: TParentsMap);
     function FindSource(ref:Integer; inChilds:boolean): Integer;
     procedure FindInternalMerges(i: Integer; var columns: TColumnArray; j: Integer);
@@ -159,32 +157,6 @@ begin
       with columns[col].sections[sec] do
         DebugLn('  Section %d: tip=%3d first=%3d last=%3d tail=%3d -> count=%3d',[sec, col, head, first, last, tail, count]);
   end;
-end;
-{$endif}
-
-{$ifdef ReportGetParentsMap}
-procedure ReportGetParentsMap(parMap: TParentsMap);
-var
-  pmi: PParentsMapItem;
-  mind: TIntArray;
-  i, j: Integer;
-begin
-  SetLength(mind, parMap.Count);
-  DebugLn;
-  DebugLn('PARENTS');
-  for i:=0 to parMap.Count-1 do begin
-    pmi := parMap.Data[i];
-    mind[pmi^.n] := i;
-  end;
-  for i:=0 to Length(mind)-1 do begin
-    pmi := parMap.Data[mind[i]];
-    DbgOut('%3d: %.16x => ',[pmi^.n, parMap.Keys[mind[i]]]);
-    for j:=0 to Length(pmi^.parents)-1 do
-      DbgOut('%.16x ',[pmi^.parents[j].commit]);
-    DebugLn;
-  end;
-
-  ReportTicks('Reporting Parents OID');
 end;
 {$endif}
 
@@ -323,139 +295,6 @@ end;
 {$ENDIF}
 
 { TGraphBuilderThread }
-
-// Given a Index database, create a map where the key is the commit OID
-// (a CommitOID limited to 16 characters packed in a QWord) and the data
-// it's an array of parents of that commit. This map can be used later
-// to find indexes inheritance.
-//
-// TODO: check if using full OIDs (strings) is really slower than using QWords
-function TGraphBuilderThread.GetParentsMap: TParentsMap;
-var
-  i, j, k, aIndex: Integer;
-  pmi, found: PParentsMapItem;
-  elements: TParentElementArray;
-  lost: TIntArray;
-  aItem: TLogItem;
-begin
-
-  // we scan the db from older to newer commits and supposedly the
-  // parents of a newer commit have already seen, however sometimes we
-  // found parents that we have not seen yet, we record those in
-  // the lost array. At the end we resolve all missing parents.
-  lost := nil;
-
-  // the parents map is created, as we use map.find, the map have
-  // to be sorted.
-  result := TParentsMap.Create;
-  result.Sorted := true;
-
-  // scan the db index from older to newer commits so we see the
-  // items that will become the parents of the next items.
-  for i:=fDb.Count-1 downto 0 do begin
-
-    // load a item whose properties are available through 'Item'
-    fDb.LoadItem(i, aItem);
-    with aItem do begin
-
-      // create a new map item for the Ith element, the key is
-      // the current (limited) commit OID. The data is the current
-      // db index and initialy no parents.
-      new(pmi);
-      pmi^.n := i;
-      pmi^.parents := nil;
-      result.Add(OIDToQWord(CommitOID), pmi);
-
-      // convert the list of parents of the current commit (a space separated
-      // list of string sha1s) into an array of limited commit OIDs
-      elements := OIDToParentElements(parentOID, Length(CommitOID));
-
-      // we expect to find all parents, so pre allocate an array big enough.
-      SetLength(pmi^.parents, Length(elements));
-
-      // we need a counter so we know if all parents have already seen
-      k := 0;
-
-      // process the list of parents and try to locate the corresponding
-      // db indices from the already seen commits. If not found, mark it.
-      for j:=0 to Length(elements)-1 do begin
-        if result.Find(elements[j].commit, aIndex) then begin
-          found := result.Data[aIndex];
-          pmi^.parents[k].n := found^.n;
-          pmi^.parents[k].commit := elements[j].commit;
-          inc(k);
-        end else begin
-          {$IFDEF Debug}
-          DebugLn('At %d parent %d (%.16x) is missing',[i, j, elements[j].commit]);
-          {$ENDIF}
-          pmi^.parents[k].n := -1;
-          pmi^.parents[k].commit := elements[j].commit;
-        end;
-      end;
-
-      // if the ith index has missing parents, add it to the lost list.
-      if Length(pmi^.parents)<>k then begin
-        aIndex := Length(lost);
-        SetLength(lost, aIndex+1);
-        lost[aIndex] := i;
-      end;
-
-    end;
-    finalize(aItem);
-  end;
-
-  // Now that we have processed all db indices, try to find lost parents
-  for i := 0 to Length(Lost)-1 do begin
-    fDb.LoadItem(lost[i], aItem);
-    with aItem do begin
-
-      // Locate the jth map entry corresponding to the lost db index
-      if not result.Find(OIDToQWord(CommitOID), j) then
-        continue; // should not happen (as we entered all CommitOIDs)
-
-      // recover the data corresponding to the commitoid key
-      pmi := result.Data[j];
-      for k:=0 to Length(pmi^.parents)-1 do
-        // is this a missing parent?
-        if pmi^.parents[k].n<0 then begin
-          // yes, now try to find it
-          if result.Find(pmi^.parents[k].commit, aIndex) then begin
-            // found, mark it as not lost
-            found := result.Data[aIndex];
-            pmi^.parents[k].n := found^.n;
-            {$IFDEF Debug}
-            DebugLn('At %d missing parent %d (%.16x) found to be at %d',[lost[i], k, pmi^.parents[k].commit, found^.n]);
-            {$ENDIF}
-          end;
-        end;
-    end;
-    finalize(aItem);
-  end;
-
-  {$ifdef Debug}
-  ReportTicks('GetParentsMap');
-  {$ifdef ReportGetParentsMap}
-  ReportGetParentsMap(result);
-  {$endif}
-  {$endif}
-end;
-
-// free the resources contained in the map
-procedure TGraphBuilderThread.ClearParentsMap(map: TParentsMap);
-var
-  pmi: PParentsMapItem;
-  i: Integer;
-begin
-  for i:=0 to map.Count-1 do begin
-    pmi := map.Data[i];
-    pmi^.parents := nil;
-    dispose(pmi);
-  end;
-  map.free;
-  {$IFDEF Debug}
-  ReportTicks('ClearingMap');
-  {$ENDIF}
-end;
 
 procedure TGraphBuilderThread.FindRelativesMap(parMap: TParentsMap);
 var
@@ -839,12 +678,12 @@ begin
   resetTicks;
   {$ENDIF}
 
-  parMap := GetParentsMap;
+  parMap := GetParentsMap(fDb);
 
   fIndexArray := nil;
   FindRelativesMap(parMap);
 
-  TopoSort(parMap);
+  //TopoSort(parMap);
 
   // parMap is not needed anymore
   ClearParentsMap(parMap);

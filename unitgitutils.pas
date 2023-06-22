@@ -49,6 +49,8 @@ uses
   function EncodeDelimitedText(delimiter:string; strings:TStrings): string;
   procedure DecodeDelimitedText(s:string; delimiter:string; strings:TStrings);
 
+  procedure DumpIntArray(msg: string; arr: TIntArray);
+
 implementation
 
 var
@@ -248,6 +250,19 @@ begin
   finally
     L.Free;
   end;
+end;
+
+procedure DumpIntArray(msg: string; arr: TIntArray);
+var
+  i: Integer;
+begin
+  DebugLn;
+  DebugLn(msg);
+  for i:=0 to Length(arr)-1 do begin
+    DbgOut('%3d ',[arr[i]]);
+    if (i+1) mod 20 = 0 then DebugLn;
+  end;
+  DebugLn;
 end;
 
 end.
