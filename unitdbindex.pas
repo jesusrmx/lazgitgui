@@ -173,7 +173,7 @@ var
   i, j, k, aIndex: Integer;
   pmi, found: PParentsMapItem;
   elements: TParentElementArray;
-  lost: TIntArray;
+  lost: array of PParentsMapItem;
   aItem: TLogItem;
 begin
 
@@ -219,15 +219,15 @@ begin
       for j:=0 to Length(elements)-1 do begin
         if result.Find(elements[j].commit, aIndex) then begin
           found := result.Data[aIndex];
-          pmi^.parents[k].n := found^.n;
-          pmi^.parents[k].commit := elements[j].commit;
+          pmi^.parents[j].n := found^.n;
+          pmi^.parents[j].commit := elements[j].commit;
           inc(k);
         end else begin
           {$IFDEF Debug}
           DebugLn('At %d parent %d (%.16x) is missing',[i, j, elements[j].commit]);
           {$ENDIF}
-          pmi^.parents[k].n := -1;
-          pmi^.parents[k].commit := elements[j].commit;
+          pmi^.parents[j].n := -1;
+          pmi^.parents[j].commit := elements[j].commit;
         end;
       end;
 
@@ -235,7 +235,7 @@ begin
       if Length(pmi^.parents)<>k then begin
         aIndex := Length(lost);
         SetLength(lost, aIndex+1);
-        lost[aIndex] := i;
+        lost[aIndex] := pmi;
       end;
 
     end;
@@ -243,31 +243,21 @@ begin
   end;
 
   // Now that we have processed all db indices, try to find lost parents
-  for i := 0 to Length(Lost)-1 do begin
-    fDb.LoadItem(lost[i], aItem);
-    with aItem do begin
-
-      // Locate the jth map entry corresponding to the lost db index
-      if not result.Find(OIDToQWord(CommitOID), j) then
-        continue; // should not happen (as we entered all CommitOIDs)
-
-      // recover the data corresponding to the commitoid key
-      pmi := result.Data[j];
-      for k:=0 to Length(pmi^.parents)-1 do
-        // is this a missing parent?
-        if pmi^.parents[k].n<0 then begin
-          // yes, now try to find it
-          if result.Find(pmi^.parents[k].commit, aIndex) then begin
-            // found, mark it as not lost
-            found := result.Data[aIndex];
-            pmi^.parents[k].n := found^.n;
-            {$IFDEF Debug}
-            DebugLn('At %d missing parent %d (%.16x) found to be at %d',[lost[i], k, pmi^.parents[k].commit, found^.n]);
-            {$ENDIF}
-          end;
+  for i := 0 to Length(lost)-1 do begin
+    pmi := lost[i];
+    for k:=0 to Length(pmi^.parents)-1 do
+      // is this a missing parent?
+      if pmi^.parents[k].n<0 then begin
+        // yes, now try to find it
+        if result.Find(pmi^.parents[k].commit, aIndex) then begin
+          // found, mark it as not lost
+          found := result.Data[aIndex];
+          pmi^.parents[k].n := found^.n;
+          {$IFDEF Debug}
+          DebugLn('At %d lost parent %d (%.16x) found to be at %d',[pmi^.n, k, pmi^.parents[k].commit, found^.n]);
+          {$ENDIF}
         end;
-    end;
-    finalize(aItem);
+      end;
   end;
 
   {$ifdef Debug}
