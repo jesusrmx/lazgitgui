@@ -866,14 +866,14 @@ begin
   SetLength(fFilter, Length(arr));
   Move(arr[0], fFilter[0], Length(arr)*SizeOf(Integer));
 
-  {$IFDEF DEBUG}
+  {$IFDEF DebugTopoFilter}
   DumpIntArray('Initial Ordering:', fFilter);
   ResetTicks;
   {$ENDIF}
 
   map := GetParentsMap(Self);
 
-  {$IFDEF DEBUG}
+  {$IFDEF DebugTopoFilter}
   //ReportGetParentsMap(map);
   {$ENDIF}
 
@@ -887,7 +887,7 @@ begin
           graph.AddEdge(pmi^.parents[j].n, pmi^.n);
     end;
 
-    {$IFDEF DEBUG}
+    {$IFDEF DebugTopoFilter}
     with graph.Alg4List do begin
       SaveToFile('pretopo.txt');
       free;
@@ -897,13 +897,13 @@ begin
     stack := graph.TopologicalSort;
     SetLength(newFilter, stack.count);
 
-    {$IFDEF DEBUG}
+    {$IFDEF DebugTopoFilter}
     ok := Stack.Count=Length(fFilter);
     DebugLn;
     DebugLn('Topological Order: stack and filter sizes matches: %s',[dbgs(ok)]);
     {$ENDIF}
     for i:=stack.Count-1 downto 0 do begin
-      {$IFDEF DEBUG}
+      {$IFDEF DebugTopoFilter}
       j := (stack.Count-1) - i;
       if stack[j]<>j then DbgOut('*%3d ', [stack[j]])
       else                DbgOut('%4d ', [stack[j]]);
@@ -911,14 +911,14 @@ begin
       {$ENDIF}
       newFilter[i] := fFilter[stack[i]];
     end;
-    {$IFDEF DEBUG}
+    {$IFDEF DebugTopoFilter}
     DebugLn;
     {$ENDIF}
 
     SetLength(fFilter, Length(newFilter));
     Move(newFilter[0], fFilter[0], Length(newFilter)*SizeOf(Integer));
 
-    {$IFDEF DEBUG}
+    {$IFDEF DebugTopoFilter}
     DumpIntArray('Final Ordering:', fFilter);
     {$ENDIF}
 
