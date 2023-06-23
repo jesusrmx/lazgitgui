@@ -28,6 +28,7 @@ resourcestring
     'You are about to discard changes in %s,'^M^M+
     'data will be lost and this action cannot be undone'^M^M+
     'Are you sure to continue?';
+  rsDeletingWorkFiles = 'Deleting untracked files';
   rsDeletingWorkFilesWarning =
     'You are about to delete %s,'^M^M+
     'This action cannot be undone'^M^M+
@@ -36,7 +37,7 @@ resourcestring
   rsTheTypeSIsAlreadyInTheIgnoredList = 'The type ''*%s'' is already in the ignored list';
   rsDFiles = '%d files';
   rsDiscardChanges = 'Discard changes';
-  rsDeleteFiles = 'Eliminar Archivos';
+  rsDeleteFiles = 'Delete Files';
   rsCancel = 'Cancel';
   rsViewUntrackedFiles = 'View Untracked Files';
   rsViewIgnoredFiles = 'View Ignored Files';
@@ -164,6 +165,7 @@ resourcestring
   rsCopy = 'Copy';
   rsSelectAll = 'Select All';
   rsDeleteS = 'Delete ''%s''';
+  rsSomeFilesCouldNotBeDeleted = 'Some files could not be deleted';
 
 implementation
 

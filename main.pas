@@ -533,23 +533,40 @@ var
   mi: TMenuItem absolute sender;
   aFile: string;
   res: TModalResult;
+  i: Integer;
+  ok, someDeleted: boolean;
 begin
 
   if mi.Tag>=0 then
     aFile := lstUnstaged.Items[mi.Tag]
   else
-    aFile := format('%d files',[lstUnstaged.SelCount]);
+    aFile := format(rsDFiles, [lstUnstaged.SelCount]);
 
-  res := QuestionDlg(rsRestoringWorkFiles, format(rsDeletingWorkFilesWarning, [aFile]), mtWarning,
+  res := QuestionDlg(rsDeletingWorkFiles, format(rsDeletingWorkFilesWarning, [aFile]), mtWarning,
     [mrYes, rsDeleteFiles, mrCancel, rsCancel], 0 );
 
-  ShowMessageFmt('You try to delete %s ',[mi.Caption]);
+  if res<>mrYes then
+    exit;
 
-  //if mi.Tag>=0 then
-  //  DeleteFile(fGit.TopLevelDir + aFile)
-  //else
-  //  for i:=0 to lstUnstaged.Count-1 do begin
-  //  end;
+  if mi.Tag>=0 then begin
+    ok := DeleteFile(fGit.TopLevelDir + aFile);
+    someDeleted := ok;
+  end else begin
+    someDeleted := false;
+    for i := 0 to lstUnstaged.Count-1 do
+      if lstUnstaged.Selected[i] then begin
+        ok := DeleteFile(fGit.TopLevelDir + lstUnstaged.Items[i]);
+        someDeleted := someDeleted or ok;
+        if not ok then
+          break;
+      end;
+  end;
+
+  if not ok then
+    ShowMessage(rsSomeFilesCouldNotBeDeleted);
+
+  if someDeleted then
+    fGitMgr.UpdateStatus;
 end;
 
 procedure TfrmMain.OnStageAllClick(Sender: TObject);
