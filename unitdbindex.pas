@@ -24,7 +24,7 @@ unit unitdbindex;
 
 {$mode ObjFPC}{$H+}
 
-{.$define Debug}
+{$define Debug}
 
 interface
 
@@ -225,7 +225,7 @@ begin
           inc(k);
         end else begin
           {$IFDEF Debug}
-          DebugLn('At %d parent %d (%.16x) is missing',[i, j, elements[j].commit]);
+          DebugLn('At %d (%.16x) parent %d (%.16x) is missing',[i, OIDToQWord(CommitOID), j, elements[j].commit]);
           {$ENDIF}
           pmi^.parents[j].n := -1;
           pmi^.parents[j].commit := elements[j].commit;

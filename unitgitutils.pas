@@ -41,8 +41,8 @@ uses
   function GitDateToDateTime(s: string): TDateTime;
   function DateTimeToGitFmt(d: TDateTime): string;
 
-  procedure ResetTicks;
-  procedure ReportTicks(msg:string);
+  procedure ResetTicks(globalToo:boolean=false);
+  procedure ReportTicks(msg:string; globalToo:boolean=false);
 
   function PosAny(chars: TSetOfChar; s:string): Integer;
   function ReplaceEOLs(s: string; encode:boolean): string;
@@ -54,7 +54,7 @@ uses
 implementation
 
 var
-  startTicks: QWord;
+  startTicks, globalTicks: QWord;
 
 function OIDToQWord(oid: string): QWord;
 begin
@@ -182,18 +182,26 @@ begin
   result := DateTimeToStr(d);
 end;
 
-procedure ResetTicks;
+procedure ResetTicks(globalToo: boolean);
 begin
   startTicks := GetTickCount64;
+  if globalToo then
+    globalTicks := startTicks
 end;
 
-procedure ReportTicks(msg: string);
+procedure ReportTicks(msg: string; globalToo: boolean);
 var
   curTicks: QWord;
 begin
   curTicks := GetTickCount64;
-  DebugLn('%s took %d ms',[msg, curTicks - startTicks]);
-  startTicks := curTicks;
+  if globalToo then begin
+    DebugLn('%s took %d ms, global %d ms',[msg, curTicks - startTicks, curTicks - globalTicks]);
+    startTicks := curTicks;
+    globalTicks := startTicks;
+  end else begin
+    DebugLn('%s took %d ms',[msg, curTicks - startTicks]);
+    startTicks := curTicks;
+  end;
 end;
 
 function PosAny(chars: TSetOfChar; s: string): Integer;

@@ -690,7 +690,7 @@ var
   columns: TColumnArray;
 begin
   {$IFDEF Debug}
-  resetTicks;
+  resetTicks(true);
   {$ENDIF}
 
   parMap := GetParentsMap(fDb);
@@ -730,6 +730,7 @@ begin
   {$ifdef ReportGraph}
   ReportGraph(fIndexArray, columns);
   {$endif}
+  ReportTicks('Graph Building', true);
   {$ENDIF}
 
   Terminate;
