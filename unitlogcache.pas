@@ -248,7 +248,7 @@ var
   arr: TIntArray;
   i: Integer;
 begin
-  if (fDb<>nil) and (fRangeStart>0) and (fRangeEnd<fDb.Count(true)) and (fRangeEnd>fRangeStart) then begin
+  if (fDb<>nil) and (fRangeStart>=0) and (fRangeEnd<fDb.Count(true)) and (fRangeEnd>fRangeStart) then begin
     SetLength(Arr, fRangeEnd-fRangeStart+1);
     for i:=0 to Length(arr)-1 do Arr[i] := i + fRangeStart;
     fDb.SetFilter(arr);
