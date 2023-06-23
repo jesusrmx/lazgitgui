@@ -140,6 +140,7 @@ procedure ClearEntries(fEntries: TfpList);
 
 const
   ChangedInWorktreeSet = [ etWorktreeChangedSinceIndex .. etCopiedInWorkTree ];
+  DeletedInWorktreeSet = [ etDeletedInWorktree .. etRenamedInWorkTree ];
   ChangedInIndexSet = [ etUpdatedInIndex .. etCopiedInIndexD ];
 
 implementation

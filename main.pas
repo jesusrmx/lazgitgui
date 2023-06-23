@@ -162,6 +162,7 @@ type
     procedure OnReloadBranchMenu({%H-}Data: PtrInt);
     procedure OnRepoInfoStatusDone(Sender: TObject);
     procedure OnRestoreFileClick(Sender: TObject);
+    procedure OnDeleteFilesClick(Sender: TObject);
     procedure OnStageAllClick(Sender: TObject);
     procedure OnStageItemClick(Sender: TObject);
     procedure OnUnstageItemClick(Sender: TObject);
@@ -264,6 +265,44 @@ var
 begin
   n := CountListItemsOfEntryType(lb, unstaged, true, entrySet);
   result := (n>0) and (n=lb.SelCount);
+end;
+
+function FirstSelectedItemExcluding(lb: TListBox; unstaged:boolean; entryset: TSetOfEntryType): Integer;
+var
+  i: Integer;
+  Entry: PFileEntry;
+  inSet: Boolean;
+begin
+  result := -1;
+  for i:=0 to lb.Count-1 do
+    if lb.Selected[i] then begin
+      Entry := PFileEntry(lb.Items.Objects[i]);
+      if (Entry<>nil) then begin
+        inSet := (unstaged and (Entry^.EntryTypeUnStaged in entrySet)) or
+               (not unstaged and (Entry^.EntryTypeStaged in entrySet));
+        if not inSet then begin
+          result := i;
+          break;
+        end;
+      end;
+    end;
+end;
+
+procedure ChangeItemSelectionOfEntryType(lb: TListbox; unstaged:boolean; unselect:boolean; entryset: TSetOfEntryType);
+var
+  i: Integer;
+  Entry: PFileEntry;
+  inSet: boolean;
+begin
+  for i:=0 to lb.Count-1 do begin
+    Entry := PFileEntry(lb.Items.Objects[i]);
+    if (Entry<>nil) then begin
+      inSet := (unstaged and (Entry^.EntryTypeUnStaged in entrySet)) or
+             (not unstaged and (Entry^.EntryTypeStaged in entrySet));
+      if inSet then
+        lb.Selected[i] := not unselect
+    end;
+  end;
 end;
 
 { TfrmMain }
@@ -489,6 +528,30 @@ begin
   txtDiff.Text := fGit.LogError;
 end;
 
+procedure TfrmMain.OnDeleteFilesClick(Sender: TObject);
+var
+  mi: TMenuItem absolute sender;
+  aFile: string;
+  res: TModalResult;
+begin
+
+  if mi.Tag>=0 then
+    aFile := lstUnstaged.Items[mi.Tag]
+  else
+    aFile := format('%d files',[lstUnstaged.SelCount]);
+
+  res := QuestionDlg(rsRestoringWorkFiles, format(rsDeletingWorkFilesWarning, [aFile]), mtWarning,
+    [mrYes, rsDeleteFiles, mrCancel, rsCancel], 0 );
+
+  ShowMessageFmt('You try to delete %s ',[mi.Caption]);
+
+  //if mi.Tag>=0 then
+  //  DeleteFile(fGit.TopLevelDir + aFile)
+  //else
+  //  for i:=0 to lstUnstaged.Count-1 do begin
+  //  end;
+end;
+
 procedure TfrmMain.OnStageAllClick(Sender: TObject);
 var
   mi: TMenuItem;
@@ -628,6 +691,41 @@ var
     end;
   end;
 
+  procedure CheckWhatToProcess;
+  begin
+    if selCount=1 then begin
+      aFile := ExtractFileName(lb.GetSelectedText);
+      aIndex := GetSelectedIndex(lb);
+      Entry := PFileEntry(lb.Items.Objects[aIndex])
+    end else begin
+      aFile := format(rsDFiles, [selCount]);
+      aIndex := LIST_TAG_ALL_SELECTED;
+      Entry := nil;
+    end;
+  end;
+
+  procedure AddDeleteFiles;
+  var
+    safeCount: Integer;
+    n, i: Integer;
+  begin
+    if isUnstaged and (SelCount>0) then begin
+      // check if there is only (in the index) already deleted files
+      safeCount := CountListItemsOfEntryType(lstUnstaged, true, true, [etUntracked]);
+      if SelCount=safeCount then begin
+        AddPopItem(popLists, '-', nil, 0);
+        AddPopItem(popLists, format(rsDeleteS, [aFile]), @OnDeleteFilesClick, aIndex)
+      end;
+      //else begin
+      //  n := SelCount - safeCount;
+      //  if n=1 then
+      //    AddPopItem(popLists, format('Delete ''%s'' denied. Is changed', [aFile]), nil, aIndex)
+      //  else
+      //    AddPopItem(popLists, format('Delete ''%s'' denied. %d Are changed', [aFile, n]), nil, aIndex);
+      //end;
+    end;
+  end;
+
 begin
 
   isUnstaged := Sender=lstUnstaged;
@@ -677,21 +775,13 @@ begin
 
   end else begin
 
-    if selCount=1 then begin
-      aFile := ExtractFileName(lb.GetSelectedText);
-      aIndex := GetSelectedIndex(lb);
-      Entry := PFileEntry(lb.Items.Objects[aIndex])
-    end else begin
-      aFile := format(rsDFiles, [selCount]);
-      aIndex := LIST_TAG_ALL_SELECTED;
-      Entry := nil;
-    end;
+    CheckWhatToProcess;
 
     if isUnstaged then begin
       AddStageFile;
       AddStageAll;
-
       AddRestoreFiles;
+      AddDeleteFiles;
 
       if (Entry<>nil) and (Entry^.EntryKind in [ekUntracked, ekIgnored]) then
         AddIgnoreUntracked;

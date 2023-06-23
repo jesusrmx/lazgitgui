@@ -371,13 +371,13 @@ msgstr "Ejecutar un comando git de forma directa."
 msgid "Insert Branch Name"
 msgstr "Insertar Nombre de Rama"
 
-#: tfrmmain.actlog.caption
-msgid "L"
-msgstr "L"
-
 #: tfrmmain.actnewlog.caption
 msgid "NL"
 msgstr "NL"
+
+#: tfrmmain.actnewlog.hint
+msgid "Show the log"
+msgstr "Mostrar el historial"
 
 #: tfrmmain.actpull.caption
 msgid "Pull"
@@ -775,10 +775,19 @@ msgstr "%d revisiones desde"
 msgid "Delete branch %s"
 msgstr "Eliminar rama %s"
 
+#: unitcommon.rsdeletefiles
+msgid "Eliminar Archivos"
+msgstr ""
+
 #: unitcommon.rsdeleteremotebranchs
 #, object-pascal-format
 msgid "Delete remote branch %s"
 msgstr "Eliminar rama remota %s"
+
+#: unitcommon.rsdeletes
+#, object-pascal-format
+msgid "Delete '%s'"
+msgstr ""
 
 #: unitcommon.rsdeletetags
 #, object-pascal-format
@@ -788,6 +797,16 @@ msgstr "Eliminar etiqueta %s"
 #: unitcommon.rsdeletingremotebranch
 msgid "Deleting remote branch"
 msgstr "Eliminar rama remota"
+
+#: unitcommon.rsdeletingworkfileswarning
+#, object-pascal-format
+msgid ""
+"You are about to delete %s,\n"
+"\n"
+"This action cannot be undone\n"
+"\n"
+"Are you sure to continue?"
+msgstr ""
 
 #: unitcommon.rsdescriptionisempty
 msgid "Description is empty"
@@ -1393,3 +1412,4 @@ msgstr "Sin modificar"
 #: unitentries.rslazgitguiuntrackednotstaged
 msgid "Untracked, not staged"
 msgstr "Sin seguimiento, no preparado"
+

@@ -28,10 +28,15 @@ resourcestring
     'You are about to discard changes in %s,'^M^M+
     'data will be lost and this action cannot be undone'^M^M+
     'Are you sure to continue?';
+  rsDeletingWorkFilesWarning =
+    'You are about to delete %s,'^M^M+
+    'This action cannot be undone'^M^M+
+    'Are you sure to continue?';
   rsSIsAlreadyInIgnoredList = '''%s'' is already in ignored list';
   rsTheTypeSIsAlreadyInTheIgnoredList = 'The type ''*%s'' is already in the ignored list';
   rsDFiles = '%d files';
   rsDiscardChanges = 'Discard changes';
+  rsDeleteFiles = 'Eliminar Archivos';
   rsCancel = 'Cancel';
   rsViewUntrackedFiles = 'View Untracked Files';
   rsViewIgnoredFiles = 'View Ignored Files';
@@ -158,6 +163,7 @@ resourcestring
   rsSIsAnInvalidBranchName = '%s is an invalid branch name';
   rsCopy = 'Copy';
   rsSelectAll = 'Select All';
+  rsDeleteS = 'Delete ''%s''';
 
 implementation
 

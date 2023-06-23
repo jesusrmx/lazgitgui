@@ -355,12 +355,12 @@ msgstr ""
 msgid "Insert Branch Name"
 msgstr ""
 
-#: tfrmmain.actlog.caption
-msgid "L"
-msgstr ""
-
 #: tfrmmain.actnewlog.caption
 msgid "NL"
+msgstr ""
+
+#: tfrmmain.actnewlog.hint
+msgid "Show the log"
 msgstr ""
 
 #: tfrmmain.actpull.caption
@@ -759,9 +759,18 @@ msgstr ""
 msgid "Delete branch %s"
 msgstr ""
 
+#: unitcommon.rsdeletefiles
+msgid "Eliminar Archivos"
+msgstr ""
+
 #: unitcommon.rsdeleteremotebranchs
 #, object-pascal-format
 msgid "Delete remote branch %s"
+msgstr ""
+
+#: unitcommon.rsdeletes
+#, object-pascal-format
+msgid "Delete '%s'"
 msgstr ""
 
 #: unitcommon.rsdeletetags
@@ -771,6 +780,16 @@ msgstr ""
 
 #: unitcommon.rsdeletingremotebranch
 msgid "Deleting remote branch"
+msgstr ""
+
+#: unitcommon.rsdeletingworkfileswarning
+#, object-pascal-format
+msgid ""
+"You are about to delete %s,\n"
+"\n"
+"This action cannot be undone\n"
+"\n"
+"Are you sure to continue?"
 msgstr ""
 
 #: unitcommon.rsdescriptionisempty
