@@ -28,8 +28,9 @@ unit main;
 interface
 
 uses
-  Classes, SysUtils, LazLogger, Forms, Controls, Graphics, Dialogs,
-  StdCtrls, ExtCtrls, ActnList, SynEdit, StrUtils, FileUtil,
+  Classes, SysUtils, {$ifdef linux}gtk2, gdk2,{$endif}
+  LazLogger, Forms, Controls, Graphics, Dialogs,
+  StdCtrls, ExtCtrls, ActnList, SynEdit, StrUtils, FileUtil, Clipbrd,
   lclType, Menus, Buttons, ComCtrls, Types,
   unitgittypes, unitifaces, unitconfig, unitprocess, unithighlighterhelper,
   unitentries, unitgitutils, unitcommon,
@@ -117,6 +118,7 @@ type
     procedure actRescanExecute(Sender: TObject);
     procedure actRestoreCommitMsgExecute(Sender: TObject);
     procedure btnGitCmdArrowClick(Sender: TObject);
+    procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
     procedure FormCloseQuery(Sender: TObject; var {%H-}CanClose: Boolean);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
@@ -1395,6 +1397,23 @@ end;
 procedure TfrmMain.btnGitCmdArrowClick(Sender: TObject);
 begin
   ShowMessage('Arrow click');
+end;
+
+// clipboard empty on exit workaround
+// reference: https://wiki.lazarus.freepascal.org/Clipboard#How_to_fix_empty_GTK2_clipboard_on_exit
+procedure TfrmMain.FormClose(Sender: TObject; var CloseAction: TCloseAction);
+{$ifdef linux}
+var
+  c: PGtkClipboard;
+  t: string;
+{$endif}
+begin
+  {$ifdef linux}
+  c := gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
+  t := Clipboard.AsText;
+  gtk_clipboard_set_text(c, PChar(t), Length(t));
+  gtk_clipboard_store(c);
+  {$endif}
 end;
 
 procedure TfrmMain.actCommitExecute(Sender: TObject);
