@@ -10,6 +10,7 @@ object frmMain: TfrmMain
   Font.Style = [fsBold]
   KeyPreview = True
   Menu = mnuMain
+  OnClose = FormClose
   OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
   OnDestroy = FormDestroy
