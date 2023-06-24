@@ -6,7 +6,7 @@ uses
   {$IFDEF UNIX}
   cthreads,
   {$ENDIF}
-  SysUtils, Classes, DateUtils, LazLogger, unitdbindex, unitgit,
+  SysUtils, Classes, DateUtils, LazLogger, unitgittypes, unitdbindex, unitgit,
   unitifaces, unitprocess, unitentries
   { you can add units after this };
 
@@ -498,12 +498,16 @@ begin
 
   fIndexStream := TMemoryStream.Create;
   fIndexStream.LoadFromFile(aIndexFile);
-  if withStats then
-    DebugLn('Index file: size=%d indices=%d',[fIndexStream.Size, fIndexStream.Size div SIZEOF_INDEX]);
+  if withStats then begin
+    DebugLn('Index file: %s',[aIndexFile]);
+    DebugLn('File stats: size=%d indices=%d',[fIndexStream.Size, fIndexStream.Size div SIZEOF_INDEX]);
+  end;
 
   fCacheStream := TFileStream.Create(aCacheFile, fmOpenRead + fmShareDenyNone);
-  if withStats then
-    DebugLn('Cache file: size=%d',[fCacheStream.Size]);
+  if withStats then begin
+    DebugLn('Cache file: %s',[aCacheFile]);
+    DebugLn('file stats: size=%d',[fCacheStream.Size]);
+  end;
   if fCacheStream.Size<4 then begin
     DebugLn('Invalid file cache size %d', [fCacheStream.Size]);
     Halt(6);
