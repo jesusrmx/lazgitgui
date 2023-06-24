@@ -93,7 +93,6 @@ type
     //procedure RecoverIndex;
     procedure ReIndex;
     function  GetRealIndex(var aIndex:Integer; unfiltered:boolean): Integer;
-    procedure CacheBufferFromItem(const aItem: TLogItem; out aBuf: PChar; out len: word);
     procedure ItemFromCacheBuffer(buffer: pchar; out aItem: TLogItem);
     procedure ItemFromLogBuffer(aBuf: PChar; out aItem: TLogItem);
     procedure DumpItem(aIndex: Integer; var item: TLogItem);
@@ -105,6 +104,7 @@ type
   public
     constructor Create(dir: string);
     destructor Destroy; override;
+    class procedure CacheBufferFromItem(const aItem: TLogItem; out aBuf: PChar; out len: word);
 
     procedure Open;
     function LoadItem(aIndex: Integer; out aItem: TLogItem; unfiltered:boolean=false): boolean;
@@ -401,7 +401,8 @@ begin
   end;
 end;
 
-procedure TDbIndex.CacheBufferFromItem(const aItem: TLogItem; out aBuf: PChar; out len: word);
+class procedure TDbIndex.CacheBufferFromItem(const aItem: TLogItem; out
+  aBuf: PChar; out len: word);
 var
   p: pchar;
   rlen: word;
@@ -410,22 +411,24 @@ var
   var
     b: byte;
     w: word;
-    l: Integer;
+    l, n: Integer;
   begin
     l := Length(s);
     if byteSize then begin
       b := min(l, high(byte));
       Move(b, p^, sizeof(byte));
       inc(p, sizeof(byte));
+      n := b;
     end else begin
       w := min(l, high(word));
       Move(w, p^, sizeOf(word));
       inc(p, sizeof(word));
+      n := w;
     end;
 
-    if l>0 then begin
-      Move(s[1], p^, l);
-      inc(p, l);
+    if n>0 then begin
+      Move(s[1], p^, n);
+      inc(p, n);
     end;
   end;
 
@@ -433,7 +436,7 @@ begin
 
   len := SizeOf(Word);
   len += SizeOf(aItem.CommiterDate);
-  len += Min(Length(aItem.ParentOID), High(word)) + 1;
+  len += Min(Length(aItem.ParentOID), High(word)) + 2;
   len += Min(Length(aItem.CommitOID), High(Byte)) + 1;
   len += Min(Length(aItem.Author), High(Byte)) + 1;
   len += Min(Length(aItem.Email), High(Byte)) + 1;
