@@ -132,7 +132,7 @@ type
   end;
   TLinesArray = array of TLineItem;
 
-  TItemFlag = (ifFirstReorder, ifReorder, ifLastReorder);
+  TItemFlag = (ifFirstReorder, ifReorder, ifLastReorder, ifBeforeCut, ifAfterCut);
   TItemFlags = set of TItemFlag;
   TItemIndex = record
     index: Integer;

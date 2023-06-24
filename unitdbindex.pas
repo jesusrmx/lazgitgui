@@ -109,6 +109,7 @@ type
     procedure Open;
     function LoadItem(aIndex: Integer; out aItem: TLogItem; unfiltered:boolean=false): boolean;
     procedure SetFilter(arr: TIntArray);
+    procedure ReplaceFilter(arr: TIntArray);
     function FindCommitSha(sha: string; startAt:Integer=-1): Integer;
     function Count(unfiltered: boolean = false): Integer;
     function GetIndex(aIndex: Integer): Integer;
@@ -120,6 +121,7 @@ type
     property MaxRecords: Integer read fMaxRecords write fMaxRecords;
     property Active: boolean read GetActive;
     property Updated: boolean read fUpdated;
+    property Filter: TIntArray read fFilter;
   end;
 
   function GetParentsMap(fDb: TDbIndex): TParentsMap;
@@ -935,6 +937,27 @@ begin
     graph.Free;
     ClearParentsMap(map)
   end;
+end;
+
+procedure TDbIndex.ReplaceFilter(arr: TIntArray);
+var
+  maxIndex, i: Integer;
+begin
+  if arr=nil then begin
+    fFilter := nil;
+    exit;
+  end;
+
+  if (fIndexStream=nil) or (fIndexStream.Size=0) then
+    raise Exception.Create('Trying to set a filter while the db is not initialized');
+  maxIndex := Count(true) - 1;
+  // check that indices are within the range of the index
+  for i:=0 to Length(arr)-1 do
+    if (arr[i]<0) or (arr[i]>maxIndex) then
+      raise Exception.CreateFmt('The filter has an invalid entry at %d',[i]);
+  // copy filter indices
+  SetLength(fFilter, Length(arr));
+  Move(arr[0], fFilter[0], Length(arr)*SizeOf(Integer));
 end;
 
 function TDbIndex.FindCommitSha(sha: string; startAt: Integer): Integer;

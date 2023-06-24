@@ -25,6 +25,8 @@ unit unitframelog;
 {$mode ObjFPC}{$H+}
 {$ModeSwitch nestedprocvars}
 
+{$define CutterMode}
+
 {
 
 Intersting lazarus ranges for checking the graph ...
@@ -191,6 +193,9 @@ type
     procedure OnSwitchTagClick(sender: TObject);
     procedure OnCreateTagClick(sender: TObject);
     procedure OnMergeBranchClick(Sender: TObject);
+    {$ifdef CutterMode}
+    procedure OnCutLogRange(Sender: TObject);
+    {$endif}
     procedure CopyToClipboard(what: Integer);
     function  LocateCommit(const commit: QWord): boolean;
     procedure LocateHead;
@@ -850,6 +855,84 @@ begin
   end;
 end;
 
+{$ifdef CutterMode}
+procedure Tframelog.OnCutLogRange(Sender: TObject);
+var
+  arr: TIntArray = nil;
+  i, ini, fin, cnt, p: Integer;
+  M, Ix: TMemoryStream;
+  sig: cardinal;
+  aItem, bItem: TLogItem;
+  aBuf: PChar;
+  aLen: word;
+  indxRec: TIndexRecord;
+begin
+
+  SetLength(arr, Length(fLogCache.DbIndex.Filter));
+  Move(fLogCache.DbIndex.Filter[0], arr[0], Length(arr)*SizeOf(Integer));
+
+  ini := gridLog.Selection.Top - gridLog.FixedRows;
+  fin := gridLog.Selection.Bottom - gridLog.FixedRows;
+
+  if Length(fItemIndices[ini].childs) >1 then raise Exception.Create('Ini has multiple childs');
+  if Length(fItemIndices[fin].parents)>1 then raise Exception.Create('Fin has multiple parents');
+
+  for i:=ini+1 to fin-1 do begin
+    if Length(fItemIndices[i].childs) >1 then raise Exception.Create('The range crosses a split');
+    if Length(fItemIndices[i].parents)>1 then raise Exception.Create('The range crosses a merge');
+  end;
+
+  cnt := fin - ini + 1;
+
+  fItemIndices[ini - 1].parents := [ fin + 1 - cnt ];
+  fItemIndices[ini - 1].iflags := [ ifBeforeCut];
+  fItemIndices[fin + 1].childs  := [ ini - 1 ];
+  fItemIndices[fin + 1].iflags := [ifAfterCut];
+
+  Delete(arr, ini, cnt);
+  Delete(fItemIndices, ini, cnt);
+  fLogCache.DbIndex.ReplaceFilter(arr);
+  gridLog.RowCount := gridLog.RowCount - cnt;
+
+  gridLog.Row := ini + gridLog.FixedRows;
+
+  M := TMemoryStream.Create;
+  Ix := TMemoryStream.Create;
+  try
+
+    sig := NToBE((PGM_SIGNATURE shl 16) or PGM_VERSION);
+    M.WriteDWord(sig);
+
+    for i:=0 to Length(fItemIndices)-1 do begin
+      fLogCache.DbIndex.LoadItem(fItemIndices[i].index, aItem);
+      if ifBeforeCut in fItemIndices[i].iFlags then begin
+        p := fItemIndices[i].parents[0];
+        fLogCache.DbIndex.LoadItem(fItemIndices[p].index, bItem);
+        aItem.ParentOID := bItem.CommitOID;
+      end;
+
+      TDbIndex.CacheBufferFromItem(aItem, aBuf, aLen);
+      indxRec.offset := M.Position;
+      M.WriteBuffer(aBuf^, aLen);
+      FreeMem(aBuf);
+
+      indxRec.size := aLen;
+      Ix.WriteBuffer(indxRec, SIZEOF_INDEX);
+    end;
+
+    M.SaveToFile('lazgitgui.logcache');
+    Ix.SaveToFile('lazgitgui.logindex');
+
+  finally
+    M.Free;
+    Ix.Free;
+  end;
+
+  gridLog.Invalidate;
+
+end;
+{$endif}
+
 procedure TframeLog.OnContextPopLogClick(Sender: TObject);
 var
   mi: TMenuItem absolute Sender;
@@ -1191,6 +1274,14 @@ begin
   mi.OnClick := @OnResetBranchClick;
   mi.Tag := 0;
   popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
+
+  {$ifdef CutterMode}
+  mi := TMenuItem.Create(Self.Owner);
+  mi.Caption := 'Cut Log Range';
+  mi.OnClick := @OnCutLogRange;
+  mi.Tag := 0;
+  popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
+  {$endif}
 end;
 
 procedure TframeLog.AddCopyExtraMenus;
@@ -1246,6 +1337,10 @@ begin
       fLinkMgr.Git := fGit;
       fLinkMgr.OnLinkClick := @OnLinkClick;
     end;
+
+    {$ifdef CutterMode}
+    gridLog.Options := gridLog.Options + [goRangeSelect];
+    {$endif}
 
   end;
 
