@@ -868,8 +868,9 @@ var
   indxRec: TIndexRecord;
 begin
 
-  SetLength(arr, Length(fLogCache.DbIndex.Filter));
-  Move(fLogCache.DbIndex.Filter[0], arr[0], Length(arr)*SizeOf(Integer));
+  SetLength(arr, fLogCache.DbIndex.Count);
+  for i:=0 to Length(arr)-1 do
+    arr[i] := fLogCache.DbIndex.GetIndex(i);
 
   ini := gridLog.Selection.Top - gridLog.FixedRows;
   fin := gridLog.Selection.Bottom - gridLog.FixedRows;
@@ -891,7 +892,9 @@ begin
 
   Delete(arr, ini, cnt);
   Delete(fItemIndices, ini, cnt);
+
   fLogCache.DbIndex.ReplaceFilter(arr);
+
   gridLog.RowCount := gridLog.RowCount - cnt;
 
   gridLog.Row := ini + gridLog.FixedRows;
