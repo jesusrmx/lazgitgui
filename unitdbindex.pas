@@ -26,6 +26,10 @@ unit unitdbindex;
 
 {$define Debug}
 
+{$ifdef Debug}
+  {.$define DebugTopoFilter}
+{$endif}
+
 interface
 
 uses
@@ -225,7 +229,8 @@ begin
           inc(k);
         end else begin
           {$IFDEF Debug}
-          DebugLn('At %d (%.16x) parent %d (%.16x) is missing',[i, OIDToQWord(CommitOID), j, elements[j].commit]);
+          DebugLn('At %d [%d] (%.16x) parent %d (%.16x) is missing',
+            [i, fdb.GetIndex(i), OIDToQWord(CommitOID), j, elements[j].commit]);
           {$ENDIF}
           pmi^.parents[j].n := -1;
           pmi^.parents[j].commit := elements[j].commit;
@@ -259,7 +264,8 @@ begin
               [pmi^.n, k, pmi^.parents[k].commit, pmi^.lostandfound, found^.n]);
           pmi^.lostandfound := found^.n;
           {$IFDEF Debug}
-          DebugLn('At %d lost parent %d (%.16x) found to be at %d',[pmi^.n, k, pmi^.parents[k].commit, found^.n]);
+          DebugLn('At %d lost parent %d (%.16x) found to be at %d [%d]',
+            [pmi^.n, k, pmi^.parents[k].commit, found^.n, fdb.GetIndex(found^.n)]);
           {$ENDIF}
         end;
       end;
