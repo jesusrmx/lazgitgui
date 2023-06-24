@@ -220,6 +220,7 @@ type
     procedure FilterLog(txt: string);
     procedure LayoutLabels;
     function UnixTimestampToStr(ts: Int64): string;
+    function CommitListFromIndexArray(arr: TIntArray; prefix:string=''; separator:string=','): string;
   protected
     property Filtered: boolean read fFiltered write SetFiltered;
   public
@@ -250,13 +251,14 @@ const
   COPY_RANGE_LAST   = 4;
 
   ALL_INFO_TEMPLATE =
-    'parents: %s' + LineEnding +
-    'commit: %s' + LineEnding +
-    'references: %s' + LineEnding +
+    'Commit: %s' + LineEnding +
+    'Parents: %s' + LineEnding +
+    'Childs: %s' + LineEnding +
+    'References: %s' + LineEnding +
     'Author: %s <%s>' + LineEnding +
     'Commit Date: %s' + LineEnding +
-    'Message: ' + LineEnding+LineEnding+
-    '%s';
+    'Message: ' + LineEnding + LineEnding +
+    '    %s';
 
 procedure DrawLine(canvas: TCanvas; x1, y1, x2, y2: Integer; withArrow, destNode:boolean);
 var
@@ -1415,11 +1417,13 @@ end;
 
 function TframeLog.GetAllCommitInfo: string;
 var
-  n: Integer;
+  n, aIndex: Integer;
   arr: TRefInfoArray;
   ref: PRefInfo;
   dt: TDateTime;
+  parents, childs: string;
 begin
+
   result := '';
   with fCurrentItem do begin
     if (fGit.RefsMap<>nil) and fGit.RefsMap.Find(CommitOID, n ) then begin
@@ -1431,12 +1435,34 @@ begin
         result += ref^.refName
       end;
     end;
+
+    aIndex := gridLog.Row - gridLog.FixedRows;
+    if (aIndex>=0) and (aIndex<Length(fItemIndices)) then begin
+      parents := CommitListFromIndexArray(fItemIndices[aIndex].parents, '', ', ');
+      childs  := CommitListFromIndexArray(fItemIndices[aIndex].childs, '', ', ');
+    end else begin
+      parents := ParentOID;
+      childs := '';
+    end;
+
     dt := UnixToDateTime(CommiterDate, false);
     result := format(ALL_INFO_TEMPLATE, [
-      ParentOID, CommitOID, result,
+      CommitOID, parents, childs, result,
       Author, Email,
       format('%s (%d)',[DateTimeToStr(dt), CommiterDate]),
       Subject]);
+  end;
+end;
+
+function TframeLog.CommitListFromIndexArray(arr: TIntArray; prefix: string;
+  separator: string): string;
+var
+  aIndex: Integer;
+begin
+  result := '';
+  for aIndex in arr do begin
+    if result<>'' then result += separator;
+    result += prefix + Lowercase(format('%.16x', [fItemIndices[aIndex].commit]));
   end;
 end;
 
