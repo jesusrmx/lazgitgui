@@ -28,6 +28,7 @@ unit unitdbindex;
 
 {$ifdef Debug}
   {.$define DebugTopoFilter}
+  {.$define ReportGetParentsMap}
 {$endif}
 
 interface
@@ -883,10 +884,6 @@ begin
   {$ENDIF}
 
   map := GetParentsMap(Self);
-
-  {$IFDEF DebugTopoFilter}
-  //ReportGetParentsMap(map);
-  {$ENDIF}
 
   graph := TGraph.Create(map.Count);
   try
