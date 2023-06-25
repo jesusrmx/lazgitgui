@@ -206,6 +206,9 @@ type
     procedure AddMergeBranchMenu;
     procedure AddTagsMenu;
     procedure AddExtraMenus;
+    {$ifdef CutterMode}
+    procedure AddCutterMenus;
+    {$endif}
     procedure AddCopyExtraMenus;
     procedure SetActive(AValue: boolean);
     procedure SetFiltered(AValue: boolean);
@@ -504,6 +507,10 @@ begin
     AddMergeBranchMenu;
 
     AddExtraMenus;
+
+    {$ifdef CutterMode}
+    AddCutterMenus;
+    {$endif}
 
     AddCopyExtraMenus;
   end;
@@ -857,7 +864,7 @@ begin
 end;
 
 {$ifdef CutterMode}
-procedure Tframelog.OnCutLogRange(Sender: TObject);
+procedure TframeLog.OnCutLogRange(Sender: TObject);
 var
   arr: TIntArray = nil;
   i, ini, fin, cnt, p: Integer;
@@ -936,8 +943,76 @@ begin
 
 end;
 
-procedure Tframelog.OnSimplifyChain(Sender: TObject);
+procedure TframeLog.OnSimplifyChain(Sender: TObject);
+
+  function IndexOk(i: Integer): boolean;
+  begin
+    result := (i>=0) and (i<Length(fItemIndices)) and
+              (Length(fItemIndices[i].childs)=1) and
+              (Length(fItemIndices[i].parents)=1)
+  end;
+
+  function NextIndex(i: Integer; prev:boolean): Integer;
+  var
+    arr: TIntArray;
+  begin
+    if prev then arr := fItemIndices[i].childs
+    else         arr := fItemIndices[i].parents;
+    if Length(arr)=1 then
+      result := arr[0]
+    else
+      result := -1;
+  end;
+
+var
+  arr: TIntArray = nil;
+  sel: array of boolean = nil;
+  i, start, ini, fin, cnt, p: Integer;
 begin
+
+  SetLength(sel, fLogCache.DbIndex.Count);
+  SetLength(arr, fLogCache.DbIndex.Count);
+  for i:=0 to Length(arr)-1 do begin
+    arr[i] := fLogCache.DbIndex.GetIndex(i);
+    sel[i] := false;
+  end;
+
+  ini := -1;
+  fin := -1;
+
+  start := gridLog.Row - gridLog.FixedRows;
+  if Length(fItemIndices[start].childs) >1 then raise Exception.Create('This node has multiple childs');
+  if Length(fItemIndices[start].parents)>1 then raise Exception.Create('This nodde has multiple parents');
+
+  i := NextIndex(start, true);
+  while IndexOk(i) do begin
+    ini := i;
+    sel[i] := true;
+    i := fItemIndices[i].childs[0];
+  end;
+
+  i := NextIndex(start, false);
+  while IndexOk(i) do begin
+    fin := i;
+    sel[i] := true;
+    i := fItemIndices[i].parents[0];
+  end;
+
+  //DebugLn('Ini=%d Fin=%d',[Ini, Fin]);
+  //cnt := 0;
+  //for i:=0 to Length(sel)-1 do
+  //  if sel[i] then begin
+  //    inc(cnt);
+  //    DbgOut('%.3d ',[i]);
+  //    if cnt mod 20 = 0 then DebugLn;
+  //  end;
+  //
+  //if (cnt>0) then
+  //  DebugLn;
+
+  if (ini<0) and (fin<0) then
+    ShowMessage('This is already simplified');
+
 end;
 
 {$endif}
@@ -1283,8 +1358,13 @@ begin
   mi.OnClick := @OnResetBranchClick;
   mi.Tag := 0;
   popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
+end;
 
-  {$ifdef CutterMode}
+{$ifdef CutterMode}
+procedure TframeLog.AddCutterMenus;
+var
+  mi: TMenuItem;
+begin
   mi := TMenuItem.Create(Self.Owner);
   mi.Caption := 'Cut Log Range';
   mi.OnClick := @OnCutLogRange;
@@ -1295,9 +1375,9 @@ begin
   mi.Caption := 'Simplify Chain';
   mi.OnClick := @OnSimplifyChain;
   mi.Tag := 0;
-  popLo.Items.Insert((mnuSeparatorLast.MenuIndex, mi);
-  {$endif}
+  popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
 end;
+{$endif}
 
 procedure TframeLog.AddCopyExtraMenus;
 var
