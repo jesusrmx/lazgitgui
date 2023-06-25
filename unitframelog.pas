@@ -195,6 +195,7 @@ type
     procedure OnMergeBranchClick(Sender: TObject);
     {$ifdef CutterMode}
     procedure OnCutLogRange(Sender: TObject);
+    procedure OnSimplifyChain(Sender: TObject);
     {$endif}
     procedure CopyToClipboard(what: Integer);
     function  LocateCommit(const commit: QWord): boolean;
@@ -879,8 +880,8 @@ begin
   if Length(fItemIndices[fin].parents)>1 then raise Exception.Create('Fin has multiple parents');
 
   for i:=ini+1 to fin-1 do begin
-    if Length(fItemIndices[i].childs) >1 then raise Exception.Create('The range crosses a split');
-    if Length(fItemIndices[i].parents)>1 then raise Exception.Create('The range crosses a merge');
+    if Length(fItemIndices[i].childs) >1 then raise Exception.Create('The range cross a split');
+    if Length(fItemIndices[i].parents)>1 then raise Exception.Create('The range cross a merge');
   end;
 
   cnt := fin - ini + 1;
@@ -934,6 +935,11 @@ begin
   gridLog.Invalidate;
 
 end;
+
+procedure Tframelog.OnSimplifyChain(Sender: TObject);
+begin
+end;
+
 {$endif}
 
 procedure TframeLog.OnContextPopLogClick(Sender: TObject);
@@ -1284,6 +1290,12 @@ begin
   mi.OnClick := @OnCutLogRange;
   mi.Tag := 0;
   popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
+
+  mi := TMenuItem.Create(Self.Owner);
+  mi.Caption := 'Simplify Chain';
+  mi.OnClick := @OnSimplifyChain;
+  mi.Tag := 0;
+  popLo.Items.Insert((mnuSeparatorLast.MenuIndex, mi);
   {$endif}
 end;
 
