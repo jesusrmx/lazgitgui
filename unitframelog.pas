@@ -964,10 +964,22 @@ procedure TframeLog.OnSimplifyChain(Sender: TObject);
       result := -1;
   end;
 
+  function ArrayIndex(arr: TIntArray; needle:Integer): Integer;
+  var
+    i: Integer;
+  begin
+    result := -1;
+    for i:=0 to Length(arr)-1 do
+      if arr[i]=needle then begin
+        result := i;
+        break;
+      end;
+  end;
+
 var
   arr: TIntArray = nil;
   sel: array of boolean = nil;
-  i, start, ini, fin, cnt, p: Integer;
+  i, j, start, ini, fin, prev, next, cnt, prevCnt, nextCnt, p: Integer;
 begin
 
   SetLength(sel, fLogCache.DbIndex.Count);
@@ -982,23 +994,27 @@ begin
 
   start := gridLog.Row - gridLog.FixedRows;
   if Length(fItemIndices[start].childs) >1 then raise Exception.Create('This node has multiple childs');
-  if Length(fItemIndices[start].parents)>1 then raise Exception.Create('This nodde has multiple parents');
+  if Length(fItemIndices[start].parents)>1 then raise Exception.Create('This node has multiple parents');
 
-  i := NextIndex(start, true);
-  while IndexOk(i) do begin
-    ini := i;
-    sel[i] := true;
-    i := fItemIndices[i].childs[0];
+  prevCnt := 0;
+  prev := NextIndex(start, true);
+  while IndexOk(prev) do begin
+    inc(prevCnt);
+    ini := prev;
+    sel[prev] := true;
+    prev := fItemIndices[prev].childs[0];
   end;
 
-  i := NextIndex(start, false);
-  while IndexOk(i) do begin
-    fin := i;
-    sel[i] := true;
-    i := fItemIndices[i].parents[0];
+  nextCnt := 0;
+  next := NextIndex(start, false);
+  while IndexOk(next) do begin
+    inc(nextCnt);
+    fin := next;
+    sel[next] := true;
+    next := fItemIndices[next].parents[0];
   end;
 
-  //DebugLn('Ini=%d Fin=%d',[Ini, Fin]);
+  //DebugLn('prev=%d ini=%d fin=%d next=%d',[prev, ini, fin, next]);
   //cnt := 0;
   //for i:=0 to Length(sel)-1 do
   //  if sel[i] then begin
@@ -1006,12 +1022,42 @@ begin
   //    DbgOut('%.3d ',[i]);
   //    if cnt mod 20 = 0 then DebugLn;
   //  end;
-  //
   //if (cnt>0) then
   //  DebugLn;
 
-  if (ini<0) and (fin<0) then
+  if (ini<0) and (fin<0) then begin
     ShowMessage('This is already simplified');
+    exit;
+  end;
+
+  startIndex := start;
+
+  if ini>=0 then begin
+    // Substitute 'ini' by 'start' in 'prev' parents
+    if prev<0 then raise Exception.CreateFmt('Error at %d node, unexpected previous node %d',[ini, prev]);
+    // prev is a merge node which have multiple parents, which parent index correspond to 'ini' ?
+    j := ArrayIndex(fItemIndices[prev].parents, ini);
+    if j<0 then raise Exception.CreateFmt('Error: %d node is not a parent in previous node %d',[ini, prev]);
+    // after removing previous nodes (though still not removed) startIndex will be:
+    startIndex := start - prevCnt;
+    fItemIndices[prev].parents[j] := startIndex;
+    // make prev a child of start
+    fItemIndices[start].childs[0] := prev;
+    // now all nodes not in 'start' chain have to adapt their childs and parents indices .... ouch...
+
+
+  end;
+
+  if fin>=0 then begin
+    // sustitute 'fin' by start in 'next' childs
+    if next<0 then raise Exception.CreateFmt('Error at %d node, unexpected next node %d',[fin, next]);
+    j := ArrayIndex(fItemIndices[next].childs, fin);
+    if j<0 then raise Exception.CreateFmt('Error %d node is not a child in next node %d',[fin, next]);
+    // make next the parent of start
+    fItemIndices[start].parents[0] := next;
+  end;
+
+
 
 end;
 
