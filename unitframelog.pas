@@ -907,10 +907,10 @@ begin
     M.WriteDWord(sig);
 
     for i:=0 to Length(fItemIndices)-1 do begin
-      fLogCache.DbIndex.LoadItem(fItemIndices[i].index, aItem);
+      fLogCache.DbIndex.LoadItem(i, aItem);
       if ifBeforeCut in fItemIndices[i].iFlags then begin
         p := fItemIndices[i].parents[0];
-        fLogCache.DbIndex.LoadItem(fItemIndices[p].index, bItem);
+        fLogCache.DbIndex.LoadItem(p, bItem);
         aItem.ParentOID := bItem.CommitOID;
       end;
 
