@@ -945,6 +945,16 @@ end;
 
 procedure TframeLog.OnSimplifyChain(Sender: TObject);
 
+const
+  ERROR_NONE                = 0;
+  ERROR_STARTOUTOFLIMITS    = 1;
+  ERROR_FEWORMANYPARENTS    = 2;
+  ERROR_FEWORMANYCHILDS     = 3;
+  ERROR_UNEXPECTEDPREV      = 4;
+  ERROR_NODEISNOTPARENT     = 5;
+  ERROR_UNEXPECTEDNEXT      = 6;
+  ERROR_NODEISNOTCHILD      = 7;
+
   function IndexOk(i: Integer): boolean;
   begin
     result := (i>=0) and (i<Length(fItemIndices)) and
@@ -974,6 +984,45 @@ procedure TframeLog.OnSimplifyChain(Sender: TObject);
         result := i;
         break;
       end;
+  end;
+
+  function RemoveNode(n: Integer): Integer;
+  var
+    p, c, i, j, k, m: Integer;
+  begin
+
+    // check if n node is valid to remove
+    // it can't be the first or the last node
+    if (n=0) or (n>=Length(fItemIndices)-1) then exit(ERROR_STARTOUTOFLIMITS);
+    // it can't be a merge or split node.
+    if Length(fItemIndices[n].childs) <>1 then exit(ERROR_FEWORMANYCHILDS);
+    if Length(fItemIndices[n].parents)<>1 then exit(ERROR_FEWORMANYPARENTS);
+
+    // Get the n's prev node ('c') and 'n' parent index in that node ('k')
+    c := fItemIndices[n].childs[0];
+    if c<0 then exit(ERROR_UNEXPECTEDNEXT);
+    k := ArrayIndex(fItemIndices[c].parents, n);
+    if k<0 then exit(ERROR_NODEISNOTCHILD);
+    // Get the n's next node ('p') and 'n' child index in that node ('j')
+    p := fItemIndices[n].parents[0];
+    if p<0 then exit(ERROR_UNEXPECTEDPREV);
+    j := ArrayIndex(fItemIndices[p].childs, n);
+    if j<0 then exit(ERROR_NODEISNOTPARENT);
+
+    // Adjust child and parent indices for all nodes affected by the node removal
+    for i:=0 to Length(fItemIndices)-1 do begin
+      if i<>n then with fItemIndices[i] do begin
+        for m := 0 to Length(childs) do if childs[m]>n then childs[m] -= 1;
+        for m := 0 to Length(parents) do if parents[m]>n then parents[m] -= 1;
+      end;
+    end;
+
+    // stitch the hole
+    if p>n then dec(p);
+    if c>n then dec(c);
+    fItemIndices[c].parents[k] := p;
+    fItemIndices[p].childs[j] := c;
+
   end;
 
 var
@@ -1029,35 +1078,6 @@ begin
     ShowMessage('This is already simplified');
     exit;
   end;
-
-  startIndex := start;
-
-  if ini>=0 then begin
-    // Substitute 'ini' by 'start' in 'prev' parents
-    if prev<0 then raise Exception.CreateFmt('Error at %d node, unexpected previous node %d',[ini, prev]);
-    // prev is a merge node which have multiple parents, which parent index correspond to 'ini' ?
-    j := ArrayIndex(fItemIndices[prev].parents, ini);
-    if j<0 then raise Exception.CreateFmt('Error: %d node is not a parent in previous node %d',[ini, prev]);
-    // after removing previous nodes (though still not removed) startIndex will be:
-    startIndex := start - prevCnt;
-    fItemIndices[prev].parents[j] := startIndex;
-    // make prev a child of start
-    fItemIndices[start].childs[0] := prev;
-    // now all nodes not in 'start' chain have to adapt their childs and parents indices .... ouch...
-
-
-  end;
-
-  if fin>=0 then begin
-    // sustitute 'fin' by start in 'next' childs
-    if next<0 then raise Exception.CreateFmt('Error at %d node, unexpected next node %d',[fin, next]);
-    j := ArrayIndex(fItemIndices[next].childs, fin);
-    if j<0 then raise Exception.CreateFmt('Error %d node is not a child in next node %d',[fin, next]);
-    // make next the parent of start
-    fItemIndices[start].parents[0] := next;
-  end;
-
-
 
 end;
 
