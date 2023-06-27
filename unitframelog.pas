@@ -25,6 +25,8 @@ unit unitframelog;
 {$mode ObjFPC}{$H+}
 {$ModeSwitch nestedprocvars}
 
+{$define CutterMode}
+
 {
 
 Intersting lazarus ranges for checking the graph ...
@@ -59,7 +61,7 @@ interface
 
 uses
   Classes, SysUtils, dateUtils, fgl, lclIntf, LazLogger, SynEdit, SynHighlighterDiff,
-  SynHighlighterPas, SynHighlighterXML, Graphics, Forms, Dialogs, Controls, StrUtils,
+  SynHighlighterPas, SynHighlighterXML, Graphics, Forms, Dialogs, Controls, //StrUtils,
   Grids, ExtCtrls, ComCtrls, Menus, Types, Clipbrd, ActnList, Buttons, StdCtrls,
   graphutil,
   unitgittypes, unitlogcache, unitdbindex, unitgitutils, unitifaces, unitruncmd,
@@ -191,6 +193,8 @@ type
     procedure OnSwitchTagClick(sender: TObject);
     procedure OnCreateTagClick(sender: TObject);
     procedure OnMergeBranchClick(Sender: TObject);
+    procedure OnCutLogRange(Sender: TObject);
+    procedure OnSimplifyChain(Sender: TObject);
     procedure CopyToClipboard(what: Integer);
     function  LocateCommit(const commit: QWord): boolean;
     procedure LocateHead;
@@ -200,6 +204,7 @@ type
     procedure AddMergeBranchMenu;
     procedure AddTagsMenu;
     procedure AddExtraMenus;
+    procedure AddCutterMenus;
     procedure AddCopyExtraMenus;
     procedure SetActive(AValue: boolean);
     procedure SetFiltered(AValue: boolean);
@@ -498,6 +503,9 @@ begin
     AddMergeBranchMenu;
 
     AddExtraMenus;
+
+    if gblCutterMode then
+      AddCutterMenus;
 
     AddCopyExtraMenus;
   end;
@@ -850,6 +858,284 @@ begin
   end;
 end;
 
+procedure TframeLog.OnCutLogRange(Sender: TObject);
+var
+  arr: TIntArray = nil;
+  i, ini, fin, cnt, p: Integer;
+  M, Ix: TMemoryStream;
+  sig: cardinal;
+  aItem, bItem: TLogItem;
+  aBuf: PChar;
+  aLen: word;
+  indxRec: TIndexRecord;
+begin
+
+  SetLength(arr, fLogCache.DbIndex.Count);
+  for i:=0 to Length(arr)-1 do
+    arr[i] := fLogCache.DbIndex.GetIndex(i);
+
+  ini := gridLog.Selection.Top - gridLog.FixedRows;
+  fin := gridLog.Selection.Bottom - gridLog.FixedRows;
+
+  if Length(fItemIndices[ini].childs) >1 then raise Exception.Create('Ini has multiple childs');
+  if Length(fItemIndices[fin].parents)>1 then raise Exception.Create('Fin has multiple parents');
+
+  for i:=ini+1 to fin-1 do begin
+    if Length(fItemIndices[i].childs) >1 then raise Exception.Create('The range cross a split');
+    if Length(fItemIndices[i].parents)>1 then raise Exception.Create('The range cross a merge');
+  end;
+
+  cnt := fin - ini + 1;
+
+  fItemIndices[ini - 1].parents := [ fin + 1 - cnt ];
+  fItemIndices[ini - 1].iflags := [ ifBeforeCut];
+  fItemIndices[fin + 1].childs  := [ ini - 1 ];
+  fItemIndices[fin + 1].iflags := [ifAfterCut];
+
+  Delete(arr, ini, cnt);
+  Delete(fItemIndices, ini, cnt);
+
+  fLogCache.DbIndex.ReplaceFilter(arr);
+
+  gridLog.RowCount := gridLog.RowCount - cnt;
+
+  gridLog.Row := ini + gridLog.FixedRows;
+
+  M := TMemoryStream.Create;
+  Ix := TMemoryStream.Create;
+  try
+
+    sig := NToBE((PGM_SIGNATURE shl 16) or PGM_VERSION);
+    M.WriteDWord(sig);
+
+    for i:=0 to Length(fItemIndices)-1 do begin
+      fLogCache.DbIndex.LoadItem(i, aItem);
+      if ifBeforeCut in fItemIndices[i].iFlags then begin
+        p := fItemIndices[i].parents[0];
+        fLogCache.DbIndex.LoadItem(p, bItem);
+        aItem.ParentOID := bItem.CommitOID;
+      end;
+
+      TDbIndex.CacheBufferFromItem(aItem, aBuf, aLen);
+      indxRec.offset := M.Position;
+      M.WriteBuffer(aBuf^, aLen);
+      FreeMem(aBuf);
+
+      indxRec.size := aLen;
+      Ix.WriteBuffer(indxRec, SIZEOF_INDEX);
+    end;
+
+    M.SaveToFile('lazgitgui.logcache');
+    Ix.SaveToFile('lazgitgui.logindex');
+
+  finally
+    M.Free;
+    Ix.Free;
+  end;
+
+  gridLog.Invalidate;
+
+end;
+
+procedure TframeLog.OnSimplifyChain(Sender: TObject);
+
+const
+  ERROR_NONE                = 0;
+  ERROR_STARTOUTOFLIMITS    = 1;
+  ERROR_FEWORMANYPARENTS    = 2;
+  ERROR_FEWORMANYCHILDS     = 3;
+  ERROR_UNEXPECTEDPREV      = 4;
+  ERROR_NODEISNOTPARENT     = 5;
+  ERROR_UNEXPECTEDNEXT      = 6;
+  ERROR_NODEISNOTCHILD      = 7;
+
+var
+  arr: TIntArray;
+
+  function IndexOk(i: Integer): boolean;
+  begin
+    result := (i>=0) and (i<Length(fItemIndices)) and
+              (Length(fItemIndices[i].childs)=1) and
+              (Length(fItemIndices[i].parents)=1)
+  end;
+
+  function NextIndex(i: Integer; prev:boolean): Integer;
+  var
+    thearr: TIntArray;
+  begin
+    if prev then thearr := fItemIndices[i].childs
+    else         thearr := fItemIndices[i].parents;
+    if Length(thearr)=1 then result := thearr[0]
+    else                     result := -1;
+  end;
+
+  function ArrayIndex(thearr: TIntArray; needle:Integer): Integer;
+  var
+    i: Integer;
+  begin
+    result := -1;
+    for i:=0 to Length(thearr)-1 do
+      if thearr[i]=needle then begin
+        result := i;
+        break;
+      end;
+  end;
+
+  function RemoveNode(n: Integer): Integer;
+  var
+    p, c, i, j, k, m: Integer;
+  begin
+
+    // check if n node is valid to remove
+    // it can't be the first or the last node
+    if (n=0) or (n>=Length(fItemIndices)-1) then exit(ERROR_STARTOUTOFLIMITS);
+    // it can't be a merge or split node.
+    if Length(fItemIndices[n].childs) <>1 then exit(ERROR_FEWORMANYCHILDS);
+    if Length(fItemIndices[n].parents)<>1 then exit(ERROR_FEWORMANYPARENTS);
+
+    // Get the n's prev node ('c') and 'n' parent index in that node ('k')
+    c := fItemIndices[n].childs[0];
+    if c<0 then exit(ERROR_UNEXPECTEDNEXT);
+    k := ArrayIndex(fItemIndices[c].parents, n);
+    if k<0 then exit(ERROR_NODEISNOTCHILD);
+    // Get the n's next node ('p') and 'n' child index in that node ('j')
+    p := fItemIndices[n].parents[0];
+    if p<0 then exit(ERROR_UNEXPECTEDPREV);
+    j := ArrayIndex(fItemIndices[p].childs, n);
+    if j<0 then exit(ERROR_NODEISNOTPARENT);
+
+    // Adjust child and parent indices for all nodes affected by the node removal
+    for i:=0 to Length(fItemIndices)-1 do begin
+      if i<>n then with fItemIndices[i] do begin
+        for m := 0 to Length(childs)-1 do if childs[m]>n then childs[m] -= 1;
+        for m := 0 to Length(parents)-1 do if parents[m]>n then parents[m] -= 1;
+      end;
+    end;
+
+    // stitch the hole
+    fItemIndices[c].parents[k] := specialize IfThen<Integer>(p>n, p-1, p);
+    fItemIndices[p].childs[j] := specialize IfThen<Integer>(c>n, c-1, c);
+
+    Delete(fItemIndices, n, 1);
+    Delete(arr, n, 1);
+
+    fLogCache.DbIndex.ReplaceFilter(arr);
+    result := ERROR_NONE;
+  end;
+
+var
+  sel: array of boolean = nil;
+  i, j, start, ini, fin, prev, next, cnt, prevCnt, nextCnt, p: Integer;
+  M, Ix: TMemoryStream;
+  sig: cardinal;
+  aItem, bItem: TLogItem;
+  aBuf: PChar;
+  aLen: word;
+  indxRec: TIndexRecord;
+  parentOID: RawByteString;
+begin
+
+  ReportRelatives(fItemIndices);
+
+  SetLength(sel, fLogCache.DbIndex.Count);
+  SetLength(arr, fLogCache.DbIndex.Count);
+  for i:=0 to Length(arr)-1 do begin
+    arr[i] := fLogCache.DbIndex.GetIndex(i);
+    sel[i] := false;
+  end;
+
+  ini := -1;
+  fin := -1;
+
+  start := gridLog.Row - gridLog.FixedRows;
+  if (start<=0) or (start>=Length(fItemIndices)-1) then raise Exception.Create('Invalid start node to simplify');
+  if Length(fItemIndices[start].childs) >1 then raise Exception.Create('This node has multiple childs');
+  if Length(fItemIndices[start].parents)>1 then raise Exception.Create('This node has multiple parents');
+
+  prevCnt := 0;
+  prev := NextIndex(start, true);
+  while IndexOk(prev) do begin
+    inc(prevCnt);
+    ini := prev;
+    sel[prev] := true;
+    prev := fItemIndices[prev].childs[0];
+  end;
+
+  nextCnt := 0;
+  next := NextIndex(start, false);
+  while IndexOk(next) do begin
+    inc(nextCnt);
+    fin := next;
+    sel[next] := true;
+    next := fItemIndices[next].parents[0];
+  end;
+
+  //DebugLn('prev=%d ini=%d start=%d fin=%d next=%d',[prev, ini, start, fin, next]);
+
+  if (ini<0) and (fin<0) then begin
+    ShowMessage('This is already simplified');
+    exit;
+  end;
+
+  //cnt := 0;
+  //for i:=0 to Length(sel)-1 do
+  //  if sel[i] then begin
+  //    inc(cnt);
+  //    DbgOut('%.3d ',[i]);
+  //    if cnt mod 20 = 0 then DebugLn;
+  //  end;
+  //if (cnt>0) then
+  //  DebugLn;
+
+  for i:=Length(sel)-1 downto 0 do
+    if sel[i] then begin
+      RemoveNode(i);
+    end;
+  //RemoveNode(start);
+
+  gridLog.RowCount := Length(arr) + gridLog.FixedRows;
+
+  if ini<0 then gridLog.Row := start + gridLog.FixedRows
+  else          gridLog.Row := ini + gridLog.FixedRows;
+
+  M := TMemoryStream.Create;
+  Ix := TMemoryStream.Create;
+  try
+
+    sig := NToBE((PGM_SIGNATURE shl 16) or PGM_VERSION);
+    M.WriteDWord(sig);
+
+    for i:=0 to Length(fItemIndices)-1 do begin
+      fLogCache.DbIndex.LoadItem(i, aItem);
+
+      parentOID := '';
+      for p in fItemIndices[i].parents do begin
+        fLogCache.DbIndex.LoadItem(p, bItem);
+        if parentOID<>'' then parentOID += ' ';
+        parentOID += bItem.CommitOID;
+      end;
+
+      aItem.ParentOID := parentOID;
+      TDbIndex.CacheBufferFromItem(aItem, aBuf, aLen);
+      indxRec.offset := M.Position;
+      M.WriteBuffer(aBuf^, aLen);
+      FreeMem(aBuf);
+
+      indxRec.size := aLen;
+      Ix.WriteBuffer(indxRec, SIZEOF_INDEX);
+    end;
+
+    M.SaveToFile('lazgitgui.logcache');
+    Ix.SaveToFile('lazgitgui.logindex');
+
+  finally
+    M.Free;
+    Ix.Free;
+  end;
+
+  gridLog.Invalidate;
+end;
+
 procedure TframeLog.OnContextPopLogClick(Sender: TObject);
 var
   mi: TMenuItem absolute Sender;
@@ -1193,6 +1479,23 @@ begin
   popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
 end;
 
+procedure TframeLog.AddCutterMenus;
+var
+  mi: TMenuItem;
+begin
+  mi := TMenuItem.Create(Self.Owner);
+  mi.Caption := 'Cut Log Range';
+  mi.OnClick := @OnCutLogRange;
+  mi.Tag := 0;
+  popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
+
+  mi := TMenuItem.Create(Self.Owner);
+  mi.Caption := 'Simplify Chain';
+  mi.OnClick := @OnSimplifyChain;
+  mi.Tag := 0;
+  popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
+end;
+
 procedure TframeLog.AddCopyExtraMenus;
 var
   mi: TMenuItem;
@@ -1246,6 +1549,9 @@ begin
       fLinkMgr.Git := fGit;
       fLinkMgr.OnLinkClick := @OnLinkClick;
     end;
+
+    if gblCutterMode then
+      gridLog.Options := gridLog.Options + [goRangeSelect];
 
   end;
 
