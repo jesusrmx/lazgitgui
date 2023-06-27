@@ -193,10 +193,8 @@ type
     procedure OnSwitchTagClick(sender: TObject);
     procedure OnCreateTagClick(sender: TObject);
     procedure OnMergeBranchClick(Sender: TObject);
-    {$ifdef CutterMode}
     procedure OnCutLogRange(Sender: TObject);
     procedure OnSimplifyChain(Sender: TObject);
-    {$endif}
     procedure CopyToClipboard(what: Integer);
     function  LocateCommit(const commit: QWord): boolean;
     procedure LocateHead;
@@ -206,9 +204,7 @@ type
     procedure AddMergeBranchMenu;
     procedure AddTagsMenu;
     procedure AddExtraMenus;
-    {$ifdef CutterMode}
     procedure AddCutterMenus;
-    {$endif}
     procedure AddCopyExtraMenus;
     procedure SetActive(AValue: boolean);
     procedure SetFiltered(AValue: boolean);
@@ -508,9 +504,8 @@ begin
 
     AddExtraMenus;
 
-    {$ifdef CutterMode}
-    AddCutterMenus;
-    {$endif}
+    if gblCutterMode then
+      AddCutterMenus;
 
     AddCopyExtraMenus;
   end;
@@ -863,7 +858,6 @@ begin
   end;
 end;
 
-{$ifdef CutterMode}
 procedure TframeLog.OnCutLogRange(Sender: TObject);
 var
   arr: TIntArray = nil;
@@ -1141,8 +1135,6 @@ begin
 
   gridLog.Invalidate;
 end;
-
-{$endif}
 
 procedure TframeLog.OnContextPopLogClick(Sender: TObject);
 var
@@ -1487,7 +1479,6 @@ begin
   popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
 end;
 
-{$ifdef CutterMode}
 procedure TframeLog.AddCutterMenus;
 var
   mi: TMenuItem;
@@ -1504,7 +1495,6 @@ begin
   mi.Tag := 0;
   popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
 end;
-{$endif}
 
 procedure TframeLog.AddCopyExtraMenus;
 var
@@ -1560,9 +1550,8 @@ begin
       fLinkMgr.OnLinkClick := @OnLinkClick;
     end;
 
-    {$ifdef CutterMode}
-    gridLog.Options := gridLog.Options + [goRangeSelect];
-    {$endif}
+    if gblCutterMode then
+      gridLog.Options := gridLog.Options + [goRangeSelect];
 
   end;
 

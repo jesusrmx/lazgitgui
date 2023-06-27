@@ -136,6 +136,7 @@ var
   gblRecordsToUpdate: Integer = 25;
   gblCacheScreens: Integer = 11;
   gblRecordsToRowCount: Integer = 10;
+  gblCutterMode: boolean = false;
 
 implementation
 
