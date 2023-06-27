@@ -61,7 +61,7 @@ interface
 
 uses
   Classes, SysUtils, dateUtils, fgl, lclIntf, LazLogger, SynEdit, SynHighlighterDiff,
-  SynHighlighterPas, SynHighlighterXML, Graphics, Forms, Dialogs, Controls, StrUtils,
+  SynHighlighterPas, SynHighlighterXML, Graphics, Forms, Dialogs, Controls, //StrUtils,
   Grids, ExtCtrls, ComCtrls, Menus, Types, Clipbrd, ActnList, Buttons, StdCtrls,
   graphutil,
   unitgittypes, unitlogcache, unitdbindex, unitgitutils, unitifaces, unitruncmd,
@@ -955,6 +955,9 @@ const
   ERROR_UNEXPECTEDNEXT      = 6;
   ERROR_NODEISNOTCHILD      = 7;
 
+var
+  arr: TIntArray;
+
   function IndexOk(i: Integer): boolean;
   begin
     result := (i>=0) and (i<Length(fItemIndices)) and
@@ -964,23 +967,21 @@ const
 
   function NextIndex(i: Integer; prev:boolean): Integer;
   var
-    arr: TIntArray;
+    thearr: TIntArray;
   begin
-    if prev then arr := fItemIndices[i].childs
-    else         arr := fItemIndices[i].parents;
-    if Length(arr)=1 then
-      result := arr[0]
-    else
-      result := -1;
+    if prev then thearr := fItemIndices[i].childs
+    else         thearr := fItemIndices[i].parents;
+    if Length(thearr)=1 then result := thearr[0]
+    else                     result := -1;
   end;
 
-  function ArrayIndex(arr: TIntArray; needle:Integer): Integer;
+  function ArrayIndex(thearr: TIntArray; needle:Integer): Integer;
   var
     i: Integer;
   begin
     result := -1;
-    for i:=0 to Length(arr)-1 do
-      if arr[i]=needle then begin
+    for i:=0 to Length(thearr)-1 do
+      if thearr[i]=needle then begin
         result := i;
         break;
       end;
@@ -1012,24 +1013,35 @@ const
     // Adjust child and parent indices for all nodes affected by the node removal
     for i:=0 to Length(fItemIndices)-1 do begin
       if i<>n then with fItemIndices[i] do begin
-        for m := 0 to Length(childs) do if childs[m]>n then childs[m] -= 1;
-        for m := 0 to Length(parents) do if parents[m]>n then parents[m] -= 1;
+        for m := 0 to Length(childs)-1 do if childs[m]>n then childs[m] -= 1;
+        for m := 0 to Length(parents)-1 do if parents[m]>n then parents[m] -= 1;
       end;
     end;
 
     // stitch the hole
-    if p>n then dec(p);
-    if c>n then dec(c);
-    fItemIndices[c].parents[k] := p;
-    fItemIndices[p].childs[j] := c;
+    fItemIndices[c].parents[k] := specialize IfThen<Integer>(p>n, p-1, p);
+    fItemIndices[p].childs[j] := specialize IfThen<Integer>(c>n, c-1, c);
 
+    Delete(fItemIndices, n, 1);
+    Delete(arr, n, 1);
+
+    fLogCache.DbIndex.ReplaceFilter(arr);
+    result := ERROR_NONE;
   end;
 
 var
-  arr: TIntArray = nil;
   sel: array of boolean = nil;
   i, j, start, ini, fin, prev, next, cnt, prevCnt, nextCnt, p: Integer;
+  M, Ix: TMemoryStream;
+  sig: cardinal;
+  aItem, bItem: TLogItem;
+  aBuf: PChar;
+  aLen: word;
+  indxRec: TIndexRecord;
+  parentOID: RawByteString;
 begin
+
+  ReportRelatives(fItemIndices);
 
   SetLength(sel, fLogCache.DbIndex.Count);
   SetLength(arr, fLogCache.DbIndex.Count);
@@ -1042,6 +1054,7 @@ begin
   fin := -1;
 
   start := gridLog.Row - gridLog.FixedRows;
+  if (start<=0) or (start>=Length(fItemIndices)-1) then raise Exception.Create('Invalid start node to simplify');
   if Length(fItemIndices[start].childs) >1 then raise Exception.Create('This node has multiple childs');
   if Length(fItemIndices[start].parents)>1 then raise Exception.Create('This node has multiple parents');
 
@@ -1063,7 +1076,13 @@ begin
     next := fItemIndices[next].parents[0];
   end;
 
-  //DebugLn('prev=%d ini=%d fin=%d next=%d',[prev, ini, fin, next]);
+  //DebugLn('prev=%d ini=%d start=%d fin=%d next=%d',[prev, ini, start, fin, next]);
+
+  if (ini<0) and (fin<0) then begin
+    ShowMessage('This is already simplified');
+    exit;
+  end;
+
   //cnt := 0;
   //for i:=0 to Length(sel)-1 do
   //  if sel[i] then begin
@@ -1074,11 +1093,53 @@ begin
   //if (cnt>0) then
   //  DebugLn;
 
-  if (ini<0) and (fin<0) then begin
-    ShowMessage('This is already simplified');
-    exit;
+  for i:=Length(sel)-1 downto 0 do
+    if sel[i] then begin
+      RemoveNode(i);
+    end;
+  //RemoveNode(start);
+
+  gridLog.RowCount := Length(arr) + gridLog.FixedRows;
+
+  if ini<0 then gridLog.Row := start + gridLog.FixedRows
+  else          gridLog.Row := ini + gridLog.FixedRows;
+
+  M := TMemoryStream.Create;
+  Ix := TMemoryStream.Create;
+  try
+
+    sig := NToBE((PGM_SIGNATURE shl 16) or PGM_VERSION);
+    M.WriteDWord(sig);
+
+    for i:=0 to Length(fItemIndices)-1 do begin
+      fLogCache.DbIndex.LoadItem(i, aItem);
+
+      parentOID := '';
+      for p in fItemIndices[i].parents do begin
+        fLogCache.DbIndex.LoadItem(p, bItem);
+        if parentOID<>'' then parentOID += ' ';
+        parentOID += bItem.CommitOID;
+      end;
+
+      aItem.ParentOID := parentOID;
+      TDbIndex.CacheBufferFromItem(aItem, aBuf, aLen);
+      indxRec.offset := M.Position;
+      M.WriteBuffer(aBuf^, aLen);
+      FreeMem(aBuf);
+
+      indxRec.size := aLen;
+      Ix.WriteBuffer(indxRec, SIZEOF_INDEX);
+    end;
+
+    M.SaveToFile('lazgitgui.logcache');
+    Ix.SaveToFile('lazgitgui.logindex');
+
+  finally
+    M.Free;
+    Ix.Free;
   end;
 
+  gridLog.Invalidate;
 end;
 
 {$endif}

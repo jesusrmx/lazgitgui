@@ -50,6 +50,7 @@ uses
   procedure DecodeDelimitedText(s:string; delimiter:string; strings:TStrings);
 
   procedure DumpIntArray(msg: string; arr: TIntArray);
+  function  IntArrayToStr(arr: TIntArray; delimiter:string=' '): string;
 
 implementation
 
@@ -271,6 +272,17 @@ begin
     if (i+1) mod 20 = 0 then DebugLn;
   end;
   DebugLn;
+end;
+
+function IntArrayToStr(arr: TIntArray; delimiter: string): string;
+var
+  i: Integer;
+begin
+  result := '';
+  for i:=0 to Length(arr)-1 do begin
+    if result<>'' then result += delimiter;
+    result += arr[i].ToString;
+  end;
 end;
 
 end.
