@@ -603,7 +603,10 @@ var
 begin
 
   // prepare git log command
-  cmd := fGitMgr.git.Exe + ' log ' + LOG_CMD;
+  if gblTopologicalMode then
+    cmd := fGitMgr.git.Exe + ' log --topo-order ' + LOG_CMD
+  else
+    cmd := fGitMgr.git.Exe + ' log ' + LOG_CMD;
 
   case fLogState of
     lsGetFirst:

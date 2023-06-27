@@ -137,6 +137,7 @@ var
   gblCacheScreens: Integer = 11;
   gblRecordsToRowCount: Integer = 10;
   gblCutterMode: boolean = false;
+  gblTopologicalMode: boolean = true;
 
 implementation
 
@@ -908,6 +909,9 @@ begin
   // copy filter indices
   SetLength(fFilter, Length(arr));
   Move(arr[0], fFilter[0], Length(arr)*SizeOf(Integer));
+
+  if gblTopologicalMode then
+    exit;
 
   {$IFDEF DebugTopoFilter}
   DumpIntArray('Initial Ordering:', fFilter);

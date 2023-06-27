@@ -1364,6 +1364,7 @@ begin
   fConfig.MenuMRE(popCommands, false, @OnMRECommand, '', SECTION_MRECOMMANDS);
 
   gblCutterMode := fConfig.ReadBoolean('CutterMode', gblCutterMode);
+  gblTopologicalMode := fConfig.ReadBoolean('TopologicalMode', gblTopologicalMode);
 
   fConfig.CloseConfig;
 
