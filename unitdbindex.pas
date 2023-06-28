@@ -139,6 +139,7 @@ var
   gblRecordsToRowCount: Integer = 10;
   gblCutterMode: boolean = false;
   gblTopologicalMode: boolean = true;
+  gblAllowDeleteChanged: boolean = false;
 
 implementation
 

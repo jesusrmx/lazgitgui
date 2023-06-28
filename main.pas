@@ -727,10 +727,14 @@ var
   var
     safeCount: Integer;
     n, i: Integer;
+    entrySet: TSetOfEntryType;
   begin
     if isUnstaged and (SelCount>0) then begin
       // check if there is only (in the index) already deleted files
-      safeCount := CountListItemsOfEntryType(lstUnstaged, true, true, [etUntracked]);
+      entrySet := [etUntracked];
+      if gblAllowDeleteChanged then
+        entrySet := entrySet + ChangedInWorktreeSet - DeletedInWorktreeSet;
+      safeCount := CountListItemsOfEntryType(lstUnstaged, true, true, entrySet);
       if SelCount=safeCount then begin
         AddPopItem(popLists, '-', nil, 0);
         AddPopItem(popLists, format(rsDeleteS, [aFile]), @OnDeleteFilesClick, aIndex)
@@ -1365,6 +1369,7 @@ begin
 
   gblCutterMode := fConfig.ReadBoolean('CutterMode', gblCutterMode);
   gblTopologicalMode := fConfig.ReadBoolean('TopologicalMode', gblTopologicalMode);
+  gblAllowDeleteChanged := fConfig.ReadBoolean('AllowDeleteChanged', gblAllowDeleteChanged);
 
   fConfig.CloseConfig;
 
