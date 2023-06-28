@@ -623,7 +623,9 @@ begin
 
   end;
 
+  {$IFDEF DEBUG}
   DebugLn('Launching for %s: %s',[BoolToStr(fLogState=lsGetFirst,'HEAD','TAIL'), cmd]);
+  {$ENDIF}
 
   db := fDbIndex;
   db.ThreadStart(fLogState=lsGetFirst);

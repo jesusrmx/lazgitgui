@@ -25,7 +25,7 @@ unit unitgraphbuild;
 
 {$mode ObjFPC}{$H+}
 
-{$define Debug}
+{.$define Debug}
 
 {$ifdef Debug}
   {.$define ReportGetParentsMap}
@@ -669,8 +669,6 @@ begin
   fIndexArray := nil;
   FindRelativesMap(parMap);
 
-  //TopoSort(parMap);
-
   // parMap is not needed anymore
   ClearParentsMap(parMap);
 
@@ -682,13 +680,6 @@ begin
   AssignColumns(columns);
 
   FindHeadsAndTails(columns);
-
-  //SortColumns(columns);
-
-  {$IFDEF Debug}
-  //ReportTicks('SortColumns');
-  //ReportColumns('After sorting', columns);
-  {$ENDIF}
 
   MapLinesAndColumns(columns, fMaxColumns);
 
