@@ -130,7 +130,7 @@ begin
     lines := TStringList.Create;
     try
 
-      if fGit.Show(fCommit, lines)>0 then begin
+      if fGit.Show('--format=fuller '+fCommit, lines)>0 then begin
         fFileDiff.Text := fGit.ErrorLog;
         fObserverMgr.NotifyObservers(self, COMMITBROWSER_EVENT_RELOAD, 0);
       end else begin

@@ -404,19 +404,12 @@ procedure TfrmFileHistory.DoRowSelection(aRow: Integer);
 var
   aIndex: Integer;
   L: TStringList;
-  s: string;
 begin
   if (fLastRow<>aRow) and (Length(fHistory)>0) then begin
     aIndex := aRow - grid.FixedRows;
     L := TStringList.Create;
     try
-      fGit.Show(fHistory[aIndex].CommitOID + ' -- ' + fHistory[aIndex].Filename, L);
-      while (L.Count>0) do begin
-        s := L[0];
-        L.Delete(0);
-        if pos('diff --git', s)=1 then
-          break;
-      end;
+      fGit.Show(' --format=fuller '+fHistory[aIndex].CommitOID + ' -- ' + fHistory[aIndex].Filename, L);
       txtDiff.Lines.Assign(L);
     finally
       L.Free;
