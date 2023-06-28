@@ -102,6 +102,7 @@ type
     procedure ThreadStore(buf: pchar; size: Integer);
     function  GetCachedItem(aIndex: Integer; unfiltered, tryToFix:boolean; out aItem:TLogItem): boolean;
     function  ReadIndexBuffer(realIndex:Integer): boolean;
+    function  SetupFilter(arr: TIntArray): boolean;
   public
     constructor Create(dir: string);
     destructor Destroy; override;
@@ -850,6 +851,29 @@ begin
   end;
 end;
 
+function TDbIndex.SetupFilter(arr: TIntArray): boolean;
+var
+  maxIndex, i: Integer;
+begin
+  if arr=nil then begin
+    result := false;
+    fFilter := nil;
+    exit;
+  end;
+
+  if (fIndexStream=nil) or (fIndexStream.Size=0) then
+    raise Exception.Create('Trying to set a filter while the db is not initialized');
+  maxIndex := Count(true) - 1;
+  // check that indices are within the range of the index
+  for i:=0 to Length(arr)-1 do
+    if (arr[i]<0) or (arr[i]>maxIndex) then
+      raise Exception.CreateFmt('The filter has an invalid entry at %d',[i]);
+  // copy filter indices
+  SetLength(fFilter, Length(arr));
+  Move(arr[0], fFilter[0], Length(arr)*SizeOf(Integer));
+  result := true;
+end;
+
 function TDbIndex.Count(unfiltered: boolean): Integer;
 begin
   if fIndexStream=nil then
@@ -884,37 +908,25 @@ end;
 
 procedure TDbIndex.SetFilter(arr: TIntArray);
 var
-  maxIndex, i: Integer;
-
-  j: Integer;
+  i, j: Integer;
   map: TParentsMap;
   graph: TGraph;
   pmi: PParentsMapItem;
   stack: TIntStack;
-  ok: Boolean;
   newFilter: TIntArray = nil;
 begin
-  if arr=nil then begin
-    fFilter := nil;
-    exit;
-  end;
 
-  if (fIndexStream=nil) or (fIndexStream.Size=0) then
-    raise Exception.Create('Trying to set a filter while the db is not initialized');
-  maxIndex := Count(true) - 1;
-  // check that indices are within the range of the index
-  for i:=0 to Length(arr)-1 do
-    if (arr[i]<0) or (arr[i]>maxIndex) then
-      raise Exception.CreateFmt('The filter has an invalid entry at %d',[i]);
-  // copy filter indices
-  SetLength(fFilter, Length(arr));
-  Move(arr[0], fFilter[0], Length(arr)*SizeOf(Integer));
+  if not SetupFilter(arr) then
+    exit;
 
   if gblTopologicalMode then
     exit;
 
   {$IFDEF DebugTopoFilter}
   DumpIntArray('Initial Ordering:', fFilter);
+  {$ENDIF}
+
+  {$IFDEF DEBUG}
   ResetTicks;
   {$ENDIF}
 
@@ -972,24 +984,8 @@ begin
 end;
 
 procedure TDbIndex.ReplaceFilter(arr: TIntArray);
-var
-  maxIndex, i: Integer;
 begin
-  if arr=nil then begin
-    fFilter := nil;
-    exit;
-  end;
-
-  if (fIndexStream=nil) or (fIndexStream.Size=0) then
-    raise Exception.Create('Trying to set a filter while the db is not initialized');
-  maxIndex := Count(true) - 1;
-  // check that indices are within the range of the index
-  for i:=0 to Length(arr)-1 do
-    if (arr[i]<0) or (arr[i]>maxIndex) then
-      raise Exception.CreateFmt('The filter has an invalid entry at %d',[i]);
-  // copy filter indices
-  SetLength(fFilter, Length(arr));
-  Move(arr[0], fFilter[0], Length(arr)*SizeOf(Integer));
+  SetupFilter(arr);
 end;
 
 function TDbIndex.FindCommitSha(sha: string; startAt: Integer): Integer;
