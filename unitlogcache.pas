@@ -286,7 +286,7 @@ begin
   {$IFDEF Capture}
   fCap.Free;
   {$ENDIF}
-  Dispose(fCmdLine);
+  Dispose(fCmdLine, done);
   inherited Destroy;
 end;
 
