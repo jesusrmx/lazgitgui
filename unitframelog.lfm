@@ -105,7 +105,7 @@ object frameLog: TframeLog
         TabOrder = 0
         OnExpanding = treeFilesExpanding
         OnSelectionChanged = treeFilesSelectionChanged
-        Options = [tvoAutoItemHeight, tvoHideSelection, tvoKeepCollapsedNodes, tvoReadOnly, tvoRowSelect, tvoShowButtons, tvoShowLines, tvoShowRoot, tvoShowSeparators, tvoToolTips, tvoThemedDraw]
+        Options = [tvoAutoItemHeight, tvoHideSelection, tvoKeepCollapsedNodes, tvoReadOnly, tvoRowSelect, tvoShowButtons, tvoShowLines, tvoShowRoot, tvoToolTips, tvoThemedDraw]
       end
       object panMode: TPanel
         Left = 0
