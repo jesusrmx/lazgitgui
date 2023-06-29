@@ -410,7 +410,8 @@ begin
               gridLog.Canvas.Pen.Style := chunk.penStyle;
               gridLog.Canvas.Pen.Color := chunk.penColor;
               gridLog.Canvas.Pen.Width := chunk.penWidth;
-              if chunk.itemType=tcitBox then gridLog.Canvas.Rectangle(chunk.r);
+              if chunk.itemType in [tcitBox, tcitTag, tcitAnnotatedTag] then
+                gridLog.Canvas.Rectangle(chunk.r);
               gridLog.Canvas.Brush.Style := bsClear;
               gridLog.Canvas.Font.Color := chunk.fontColor;
               aStyle := gridLog.Canvas.Font.Style;

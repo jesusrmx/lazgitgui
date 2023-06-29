@@ -9,7 +9,7 @@ uses
   unitcommon, unitgittypes, unitgitutils, unitconfig, unitdbindex;
 
 type
-  TTextChunksItemType = (tcitNone, tcitBox, tcitLink);
+  TTextChunksItemType = (tcitNone, tcitBox, tcitTag, tcitAnnotatedTag, tcitLink);
   TTextChunksItem = record
     itemType: TTextChunksItemType;
     r: TRect;
@@ -84,6 +84,7 @@ begin
 
       w := canvas.TextWidth(arr[i]^.refName) + 6;
 
+      item.itemType := tcitBox;
       case arr[i]^.subType of
         rostLocal:
           begin
@@ -100,6 +101,8 @@ begin
           begin
             item.brushColor := clYellow;
             item.fontColor := clBlack;
+            if arr[i]^.objType=rotTag then item.itemType := tcitAnnotatedTag
+            else                           item.itemType := tcitTag;
           end;
       end;
 
@@ -109,7 +112,6 @@ begin
       item.penStyle := psSolid;
       item.penColor := clBlack;
       item.text := arr[i]^.refName;
-      item.itemType := tcitBox;
 
       j := Length(result);
       SetLength(result, j+1);
