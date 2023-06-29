@@ -24,7 +24,7 @@ unit unitgit;
 
 {$mode ObjFPC}{$H+}
 {$ModeSwitch nestedprocvars}
-
+{$WARN 6058 off : Call to subroutine "$1" marked as inline is not inlined}
 interface
 
 uses
@@ -239,6 +239,7 @@ var
   info: PRefInfo;
   arr: TRefInfoArray;
   exists: boolean;
+  s, sub: string;
 begin
   if fRefsMap=nil then begin
     fRefsMap := TRefsMap.Create;
@@ -258,16 +259,27 @@ begin
     SetLength(arr, j+1);
     arr[j] := info;
 
+    if info^.objType=rotTag then s := info^.refered^.objName
+    else                         s := info^.objName;
+
     if not exists then
-      fRefsMap.Add(info^.objName, arr)
+      fRefsMap.Add(s, arr)
     else
-      fRefsMap[info^.objName] := arr;
+      fRefsMap[s] := arr;
   end;
 
   //DebugLn;
   //for i:=0 to RefList.Count-1 do begin
   //  info := PRefInfo(RefList.Objects[i]);
-  //  DebugLn('%2d. %s %s',[i, info^.objName, info^.refName]);
+  //  WriteStr(s, info^.objType);
+  //  WriteStr(sub, info^.subType);
+  //  DebugLn('%2d. %40s | %12s %12s | %s',[i, info^.objName, s, sub, info^.refName]);
+  //  if info^.refered<>nil then begin
+  //    info := info^.refered;
+  //    WriteStr(s, info^.objType);
+  //    WriteStr(sub, info^.subType);
+  //    DebugLn(' -> %40s | %12s %12s | %s',[info^.objName, s, sub, info^.refName]);
+  //  end;
   //end;
   //DebugLn;
   //for i:=0 to fRefsMap.Count-1 do begin
