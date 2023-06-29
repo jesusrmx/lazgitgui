@@ -1,6 +1,7 @@
 unit unittextchunks;
 
 {$mode ObjFPC}{$H+}
+{$ModeSwitch advancedrecords}
 
 interface
 
@@ -10,6 +11,9 @@ uses
 
 type
   TTextChunksItemType = (tcitNone, tcitBox, tcitTag, tcitAnnotatedTag, tcitLink);
+
+  { TTextChunksItem }
+
   TTextChunksItem = record
     itemType: TTextChunksItemType;
     r: TRect;
@@ -24,6 +28,7 @@ type
     linkDest: string;
     linkAction: string;
     linkColor: string;
+    procedure Draw(Canvas: TCanvas);
   end;
   TTextChunks = array of TTextChunksItem;
 
@@ -101,8 +106,11 @@ begin
           begin
             item.brushColor := clYellow;
             item.fontColor := clBlack;
-            if arr[i]^.objType=rotTag then item.itemType := tcitAnnotatedTag
-            else                           item.itemType := tcitTag;
+            if arr[i]^.objType=rotTag then begin
+              item.itemType := tcitAnnotatedTag;
+              w += 5;
+            end else
+              item.itemType := tcitTag;
           end;
       end;
 
@@ -159,6 +167,42 @@ begin
 
   end;
 
+end;
+
+{ TTextChunksItem }
+
+procedure TTextChunksItem.Draw(Canvas: TCanvas);
+var
+  aStyle: TFontStyles;
+begin
+  Canvas.Brush.Style := brushStyle;
+  Canvas.Brush.Color := brushColor;
+  Canvas.Pen.Style := penStyle;
+  Canvas.Pen.Color := penColor;
+  Canvas.Pen.Width := penWidth;
+
+  if itemType in [tcitBox, tcitTag, tcitAnnotatedTag] then
+    Canvas.Rectangle(r);
+
+  Canvas.Brush.Style := bsClear;
+  Canvas.Font.Color := fontColor;
+  aStyle := Canvas.Font.Style;
+  if itemType=tcitLink then Include(aStyle, fsUnderline)
+  else                      Exclude(aStyle, fsUnderline);
+  Canvas.Font.Style := aStyle;
+  Canvas.TextOut(r.Left + 3, r.Top, text);
+
+  if itemType=tcitAnnotatedTag then begin
+    Canvas.Pen.Style := psClear;
+    Canvas.Brush.Style := bsSolid;
+    r.Left := r.Right - 7;
+    r.Bottom := r.Top + 7;
+    Canvas.Brush.Color := clRed;
+    Canvas.Ellipse(r);
+  end;
+
+  Canvas.Brush.Style := bsSolid;
+  Canvas.Pen.Style := psSolid;
 end;
 
 { TTextLinks }

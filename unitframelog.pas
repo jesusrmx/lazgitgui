@@ -404,24 +404,8 @@ begin
         COLTAG_SUBJECT:
           begin
             Chunks := GetTextChunks(gridLog.Canvas, aRect, x, fGit.RefsMap, aItem.CommitOID, aItem.Subject);
-            for chunk in Chunks do begin
-              gridLog.Canvas.Brush.Style := chunk.brushStyle;
-              gridLog.Canvas.Brush.Color := chunk.brushColor;
-              gridLog.Canvas.Pen.Style := chunk.penStyle;
-              gridLog.Canvas.Pen.Color := chunk.penColor;
-              gridLog.Canvas.Pen.Width := chunk.penWidth;
-              if chunk.itemType in [tcitBox, tcitTag, tcitAnnotatedTag] then
-                gridLog.Canvas.Rectangle(chunk.r);
-              gridLog.Canvas.Brush.Style := bsClear;
-              gridLog.Canvas.Font.Color := chunk.fontColor;
-              aStyle := gridLog.Canvas.Font.Style;
-              if chunk.itemType=tcitLink then Include(aStyle, fsUnderline)
-              else                            Exclude(aStyle, fsUnderline);
-              gridLog.Canvas.Font.Style := aStyle;
-              gridLog.Canvas.TextOut(chunk.r.Left + 3, chunk.r.Top, chunk.text);
-            end;
-            gridLog.Canvas.Brush.Style := bsSolid;
-            gridLog.Canvas.Pen.Style := psSolid;
+            for chunk in Chunks do
+              chunk.Draw(gridLog.Canvas);
           end;
 
         COLTAG_AUTHOR: s := aItem.Author;
