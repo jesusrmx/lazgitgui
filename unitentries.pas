@@ -127,6 +127,7 @@ type
   end;
   TPFileEntryArray = array of PFileEntry;
 
+procedure ParsePorcelainV1(var head:pchar; tail: pchar; out entry: PFileEntry);
 procedure ParseOrdinaryChanged(var head: pchar; tail: pchar; out entry: PFileEntry);
 procedure ParseRenamedCopied(var head: pchar; tail: pchar; out entry: PFileEntry);
 procedure ParseUnmerged(var head: pchar; tail: pchar; out entry: PFileEntry);
@@ -142,6 +143,7 @@ const
   ChangedInWorktreeSet = [ etWorktreeChangedSinceIndex .. etCopiedInWorkTree ];
   DeletedInWorktreeSet = [ etDeletedInWorktree .. etRenamedInWorkTree ];
   ChangedInIndexSet = [ etUpdatedInIndex .. etCopiedInIndexD ];
+  UnmergedSet = [ etUnmergedAddedByUs .. etUnmergedBothModified ];
 
 implementation
 
@@ -402,6 +404,35 @@ begin
     head := p + 1;
   end else
     result := '';
+end;
+
+procedure ParsePorcelainV1(var head: pchar; tail: pchar; out entry: PFileEntry);
+var
+  q: pchar;
+begin
+  // <XY> <path>
+  new(Entry);
+  entry^.EntryTypeStaged := XYToEntryType(head^, (head+1)^, true);
+  entry^.EntryTypeUnStaged := XYToEntryType(head^, (head+1)^, false);
+  entry^.x := head^;
+  entry^.y := (head+1)^;
+  if (entry^.EntryTypeStaged in UnmergedSet) or (entry^.EntryTypeUnStaged in UnmergedSet) then
+    entry^.EntryKind := ekUnmerged
+  else
+  if (entry^.x='R') or (entry^.y='R') then
+    entry^.EntryKind := ekRenamedCopied // todo: Check porcelain v1 EntryKind ekRenamedCopied
+  else
+    entry^.EntryKind := ekOrdinaryChanged;  // todo: Check porcelain v1 EntryKind ekOrdinaryChanged
+
+  inc(head, 3);
+  q := strpos(head, ' ');
+  if (q<>nil) then begin
+    entry^.EntryKind := ekRenamedCopied;
+    SetString(entry^.path, head, q-head);
+    inc(head, q-head);
+    entry^.origPath := head;
+  end else
+    entry^.path := head
 end;
 
 procedure ParseOrdinaryChanged(var head: pchar; tail: pchar; out
@@ -673,6 +704,9 @@ begin
       '!': ParseOther(head, tail, entry);
       else entry := nil;
     end;
+
+    if (entry=nil) and (n>3) then
+      ParsePorcelainV1(head, tail, entry);
 
     if entry<>nil then begin
       fEntries.Add(entry);
