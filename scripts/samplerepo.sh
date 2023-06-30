@@ -42,12 +42,22 @@ makerepo () {
 
 clonerepos () {
   if [ ! -d gita ]; then
-    echo "Cloning sample repositories"
+    echo "Cloning gita sample repository"
     GIT clone file://$REPO gita
-    #git clone file://$REPO gitb
-    #git clone file://$REPO gitc
   else
-    echo "The reposositories are already created"
+    echo "gita repository already created"
+  fi
+  if [ ! -d gitb ]; then
+    echo "Cloning gitb sample repository"
+    GIT clone file://$REPO gitb
+  else
+    echo "gitb repository already created"
+  fi
+  if [ ! -d gitc ]; then
+    echo "Cloning gitc sample repository"
+    GIT clone file://$REPO gitc
+  else
+    echo "gitc repository already created"
   fi
 }
 
