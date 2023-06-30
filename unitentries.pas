@@ -590,6 +590,10 @@ begin
       i := pos(' ', ab);
       fCommitsAhead := StrToIntDef(copy(ab, 1, i-1), 0);
       fCommitsBehind := StrToIntDef(copy(ab, i+1, Length(ab)), 0);
+    end else
+    if (fBranch='') and (strlcomp(head, '## ', 3)=0) then begin
+      // porcelain v1 branch info
+
     end;
 
     inc(head, n + 1);

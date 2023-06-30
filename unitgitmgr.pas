@@ -78,6 +78,9 @@ type
     fUnstagedList, fStagedList: TStringList;
     fObserverMgr: TObserverMgr;
     fRemotes: TRemotesArray;
+    fWithStatusAheadBehihd: Boolean;
+    fWithStatusPorcelainV2: Boolean;
+    fWithStatusIgnored: Boolean;
     function GetGit: IGit;
     function GetRemotesList: string;
     procedure OnCommandsDone(Sender: TObject);
@@ -216,6 +219,14 @@ end;
 function TGitMgr.Initialize: boolean;
 begin
   result := fGit.Initialize;
+  fWithStatusPorcelainV2 := false;
+  fWithStatusAheadBehihd := false;
+  fWithStatusIgnored     := false;
+  if result then begin
+    fWithStatusPorcelainV2 := fGit.AtLeastVersion('2.11');
+    fWithStatusAheadBehihd := fGit.AtLeastVersion('2.17');
+    fWithStatusIgnored     := fGit.AtLeastVersion('2.21'); // TODO: check this..
+  end;
 end;
 
 procedure TGitMgr.OnCommandProgress(sender: TObject; item: TCommandItem; percent: single);
@@ -259,7 +270,7 @@ begin
         M := TMemoryStream(item.tag);
         head := M.Memory;
         tail := head + M.Size;
-        //M.SaveToFile('laststatus.txt');
+        M.SaveToFile('laststatus.txt');
 
         ParseBranches(head, tail, fBranch, fBranchOID, fUpstream, fCommitsAhead, fCommitsBehind);
         ParseStatus(head, tail, fUnstagedList, fStagedList, fEntries, fMergingConflict);
@@ -298,6 +309,7 @@ procedure TGitMgr.UpdateStatus(ondone: TNotifyEvent);
 var
   i: Integer;
   commands: TCommandsArray;
+  s: string;
 begin
 
   commands := nil;
@@ -325,10 +337,12 @@ begin
   i := Length(commands);
   SetLength(commands, i+1);
   commands[i].description := 'status';
-  commands[i].command := fGit.Exe +
-    format(' status -b --long --porcelain=2 --ahead-behind --ignored=%s --untracked-files=%s -z',
-      [BoolToStr(fViewIgnoredFiles, 'traditional', 'no'),
-       BoolToStr(fViewUntrackedFiles, 'all', 'no')]);
+  s := fGit.Exe + ' status -b --long --porcelain';
+  if fWithStatusPorcelainV2 then s += '=2';
+  if fWithStatusAheadBehihd then s += ' --ahead-behind';
+  if fWithStatusIgnored then s += ' --ignored=' + BoolToStr(fViewIgnoredFiles, 'traditional', 'no');
+  s += format(' --untracked-files=%s -z', [BoolToStr(fViewUntrackedFiles, 'all', 'no')]);
+  commands[i].command := s;
   commands[i].RedirStdErr := false;
   commands[i].PreferredOutputType := cipotStream;
 

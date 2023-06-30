@@ -64,7 +64,6 @@ type
     function GetVersion: string;
     function  TryGitIn(aPath: string): boolean;
     function GetVersion(gitCmd:string; out aVersion:string): boolean;
-    function AtLeastVersion(aVer: string): boolean;
     function RefListEnabledField(aField: string): boolean;
     procedure SetupExe(aExeFile, aVersion: string);
     procedure UpdateRefsMap;
@@ -72,6 +71,7 @@ type
   public
     constructor create;
     destructor destroy; override;
+    function AtLeastVersion(aVer: string): boolean;
     function Initialize: boolean;
     function Diff(entry: PFileEntry; Unstaged:boolean; Lines:TStrings): Integer;
     function Add(entry: PFileEntry): Integer; overload;
