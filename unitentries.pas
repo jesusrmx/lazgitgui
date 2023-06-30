@@ -558,11 +558,31 @@ begin
   entry^.path := head;
 end;
 
+function GetNextString(var head: pchar; var s: string; nextdelim: pchar): boolean;
+var
+  q: pchar;
+  n: Integer;
+begin
+  q := strpos(head, nextdelim);
+  result := q<>nil;
+  if result then begin
+    SetString(s, head, q-head);
+    inc(head, q-head + strlen(nextdelim));
+    result := true;
+  end else begin
+    n := strlen(head);
+    SetString(s, head, n);
+    inc(head, n);
+  end;
+
+end;
+
 procedure ParseBranches(var head: pchar; tail: pchar; out fBranch, fBranchOID,
   fUpstream: string; out fCommitsAhead, fCommitsBehind: Integer);
 var
   ab: string;
   i, n: Integer;
+  q: pchar;
 begin
   fBranch := '';
   fBranchOID := '';
@@ -592,8 +612,23 @@ begin
       fCommitsBehind := StrToIntDef(copy(ab, i+1, Length(ab)), 0);
     end else
     if (fBranch='') and (strlcomp(head, '## ', 3)=0) then begin
-      // porcelain v1 branch info
-
+      q := head;
+      inc(q, 3);
+      if GetNextString(q, fBranch, '...') then
+      if GetNextString(q, fUpstream, ' [') then
+      if GetNextString(q, ab, ']') then begin
+        // ahead x behind y
+        // ahead x
+        i := pos('behind ', ab);
+        if i>0 then begin
+          fCommitsBehind := StrToIntDef(copy(ab, i+7, Length(ab)), 0);
+          delete(ab, i, length(ab));
+        end;
+        i := pos('ahead ', ab);
+        if i>0 then
+          fCommitsAhead := StrToIntDef(copy(ab, i+6, length(ab)), 0);
+        // gone
+      end;
     end;
 
     inc(head, n + 1);
