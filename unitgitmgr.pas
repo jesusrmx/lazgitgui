@@ -273,7 +273,7 @@ begin
         M.SaveToFile('laststatus.txt');
 
         ParseBranches(head, tail, fBranch, fBranchOID, fUpstream, fCommitsAhead, fCommitsBehind);
-        ParseStatus(head, tail, fUnstagedList, fStagedList, fEntries, fMergingConflict);
+        ParseStatus(head, tail, fUnstagedList, fStagedList, fEntries, fMergingConflict, not fWithStatusPorcelainV2);
 
         fObserverMgr.NotifyObservers(self, GITMGR_EVENT_UPDATESTATUS, 0);
       end;

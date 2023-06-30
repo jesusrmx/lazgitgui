@@ -133,7 +133,7 @@ procedure ParseRenamedCopied(var head: pchar; tail: pchar; out entry: PFileEntry
 procedure ParseUnmerged(var head: pchar; tail: pchar; out entry: PFileEntry);
 procedure ParseOther(var head: pchar; tail: pchar; out entry: PFileEntry);
 procedure ParseBranches(var head: pchar; tail: pchar; out fBranch, fBranchOID, fUpstream: string; out fCommitsAhead, fCommitsBehind: Integer);
-procedure ParseStatus(var head: pchar; tail: pchar; lstUnstaged, lstStaged: TStrings; fEntries:TfpList; out fMergingConflict:boolean);
+procedure ParseStatus(var head: pchar; tail: pchar; lstUnstaged, lstStaged: TStrings; fEntries:TfpList; out fMergingConflict:boolean; v1: boolean);
 
 function EntryTypeToStr(X, Y: char): string;
 procedure DumpEntry(Entry: PFileEntry);
@@ -206,59 +206,39 @@ resourcestring
 
 function XYToEntryType(x, y: char; staged:boolean; merging:boolean=false): TEntryType;
 begin
+  if x=' ' then x := '.';
+  if y=' ' then y := '.';
   result := etUnknown;
   if staged and (not merging) then begin
-    case x of
-      '.':
-        case y of
-          'A': result := etNotUpdatedA;
-          'M': result := etNotUpdatedM;
-          'D': result := etNotUpdatedD;
-          'R': result := etRenamedInWorkTree;
-          'C': result := etCopiedInWorkTree;
-        end;
-      'M':
-        case y of
-          '.': result := etUpdatedInIndex;
-          'M': result := etUpdatedInIndexM;
-          'T': result := etUpdatedInIndexT;
-          'D': result := etUpdatedInIndexD;
-        end;
-      'T':
-        case y of
-          '.': result := etTypeChangedInIndex;
-          'M': result := etTypeChangedInIndexM;
-          'T': result := etTypeChangedInIndexT;
-          'D': result := etTypeChangedInIndexD;
-        end;
-      'A':
-        case y of
-          '.': result := etAddedToIndex;
-          'M': result := etAddedToIndexM;
-          'T': result := etAddedToIndexT;
-          'D': result := etAddedToIndexD;
-        end;
-      'D':
-        case y of
-          '.': result := etDeletedFromIndex;
-        end;
-      'R':
-        case y of
-          '.': result := etRenamedInIndex;
-          'M': result := etRenamedInIndexM;
-          'T': result := etRenamedInIndexT;
-          'D': result := etRenamedInIndexD;
-        end;
-      'C':
-        case y of
-          '.': result := etCopiedInIndex;
-          'M': result := etCopiedInIndexM;
-          'T': result := etCopiedInIndexT;
-          'D': result := etCopiedInIndexD;
-        end;
-      '?':  result := etUntracked;
-      '!':  result := etIgnored;
+    case x+y of
+      '.A': result := etNotUpdatedA;
+      '.M': result := etNotUpdatedM;
+      '.D': result := etNotUpdatedD;
+      '.R': result := etRenamedInWorkTree;
+      '.C': result := etCopiedInWorkTree;
+      'M.': result := etUpdatedInIndex;
+      'MM': result := etUpdatedInIndexM;
+      'MT': result := etUpdatedInIndexT;
+      'MD': result := etUpdatedInIndexD;
+      'T.': result := etTypeChangedInIndex;
+      'TM': result := etTypeChangedInIndexM;
+      'TT': result := etTypeChangedInIndexT;
+      'TD': result := etTypeChangedInIndexD;
+      'A.': result := etAddedToIndex;
+      'AM': result := etAddedToIndexM;
+      'AT': result := etAddedToIndexT;
+      'AD': result := etAddedToIndexD;
+      'D.': result := etDeletedFromIndex;
+      'R.': result := etRenamedInIndex;
+      'RM': result := etRenamedInIndexM;
+      'RT': result := etRenamedInIndexT;
+      'RD': result := etRenamedInIndexD;
+      'C.': result := etCopiedInIndex;
+      'CM': result := etCopiedInIndexM;
+      'CT': result := etCopiedInIndexT;
+      'CD': result := etCopiedInIndexD;
     end;
+
   end else begin
 
     if merging then
@@ -271,44 +251,35 @@ begin
         'AA': result := etUnmergedBothAdded;
         'UU': result := etUnmergedBothModified;
       end
-    else
-      case y of
-        '.':
-          case x of
-            'M': result := etIndexAndWorktreeMatchesM;
-            'T': result := etIndexAndWorktreeMatchesT;
-            'A': result := etIndexAndWorktreeMatchesA;
-            'R': result := etIndexAndWorktreeMatchesR;
-            'C': result := etIndexAndWorktreeMatchesC;
-          end;
-        'M':
-          case x of
-            '.': result := etWorktreeChangedSinceIndex;
-            'M': result := etWorktreeChangedSinceIndexM;
-            'T': result := etWorktreeChangedSinceIndexT;
-            'A': result := etWorktreeChangedSinceIndexA;
-            'R': result := etWorktreeChangedSinceIndexR;
-            'C': result := etWorktreeChangedSinceIndexC;
-          end;
-        'T':
-          case x of
-            '.': result := etTypeChangedInWorktreeSinceIndex;
-            'M': result := etTypeChangedInWorktreeSinceIndexM;
-            'T': result := etTypeChangedInWorktreeSinceIndexT;
-            'A': result := etTypeChangedInWorktreeSinceIndexA;
-            'R': result := etTypeChangedInWorktreeSinceIndexR;
-            'C': result := etTypeChangedInWorktreeSinceIndexC;
-          end;
-        'D':
-          case x of
-            '.': result := etDeletedInWorktree;
-            'M': result := etDeletedInWorktreeM;
-            'T': result := etDeletedInWorktreeT;
-            'A': result := etDeletedInWorktreeA;
-            'R': result := etDeletedInWorktreeR;
-            'C': result := etDeletedInWorktreeC;
-          end;
+    else begin
+      case x+y of
+        'M.': result := etIndexAndWorktreeMatchesM;
+        'T.': result := etIndexAndWorktreeMatchesT;
+        'A.': result := etIndexAndWorktreeMatchesA;
+        'R.': result := etIndexAndWorktreeMatchesR;
+        'C.': result := etIndexAndWorktreeMatchesC;
+        '.M': result := etWorktreeChangedSinceIndex;
+        'MM': result := etWorktreeChangedSinceIndexM;
+        'TM': result := etWorktreeChangedSinceIndexT;
+        'AM': result := etWorktreeChangedSinceIndexA;
+        'RM': result := etWorktreeChangedSinceIndexR;
+        'CM': result := etWorktreeChangedSinceIndexC;
+        '.T': result := etTypeChangedInWorktreeSinceIndex;
+        'MT': result := etTypeChangedInWorktreeSinceIndexM;
+        'TT': result := etTypeChangedInWorktreeSinceIndexT;
+        'AT': result := etTypeChangedInWorktreeSinceIndexA;
+        'RT': result := etTypeChangedInWorktreeSinceIndexR;
+        'CT': result := etTypeChangedInWorktreeSinceIndexC;
+        '.D': result := etDeletedInWorktree;
+        'MD': result := etDeletedInWorktreeM;
+        'TD': result := etDeletedInWorktreeT;
+        'AD': result := etDeletedInWorktreeA;
+        'RD': result := etDeletedInWorktreeR;
+        'CD': result := etDeletedInWorktreeC;
+        '??':  result := etUntracked;
+        '!!':  result := etIgnored;
       end;
+    end;
   end;
 end;
 
@@ -410,17 +381,21 @@ procedure ParsePorcelainV1(var head: pchar; tail: pchar; out entry: PFileEntry);
 var
   q: pchar;
 begin
-  // <XY> <path>
+  // <XY> <path> [ <origpath ]
   new(Entry);
   entry^.EntryTypeStaged := XYToEntryType(head^, (head+1)^, true);
   entry^.EntryTypeUnStaged := XYToEntryType(head^, (head+1)^, false);
   entry^.x := head^;
   entry^.y := (head+1)^;
+
   if (entry^.EntryTypeStaged in UnmergedSet) or (entry^.EntryTypeUnStaged in UnmergedSet) then
     entry^.EntryKind := ekUnmerged
-  else
-  if (entry^.x='R') or (entry^.y='R') then
+  else if (entry^.x='R') or (entry^.y='R') then
     entry^.EntryKind := ekRenamedCopied // todo: Check porcelain v1 EntryKind ekRenamedCopied
+  else if (entry^.x='?') or (entry^.y='?') then
+    entry^.EntryKind := ekUntracked
+  else if (entry^.x='!') or (entry^.y='!') then
+    entry^.EntryKind := ekIgnored
   else
     entry^.EntryKind := ekOrdinaryChanged;  // todo: Check porcelain v1 EntryKind ekOrdinaryChanged
 
@@ -667,7 +642,8 @@ begin
 end;
 
 procedure ParseStatus(var head: pchar; tail: pchar; lstUnstaged,
-  lstStaged: TStrings; fEntries: TfpList; out fMergingConflict: boolean);
+  lstStaged: TStrings; fEntries: TfpList; out fMergingConflict: boolean;
+  v1: boolean);
 var
   n: Integer;
   entry: PFileEntry;
@@ -688,25 +664,27 @@ begin
     //DebugLn(start);
     needResetHead := true;
 
-    case head^ of
-      '1': ParseOrdinaryChanged(head, tail, entry);
-      '2':
-        begin
-          ParseRenamedCopied(head, tail, entry);
-          needResetHead := false;
-        end;
-      'u':
-        begin
-          fMergingConflict := true;
-          ParseUnmerged(head, tail, entry);
-        end;
-      '?',
-      '!': ParseOther(head, tail, entry);
-      else entry := nil;
-    end;
+    if v1 then begin
 
-    if (entry=nil) and (n>3) then
       ParsePorcelainV1(head, tail, entry);
+
+    end else
+      case head^ of
+        '1': ParseOrdinaryChanged(head, tail, entry);
+        '2':
+          begin
+            ParseRenamedCopied(head, tail, entry);
+            needResetHead := false;
+          end;
+        'u':
+          begin
+            fMergingConflict := true;
+            ParseUnmerged(head, tail, entry);
+          end;
+        '?',
+        '!': ParseOther(head, tail, entry);
+        else entry := nil;
+      end;
 
     if entry<>nil then begin
       fEntries.Add(entry);
