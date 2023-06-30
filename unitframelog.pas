@@ -72,11 +72,12 @@ const
   GRAPH_LEFT_PADDING          = 12;
   GRAPH_RIGHT_PADDING         = 12;
   GRAPH_LINE_WIDTH            = 2;
-  GRAPH_NODE_RADIUS           = 4;
+  GRAPH_NODE_RADIUS           = 5;  // for round dot
+  GRAPH_NODE_WIDTH            = 4;  // for square dot
   GRAPH_COLUMN_SEPARATOR      = 18;
 
-  ARROWLEN_X                  = GRAPH_NODE_RADIUS;
-  ARROWLEN_Y                  = GRAPH_NODE_RADIUS;
+  ARROWLEN_X                  = 4;
+  ARROWLEN_Y                  = 4;
 
   COLTAG_INDEX                = 0;
   COLTAG_GRAPH                = 1;
@@ -295,22 +296,65 @@ begin
   end;
 end;
 
+procedure DrawNode(canvas: TCanvas; x, y: Integer; aColor: TColor; square:boolean);
+var
+  j, h: Integer;
+begin
+  if square then begin
+    canvas.FillRect(x-GRAPH_NODE_WIDTH, y-GRAPH_NODE_WIDTH, x+GRAPH_NODE_WIDTH, y+GRAPH_NODE_WIDTH);
+    exit;
+  end;
+
+  canvas.Font.Color := aColor;
+
+  // fine tuning for linux
+  //j := canvas.Font.Height;
+  //h := round(GRAPH_NODE_RADIUS * 2.3);
+  //canvas.Font.Height := h;
+  //canvas.Brush.Style := bsClear;
+  //canvas.TextOut(x - h div 2 + 1, y - h div 2 - 3, '●');
+  //canvas.Font.Height := j;
+
+  // Fine tuning for windows
+  //j := canvas.Font.Height;
+  //h := round(GRAPH_NODE_RADIUS * 5);
+  //canvas.Font.Height := h;
+  //canvas.Brush.Style := bsClear;
+  //canvas.TextOut(x - GRAPH_NODE_RADIUS, y - 3 * GRAPH_NODE_RADIUS, '●');
+  //canvas.Font.Height := j;
+
+  // five pixels dot
+  j := canvas.pen.width;
+  canvas.pen.width := 1;
+  canvas.pen.style := psSolid;
+  canvas.pen.color := aColor;
+  canvas.Line(x - 4, y - GRAPH_NODE_RADIUS + 3, x - 4, y + GRAPH_NODE_RADIUS - 3);
+  canvas.Line(x - 3, y - GRAPH_NODE_RADIUS + 2, x - 3, y + GRAPH_NODE_RADIUS - 2);
+  canvas.Line(x - 2, y - GRAPH_NODE_RADIUS + 1, x - 2, y + GRAPH_NODE_RADIUS - 1);
+  canvas.Line(x - 1, y - GRAPH_NODE_RADIUS + 1, x - 1, y + GRAPH_NODE_RADIUS - 1);
+  canvas.Line(x - 0, y - GRAPH_NODE_RADIUS + 1, x - 0, y + GRAPH_NODE_RADIUS - 1);
+  canvas.Line(x + 1, y - GRAPH_NODE_RADIUS + 1, x + 1, y + GRAPH_NODE_RADIUS - 1);
+  canvas.Line(x + 2, y - GRAPH_NODE_RADIUS + 2, x + 2, y + GRAPH_NODE_RADIUS - 2);
+  canvas.Line(x + 3, y - GRAPH_NODE_RADIUS + 3, x + 3, y + GRAPH_NODE_RADIUS - 3);
+  canvas.Pixels[x, y] := clRed;
+  canvas.pen.width := j;
+
+  //canvas.EllipseC(x, y, GRAPH_NODE_RADIUS, GRAPH_NODE_RADIUS);
+end;
+
 { TframeLog }
 
 procedure TframeLog.gridLogDrawCell(Sender: TObject; aCol, aRow: Integer;
   aRect: TRect; aState: TGridDrawState);
 var
-  aIndex, x, x1, x2, y, y1, y2, i, j, w, n: Integer;
+  aIndex, x, x1, x2, y, y1, y2, i, j, w, n, h: Integer;
   s: RawByteString;
-  arr: TRefInfoArray;
   aColor: TColor;
-  r: TRect;
   db: TDbIndex;
   flags:  TLineItemFlags;
   aItem: TLogItem;
-  Chunks: TTextChunks;
+  chunks: TTextChunks;
   chunk: TTextChunksItem;
-  aStyle: TFontStyles;
 begin
 
   if fGitMgr=nil then
@@ -369,10 +413,8 @@ begin
                   gridlog.Canvas.Line(x, y1, x, y2);
                   gridLog.Canvas.Brush.Style := bsSolid;
                   gridLog.canvas.Pen.Style := psClear;
-                  if (Length(childs)>1) or (Length(parents)>1) then
-                    gridLog.Canvas.FillRect(x-GRAPH_NODE_RADIUS, y-GRAPH_NODE_RADIUS, x+GRAPH_NODE_RADIUS, y+GRAPH_NODE_RADIUS)
-                  else
-                    gridLog.canvas.EllipseC(x, y, GRAPH_NODE_RADIUS, GRAPH_NODE_RADIUS);
+                  DrawNode(gridLog.Canvas, x, y, aColor, (Length(childs)>1) or (Length(parents)>1));
+
                   gridLog.canvas.Pen.Style := psSolid;
                 end else begin
 
