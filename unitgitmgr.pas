@@ -562,6 +562,7 @@ begin
     commands[i].command := fGit.Exe + ' describe --tags';
     commands[i].RedirStdErr := false;
     commands[i].PreferredOutputType := cipotString;
+    commands[i].Enviroment := '';
   end;
 
   //result := FileExists(fTopLevelDir + '.git/MERGE_HEAD');
@@ -573,6 +574,7 @@ begin
   commands[i].command := fGit.Exe + ' rev-list -1 MERGE_HEAD';
   commands[i].RedirStdErr := true;
   commands[i].PreferredOutputType := cipotString;
+  commands[i].Enviroment := '';
 
   i := Length(commands);
   SetLength(commands, i+1);
@@ -585,6 +587,7 @@ begin
   commands[i].command := s;
   commands[i].RedirStdErr := false;
   commands[i].PreferredOutputType := cipotStream;
+  commands[i].Enviroment := 'LANG=C';
 
   if ondone=nil then
     ondone := @OnCommandsDone;
