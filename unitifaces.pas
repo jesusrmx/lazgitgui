@@ -57,7 +57,6 @@ type
 
   IGit = interface ['{2BC4C993-13AA-44BD-9C8A-11038CD50904}']
     function Switch(branchName: string): Integer;
-    function AddToIgnoreFile(aFile:string; justType:boolean; global:boolean): boolean;
     function Restore(entry: PFileEntry; staged: boolean): Integer; overload;
     function Restore(entryArray: TPFileEntryArray; staged: boolean): Integer; overload;
     function Any(cmd: string; out cmdout:RawByteString): Integer;

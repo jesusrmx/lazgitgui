@@ -389,7 +389,7 @@ var
 begin
   // what file?
   ignored := lstUnstaged.Items[mi.Tag];
-  if fGit.AddToIgnoreFile(ignored, false, true) then
+  if fGitMgr.AddToIgnoreFile(ignored, false, true) then
     fGitMgr.UpdateStatus
   else
     ShowMessage(Format(rsSIsAlreadyInIgnoredList, [ignored]));
@@ -402,7 +402,7 @@ var
 begin
   // what file?
   ignored := lstUnstaged.Items[mi.Tag];
-  if fGit.AddToIgnoreFile(ignored, true, true) then
+  if fGitMgr.AddToIgnoreFile(ignored, true, true) then
     fGitMgr.UpdateStatus
   else
     ShowMessage(Format(rsTheTypeSIsAlreadyInTheIgnoredList, [ExtractFileExt(ignored)]));

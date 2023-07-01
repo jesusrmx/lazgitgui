@@ -78,14 +78,13 @@ type
     function Any(cmd: string; out cmdout:RawByteString): Integer;
     function Tag(tagName, tagCommit:string; annotated:boolean; tagMsg:string): Integer;
     function DeleteTag(tagName: string): Integer;
-    function AddToIgnoreFile(aFile:string; justType:boolean; global:boolean): boolean;
     function Show(obj: string; lines: TStrings): Integer;
     procedure ResetLogError;
 
     property ErrorLog: RawByteString read GetErrorLog;
     property LogError: RawBytestring read GetLogError;
-    property UntrackedMode: string read fUntrackedMode write fUntrackedMode;
-    property IgnoredMode: string read fIgnoredMode write fIgnoredMode;
+    //property UntrackedMode: string read fUntrackedMode write fUntrackedMode;
+    //property IgnoredMode: string read fIgnoredMode write fIgnoredMode;
     property Config: IConfig read fConfig write fConfig;
 
     property Exe: string read GetExe;
@@ -434,43 +433,6 @@ var
 begin
   cmd := ' tag -d ' + tagName;
   result := cmdLine.RunProcess(fGitCommand + cmd, fTopLevelDir, cmdOut);
-end;
-
-function TGit.AddToIgnoreFile(aFile: string; justType: boolean; global: boolean
-  ): boolean;
-var
-  l: TStringList;
-  aPath, gitIgnoreFile: string;
-begin
-  result := false;
-
-  l := TStringList.Create;
-  try
-    aPath := fTopLevelDir;
-    if not global then
-      aPath += ExtractFilePath(aFile);
-    aPath += '.gitignore';
-
-    if FileExists(aPath) then
-      l.LoadFromFile(aPath);
-
-    if justType then begin
-      aFile := ExtractFileExt(aFile);
-      if aFile='' then
-        exit; // refuse to add '*.' to ignore list
-      aFile := '*' + aFile;
-    end else
-      aFile := ExtractFileName(aFile);
-
-    result := l.IndexOf(aFile)<0;
-    if result then begin
-      l.Add(aFile);
-      l.SaveToFile(aPath);
-    end;
-
-  finally
-    l.Free;
-  end;
 end;
 
 function TGit.Show(obj: string; lines: TStrings): Integer;

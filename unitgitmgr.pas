@@ -97,12 +97,14 @@ type
   public
     constructor create;
     destructor destroy; override;
-    function Initialize: boolean;
+
+    function  AddToIgnoreFile(aFile:string; justType:boolean; global:boolean): boolean;
+    function  Initialize: boolean;
     procedure UpdateStatus(ondone: TNotifyEvent = nil);
     procedure UpdateRefList;
     procedure AddObserver(who: IObserver);
     procedure RemoveObserver(who: IObserver);
-    function IndexOfLocalBranch(aName: string): Integer;
+    function  IndexOfLocalBranch(aName: string): Integer;
     procedure QueueNewTag(commit: string);
     procedure QueueSwitchTag(tagName: string);
     procedure QueueNewBranch(sender: TObject; branchName, command: string; switch, fetch:boolean);
@@ -393,6 +395,43 @@ begin
   fInternalRefList.Free;
   fGit.Free;
   inherited destroy;
+end;
+
+function TGitMgr.AddToIgnoreFile(aFile: string; justType: boolean;
+  global: boolean): boolean;
+var
+  l: TStringList;
+  aPath, gitIgnoreFile: string;
+begin
+  result := false;
+
+  l := TStringList.Create;
+  try
+    aPath := fGit.TopLevelDir;
+    if not global then
+      aPath += ExtractFilePath(aFile);
+    aPath += '.gitignore';
+
+    if FileExists(aPath) then
+      l.LoadFromFile(aPath);
+
+    if justType then begin
+      aFile := ExtractFileExt(aFile);
+      if aFile='' then
+        exit; // refuse to add '*.' to ignore list
+      aFile := '*' + aFile;
+    end else
+      aFile := ExtractFileName(aFile);
+
+    result := l.IndexOf(aFile)<0;
+    if result then begin
+      l.Add(aFile);
+      l.SaveToFile(aPath);
+    end;
+
+  finally
+    l.Free;
+  end;
 end;
 
 function TGitMgr.Initialize: boolean;
