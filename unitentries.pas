@@ -627,7 +627,7 @@ begin
         // ahead x
         i := pos('behind ', ab);
         if i>0 then begin
-          fCommitsBehind := StrToIntDef(copy(ab, i+7, Length(ab)), 0);
+          fCommitsBehind := -StrToIntDef(copy(ab, i+7, Length(ab)), 0);
           delete(ab, i, length(ab));
         end;
         i := pos('ahead ', ab);
