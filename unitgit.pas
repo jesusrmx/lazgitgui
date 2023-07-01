@@ -44,16 +44,14 @@ type
     fConfig: IConfig;
     fGitCommand: string;
     fTopLevelDir: string;
-    fGitCommonDir: string;
-    fUntrackedMode: string;
-    fIgnoredMode: string;
+    fGitDir: string;
     fVersion: String;
     fLogError: RawByteString;
     function GetErrorLog: RawByteString;
     function GetExe: string;
     function GetLogError: RawBytestring;
     function GetTopLevelDir: string;
-    function GetGitCommonDir: string;
+    function GetGitDir: string;
     function GetVersion: string;
     function TryGitIn(aPath: string): boolean;
     function GetVersion(gitCmd:string; out aVersion:string): boolean;
@@ -83,13 +81,11 @@ type
 
     property ErrorLog: RawByteString read GetErrorLog;
     property LogError: RawBytestring read GetLogError;
-    //property UntrackedMode: string read fUntrackedMode write fUntrackedMode;
-    //property IgnoredMode: string read fIgnoredMode write fIgnoredMode;
     property Config: IConfig read fConfig write fConfig;
 
     property Exe: string read GetExe;
     property TopLevelDir: string read GetTopLevelDir;
-    property GitCommonDir: string read GetGitCommonDir;
+    property GitDir: string read GetGitDir;
     property Version: string read GetVersion;
   end;
 
@@ -125,8 +121,6 @@ end;
 constructor TGit.create;
 begin
   inherited create;
-  fUntrackedMode := 'all';
-  fIgnoredMode := 'no';
 end;
 
 function TGit.Initialize: boolean;
@@ -214,9 +208,9 @@ begin
   result := fTopLevelDir;
 end;
 
-function TGit.GetGitCommonDir: string;
+function TGit.GetGitDir: string;
 begin
-  result := fGitCommonDir;
+  result := fGitDir;
 end;
 
 function TGit.GetVersion: string;
@@ -336,15 +330,15 @@ begin
   if (fTopLevelDir='') or (pos(fTopLevelDir, aDir)<>1) then begin
     if DirectoryExists(aDir + '.git') then begin
       fTopLevelDir := IncludeTrailingPathDelimiter(aDir);
-      fGitCommonDir := fTopLevelDir;
+      fGitDir := fTopLevelDir;
     end else begin
       cmdOut := ExcludeTrailingPathDelimiter(aDir);
       if ExtractFileName(cmdOut)='.git' then begin
         fTopLevelDir := ExtractFilePath(cmdOut);
-        fGitCommonDir := fTopLevelDir;
+        fGitDir := fTopLevelDir;
       end else begin
 
-        fGitCommonDir := '';
+        fGitDir := '';
         result := cmdLine.RunProcess(fGitCommand + ' rev-parse --show-toplevel', aDir, cmdOut);
         if result>0 then begin
           DebugLn('Error getting top level directory: (%d) %s', [cmdLine.ExitCode, cmdLine.ErrorLog]);
@@ -352,14 +346,14 @@ begin
         end;
         fTopLevelDir := IncludeTrailingPathDelimiter(SetDirSeparators(Trim(cmdOut)));
         if DirectoryExists(fTopLevelDir + '.git') then
-          fGitCommonDir := fTopLevelDir
+          fGitDir := fTopLevelDir
         else begin
           if cmdLine.RunProcess(fGitCommand + ' rev-parse --git-common-dir', aDir, cmdOut)>0 then begin
             DebugLn('Error getting git common directory: (%d) %s', [cmdLine.ExitCode, cmdLine.ErrorLog]);
             fTopLevelDir := '';
             exit;
           end;
-          fGitCommonDir := ExtractFilePath(trim(cmdout));
+          fGitDir := ExtractFilePath(trim(cmdout));
         end;
       end;
     end;

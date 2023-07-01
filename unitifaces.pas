@@ -73,7 +73,7 @@ type
     //
     function GetExe: string;
     function GetTopLevelDir: string;
-    function GetGitCommonDir: string;
+    function GetGitDir: string;
     function GetVersion: string;
     function GetErrorLog: RawByteString;
     function GetLogError: RawByteString;
@@ -81,7 +81,7 @@ type
 
     property Exe: string read GetExe;
     property TopLevelDir: string read GetTopLevelDir;
-    property GitCommonDir: string read GetGitCommonDir;
+    property GitDir: string read GetGitDir;
     property Version: string read GetVersion;
     property ErrorLog: RawByteString read GetErrorLog;
     property LogError: RawByteString read GetLogError;

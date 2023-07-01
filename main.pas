@@ -443,7 +443,7 @@ begin
     DebugLnEnter('Repository Information:');
     DebugLn('Date: %s', [DateTimeToStr(Now)]);
     DebugLn('Top Level Directory: %s', [fGit.TopLevelDir]);
-    DebugLn('Repo .git Directory: %s', [fGit.GitCommonDir]);
+    DebugLn('Repo .git Directory: %s', [fGit.GitDir]);
     DebugLn('Git program: %s', [fGit.Exe]);
     DebugLn('Git version: %s', [fGit.Version]);
     DebugLnExit('');
