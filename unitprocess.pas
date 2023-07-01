@@ -49,6 +49,7 @@ type
     fErrorLog: string;
     fLastCommand: string;
     fExitCode: Integer;
+    fEnvironment: string;
   public
 
     constructor Init;
@@ -69,6 +70,7 @@ type
     property StdInputClosed: boolean read fStdInputClosed write fStdInputClosed;
     property RedirStdErr: boolean read fRedirStdErr write fRedirStdErr;
     property CaptureFile: string read fCaptureFile write fCaptureFile;
+    property Environment: string read fEnvironment write fEnvironment;
   end;
 
   function SplitParameters(Params: string; ParamList: TStrings): boolean;
@@ -204,6 +206,21 @@ var
     end;
   end;
 
+  procedure AssignEnvironment;
+  var
+    List: TStringList;
+  begin
+    if fEnvironment<>'' then begin
+      List := TStringList.Create;
+      try
+        List.CommaText := fEnvironment;
+        Process.Environment := List;
+      finally
+        List.Free;
+      end;
+    end;
+  end;
+
 begin
 
   if not Assigned(callback) then
@@ -224,6 +241,8 @@ begin
     {$else}
     Process.ParseCmdLine(aCommand, true);
     {$endif}
+
+    AssignEnvironment;
 
     Process.CurrentDirectory := startDir;
     opts := [poUsePipes, poNoConsole];

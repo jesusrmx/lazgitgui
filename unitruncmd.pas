@@ -42,6 +42,7 @@ type
     command: string;
     RedirStdErr: boolean;
     PreferredOutputType: TCommandItemPreferredOutputType;
+    Enviroment: string;
     tag: pointer;
   end;
   TCommandsArray = array of TCommandItem;
@@ -319,6 +320,7 @@ begin
   fIndex := 0;
   while not terminated and (fIndex<Length(fCommands)) do begin
     fCmdLine^.RedirStdErr := fCommands[fIndex].RedirStdErr;
+    fCmdLine^.Environment := fCommands[fIndex].Enviroment;
     try
       M := nil;
       if fCommands[fIndex].PreferredOutputType=cipotStream then begin
