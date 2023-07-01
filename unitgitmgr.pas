@@ -222,6 +222,12 @@ begin
         'refname':
           begin
             case opt of
+              '':
+                begin
+                  if pos('refs/tags', value)=1 then info^.subType := rostTag else
+                  if pos('refs/heads', value)=1 then info^.subType := rostLocal else
+                  if pos('refs/remotes', value)=1 then info^.subType := rostTracking;
+                end;
               'short': info^.refName := value;
               'rstrip=-2':
                 case value of
@@ -457,7 +463,10 @@ begin
   if pos('%(worktreepath', aField)=1 then
     // TODO: check the real version worktreepath appeared
     //       here I'm only registering the version it worked for me.
-    result := fGit.AtLeastVersion('2.25');
+    result := fGit.AtLeastVersion('2.25')
+
+  else if pos(':rstrip', aField)>0 then
+    result := fGit.AtLeastVersion('2.13');
 end;
 
 procedure TGitMgr.UpdateRefsMap;
@@ -595,7 +604,7 @@ begin
   res := FillRefList(
       fInternalRefList, '', [
       '%(refname:short)',
-      '%(refname:rstrip=-2)',
+      '%(refname)',
       '%(objecttype)',
       '%(objectname)',
       '%(upstream:short)',
