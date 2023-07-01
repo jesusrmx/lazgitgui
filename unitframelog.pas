@@ -336,7 +336,6 @@ begin
   canvas.Line(x + 1, y - GRAPH_NODE_RADIUS + 1, x + 1, y + GRAPH_NODE_RADIUS - 1);
   canvas.Line(x + 2, y - GRAPH_NODE_RADIUS + 2, x + 2, y + GRAPH_NODE_RADIUS - 2);
   canvas.Line(x + 3, y - GRAPH_NODE_RADIUS + 3, x + 3, y + GRAPH_NODE_RADIUS - 3);
-  canvas.Pixels[x, y] := clRed;
   canvas.pen.width := j;
 
   //canvas.EllipseC(x, y, GRAPH_NODE_RADIUS, GRAPH_NODE_RADIUS);
