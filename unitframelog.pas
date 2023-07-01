@@ -445,7 +445,7 @@ begin
 
         COLTAG_SUBJECT:
           begin
-            Chunks := GetTextChunks(gridLog.Canvas, aRect, x, fGit.RefsMap, aItem.CommitOID, aItem.Subject);
+            Chunks := GetTextChunks(gridLog.Canvas, aRect, x, fGitMgr.RefsMap, aItem.CommitOID, aItem.Subject);
             for chunk in Chunks do
               chunk.Draw(gridLog.Canvas);
           end;
@@ -1404,7 +1404,7 @@ begin
   mi.Tag := 0;
   popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
 
-  refItems := fGit.RefsFilter(fCurrentItem.CommitOID, @FilterLocal);
+  refItems := fGitMgr.RefsFilter(fCurrentItem.CommitOID, @FilterLocal);
   for i := 0 to Length(refItems)-1 do begin
     mi := TMenuItem.Create(Self.Owner);
     mi.Caption := format(rsMergeSToS, [QuotedStr(refItems[i]^.refName), QuotedStr(fGitMgr.Branch)]);
@@ -1428,7 +1428,7 @@ begin
       curBranch := refItems[i]^.refName;
   end;
 
-  refItems := fGit.RefsFilter(fCurrentItem.CommitOID, @FilterTracking);
+  refItems := fGitMgr.RefsFilter(fCurrentItem.CommitOID, @FilterTracking);
   for i := 0 to Length(refItems)-1 do begin
     if refItems[i]^.refName.EndsWith('HEAD') then
       continue;
@@ -1465,7 +1465,7 @@ begin
   mi.Tag := 0;
   popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
 
-  refItems := fGit.RefsFilter(fCurrentItem.CommitOID, @Filter);
+  refItems := fGitMgr.RefsFilter(fCurrentItem.CommitOID, @Filter);
   for i := 0 to Length(refItems)-1 do begin
 
     mi := TMenuItem.Create(Self.Owner);
@@ -1573,7 +1573,7 @@ begin
     if fLinkMgr=nil then begin
       fLinkMgr := TLinkMgr.Create(gridLog, COLTAG_SUBJECT);
       fLinkMgr.LogCache := fLogCache;
-      fLinkMgr.Git := fGit;
+      fLinkMgr.GitMgr := fGitMgr;
       fLinkMgr.OnLinkClick := @OnLinkClick;
     end;
 
@@ -1759,8 +1759,8 @@ begin
 
   result := '';
   with fCurrentItem do begin
-    if (fGit.RefsMap<>nil) and fGit.RefsMap.Find(CommitOID, n ) then begin
-      arr := fGit.RefsMap.Data[n];
+    if (fGitMgr.RefsMap<>nil) and fGitMgr.RefsMap.Find(CommitOID, n ) then begin
+      arr := fGitMgr.RefsMap.Data[n];
       for ref in arr do begin
         if result<>'' then result+=', ';
         if ref^.subType=rostTag then

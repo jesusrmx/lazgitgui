@@ -171,7 +171,7 @@ begin
       lstSource.Items.AddObject(fCommit, nil);
       lstSource.ItemIndex := 0;
     end else begin
-      refList := fGit.RefList;
+      refList := fGitMgr.RefList;
       for i:=0 to refList.Count-1 do begin
         info := PRefInfo(refList.Objects[i]);
         ok := false;

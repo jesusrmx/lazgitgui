@@ -74,19 +74,14 @@ type
     function Log(opts: string; Lines:TStrings): Integer;
     //
     function GetExe: string;
-    function GetRefsMap: TRefsMap;
-    function GetRefList: TStringList;
     function GetTopLevelDir: string;
     function GetGitCommonDir: string;
     function GetVersion: string;
     function GetErrorLog: RawByteString;
     function GetLogError: RawByteString;
-    function RefsFilter(commitOID: string; filter: TRefFilterProc): TRefInfoArray;
     procedure ResetLogError;
 
     property Exe: string read GetExe;
-    property RefList: TStringList read GetRefList;
-    property RefsMap: TRefsMap read GetRefsMap;
     property TopLevelDir: string read GetTopLevelDir;
     property GitCommonDir: string read GetGitCommonDir;
     property Version: string read GetVersion;

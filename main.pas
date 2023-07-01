@@ -460,7 +460,7 @@ begin
     DebugLn('Has Merging Conflict: %s',[dbgs(fGitMgr.MergingConflict)]);
     DebugLnExit('');
     DebugLnEnter('Local Branches:');
-    refItems := fGit.RefsFilter('', @FilterLocal);
+    refItems := fGitMgr.RefsFilter('', @FilterLocal);
     for i := 0 to Length(refItems)-1 do
     with refItems[i]^ do begin
       s := '';
@@ -470,13 +470,13 @@ begin
     end;
     DebugLnExit('');
     DebugLnEnter('Tracking branches:');
-    refItems := fGit.RefsFilter('', @FilterTracking);
+    refItems := fGitMgr.RefsFilter('', @FilterTracking);
     for i := 0 to Length(refItems)-1 do
     with refItems[i]^ do
       DebugLn('%s %s',[objName, refName]);
     DebugLnExit('');
     DebugLnEnter('Tags:');
-    refItems := fGit.RefsFilter('', @FilterTags);
+    refItems := fGitMgr.RefsFilter('', @FilterTags);
     for i := 0 to Length(refItems)-1 do
     with refItems[i]^ do
       DebugLn('%s %s',[objName, refName]);

@@ -150,7 +150,7 @@ begin
   fConfig.CloseConfig;
 
   fLinkMgr := TLinkMgr.Create(grid, COLTAG_SUBJECT);
-  fLinkMgr.Git := fGit;
+  fLinkMgr.GitMgr := fGitMgr;
   fLinkMgr.OnLinkClick := @OnLinkClick;
   fLinkMgr.OnGetLogItemData := @OnGetLogItemData;
 end;
@@ -173,7 +173,7 @@ begin
     COLTAG_AUTHOR:  s := fHistory[aIndex].Author;
     COLTAG_SUBJECT:
       begin
-        Chunks := GetTextChunks(grid.Canvas, aRect, x, fGit.RefsMap, fHistory[aIndex].CommitOID, fHistory[aIndex].Subject);
+        Chunks := GetTextChunks(grid.Canvas, aRect, x, fGitMgr.RefsMap, fHistory[aIndex].CommitOID, fHistory[aIndex].Subject);
         for chunk in Chunks do begin
           grid.Canvas.Brush.Style := chunk.brushStyle;
           grid.Canvas.Brush.Color := chunk.brushColor;

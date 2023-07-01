@@ -239,7 +239,7 @@ var
   info: PRefInfo;
   i, j: Integer;
 begin
-  refList := fGit.RefList;
+  refList := fGitMgr.RefList;
   for i:=0 to refList.Count-1 do begin
     info := PRefInfo(refList.Objects[i]);
     if info^.subType=rostLocal then begin

@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, Graphics, Controls, Grids,
-  unitifaces, unittextchunks, unitlogcache, unitdbindex;
+  unitifaces, unittextchunks, unitlogcache, unitdbindex, unitgitmgr;
 
 const
   LOGCELL_LEFTMARGIN  = 7;
@@ -21,7 +21,7 @@ type
   TLinkMgr = class
   private
     fClickingLink: Boolean;
-    fGit: IGit;
+    fGitMgr: TGitMgr;
     fGrid: TDrawGrid;
     fLogCache: TLogCache;
     fOnGetLogItemData: TGetLogItemDataEvent;
@@ -43,7 +43,7 @@ type
     destructor destroy; override;
 
     property LogCache: TLogCache read fLogCache write fLogCache;
-    property Git: IGit read fGit write fGit;
+    property GitMgr: TGitMgr read fGitMgr write fGitMgr;
     property OnLinkClick: TLinkClickEvent read fOnLinkClick write fOnLinkClick;
     property OnGetLogItemData: TGetLogItemDataEvent read fOnGetLogItemData write fOnGetLogItemData;
   end;
@@ -65,7 +65,6 @@ end;
 
 destructor TLinkMgr.destroy;
 begin
-  fGit := nil;
   fRowTextChunks := nil;
   inherited destroy;
 end;
@@ -98,7 +97,8 @@ begin
       aIndex := aRow - fGrid.FixedRows;
       aRect := fGrid.CellRect(aCol, aRow);
       GetLogItemData(aIndex, aCommit, aSubject);
-      fRowTextChunks := GetTextChunks(fGrid.Canvas, aRect, aRect.Left + LOGCELL_LEFTMARGIN, fGit.RefsMap, aCommit, aSubject);
+      fRowTextChunks := GetTextChunks(fGrid.Canvas, aRect, aRect.Left + LOGCELL_LEFTMARGIN,
+      fGitMgr.RefsMap, aCommit, aSubject);
     end;
 
     for i:=0 to Length(fRowTextChunks)-1 do
