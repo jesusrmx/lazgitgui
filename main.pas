@@ -877,6 +877,13 @@ var
   list, branchLine: TStringList;
   i: integer;
   mi: TMenuItem;
+  ref: PRefInfo;
+
+  function FilterLocalBranches(info: PRefInfo): boolean;
+  begin
+    result := (info^.subType=rostLocal);
+  end;
+
 begin
   InvalidateBranchMenu;
 
@@ -886,43 +893,20 @@ begin
   AddPopItem(popBranch, '-', nil, MENU_INVALID);
 
   try
-    list := TStringList.Create;
 
-    if fGit.BranchList(list, [
-        '%(refname:short)',
-        '%(objecttype)',
-        '%(upstream:short)',
-        '%(HEAD)'])>0 then
-    begin
-      ShowError;
-      exit;
+    fGitMgr.UpdateRefList;
+
+    for ref in fGitMgr.RefsFilter('', @FilterLocalBranches) do begin
+      mi := AddPopItem(popBranch, ref^.refName, @OnPopupItemClick, MENU_BRANCH_SWITCH);
+      mi.GroupIndex := 1;
+      mi.AutoCheck := true;
+      mi.Checked := ref^.head;
+      if mi.Checked then
+        mi.OnClick := nil;
+      mi.RadioItem := true;
     end;
 
-    try
-      branchLine := TStringList.Create;
-      branchLine.StrictDelimiter := true;
-      branchLine.Delimiter := '|';
-
-      for i:=0 to list.Count-1 do begin
-        BranchLine.DelimitedText := list[i];
-        if pos('/', branchLine[0])<>0 then
-          continue;
-
-        mi := AddPopItem(popBranch, branchLine[0], @OnPopupItemClick, MENU_BRANCH_SWITCH);
-        mi.GroupIndex := 1;
-        mi.AutoCheck := true;
-        mi.Checked := branchLine[3]='*';
-        if mi.Checked then
-          mi.OnClick := nil;
-        mi.RadioItem := true;
-
-      end;
-
-    finally
-      branchLine.free;
-    end;
   finally
-    list.Free;
     CheckMenuDivisorInLastPosition(popBranch);
   end;
 end;
