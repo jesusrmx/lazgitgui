@@ -64,7 +64,6 @@ type
     function Add(entry: PFileEntry): Integer; overload;
     function Add(entryArray: TPFileEntryArray): Integer; overload;
     function Rm(entry: PFileEntry): Integer;
-    function BranchList(list: TStrings; opts:array of string): Integer;
     function Tag(tagName, tagCommit:string; annotated:boolean; tagMsg:string): Integer;
     function DeleteTag(tagName: string): Integer;
     function OpenDir(aDir: string): Integer;

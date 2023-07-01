@@ -73,7 +73,6 @@ type
     function Restore(entry: PFileEntry; staged: boolean): Integer; overload;
     function Restore(entryArray: TPFileEntryArray; staged: boolean): Integer; overload;
     function Reset(opts: string; out outMsg:RawByteString): Integer;
-    function BranchList(list: TStrings; opts:array of string): Integer;
     function Switch(branchName: string): Integer;
     function OpenDir(aDir: string): Integer;
     function Commit(msg, opts: string): Integer;
@@ -343,20 +342,6 @@ function TGit.Reset(opts: string; out outMsg: RawByteString): Integer;
 begin
   opts := ' reset ' + opts;
   result := cmdLine.RunProcess(fGitCommand+opts, fTopLevelDir, outMsg);
-end;
-
-function TGit.BranchList(list: TStrings; opts: array of string): Integer;
-var
-  opt, cmd: String;
-begin
-  list.Clear;
-  cmd := '';
-  for opt in opts do begin
-    if cmd<>'' then cmd += '|';
-    cmd += opt;
-  end;
-  cmd := ' branch -vv --format="' + cmd + '" -a';
-  result := cmdLine.RunProcess(fGitCommand + cmd, fTopLevelDir, List);
 end;
 
 function TGit.Switch(branchName: string): Integer;
