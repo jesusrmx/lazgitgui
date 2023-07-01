@@ -1355,7 +1355,7 @@ begin
   fGitMgr.ViewTrackedFiles := fConfig.ViewTrackedFiles;
   fGitMgr.ShowTags := fConfig.ShowTags;
 
-  if fConfig.ReadBoolean('NeedsMenuWorkaround') then begin
+  if fConfig.ReadBoolean('NeedsMenuWorkaround'{$ifdef Linux},true{$endif}) then begin
     Self.Menu := nil;
     Application.QueueAsyncCall(@DelayedShowMenu, 0);
   end;
