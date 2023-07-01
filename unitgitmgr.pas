@@ -139,6 +139,25 @@ type
 
 implementation
 
+procedure ClearRefList(list: TStrings);
+var
+  i: Integer;
+  info: PRefInfo;
+begin
+  if List<>nil then begin
+    for i:=0 to list.Count-1 do begin
+      info := PRefInfo(list.Objects[i]);
+      if info^.refered<>nil then begin
+        Finalize(info^.refered^);
+        Dispose(info^.refered);
+      end;
+      Finalize(info^);
+      Dispose(info);
+    end;
+    list.clear;
+  end;
+end;
+
 function CleanRefField(const aField: string; out opt:string): string;
 var
   i: SizeInt;

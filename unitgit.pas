@@ -48,9 +48,6 @@ type
     fUntrackedMode: string;
     fIgnoredMode: string;
     fVersion: String;
-    fLastTag: string;
-    fLastTagOID: string;
-    fLastTagCommits: Integer;
     fLogError: RawByteString;
     function GetErrorLog: RawByteString;
     function GetExe: string;
@@ -58,7 +55,7 @@ type
     function GetTopLevelDir: string;
     function GetGitCommonDir: string;
     function GetVersion: string;
-    function  TryGitIn(aPath: string): boolean;
+    function TryGitIn(aPath: string): boolean;
     function GetVersion(gitCmd:string; out aVersion:string): boolean;
     procedure SetupExe(aExeFile, aVersion: string);
     procedure PushError;
@@ -97,8 +94,6 @@ type
     property Version: string read GetVersion;
   end;
 
-  procedure ClearRefList(list: TStrings);
-
 implementation
 
 const
@@ -123,25 +118,6 @@ begin
     end;
     len := strlen(head);
     head := head + len + 1;
-  end;
-end;
-
-procedure ClearRefList(list: TStrings);
-var
-  i: Integer;
-  info: PRefInfo;
-begin
-  if List<>nil then begin
-    for i:=0 to list.Count-1 do begin
-      info := PRefInfo(list.Objects[i]);
-      if info^.refered<>nil then begin
-        Finalize(info^.refered^);
-        Dispose(info^.refered);
-      end;
-      Finalize(info^);
-      Dispose(info);
-    end;
-    list.clear;
   end;
 end;
 
