@@ -66,7 +66,8 @@ uses
   graphutil,
   unitgittypes, unitlogcache, unitdbindex, unitgitutils, unitifaces, unitruncmd,
   unitgitmgr, unitcommitbrowser, unitvfs, unithighlighterhelper, unitgraphbuild,
-  unitfilehistory, unitnewbranch, unitreset, unitcommon, unittextchunks, unitlinkmgr;
+  unitfilehistory, unitnewbranch, unitreset, unitcommon, unittextchunks, unitlinkmgr,
+  unitcolumnscroller;
 
 const
   GRAPH_LEFT_PADDING          = 12;
@@ -178,6 +179,7 @@ type
     fLastSelectedCommit: QWord;
     fLinkMgr: TLinkMgr;
     fRangeFirstCommit: string;
+    fColScroller: TColumnScroller;
     procedure CheckSearchButtons;
     procedure LaunchGraphBuildingThread;
     procedure OnContextPopLogClick(Sender: TObject);
@@ -1575,6 +1577,10 @@ begin
       fLinkMgr.GitMgr := fGitMgr;
       fLinkMgr.OnLinkClick := @OnLinkClick;
     end;
+
+    // NOTE: this MUST be created after linkMgr
+    //if fColScroller=nil then
+    //  fColScroller := TColumnScroller.Create(gridLog, COLTAG_GRAPH);
 
     if gblCutterMode then
       gridLog.Options := gridLog.Options + [goRangeSelect];
