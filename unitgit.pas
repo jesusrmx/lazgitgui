@@ -222,6 +222,8 @@ function TGit.TryGitIn(aPath: string): boolean;
 begin
   aPath := aPath + 'git' + EXE_EXTENSION;
   result := FileExists(aPath);
+  if result then
+    fGitCommand := aPath;
 end;
 
 function TGit.Diff(entry: PFileEntry; Unstaged: boolean; Lines: TStrings
