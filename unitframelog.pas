@@ -60,7 +60,7 @@ c4109375a599264d818df2d265dab104ff8271a4
 interface
 
 uses
-  Classes, SysUtils, dateUtils, fgl, lclIntf, LazLogger, SynEdit, SynHighlighterDiff,
+  Classes, SysUtils, Math, dateUtils, fgl, lclIntf, LazLogger, SynEdit, SynHighlighterDiff,
   SynHighlighterPas, SynHighlighterXML, Graphics, Forms, Dialogs, Controls, //StrUtils,
   Grids, ExtCtrls, ComCtrls, Menus, Types, Clipbrd, ActnList, Buttons, StdCtrls,
   graphutil,
@@ -1259,7 +1259,7 @@ procedure TframeLog.OnGraphBuilderDone(Sender: TObject);
 var
   thread: TGraphBuilderThread absolute sender;
   col: TGridColumn;
-  i: Integer;
+  i, aWidth: Integer;
 begin
   lblGraphBuild.Visible := false;
   LayoutLabels;
@@ -1269,7 +1269,10 @@ begin
 
   col := ColumnByTag(COLTAG_GRAPH);
   i := gridLog.Columns.IndexOf(col);
-  gridLog.Columns[i].Width := GRAPH_LEFT_PADDING + (fGraphColumns-1)*GRAPH_COLUMN_SEPARATOR + GRAPH_RIGHT_PADDING;
+  aWidth := GRAPH_LEFT_PADDING + (fGraphColumns-1)*GRAPH_COLUMN_SEPARATOR + GRAPH_RIGHT_PADDING;
+  gridLog.Columns[i].Width := min(aWidth, gblMaxGraphColumnWidth);
+  if fColScroller<>nil then
+    fColScroller.Width := aWidth;
 
   gridLog.Invalidate;
 end;
@@ -1579,8 +1582,8 @@ begin
     end;
 
     // NOTE: this MUST be created after linkMgr
-    //if fColScroller=nil then
-    //  fColScroller := TColumnScroller.Create(gridLog, COLTAG_GRAPH);
+    if fColScroller=nil then
+      fColScroller := TColumnScroller.Create(gridLog, COLTAG_GRAPH);
 
     if gblCutterMode then
       gridLog.Options := gridLog.Options + [goRangeSelect];

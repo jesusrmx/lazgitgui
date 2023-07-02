@@ -140,6 +140,7 @@ var
   gblCutterMode: boolean = false;
   gblTopologicalMode: boolean = true;
   gblAllowDeleteChanged: boolean = false;
+  gblMaxGraphColumnWidth: Integer = 150;
 
 implementation
 
