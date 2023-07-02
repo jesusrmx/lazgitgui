@@ -216,8 +216,8 @@ begin
     info^.subType := rostOther;
     info^.isTracking := false;
 
-    if haveReferedFields and (strpos(p, pchar('refs/tags'+sep))<>nil) then  new(refered)
-    else                                                                    refered := nil;
+    if haveReferedFields and (strpos(p, pchar('refs/tags/'))<>nil) then new(refered)
+    else                                                                refered := nil;
     info^.refered := refered;
 
     // each returned field should correspond to every fields[] requested
