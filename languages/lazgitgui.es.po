@@ -457,13 +457,14 @@ msgstr "Cargar una etiqueta"
 msgid "Create a branch."
 msgstr "Crear rama."
 
-#: tfrmcheckoutag.label1.caption
-msgid "tag"
-msgstr "etiqueta"
-
 #: tfrmcheckoutag.lblbranch.caption
 msgid "Branch Name:"
 msgstr "Rama:"
+
+#: tfrmcheckoutag.lblcaption.caption
+msgctxt "tfrmcheckoutag.lblcaption.caption"
+msgid "Tag"
+msgstr "Etiqueta"
 
 #: tfrmcheckoutag.lbltag.caption
 msgid "lblTag"
@@ -977,6 +978,10 @@ msgctxt "unitcommon.rscancel"
 msgid "Cancel"
 msgstr "Cancelar"
 
+#: unitcommon.rscheckoutacommit
+msgid "Check out a commit"
+msgstr "Cargar copia de trabajo a una revisión"
+
 #: unitcommon.rscommandds
 #, object-pascal-format
 msgid "command %d: %s"
@@ -1432,6 +1437,10 @@ msgstr "Cambiar a %s"
 #, object-pascal-format
 msgid "Switch to tag %s"
 msgstr "Cambiar a la etiqueta %s"
+
+#: unitcommon.rsswitchtothiscommit
+msgid "Switch to this commit"
+msgstr "Cambiar a esta revisión"
 
 #: unitcommon.rstagnameisempty
 msgid "Tag name is empty"

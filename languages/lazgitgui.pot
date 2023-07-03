@@ -427,12 +427,13 @@ msgstr ""
 msgid "Create a branch."
 msgstr ""
 
-#: tfrmcheckoutag.label1.caption
-msgid "tag"
-msgstr ""
-
 #: tfrmcheckoutag.lblbranch.caption
 msgid "Branch Name:"
+msgstr ""
+
+#: tfrmcheckoutag.lblcaption.caption
+msgctxt "tfrmcheckoutag.lblcaption.caption"
+msgid "Tag"
 msgstr ""
 
 #: tfrmcheckoutag.lbltag.caption
@@ -947,6 +948,10 @@ msgctxt "unitcommon.rscancel"
 msgid "Cancel"
 msgstr ""
 
+#: unitcommon.rscheckoutacommit
+msgid "Check out a commit"
+msgstr ""
+
 #: unitcommon.rscommandds
 #, object-pascal-format
 msgid "command %d: %s"
@@ -1368,6 +1373,10 @@ msgstr ""
 #: unitcommon.rsswitchtotags
 #, object-pascal-format
 msgid "Switch to tag %s"
+msgstr ""
+
+#: unitcommon.rsswitchtothiscommit
+msgid "Switch to this commit"
 msgstr ""
 
 #: unitcommon.rstagnameisempty
