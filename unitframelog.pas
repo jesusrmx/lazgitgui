@@ -60,13 +60,14 @@ c4109375a599264d818df2d265dab104ff8271a4
 interface
 
 uses
-  Classes, SysUtils, dateUtils, fgl, lclIntf, LazLogger, SynEdit, SynHighlighterDiff,
+  Classes, SysUtils, Math, dateUtils, fgl, lclIntf, LazLogger, SynEdit, SynHighlighterDiff,
   SynHighlighterPas, SynHighlighterXML, Graphics, Forms, Dialogs, Controls, //StrUtils,
   Grids, ExtCtrls, ComCtrls, Menus, Types, Clipbrd, ActnList, Buttons, StdCtrls,
   graphutil,
   unitgittypes, unitlogcache, unitdbindex, unitgitutils, unitifaces, unitruncmd,
   unitgitmgr, unitcommitbrowser, unitvfs, unithighlighterhelper, unitgraphbuild,
-  unitfilehistory, unitnewbranch, unitreset, unitcommon, unittextchunks, unitlinkmgr;
+  unitfilehistory, unitnewbranch, unitreset, unitcommon, unittextchunks, unitlinkmgr,
+  unitcolumnscroller;
 
 const
   GRAPH_LEFT_PADDING          = 12;
@@ -166,6 +167,7 @@ type
     fFiltered: boolean;
     fGit: IGit;
     fGitMgr: TGitMgr;
+    fGraphOffset: Integer;
     fhlHelper: THighlighterHelper;
     fItemIndices: TItemIndexArray;
     fLogCache: TLogCache;
@@ -178,6 +180,7 @@ type
     fLastSelectedCommit: QWord;
     fLinkMgr: TLinkMgr;
     fRangeFirstCommit: string;
+    fColScroller: TColumnScroller;
     procedure CheckSearchButtons;
     procedure LaunchGraphBuildingThread;
     procedure OnContextPopLogClick(Sender: TObject);
@@ -186,6 +189,7 @@ type
     procedure OnDeleteBranchClick(Sender: TObject);
     procedure OnDeleteRemoteBranchClick(Sender: TObject);
     procedure OnGraphBuilderDone(Sender: TObject);
+    procedure OnGraphColumnScroll(Sender: TObject);
     procedure OnLinkClick(sender: TObject; link: TTextChunksItem);
     procedure OnLogEvent(sender: TObject; thread: TLogThread; event: Integer; var interrupt: boolean);
     procedure OnDeleteTagClick(sender: TObject);
@@ -380,7 +384,7 @@ begin
 
             with fItemIndices[aIndex] do begin
               gridLog.canvas.Pen.Width := GRAPH_LINE_WIDTH;
-              w := aRect.Left + GRAPH_LEFT_PADDING;
+              w := aRect.Left + GRAPH_LEFT_PADDING - fGraphOffset;
 
               j := column;
               for i:=Length(lines)-1 downto 0 do begin
@@ -1257,7 +1261,7 @@ procedure TframeLog.OnGraphBuilderDone(Sender: TObject);
 var
   thread: TGraphBuilderThread absolute sender;
   col: TGridColumn;
-  i: Integer;
+  i, aWidth: Integer;
 begin
   lblGraphBuild.Visible := false;
   LayoutLabels;
@@ -1267,9 +1271,20 @@ begin
 
   col := ColumnByTag(COLTAG_GRAPH);
   i := gridLog.Columns.IndexOf(col);
-  gridLog.Columns[i].Width := GRAPH_LEFT_PADDING + (fGraphColumns-1)*GRAPH_COLUMN_SEPARATOR + GRAPH_RIGHT_PADDING;
+  aWidth := GRAPH_LEFT_PADDING + (fGraphColumns-1)*GRAPH_COLUMN_SEPARATOR + GRAPH_RIGHT_PADDING;
+  gridLog.Columns[i].Width := min(aWidth, gblMaxGraphColumnWidth);
+  if fColScroller<>nil then
+    fColScroller.Width := aWidth;
 
   gridLog.Invalidate;
+end;
+
+procedure TframeLog.OnGraphColumnScroll(Sender: TObject);
+var
+  slider: TSlider absolute Sender;
+begin
+  fGraphOffset := slider.Offset;
+  gridLog.InvalidateCol(slider.SliderCol);
 end;
 
 procedure TframeLog.OnLinkClick(sender: TObject; link: TTextChunksItem);
@@ -1575,6 +1590,10 @@ begin
       fLinkMgr.GitMgr := fGitMgr;
       fLinkMgr.OnLinkClick := @OnLinkClick;
     end;
+
+    // NOTE: this MUST be created after linkMgr
+    if fColScroller=nil then
+      fColScroller := TColumnScroller.Create(gridLog, COLTAG_GRAPH, @OnGraphColumnScroll);
 
     if gblCutterMode then
       gridLog.Options := gridLog.Options + [goRangeSelect];
@@ -1992,6 +2011,7 @@ procedure TframeLog.Clear;
 begin
   FreeAndNil(fLogCache);
   FreeAndNil(fCommitBrowser);
+  FreeAndNil(fColScroller);
   FreeAndNil(fLinkMgr);
 end;
 
