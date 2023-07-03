@@ -167,6 +167,7 @@ type
     fFiltered: boolean;
     fGit: IGit;
     fGitMgr: TGitMgr;
+    fGraphOffset: Integer;
     fhlHelper: THighlighterHelper;
     fItemIndices: TItemIndexArray;
     fLogCache: TLogCache;
@@ -188,6 +189,7 @@ type
     procedure OnDeleteBranchClick(Sender: TObject);
     procedure OnDeleteRemoteBranchClick(Sender: TObject);
     procedure OnGraphBuilderDone(Sender: TObject);
+    procedure OnGraphColumnScroll(Sender: TObject);
     procedure OnLinkClick(sender: TObject; link: TTextChunksItem);
     procedure OnLogEvent(sender: TObject; thread: TLogThread; event: Integer; var interrupt: boolean);
     procedure OnDeleteTagClick(sender: TObject);
@@ -382,7 +384,7 @@ begin
 
             with fItemIndices[aIndex] do begin
               gridLog.canvas.Pen.Width := GRAPH_LINE_WIDTH;
-              w := aRect.Left + GRAPH_LEFT_PADDING;
+              w := aRect.Left + GRAPH_LEFT_PADDING - fGraphOffset;
 
               j := column;
               for i:=Length(lines)-1 downto 0 do begin
@@ -1277,6 +1279,14 @@ begin
   gridLog.Invalidate;
 end;
 
+procedure TframeLog.OnGraphColumnScroll(Sender: TObject);
+var
+  slider: TSlider absolute Sender;
+begin
+  fGraphOffset := slider.Offset;
+  gridLog.InvalidateCol(slider.SliderCol);
+end;
+
 procedure TframeLog.OnLinkClick(sender: TObject; link: TTextChunksItem);
 begin
   case link.linkAction of
@@ -1583,7 +1593,7 @@ begin
 
     // NOTE: this MUST be created after linkMgr
     if fColScroller=nil then
-      fColScroller := TColumnScroller.Create(gridLog, COLTAG_GRAPH);
+      fColScroller := TColumnScroller.Create(gridLog, COLTAG_GRAPH, @OnGraphColumnScroll);
 
     if gblCutterMode then
       gridLog.Options := gridLog.Options + [goRangeSelect];
@@ -2001,6 +2011,7 @@ procedure TframeLog.Clear;
 begin
   FreeAndNil(fLogCache);
   FreeAndNil(fCommitBrowser);
+  FreeAndNil(fColScroller);
   FreeAndNil(fLinkMgr);
 end;
 

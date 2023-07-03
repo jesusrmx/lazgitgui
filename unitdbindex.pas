@@ -140,7 +140,7 @@ var
   gblCutterMode: boolean = false;
   gblTopologicalMode: boolean = true;
   gblAllowDeleteChanged: boolean = false;
-  gblMaxGraphColumnWidth: Integer = 150;
+  gblMaxGraphColumnWidth: Integer = 300;
 
 implementation
 
@@ -179,7 +179,7 @@ end;
 // Given a Index database, create a map where the key is the commit OID
 // (a CommitOID limited to 16 characters packed in a QWord) and the data
 // it's an array of parents of that commit. This map can be used later
-// to find indexes inheritance.
+// to find commits inheritance.
 //
 // TODO: check if using full OIDs (strings) is really slower than using QWords
 function GetParentsMap(fDb: TDbIndex): TParentsMap;

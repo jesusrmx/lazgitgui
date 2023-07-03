@@ -19,9 +19,11 @@
   Boston, MA 02110-1335, USA.
 
   Column Scroller.
-  Given a drawgrid, this class handles a column built-in scroller so
-  If the column is given a max width and the column width is wider
-  it handles scrolling in this column
+  Given a drawgrid, this class handles a column built-in scrollbar so if the
+  column content (identified by scroller.width) is bigger than the column width
+  an indicator showing the column width is too small and a slider bar will
+  appear as soon the user points the mouse cursor to the indicator area, then
+  the user can drag the slider and see the hidden part of the column content.
 }
 unit unitcolumnscroller;
 
@@ -45,6 +47,7 @@ type
     fDrag: Boolean;
     fDragX: Integer;
     fDragY: Integer;
+    fOnScroll: TNotifyEvent;
     fSliderCol, fSliderRow: Integer;
     fGrid: TDrawGrid;
     fDirty: boolean;
@@ -55,12 +58,14 @@ type
     fActive: boolean;
     fEnabled: boolean;
     fWidth: Integer;
+    fOffset: Integer;
     function IsSliderCell(aCol, aRow: Integer): boolean;
-    function IsSliderVisible(aCol: Integer): boolean;
+    function IsSliderVisible(aCol, aRow: Integer): boolean;
     procedure SetEnabled(AValue: boolean);
     procedure SetWidth(AValue: Integer);
     procedure UpdateBounds(aRect: TRect);
     procedure UpdateCol;
+    procedure CheckVisibility(aCol, aRow: Integer);
   public
     constructor create(aGrid: TDrawGrid; aColTag: Integer);
 
@@ -73,6 +78,10 @@ type
     property Active: boolean read fActive;
     property Enabled: boolean read fEnabled write SetEnabled;
     property Width: Integer read fWidth write SetWidth;
+    property Offset: Integer read fOffset;
+    property OnScroll: TNotifyEvent read fOnScroll Write fOnScroll;
+    property SliderCol: Integer read fSliderCol;
+    property SliderRow: Integer read fSliderRow;
   end;
 
   { TColumnScroller }
@@ -89,6 +98,7 @@ type
     fOrgOnSelectCell: TOnSelectCellEvent;
     fSlider: TSlider;
     fWidth: Integer;
+    function GetOffset: integer;
     function GetWidth: Integer;
     procedure GridDrawCell(Sender: TObject; aCol, aRow: Integer; aRect: TRect;
       aState: TGridDrawState);
@@ -103,17 +113,18 @@ type
       var CanSelect: Boolean);
     procedure SetWidth(AValue: Integer);
   public
-    constructor Create(aGrid: TDrawGrid; aColTag: Integer);
+    constructor Create(aGrid: TDrawGrid; aColTag: Integer; OnScroll: TNotifyEvent);
+    destructor destroy; override;
 
-    property OffsetX: integer read fOffsetX write fOffsetX;
+    property OffsetX: integer read GetOffset;
     property Width: Integer read GetWidth write SetWidth;
   end;
 
 implementation
 
 const
-  SLIDER_COLOR_INACTIVE     = clMoneyGreen; // TColor($100010);
-  SLIDER_COLOR_ACTIVE       = clSkyBlue; //TColor($800080);
+  SLIDER_COLOR_INACTIVE = clMoneyGreen;
+  SLIDER_COLOR_ACTIVE   = clSkyBlue;
 
 function ColumnByTag(aGrid:TDrawGrid; aTag: Integer): TGridColumn;
 var
@@ -134,9 +145,9 @@ begin
   result := (aCol=fSliderCol) and (aRow=fSliderRow);
 end;
 
-function TSlider.IsSliderVisible(aCol: Integer): boolean;
+function TSlider.IsSliderVisible(aCol, aRow: Integer): boolean;
 begin
-  result := aCol=fSliderCol;
+  result := (aCol=fSliderCol) and (aRow=fSliderRow);
 end;
 
 procedure TSlider.SetEnabled(AValue: boolean);
@@ -166,15 +177,21 @@ begin
 end;
 
 procedure TSlider.UpdateBounds(aRect: TRect);
+var
+  w: Integer;
 begin
-  fRect := aRect;
   fBase := aRect;
-
-  fRect.Left := fRect.Left + aRect.Width div 4;
-  fRect.Right := fRect.Right - aRect.Width div 4;
-  fRect.Bottom := fRect.Bottom - 2;
-  fRect.Top := fRect.Bottom - 7;
-
+  if fWidth=0 then begin
+    fRect.Left := aRect.Left;
+    w := 0
+  end else begin
+    fRect.Left := fBase.Left + round( fOffset * aRect.Width / fWidth );
+    w := round(aRect.Width * aRect.Width / fWidth);
+  end;
+  fEnabled := aRect.Width < fWidth;
+  fRect.Right := fRect.Left + w;
+  fRect.Bottom := aRect.Bottom - 2;
+  fRect.Top := aRect.Bottom - 7;
   fDirty := false;
 end;
 
@@ -183,19 +200,50 @@ var
   column: TGridColumn;
 begin
   column := ColumnByTag(fGrid, fColTag);
-  if (column<>nil) then
+  if (column<>nil) then begin
     fSliderCol := fGrid.FixedCols + column.Index;
+  end;
+end;
+
+procedure TSlider.CheckVisibility(aCol, aRow: Integer);
+var
+  newVisible, ok: Boolean;
+begin
+  newVisible := IsSliderVisible(aCol, aRow);
+
+  if newVisible <> fVisible then begin
+    if fVisible then begin
+      aCol := fVisibleCol;
+      aRow := fVisibleRow;
+    end else begin
+      aCol := fSliderCol;
+      aRow := fSliderRow;
+    end;
+
+    fGrid.InvalidateCell(aCol, aRow);
+
+    fVisible := newVisible;
+    if fVisible then begin
+      fVisibleCol := aCol;
+      fVisibleRow := aRow;
+    end else
+      fActive := false;
+  end;
+
 end;
 
 procedure TSlider.Draw(aRect: TRect; aCol, aRow: Integer);
 begin
 
-  if not fEnabled then
-    exit;
-
   fSliderRow := fGrid.TopRow + fGrid.VisibleRowCount - 1;
+
   if IsSliderCell(aCol, aRow) then begin
-    if fDirty then UpdateBounds(aRect);
+
+    UpdateBounds(aRect);
+
+    if not fEnabled then
+      exit;
+
     if fVisible then begin
       fGrid.Canvas.Brush.Style := bsSolid;
       if fActive then fGrid.Canvas.Brush.Color := SLIDER_COLOR_ACTIVE
@@ -204,9 +252,11 @@ begin
     end else begin
       fGrid.Canvas.Pen.Color := SLIDER_COLOR_INACTIVE;
       fGrid.Canvas.Pen.Width := 2;
+
       // draw scroll left arrow
       fGrid.Canvas.Line(aRect.Left + 10, aRect.Top    + 4, aRect.Left, aRect.Top + 9);
       fGrid.Canvas.Line(aRect.Left + 10, aRect.Bottom - 4, aRect.Left, aRect.Top + 9);
+
       // draw scroll right arrow
       fGrid.Canvas.Line(aRect.Right - 12, aRect.Top    + 4, aRect.Right-2, aRect.Top + 9);
       fGrid.Canvas.Line(aRect.Right - 12, aRect.Bottom - 4, aRect.Right-2, aRect.Top + 9);
@@ -226,7 +276,7 @@ end;
 procedure TSlider.MouseMove(x, y: Integer);
 var
   aCol, aRow, orgLeft: Longint;
-  newVisible, ok: boolean;
+  ok: boolean;
   delta: Integer;
 begin
 
@@ -242,8 +292,20 @@ begin
       if fRect.Left < fBase.Left then
         fRect.Offset(fBase.Left - fRect.Left, 0);
 
-      if orgLeft<>fRect.Left then
+      if orgLeft<>fRect.Left then begin
+
+        if fBase.Width=0 then
+          fOffset := 0
+        else begin
+          delta := fRect.Left - fBase.Left;
+          fOffset := round( delta * fWidth / fBase.Width );
+        end;
+
+        if Assigned(fOnScroll) then
+          fOnScroll(Self);
+
         Invalidate;
+      end;
 
       fDragX := x;
       fDragY := y;
@@ -253,25 +315,7 @@ begin
 
   fGrid.MouseToCell(x, y, aCol, aRow);
 
-  newVisible := IsSliderVisible(aCol);
-
-  if newVisible <> fVisible then begin
-    if fVisible then begin
-      aCol := fVisibleCol;
-      aRow := fVisibleRow;
-    end else begin
-      aCol := fSliderCol;
-      aRow := fSliderRow;
-    end;
-
-    fGrid.InvalidateCell(aCol, aRow);
-
-    fVisible := newVisible;
-    if fVisible then begin
-      fVisibleCol := aCol;
-      fVisibleRow := aRow;
-    end;
-  end;
+  CheckVisibility(aCol, aRow);
 
   if fVisible and IsSliderCell(aCol, aRow) then begin
     ok := fRect.Contains(Point(x, y));
@@ -280,12 +324,11 @@ begin
       fGrid.InvalidateCell(aCol, aRow);
     end;
   end;
+
 end;
 
 procedure TSlider.MouseUp(x, y: Integer);
 begin
-  if fActive then
-    Invalidate;
   fDrag := false;
 end;
 
@@ -319,6 +362,11 @@ end;
 function TColumnScroller.GetWidth: Integer;
 begin
   result := fSlider.Width;
+end;
+
+function TColumnScroller.GetOffset: integer;
+begin
+  result := fSlider.Offset;
 end;
 
 procedure TColumnScroller.GridMouseMove(Sender: TObject; Shift: TShiftState; X,
@@ -356,14 +404,15 @@ begin
   fSlider.Width := Avalue;
 end;
 
-constructor TColumnScroller.Create(aGrid: TDrawGrid; aColTag: Integer);
+constructor TColumnScroller.Create(aGrid: TDrawGrid; aColTag: Integer;
+  OnScroll: TNotifyEvent);
 begin
   fGrid := aGrid;
 
-  fOrgOnMouseDown := fGrid.OnMouseDown;
-  fOrgOnMouseMove := fGrid.OnMouseMove;
-  fOrgOnMouseUp := fGrid.OnMouseUp;
-  fOrgOnDrawCell := fGrid.OnDrawCell;
+  fOrgOnMouseDown  := fGrid.OnMouseDown;
+  fOrgOnMouseMove  := fGrid.OnMouseMove;
+  fOrgOnMouseUp    := fGrid.OnMouseUp;
+  fOrgOnDrawCell   := fGrid.OnDrawCell;
   fOrgOnSelectCell := fGrid.OnSelectCell;
   fOrgOnMouseWheel := fGrid.OnMouseWheel;
 
@@ -375,6 +424,22 @@ begin
   fGrid.OnMouseWheel  := @GridMouseWheel;
 
   fSlider := TSlider.Create(fGrid, aColTag);
+  fSlider.OnScroll := OnScroll;
+end;
+
+destructor TColumnScroller.destroy;
+begin
+
+  fSlider.Free;
+
+  fGrid.OnMouseDown  := fOrgOnMouseDown;
+  fGrid.OnMouseMove  := fOrgOnMouseMove;
+  fGrid.OnMouseUp    := fOrgOnMouseUp;
+  fGrid.OnDrawCell   := fOrgOnDrawCell;
+  fGrid.OnSelectCell := fOrgOnSelectCell;
+  fGrid.OnMouseWheel := fOrgOnMouseWheel;
+
+  inherited destroy;
 end;
 
 end.
