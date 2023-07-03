@@ -186,6 +186,7 @@ type
     procedure ObservedChanged(Sender:TObject; what: Integer; data: PtrInt);
     procedure ShowNewTagForm(commit: string);
     procedure ShowSwitchToTagForm(aTag: string);
+    procedure ShowSwitchToCommitForm(aCommit: string);
     procedure SwitchTo(cmd: string);
     procedure SaveCommitMessage;
     procedure RestoreCommitMessage;
@@ -1072,6 +1073,7 @@ var
   binfo: PBranchInfo;
 begin
   case what of
+
     GITMGR_EVENT_UpdateStatus:
       begin
         prgBar.Visible := false;
@@ -1083,6 +1085,7 @@ begin
           UpdateBranch;
         end;
       end;
+
     GITMGR_EVENT_NEWTAG:
       begin
         info := {%H-}PTagInfo(data);
@@ -1090,10 +1093,19 @@ begin
         Finalize(info^.data);
         dispose(info);
       end;
+
     GITMGR_EVENT_SWITCHTOTAG:
       begin
         info := {%H-}PTagInfo(data);
         ShowSwitchToTagForm(info^.data);
+        finalize(info^.data);
+        dispose(info);
+      end;
+
+    GITMGR_EVENT_SWITCHTOCOMMIT:
+      begin
+        info := {%H-}PTagInfo(data);
+        ShowSwitchToCommitForm(info^.data);
         finalize(info^.data);
         dispose(info);
       end;
@@ -1138,6 +1150,27 @@ begin
   try
     if f.ShowModal=mrOk then begin
       cmd := aTag;
+      if f.chkCreateBranch.Checked then
+        cmd := '-b ' + Trim(f.txtBranchName.Text) + ' ' + cmd;
+      SwitchTo(cmd);
+    end;
+  finally
+    f.free;
+  end;
+end;
+
+procedure TfrmMain.ShowSwitchToCommitForm(aCommit: string);
+var
+  f: TfrmCheckouTag;
+  cmd: string;
+begin
+  f := TfrmCheckouTag.Create(Self);
+  f.IsCommit := true;
+  f.TagName := aCommit;
+  f.GitMgr := fGitMgr;
+  try
+    if f.ShowModal=mrOk then begin
+      cmd := aCommit;
       if f.chkCreateBranch.Checked then
         cmd := '-b ' + Trim(f.txtBranchName.Text) + ' ' + cmd;
       SwitchTo(cmd);

@@ -38,7 +38,7 @@ type
   TfrmCheckouTag = class(TForm)
     ButtonPanel1: TButtonPanel;
     chkCreateBranch: TCheckBox;
-    Label1: TLabel;
+    lblCaption: TLabel;
     lblTag: TLabel;
     lblHint: TLabel;
     lblBranch: TLabel;
@@ -48,12 +48,14 @@ type
     procedure txtBranchNameChange(Sender: TObject);
   private
     fGitMgr: TGitMgr;
+    fIsCommit: boolean;
     fTagName: string;
     procedure CheckOkButton;
     procedure SetGitMgr(AValue: TGitMgr);
   public
     property GitMgr: TGitMgr read fGitMgr write SetGitMgr;
     property TagName: string read fTagName write fTagName;
+    property IsCommit: boolean read fIsCommit write fIsCommit;
   end;
 
 var
@@ -75,6 +77,11 @@ end;
 procedure TfrmCheckouTag.FormShow(Sender: TObject);
 begin
   lblTag.Caption := fTagName;
+  if fIsCommit then begin
+    Caption := rsCheckOutACommit;
+    lblCaption.Caption := rsCommit;
+    lblTag.Color := clDefault;
+  end;
   CheckOkButton;
 end;
 

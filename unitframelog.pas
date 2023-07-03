@@ -196,6 +196,7 @@ type
     procedure OnResetBranchClick(Sender: TObject);
     procedure OnSwitchBranchClick(Sender: TObject);
     procedure OnSwitchTagClick(sender: TObject);
+    procedure OnSwitchCommitClick(sender: TObject);
     procedure OnCreateTagClick(sender: TObject);
     procedure OnMergeBranchClick(Sender: TObject);
     procedure OnCutLogRange(Sender: TObject);
@@ -861,6 +862,13 @@ begin
     fGitMgr.QueueSwitchTag(info^.refName);
 end;
 
+procedure TframeLog.OnSwitchCommitClick(sender: TObject);
+var
+  mi: TMenuItem absolute Sender;
+begin
+  fGitMgr.QueueSwitchToCommit(fCurrentItem.CommitOID);
+end;
+
 procedure TframeLog.OnCreateTagClick(sender: TObject);
 begin
   fGitMgr.QueueNewTag(fCurrentItem.CommitOID);
@@ -1518,6 +1526,13 @@ begin
   mi.OnClick := @OnResetBranchClick;
   mi.Tag := 0;
   popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
+
+  mi := TMenuItem.Create(Self.Owner);
+  mi.Caption := rsSwitchToThisCommit;
+  mi.OnClick := @OnSwitchCommitClick;
+  mi.Tag := 0;
+  popLog.Items.Insert(mnuSeparatorLast.MenuIndex, mi);
+
 end;
 
 procedure TframeLog.AddCutterMenus;

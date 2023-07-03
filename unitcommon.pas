@@ -166,6 +166,8 @@ resourcestring
   rsSelectAll = 'Select All';
   rsDeleteS = 'Delete ''%s''';
   rsSomeFilesCouldNotBeDeleted = 'Some files could not be deleted';
+  rsCheckOutACommit = 'Check out a commit';
+  rsSwitchToThisCommit = 'Switch to this commit';
 
 implementation
 

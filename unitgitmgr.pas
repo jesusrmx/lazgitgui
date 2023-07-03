@@ -38,7 +38,8 @@ const
   GITMGR_EVENT_REFLISTCHANGED       = 2;
   GITMGR_EVENT_NEWTAG               = 3;
   GITMGR_EVENT_SWITCHTOTAG          = 4;
-  GITMGR_EVENT_NEWBRANCH            = 5;
+  GITMGR_EVENT_SWITCHTOCOMMIT       = 5;
+  GITMGR_EVENT_NEWBRANCH            = 6;
 
 type
 
@@ -107,6 +108,7 @@ type
     function  IndexOfLocalBranch(aName: string): Integer;
     procedure QueueNewTag(commit: string);
     procedure QueueSwitchTag(tagName: string);
+    procedure QueueSwitchToCommit(aCommit: string);
     procedure QueueNewBranch(sender: TObject; branchName, command: string; switch, fetch:boolean);
     procedure ForceTagDescription;
     procedure UpdateRemotes;
@@ -730,6 +732,15 @@ begin
   new(info);
   info^.data := tagName;
   fObserverMgr.NotifyObservers(Self, GITMGR_EVENT_SWITCHTOTAG, PtrInt(info));
+end;
+
+procedure TGitMgr.QueueSwitchToCommit(aCommit: string);
+var
+  info: PTagInfo;
+begin
+  new(info);
+  info^.data := aCommit;
+  fObserverMgr.NotifyObservers(Self, GITMGR_EVENT_SWITCHTOCOMMIT, PtrInt(info));
 end;
 
 procedure TGitMgr.QueueNewBranch(sender: TObject; branchName, command: string;
