@@ -45,7 +45,7 @@ uses
 {.$define drafts}
 
 begin
-  SetDefaultLang('', 'languages', '', false);
+  SetDefaultLang('', 'translations', '', false);
 
   Application.Scaled := True;
 
