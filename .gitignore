@@ -26,3 +26,7 @@ PkgInfo
 *.bin
 *.orig
 *.reflist
+*.logdump
+*.logindex
+*.logcache
+*.backup
