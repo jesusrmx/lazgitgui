@@ -244,25 +244,10 @@ begin
     if not fEnabled then
       exit;
 
-    if fVisible then begin
-      fGrid.Canvas.Brush.Style := bsSolid;
-      if fActive then fGrid.Canvas.Brush.Color := SLIDER_COLOR_ACTIVE
-      else            fGrid.Canvas.Brush.Color := SLIDER_COLOR_INACTIVE;
-      fGrid.Canvas.FillRect(fRect);
-    end else begin
-      fGrid.Canvas.Pen.Color := SLIDER_COLOR_INACTIVE;
-      fGrid.Canvas.Pen.Width := 2;
-
-      // draw scroll left arrow
-      fGrid.Canvas.Line(aRect.Left + 10, aRect.Top    + 4, aRect.Left, aRect.Top + 9);
-      fGrid.Canvas.Line(aRect.Left + 10, aRect.Bottom - 4, aRect.Left, aRect.Top + 9);
-
-      // draw scroll right arrow
-      fGrid.Canvas.Line(aRect.Right - 12, aRect.Top    + 4, aRect.Right-2, aRect.Top + 9);
-      fGrid.Canvas.Line(aRect.Right - 12, aRect.Bottom - 4, aRect.Right-2, aRect.Top + 9);
-
-      fGrid.Canvas.Pen.Width := 1;
-    end;
+    fGrid.Canvas.Brush.Style := bsSolid;
+    if fActive then fGrid.Canvas.Brush.Color := SLIDER_COLOR_ACTIVE
+    else            fGrid.Canvas.Brush.Color := SLIDER_COLOR_INACTIVE;
+    fGrid.Canvas.FillRect(fRect);
   end;
 end;
 
