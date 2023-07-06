@@ -602,7 +602,7 @@ end;
 
 procedure TGraphBuilderThread.SetEnd(AValue: Integer);
 begin
-  if AValue=MAXINT then
+  if AValue>fDb.Count-1 then
     AValue := fDb.Count-1;
 
   if fEnd = AValue then
