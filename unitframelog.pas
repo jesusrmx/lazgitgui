@@ -168,6 +168,7 @@ type
     fGit: IGit;
     fGitMgr: TGitMgr;
     fGraphOffset: Integer;
+    fGraphStart, fGraphEnd: Integer;
     fhlHelper: THighlighterHelper;
     fItemIndices: TItemIndexArray;
     fLogCache: TLogCache;
@@ -230,8 +231,9 @@ type
     procedure SearchLog(txt: string; forward: boolean; startRow:Integer=-1; searchIn:TSetOfByte=[]);
     procedure FilterLog(txt: string);
     procedure LayoutLabels;
-    function UnixTimestampToStr(ts: Int64): string;
-    function CommitListFromIndexArray(arr: TIntArray; prefix:string=''; separator:string=','): string;
+    function  UnixTimestampToStr(ts: Int64): string;
+    function  CommitListFromIndexArray(arr: TIntArray; prefix:string=''; separator:string=','): string;
+    procedure SetupGraphRange;
   protected
     property Filtered: boolean read fFiltered write SetFiltered;
   public
@@ -1208,8 +1210,8 @@ begin
   gBuild.WithColumns := true;
   gBuild.FreeOnTerminate := true;
   gBuild.OnTerminate := @OnGraphBuilderDone;
-  gBuild.StartIndex := 0;
-  gBuild.EndIndex := MAXINT;
+  gBuild.StartIndex := fGraphStart;
+  gBuild.EndIndex := fGraphEnd;
   gBuild.Start;
 end;
 
@@ -1595,6 +1597,9 @@ begin
       fLogCache.Config := fConfig;
 
       fLogCache.Open;
+
+      SetupGraphRange;
+
       if fLogCache.DbIndex.Count>0 then begin
         UpdateGridRows;
         Application.ProcessMessages;
@@ -1831,6 +1836,28 @@ begin
   for aIndex in arr do begin
     if result<>'' then result += separator;
     result += prefix + Lowercase(format('%.16x', [fItemIndices[aIndex].commit]));
+  end;
+end;
+
+procedure TframeLog.SetupGraphRange;
+var
+  grStart, grEnd: String;
+  aIndex: Integer;
+begin
+  fGraphStart := 0;
+  fGraphEnd := MAXINT;
+
+  grStart := fConfig.ReadString('GraphStart', '', fGit.TopLevelDir);
+  grEnd := fConfig.ReadString('GraphEnd', '', fGit.TopLevelDir);
+  if (grStart<>'') and (grEnd<>'') then begin
+    // find the corresponding indexes
+    aIndex := fLogCache.DbIndex.FindCommitSha(grStart);
+    if aIndex>=0 then begin
+      fGraphStart := aIndex;
+      aIndex := fLogCache.DbIndex.FindCommitSha(grEnd, fGraphStart);
+      if aIndex>=0 then
+        fGraphEnd := aIndex;
+    end;
   end;
 end;
 
