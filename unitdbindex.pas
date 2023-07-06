@@ -141,6 +141,7 @@ var
   gblTopologicalMode: boolean = true;
   gblAllowDeleteChanged: boolean = false;
   gblMaxGraphColumnWidth: Integer = 300;
+  gblMaxGraphRows: Integer = 10000;
 
 implementation
 

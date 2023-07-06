@@ -240,7 +240,7 @@ begin
   if (fRangeStart>=0) and (fRangeEnd>=0) and (fRangeEnd>=fRangeStart) then begin
     fDb.MaxRecords := fRangeEnd + 1;
   end else
-    fDb.MaxRecords := fConfig.ReadInteger('MaxLogRecords', 10000, fGit.TopLevelDir);
+    fDb.MaxRecords := fConfig.ReadInteger('MaxLogRecords', 0, fGit.TopLevelDir);
 end;
 
 procedure TCacheLimits.Filter;

@@ -1845,7 +1845,7 @@ var
   aIndex: Integer;
 begin
   fGraphStart := 0;
-  fGraphEnd := MAXINT;
+  fGraphEnd := gblMaxGraphRows;
 
   grStart := fConfig.ReadString('GraphStart', '', fGit.TopLevelDir);
   grEnd := fConfig.ReadString('GraphEnd', '', fGit.TopLevelDir);
