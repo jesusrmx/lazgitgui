@@ -191,6 +191,9 @@ var
   lost: array of PParentsMapItem;
   aItem: TLogItem;
 begin
+  {$ifdef Debug}
+  ResetTicks;
+  {$endif}
 
   if fEnd>fDb.Count-1 then
     fEnd := fDb.Count-1;

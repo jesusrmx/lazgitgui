@@ -277,15 +277,14 @@ var
   i, j, k, m, p, q: Integer;
   pmi: PParentsMapItem;
 begin
-  SetLength(fIndexArray, parMap.Count);
+  SetLength(fIndexArray, fDb.Count);
 
   for i:=0 to Length(fIndexArray)-1 do begin
-    fIndexArray[i].index := i;
-    fIndexArray[i].column := -1;
-    fIndexArray[i].parents := nil;
-    fIndexArray[i].childs := nil;
-    fIndexArray[i].lines := nil;
-    fIndexArray[i].iflags := [];
+    if not (ifAllocated in fIndexArray[i].iflags) then begin
+      fIndexArray[i].index := i;
+      fIndexArray[i].column := -1;
+      fIndexArray[i].iflags := [ifAllocated];
+    end;
   end;
 
   for m:=0 to parMap.Count-1 do begin
@@ -682,7 +681,6 @@ begin
 
   parMap := GetParentsMap(fDb, fStart, fEnd);
 
-  fIndexArray := nil;
   FindRelativesMap(parMap);
 
   // parMap is not needed anymore
