@@ -405,29 +405,29 @@ var
 begin
 
   column := -1;
-  i := 0;
+  i := fStart;
 
-  n := Length(fIndexArray);
+  n := fEnd-fStart+1{Length(fIndexArray)};
   while n>0 do begin
 
     // if starting from the top, create a new column
-    // if i<>0 we are trying to find more sections in this column
-    if i=0 then begin
+    // if i<>fStart we are trying to find more sections in this column
+    if i=fStart then begin
       inc(Column);
       SetLength(Columns, column + 1);
       Columns[column].index := column;
     end;
 
     // find the first index with no assigned column
-    while i<Length(fIndexArray) do begin
+    while i<=fEnd{i<Length(fIndexArray)} do begin
       if fIndexArray[i].column<0 then break;
       inc(i);
     end;
-    if i=length(fIndexArray) then begin
+    if i>fEnd{i=length(fIndexArray)} then begin
       // finished this column, check if all indexes were processed
       if n>0 then begin
         // not yet, continue with another column
-        i := 0;
+        i := fStart{0};
         continue;
       end;
       break; // we are done
@@ -477,10 +477,10 @@ begin
 
         // at what index 'i' should continue?
         // it should be past the assigned 'p's parent
-        if (p>=0) and (p+1<Length(fIndexArray)-1) then
+        if (p>=0) and (p+1<fEnd{Length(fIndexArray)-1}) then
           i := p + 1
         else
-          i := 0;
+          i := fStart{0};
 
         break;
       end;
@@ -602,8 +602,8 @@ end;
 
 procedure TGraphBuilderThread.SetEnd(AValue: Integer);
 begin
-  if fEnd=MAXINT then
-    fEnd := fDb.Count-1;
+  if AValue=MAXINT then
+    AValue := fDb.Count-1;
 
   if fEnd = AValue then
     Exit;
