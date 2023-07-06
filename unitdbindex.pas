@@ -126,7 +126,7 @@ type
     property Filter: TIntArray read fFilter;
   end;
 
-  function GetParentsMap(fDb: TDbIndex): TParentsMap;
+  function GetParentsMap(fDb: TDbIndex; fStart:Integer=0; fEnd:Integer=MAXINT): TParentsMap;
   procedure ReportGetParentsMap(parMap: TParentsMap);
   procedure ClearParentsMap(map: TParentsMap);
 
@@ -182,7 +182,8 @@ end;
 // to find commits inheritance.
 //
 // TODO: check if using full OIDs (strings) is really slower than using QWords
-function GetParentsMap(fDb: TDbIndex): TParentsMap;
+function GetParentsMap(fDb: TDbIndex; fStart: Integer; fEnd: Integer
+  ): TParentsMap;
 var
   i, j, k, aIndex: Integer;
   pmi, found: PParentsMapItem;
@@ -190,6 +191,9 @@ var
   lost: array of PParentsMapItem;
   aItem: TLogItem;
 begin
+
+  if fEnd>fDb.Count-1 then
+    fEnd := fDb.Count-1;
 
   // we scan the db from older to newer commits and supposedly the
   // parents of a newer commit have already seen, however sometimes we
@@ -204,7 +208,7 @@ begin
 
   // scan the db index from older to newer commits so we see the
   // items that will become the parents of the next items.
-  for i:=fDb.Count-1 downto 0 do begin
+  for i:=fEnd downto fStart do begin
 
     // load a item whose properties are available through 'Item'
     fDb.LoadItem(i, aItem);
@@ -239,8 +243,8 @@ begin
           inc(k);
         end else begin
           {$IFDEF Debug}
-          DebugLn('At %d [%d] (%.16x) parent %d (%.16x) is missing',
-            [i, fdb.GetIndex(i), OIDToQWord(CommitOID), j, elements[j].commit]);
+          DebugLn('At %d (%d [%d] %.16x) parent %d (%.16x) is missing.',
+            [i-fStart, i, fdb.GetIndex(i), OIDToQWord(CommitOID), j, elements[j].commit]);
           {$ENDIF}
           pmi^.parents[j].n := -1;
           pmi^.parents[j].commit := elements[j].commit;

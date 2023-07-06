@@ -62,8 +62,10 @@ type
   TGraphBuilderThread = class(TThread)
   private
     fDb: TDbIndex;
+    fEnd: Integer;
     fIndexArray: TItemIndexArray;
     fMaxColumns: Integer;
+    fStart: Integer;
     fWithColumns: boolean;
     procedure FindRelativesMap(parMap: TParentsMap);
     function FindSource(ref:Integer; inChilds:boolean): Integer;
@@ -71,6 +73,7 @@ type
     procedure AssignColumns(var columns: TColumnArray);
     procedure FindHeadsAndTails(var columns: TColumnArray);
     procedure MapLinesAndColumns(var columns: TColumnArray; out maxColumns: Integer);
+    procedure SetEnd(AValue: Integer);
     procedure TopoSort(map: TParentsMap);
   public
     constructor Create(db: TDbIndex);
@@ -79,6 +82,8 @@ type
     property IndexArray: TItemIndexArray read fIndexArray;
     property WithColumns: boolean read fWithColumns write fWithColumns;
     property MaxColumns: Integer read fMaxColumns;
+    property StartIndex: Integer read fStart write fStart;
+    property EndIndex: Integer read fEnd write SetEnd;
   end;
 
 implementation
@@ -596,6 +601,17 @@ begin
   {$ENDIF}
 end;
 
+procedure TGraphBuilderThread.SetEnd(AValue: Integer);
+begin
+  if fEnd=MAXINT then
+    fEnd := fDb.Count-1;
+
+  if fEnd = AValue then
+    Exit;
+
+  fEnd := AValue;
+end;
+
 procedure TGraphBuilderThread.TopoSort(map: TParentsMap);
 var
   graph: TGraph;
@@ -664,7 +680,7 @@ begin
   resetTicks(true);
   {$ENDIF}
 
-  parMap := GetParentsMap(fDb);
+  parMap := GetParentsMap(fDb, fStart, fEnd);
 
   fIndexArray := nil;
   FindRelativesMap(parMap);

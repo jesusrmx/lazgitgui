@@ -1208,6 +1208,8 @@ begin
   gBuild.WithColumns := true;
   gBuild.FreeOnTerminate := true;
   gBuild.OnTerminate := @OnGraphBuilderDone;
+  gBuild.StartIndex := 0;
+  gBuild.EndIndex := MAXINT;
   gBuild.Start;
 end;
 
