@@ -153,6 +153,7 @@ type
     procedure DoFetch;
     procedure DoPull;
     procedure DoRepoInfo;
+    procedure OnCreatePatchClick(Sender: TObject);
     procedure OnCustomCommandClick(Sender: TObject);
     procedure OnDebugLoggerInterceptor(Sender: TObject; S: string;
       var Handled: Boolean);
@@ -750,6 +751,14 @@ var
     end;
   end;
 
+  procedure AddCreateAPatch;
+  begin
+    if isUnstaged and (SelCount>0) then begin
+      AddPopItem(popLists, '-', nil, 0);
+      AddPopItem(popLists, format(rsCreateAPatchFromS, [aFile]), @OnCreatePatchClick, aIndex)
+    end;
+  end;
+
 begin
 
   isUnstaged := Sender=lstUnstaged;
@@ -806,6 +815,7 @@ begin
       AddStageAll;
       AddRestoreFiles;
       AddDeleteFiles;
+      AddCreateAPatch;
 
       if (Entry<>nil) and (Entry^.EntryKind in [ekUntracked, ekIgnored]) then
         AddIgnoreUntracked;
@@ -1676,6 +1686,11 @@ end;
 procedure TfrmMain.DoRepoInfo;
 begin
   fGitMgr.UpdateStatus(@OnRepoInfoStatusDone);
+end;
+
+procedure TfrmMain.OnCreatePatchClick(Sender: TObject);
+begin
+
 end;
 
 procedure TfrmMain.OnCustomCommandClick(Sender: TObject);
