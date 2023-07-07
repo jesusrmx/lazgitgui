@@ -144,6 +144,7 @@ type
     fhlHelper: THighlighterHelper;
     fCustomCommands: TCustomCommandsMgr;
     procedure CreateBranch(const binfo: PBranchInfo);
+    function  CreatePatchFromListbox(const lb: TListbox): TStringList;
     procedure DelayedShowMenu({%H-}Data: PtrInt);
     procedure DoGitDiff(Data: PtrInt);
     procedure DoItemAction(Data: PtrInt);
@@ -1704,52 +1705,9 @@ procedure TfrmMain.OnCreatePatchClick(Sender: TObject);
 var
   mi: TMenuItem absolute Sender;
   lb: TListbox;
-  isStaged: boolean;
-  entry: PFileEntry;
-  untrackedList: TStringList;
-  unstagedList, stagedList, s: string;
-  i, aIndex: Integer;
 begin
-  // make a list from modified files
   lb := TListBox(mi.Tag);
-  isStaged := (lb=lstStaged);
-
-  //DebugLn('Creating a patch for %s list with %d selected files', [BoolToStr(isUnstaged, 'unstaged','unstaged'), lb.SelCount]);
-
-  // make a list from selected unstaged or staged files
-  // make a list from selected untracked files
-  untrackedList := TStringList.Create;
-  try
-
-    unstagedList := '';
-    stagedList := '';
-    for i:=0 to lb.Count-1 do begin
-      if lb.Selected[i] then begin
-        s := lb.Items[i];
-        DebugLn('%s is selected',[s]);
-        if isStaged then
-          Add(stagedList, s)
-        else begin
-          entry := PFileEntry(lb.Items.Objects[i]);
-          if entry^.EntryTypeUnStaged=etUntracked then
-            untrackedList.Add(s)
-          else
-            Add(unstagedList, s);
-        end;
-      end;
-    end;
-    if isStaged then
-      DebugLn('git diff --cached -- %s',[stagedList])
-    else begin
-      DebugLn('git diff -- %s', [unstagedList]);
-      for i:=0 to untrackedList.Count-1 do
-        DebugLn('git diff --no-index /dev/null %s', [unstagedList[i]]);
-    end;
-
-  finally
-    untrackedList.Free;
-  end;
-  // add to the previous list a diff from each file
+  CreatePatchFromListbox(lb);
 end;
 
 procedure TfrmMain.OnCustomCommandClick(Sender: TObject);
@@ -1878,6 +1836,58 @@ begin
     if needReflistUpdate then fGitMgr.UpdateRefList;
   end;
 
+end;
+
+function TfrmMain.CreatePatchFromListbox(const lb: TListbox): TStringList;
+var
+  i: Integer;
+  s: string;
+  stagedList: string;
+  unstagedList: string;
+  untrackedList: TStringList;
+  entry: PFileEntry;
+  isStaged: boolean;
+begin
+
+  result := nil;
+
+  isStaged := (lb = lstStaged);
+
+  untrackedList := TStringList.Create;
+  try
+
+    unstagedList := '';
+    stagedList := '';
+    for i := 0 to lb.Count - 1 do begin
+      if lb.Selected[i] then begin
+        s := lb.Items[i];
+        if isStaged then
+          Add(stagedList, s)
+        else begin
+          entry := PFileEntry(lb.Items.Objects[i]);
+          if entry^.EntryTypeUnStaged = etUntracked then
+            untrackedList.Add(s)
+          else
+            Add(unstagedList, s);
+        end;
+      end;
+    end;
+
+    res := fGit.Diff(entry, unstaged, txtDiff.Lines);
+    if res>0 then
+      ShowError;
+
+    if isStaged then
+      DebugLn('git diff --cached -- %s', [stagedList])
+    else begin
+      DebugLn('git diff -- %s', [unstagedList]);
+      for i := 0 to untrackedList.Count - 1 do
+        DebugLn('git diff --no-index /dev/null %s', [untrackedList[i]]);
+    end;
+
+  finally
+    untrackedList.Free;
+  end;
 end;
 
 procedure TfrmMain.UpdateBranch;
