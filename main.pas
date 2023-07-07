@@ -1690,7 +1690,10 @@ end;
 
 procedure TfrmMain.OnCreatePatchClick(Sender: TObject);
 begin
-
+  // make a list from modified tracked files
+  // create a patch from this list
+  // make a list from selected untracked files
+  // add to the previous list a diff from each file
 end;
 
 procedure TfrmMain.OnCustomCommandClick(Sender: TObject);
