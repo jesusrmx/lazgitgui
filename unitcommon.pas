@@ -168,7 +168,8 @@ resourcestring
   rsSomeFilesCouldNotBeDeleted = 'Some files could not be deleted';
   rsCheckOutACommit = 'Check out a commit';
   rsSwitchToThisCommit = 'Switch to this commit';
-  rsCreateAPatchFromS = 'Create a patch from %s';
+  rsCreateAPatchFileFromS = 'Create a patch file from %s';
+  rsCopyPatchFromSToTheClipboard = 'Copy patch from %s to the clipboard';
 
 implementation
 

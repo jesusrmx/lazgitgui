@@ -18,7 +18,7 @@ object frmMain: TfrmMain
   OnShow = FormShow
   ParentDoubleBuffered = False
   ShowHint = True
-  LCLVersion = '2.3.0.0'
+  LCLVersion = '3.99.0.0'
   object panLeft: TPanel
     Left = 0
     Height = 528
@@ -1121,6 +1121,12 @@ object frmMain: TfrmMain
   end
   object popCommands: TPopupMenu
     Left = 384
+    Top = 64
+  end
+  object dlgSave: TSaveDialog
+    DefaultExt = '.diff'
+    Filter = 'Patch files (*.diff; *.patch)|*.diff;*.patch|All files|*.*'
+    Left = 608
     Top = 64
   end
 end

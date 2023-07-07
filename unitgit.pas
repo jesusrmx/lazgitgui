@@ -61,7 +61,8 @@ type
     constructor create;
     function AtLeastVersion(aVer: string): boolean;
     function Initialize: boolean;
-    function Diff(entry: PFileEntry; Unstaged:boolean; Lines:TStrings): Integer;
+    function Diff(entry: PFileEntry; Unstaged:boolean; Lines:TStrings): Integer; overload;
+    function Diff(cmd: string; Lines:TStrings): Integer; overload;
     function Add(entry: PFileEntry): Integer; overload;
     function Add(entryArray: TPFileEntryArray): Integer; overload;
     function Rm(entry: PFileEntry): Integer;
@@ -238,6 +239,25 @@ begin
     if Unstaged then  arg := ''
     else              arg := '--cached ';
     aCommand := format('%s diff %s-- %s', [fGitCommand, arg, Sanitize(Entry^.path)]);
+    //cmdLine.waitOnExit := true;
+    result := cmdLine.RunProcess(aCommand, fTopLevelDir, M);
+    if M.Size>0 then begin
+      M.Position := 0;
+      lines.LoadFromStream(M);
+    end;
+  finally
+    M.Free;
+  end;
+end;
+
+function TGit.Diff(cmd: string; Lines: TStrings): Integer;
+var
+  aCommand: string;
+  M: TMemoryStream;
+begin
+  M := TMemoryStream.Create;
+  try
+    aCommand := format('%s diff %s', [fGitCommand, cmd]);
     //cmdLine.waitOnExit := true;
     result := cmdLine.RunProcess(aCommand, fTopLevelDir, M);
     if M.Size>0 then begin

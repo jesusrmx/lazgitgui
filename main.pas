@@ -92,6 +92,7 @@ type
     popCommands: TPopupMenu;
     prgBar: TProgressBar;
     btnRepoInfo: TSpeedButton;
+    dlgSave: TSaveDialog;
     splitterMain: TSplitter;
     barCustomCmds: TToolBar;
     btnGitCmd: TToolButton;
@@ -155,6 +156,7 @@ type
     procedure DoPull;
     procedure DoRepoInfo;
     procedure OnCreatePatchClick(Sender: TObject);
+    procedure OnCopyPatchClick(Sender: TObject);
     procedure OnCustomCommandClick(Sender: TObject);
     procedure OnDebugLoggerInterceptor(Sender: TObject; S: string;
       var Handled: Boolean);
@@ -760,7 +762,8 @@ var
   begin
     if SelCount>0 then begin
       AddPopItem(popLists, '-', nil, 0);
-      AddPopItem(popLists, format(rsCreateAPatchFromS, [aFile]), @OnCreatePatchClick, PtrInt(lb));
+      AddPopItem(popLists, format(rsCreateAPatchFileFromS, [aFile]), @OnCreatePatchClick, PtrInt(lb));
+      AddPopItem(popLists, format(rsCopyPatchFromSToTheClipboard, [aFile]), @OnCopyPatchClick, PtrInt(lb));
     end;
   end;
 
@@ -1695,19 +1698,30 @@ begin
 end;
 
 procedure TfrmMain.OnCreatePatchClick(Sender: TObject);
-
-  procedure Add(var list:string; what:string);
-  begin
-    if list<>'' then list += ' ';
-    list += what;
-  end;
-
 var
   mi: TMenuItem absolute Sender;
   lb: TListbox;
+  diff: TStringList;
 begin
   lb := TListBox(mi.Tag);
-  CreatePatchFromListbox(lb);
+  diff := CreatePatchFromListbox(lb);
+  txtDiff.Text := diff.Text;
+  if dlgSave.Execute then
+    diff.SaveToFile(dlgSave.FileName);
+  diff.free;
+end;
+
+procedure TfrmMain.OnCopyPatchClick(Sender: TObject);
+var
+  mi: TMenuItem absolute Sender;
+  lb: TListbox;
+  diff: TStringList;
+begin
+  lb := TListBox(mi.Tag);
+  diff := CreatePatchFromListbox(lb);
+  txtDiff.Text := diff.Text;
+  Clipboard.AsText := diff.Text;
+  diff.Free;
 end;
 
 procedure TfrmMain.OnCustomCommandClick(Sender: TObject);
@@ -1844,9 +1858,27 @@ var
   s: string;
   stagedList: string;
   unstagedList: string;
-  untrackedList: TStringList;
+  untrackedList, list: TStringList;
   entry: PFileEntry;
-  isStaged: boolean;
+  isStaged, succeed: boolean;
+
+  procedure DoDiff(cmdfmt: string; args:array of const);
+  var
+    cmd: string;
+  begin
+    cmd := format(cmdfmt, args);
+    list.clear;
+    succeed := fGit.Diff(cmd, list)<=0;
+    if succeed then
+      result.AddStrings(list);
+  end;
+
+  procedure Add(var strList:string; what:string);
+  begin
+    if strList<>'' then strList += ' ';
+    strList += what;
+  end;
+
 begin
 
   result := nil;
@@ -1854,6 +1886,7 @@ begin
   isStaged := (lb = lstStaged);
 
   untrackedList := TStringList.Create;
+  list := TStringList.Create;
   try
 
     unstagedList := '';
@@ -1873,19 +1906,25 @@ begin
       end;
     end;
 
-    res := fGit.Diff(entry, unstaged, txtDiff.Lines);
-    if res>0 then
-      ShowError;
+    result := TStringList.Create;
 
     if isStaged then
-      DebugLn('git diff --cached -- %s', [stagedList])
+      DoDiff('--cached -- %s',[stagedList])
     else begin
-      DebugLn('git diff -- %s', [unstagedList]);
-      for i := 0 to untrackedList.Count - 1 do
-        DebugLn('git diff --no-index /dev/null %s', [untrackedList[i]]);
+      if unstagedList<>'' then
+        DoDiff('-- %s',[unstagedList]);
+      for s in untrackedList do begin
+        DoDiff('--no-index -- /dev/null %s', [s]);
+        if not succeed then
+          break;
+      end;
     end;
 
+    if not succeed then
+      txtDiff.Text := fGit.ErrorLog;
+
   finally
+    list.Free;
     untrackedList.Free;
   end;
 end;

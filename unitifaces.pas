@@ -67,7 +67,8 @@ type
     function DeleteTag(tagName: string): Integer;
     function OpenDir(aDir: string): Integer;
     function Commit(msg, opts: string): Integer;
-    function Diff(entry: PFileEntry; Unstaged:boolean; Lines:TStrings): Integer;
+    function Diff(entry: PFileEntry; Unstaged:boolean; Lines:TStrings): Integer; overload;
+    function Diff(cmd: string; Lines:TStrings): Integer; overload;
     function Show(obj: string; lines: TStrings): Integer;
     function Log(opts: string; Lines:TStrings): Integer;
     //
