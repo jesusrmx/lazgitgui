@@ -225,8 +225,12 @@ const
   BIN_BUFSIZE                 = 1024;
 
 
-function AddPopItem(pop: TPopupMenu; caption:string; onClick:TNotifyEvent; tag: Integer): TMenuItem;
+function AddPopItem(pop: TPopupMenu; caption:string; onClick:TNotifyEvent; tag: Ptrint): TMenuItem;
 begin
+  if caption='-' then begin
+    if pop.Items[pop.Items.Count-1].Caption='-' then
+      exit;
+  end;
   result := TMenuItem.Create(pop.Owner);
   result.Caption := caption;
   result.OnClick := onClick;
@@ -753,9 +757,9 @@ var
 
   procedure AddCreateAPatch;
   begin
-    if isUnstaged and (SelCount>0) then begin
+    if SelCount>0 then begin
       AddPopItem(popLists, '-', nil, 0);
-      AddPopItem(popLists, format(rsCreateAPatchFromS, [aFile]), @OnCreatePatchClick, aIndex)
+      AddPopItem(popLists, format(rsCreateAPatchFromS, [aFile]), @OnCreatePatchClick, PtrInt(lb));
     end;
   end;
 
@@ -823,6 +827,7 @@ begin
       AddPopItem(popLists, '-', nil, 0);
       AddViewItems;
     end else begin
+      AddCreateAPatch;
       AddUnstageFile;
     end;
 
@@ -1689,10 +1694,61 @@ begin
 end;
 
 procedure TfrmMain.OnCreatePatchClick(Sender: TObject);
+
+  procedure Add(var list:string; what:string);
+  begin
+    if list<>'' then list += ' ';
+    list += what;
+  end;
+
+var
+  mi: TMenuItem absolute Sender;
+  lb: TListbox;
+  isStaged: boolean;
+  entry: PFileEntry;
+  untrackedList: TStringList;
+  unstagedList, stagedList, s: string;
+  i, aIndex: Integer;
 begin
-  // make a list from modified tracked files
-  // create a patch from this list
+  // make a list from modified files
+  lb := TListBox(mi.Tag);
+  isStaged := (lb=lstStaged);
+
+  //DebugLn('Creating a patch for %s list with %d selected files', [BoolToStr(isUnstaged, 'unstaged','unstaged'), lb.SelCount]);
+
+  // make a list from selected unstaged or staged files
   // make a list from selected untracked files
+  untrackedList := TStringList.Create;
+  try
+
+    unstagedList := '';
+    stagedList := '';
+    for i:=0 to lb.Count-1 do begin
+      if lb.Selected[i] then begin
+        s := lb.Items[i];
+        DebugLn('%s is selected',[s]);
+        if isStaged then
+          Add(stagedList, s)
+        else begin
+          entry := PFileEntry(lb.Items.Objects[i]);
+          if entry^.EntryTypeUnStaged=etUntracked then
+            untrackedList.Add(s)
+          else
+            Add(unstagedList, s);
+        end;
+      end;
+    end;
+    if isStaged then
+      DebugLn('git diff --cached -- %s',[stagedList])
+    else begin
+      DebugLn('git diff -- %s', [unstagedList]);
+      for i:=0 to untrackedList.Count-1 do
+        DebugLn('git diff --no-index /dev/null %s', [unstagedList[i]]);
+    end;
+
+  finally
+    untrackedList.Free;
+  end;
   // add to the previous list a diff from each file
 end;
 
