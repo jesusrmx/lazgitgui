@@ -1862,15 +1862,29 @@ var
   entry: PFileEntry;
   isStaged, succeed: boolean;
 
-  procedure DoDiff(cmdfmt: string; args:array of const);
+  procedure DoDiff(cmdfmt: string; args:array of const; isUntracked: boolean);
   var
     cmd: string;
+    Code: Integer;
   begin
     cmd := format(cmdfmt, args);
     list.clear;
-    succeed := fGit.Diff(cmd, list)<=0;
-    if succeed then
+    Code := fGit.Diff(cmd, list);
+    succeed := Code<=0;
+    {$ifdef MSWindows}
+    // this is crazy, in windows it apparently fails with code=1 when diffing
+    // an untracked file, could it related to the use of /dev/null?
+    // but the output is ok, if we blindly check the code for success
+    // it wont work....
+    succeed := succeed or ((isUntracked) and (code=1));
+    {$endif}
+    if succeed then begin
+      //DebugLn(list.Text);
       result.AddStrings(list);
+    end else begin
+      DebugLn(fGit.ErrorLog);
+      DebugLn(list.Text);
+    end;
   end;
 
   procedure Add(var strList:string; what:string);
@@ -1909,12 +1923,12 @@ begin
     result := TStringList.Create;
 
     if isStaged then
-      DoDiff('--cached -- %s',[stagedList])
+      DoDiff('--cached -- %s',[stagedList], false)
     else begin
       if unstagedList<>'' then
-        DoDiff('-- %s',[unstagedList]);
+        DoDiff('-- %s',[unstagedList], false);
       for s in untrackedList do begin
-        DoDiff('--no-index -- /dev/null %s', [s]);
+        DoDiff('--no-index -- /dev/null %s', [s], true);
         if not succeed then
           break;
       end;
