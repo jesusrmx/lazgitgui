@@ -1873,9 +1873,9 @@ var
     succeed := Code<=0;
     {$ifdef MSWindows}
     // this is crazy, in windows it apparently fails with code=1 when diffing
-    // an untracked file, could it related to the use of /dev/null?
-    // but the output is ok, if we blindly check the code for success
-    // it wont work....
+    // an untracked file, but the output is ok, if we blindly check the code
+    // for success it wont work...
+    // could it related to the use of /dev/null?
     succeed := succeed or ((isUntracked) and (code=1));
     {$endif}
     if succeed then begin
