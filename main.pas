@@ -1705,7 +1705,7 @@ var
 begin
   lb := TListBox(mi.Tag);
   diff := CreatePatchFromListbox(lb);
-  txtDiff.Text := diff.Text;
+  //txtDiff.Text := diff.Text;
   if dlgSave.Execute then
     diff.SaveToFile(dlgSave.FileName);
   diff.free;
@@ -1719,7 +1719,7 @@ var
 begin
   lb := TListBox(mi.Tag);
   diff := CreatePatchFromListbox(lb);
-  txtDiff.Text := diff.Text;
+  //txtDiff.Text := diff.Text;
   Clipboard.AsText := diff.Text;
   diff.Free;
 end;
