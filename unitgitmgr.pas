@@ -490,7 +490,7 @@ begin
         M := TMemoryStream(item.tag);
         head := M.Memory;
         tail := head + M.Size;
-        M.SaveToFile('laststatus.txt');
+        //M.SaveToFile('laststatus.txt');
 
         ParseBranches(head, tail, fBranch, fBranchOID, fUpstream, fCommitsAhead, fCommitsBehind);
         ParseStatus(head, tail, fUnstagedList, fStagedList, fEntries, fMergingConflict, not fWithStatusPorcelainV2);
