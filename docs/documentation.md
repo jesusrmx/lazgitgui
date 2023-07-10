@@ -1,6 +1,6 @@
 **LazGitGui**
 
-This is yet another git tool, resembling 'git gui' with some additional features. I started this tool because it was not available, by default, under mac os, as it is under Linux and windows (when you install git by your own).
+This is yet another git tool, resembling 'git gui' with some additional features. I started this tool because it was not available, by default, under macOS, as it is under Linux and windows (when you install git by your own).
 
 It was built also as a test for doing some git commands, with the ultimate goal
 of doing a Lazarus integration.
@@ -68,18 +68,28 @@ The "current branch" label, has a context menu:
 
 From there a new branch can be created, or the repository can be switched to an existing local branch, the current branch is selected in this list.
 
-Note. Deleting branches in implemented in the log window.
+Note. Deleting branches is implemented in the log window.
 
 *Unstaged list*
 
 ![](../images/unstagedlist.png)
 
-In this list are presented the changes in the working area, the type of changes is represented with a distictive icon at the start of the file name. All changed files are presented as relative to the top level directory of the reposistory. Files in this list are "moved" to the staged list by clicking the icon o by using other options available in the context menu:
+This list show the changes in the working area, the kind of change is represented with a distinctive icon at the start of the file name. All changed files are presented as relative to the top level directory of the repository. Files in this list can be "moved" to the staged list by clicking the icon or by using other options available in the context menu:
 
 ![](../images/unstagedcontextmenu.png)
 
 Here, options to move the selected file, all changed files or all files including files not yet tracked. Also, changes on files can be discarded using the restore functions.
 
-If only untracked files are selected, the menu presents some options for ignoring an indivual file or a group of files of the same type. Ignoring files in this list will modify the repository top level .gitignore file:
+The context menu changes dynamically based on the selected files, a contiguous group can be selected by SHIFT+clicking a range of files or CTRL+clicking individual files. 
+
+If only one untracked file (a file with a plain icon) of the same type is selected, the menu presents some options for ignoring the file or all files of the same type. Ignoring files in this list will modify the repository top level .gitignore file:
 
 ![](../images/unstagedignore.png)
+
+*Staged list*
+
+The staged list shows all new (untracked) and changed files that have been selected for the next commit. In this list the context menu have options for "undoing" the selected files, that is unstage items so they are returned to the unstaged list. A new commit is created from this list by writing a comment in the message area a pressing the commit button.
+
+*Viewer area*
+
+In this area shows the changes of the selected files in either the staged or unstaged list. If the selected file is a new in the repository (untracked), the file content (it the file is text) or a binary indicator is shown in this area. This area sometimes also show error messages from git commands on the staged or unstaged list.
