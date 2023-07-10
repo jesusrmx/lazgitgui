@@ -29,7 +29,8 @@ unit unithighlighterhelper;
 interface
 
 uses
-  Classes, SysUtils, SynEditHighlighter, SynEdit, SynHighlighterDiff,
+  Classes, SysUtils, Graphics,
+  SynEditHighlighter, SynEdit, SynHighlighterDiff,
   SynHighlighterPas, SynHighlighterXML, SynHighlighterHTML,
   synhighlighterunixshellscript, SynHighlighterCpp, SynHighlighterJScript,
   SynHighlighterLFM, SynHighlighterJava, SynHighlighterCss, SynHighlighterPHP,
@@ -41,7 +42,11 @@ type
 
   TSynDiffHeaderSyn = class(TSynDiffSyn)
   private
+    fBugLinkAttr: TSynHighlighterAttributes;
+    fCommitLinkAttr: TSynHighlighterAttributes;
     fEndLine: Integer;
+    fHtmlLinkAttr: TSynHighlighterAttributes;
+    fKeyAttr: TSynHighlighterAttributes;
     fStartLine: Integer;
   protected
     procedure DoCurrentLinesChanged; override;
@@ -98,6 +103,25 @@ end;
 constructor TSynDiffHeaderSyn.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
+
+  fKeyAttr := TSynHighlighterAttributes.Create('HeaderKeyAttr', '');
+  fKeyAttr.Style := [fsBold];
+  AddAttribute(fKeyAttr);
+
+  fCommitLinkAttr := TSynHighlighterAttributes.Create('HeaderCommitLinkAttr', '');
+  fCommitLinkAttr.Foreground := clMaroon;
+  fCommitLinkAttr.Style := [fsUnderline];
+  AddAttribute(fCommitLinkAttr);
+
+  fBugLinkAttr := TSynHighlighterAttributes.Create('HeaderBugLinkAttr', '');
+  fBugLinkAttr.Foreground := clBlue;
+  fBugLinkAttr.Style := [fsUnderline];
+  AddAttribute(fBugLinkAttr);
+
+  fHtmlLinkAttr := TSynHighlighterAttributes.Create('HeaderHtmlLinkAttr', '');
+  fHtmlLinkAttr.Foreground := clBlue;
+  fHtmlLinkAttr.Style := [fsUnderline];
+  AddAttribute(fHtmlLinkAttr);
 end;
 
 destructor TSynDiffHeaderSyn.Destroy;
