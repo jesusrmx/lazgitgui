@@ -666,6 +666,7 @@ var
       mi := AddPopItem(popLists, rsViewTrackedFiles, @OnPopupItemClick, MENU_LIST_VIEW_TRACKED);
       mi.AutoCheck := true;
       mi.Checked := fConfig.ViewTrackedFiles;
+      mi.Enabled := false;
     end;
   end;
 
