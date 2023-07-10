@@ -1692,7 +1692,7 @@ begin
     COMMITBROWSER_EVENT_RELOAD: begin
       treeFiles.Items.Clear;
       aMode := CommitBrowserModeFromGui;
-      fhlHelper.SetHighlighter(txtViewer, 'x.diff');
+      fhlHelper.SetHighlighter(txtViewer, 'x.xhdrdiff');
       if aMode=cbmPatch then
         txtViewer.Lines.Assign(fCommitBrowser.Diff)
       else

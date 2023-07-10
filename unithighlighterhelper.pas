@@ -37,6 +37,20 @@ uses
 
 type
 
+  { TSynDiffHeaderSyn }
+
+  TSynDiffHeaderSyn = class(TSynDiffSyn)
+  private
+    fEndLine: Integer;
+    fStartLine: Integer;
+  protected
+    procedure DoCurrentLinesChanged; override;
+    procedure SetLine(const NewValue: String; LineNumber:Integer); override;
+  public
+    constructor Create(AOwner: TComponent); override;
+    destructor  Destroy; override;
+  end;
+
   { THighlighterHelper }
 
   THighlighterHelper = class
@@ -51,6 +65,45 @@ type
   end;
 
 implementation
+
+{ TSynDiffHeaderSyn }
+
+procedure TSynDiffHeaderSyn.DoCurrentLinesChanged;
+var
+  i: Integer;
+begin
+  inherited DoCurrentLinesChanged;
+  fStartLine := 0;
+  fEndLine   := 0;
+  // find diff header
+  for i:=0 to CurrentLines.Count-1 do
+    if pos('diff', CurrentLines[i])=1 then begin
+      fEndLine := i-1;
+      break;
+    end;
+end;
+
+procedure TSynDiffHeaderSyn.SetLine(const NewValue: String; LineNumber: Integer
+  );
+begin
+  inherited SetLine(NewValue, LineNumber);
+  dec(LineNumber);
+  if (LineNumber>=1) and (LineNumber<=fEndLine) then begin
+    // in this line range is the header
+    // each line that starts with a non-space is key: info line
+    // after a empty line starts the subject
+  end;
+end;
+
+constructor TSynDiffHeaderSyn.Create(AOwner: TComponent);
+begin
+  inherited Create(AOwner);
+end;
+
+destructor TSynDiffHeaderSyn.Destroy;
+begin
+  inherited Destroy;
+end;
 
 { THighlighterHelper }
 
@@ -106,6 +159,7 @@ constructor THighlighterHelper.create;
 begin
   inherited Create;
   fList := TStringList.Create;
+  Register(TSynDiffHeaderSyn, '|*.xhdrdiff');
   Register(TSynDiffSyn, '|*.rej');
   Register(TSynFreePascalSyn, '|*.lpr;*.pp');
   Register(TSynHTMLSyn);
@@ -148,5 +202,7 @@ begin
   inherited Destroy;
 end;
 
+initialization
+  RegisterPlaceableHighlighter(TSynDiffHeaderSyn);
 end.
 
