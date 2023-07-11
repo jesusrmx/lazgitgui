@@ -1,6 +1,93 @@
 msgid ""
 msgstr "Content-Type: text/plain; charset=UTF-8"
 
+#: main.rsaddsfilestoignorelist
+#, object-pascal-format
+msgctxt "main.rsaddsfilestoignorelist"
+msgid "Add '*%s' Files to ignore list"
+msgstr ""
+
+#: main.rsaddstoignorelist
+#, object-pascal-format
+msgctxt "main.rsaddstoignorelist"
+msgid "Add '%s' to ignore list"
+msgstr ""
+
+#: main.rsattag
+msgctxt "main.rsattag"
+msgid "At tag"
+msgstr ""
+
+#: main.rscancel
+msgctxt "main.rscancel"
+msgid "Cancel"
+msgstr ""
+
+#: main.rscouldntgettopleveldirectoryofs
+#, object-pascal-format
+msgctxt "main.rscouldntgettopleveldirectoryofs"
+msgid "Couldn't get toplevel directory of %s"
+msgstr ""
+
+#: main.rsdcommitsahead
+#, object-pascal-format
+msgctxt "main.rsdcommitsahead"
+msgid "%d commits ahead"
+msgstr ""
+
+#: main.rsdcommitsbehind
+#, object-pascal-format
+msgctxt "main.rsdcommitsbehind"
+msgid "%d commits behind"
+msgstr ""
+
+#: main.rsdcommitssince
+#, object-pascal-format
+msgctxt "main.rsdcommitssince"
+msgid "%d commits since"
+msgstr ""
+
+#: main.rsdfiles
+#, object-pascal-format
+msgctxt "main.rsdfiles"
+msgid "%d files"
+msgstr ""
+
+#: main.rsdiscardchanges
+msgctxt "main.rsdiscardchanges"
+msgid "Discard changes"
+msgstr ""
+
+#: main.rsdoyouwanttopushstosa
+#, object-pascal-format
+msgctxt "main.rsdoyouwanttopushstosa"
+msgid ""
+"Do you want to push \"%s\" to \"%s\"\n"
+"and setup tracking information? I will do:\n"
+"\n"
+"git push --set-upstream %1:s %0:s"
+msgstr ""
+
+#: main.rsexecutingacustomcommand
+msgctxt "main.rsexecutingacustomcommand"
+msgid "Executing a custom command"
+msgstr ""
+
+#: main.rsfetchingfromremote
+msgctxt "main.rsfetchingfromremote"
+msgid "Fetching from remote: "
+msgstr ""
+
+#: main.rsmerging
+msgctxt "main.rsmerging"
+msgid "MERGING"
+msgstr ""
+
+#: main.rsmergingconflict
+msgctxt "main.rsmergingconflict"
+msgid "MERGING CONFLICT"
+msgstr ""
+
 #: main.rsnewbranch
 msgctxt "main.rsnewbranch"
 msgid "New Branch"
@@ -11,6 +98,44 @@ msgctxt "main.rsnewtag"
 msgid "Create a tag at this point"
 msgstr ""
 
+#: main.rsnotagavailable
+msgctxt "main.rsnotagavailable"
+msgid "No Tag available"
+msgstr ""
+
+#: main.rsnotyetimplementedforstageds
+#, object-pascal-format
+msgctxt "main.rsnotyetimplementedforstageds"
+msgid "Not yet implemented for Staged: %s"
+msgstr ""
+
+#: main.rsnotyetimplementedforunstageds
+#, object-pascal-format
+msgctxt "main.rsnotyetimplementedforunstageds"
+msgid "Not yet implemented for Unstaged: %s"
+msgstr ""
+
+#: main.rsof
+msgctxt "main.rsof"
+msgid "of"
+msgstr ""
+
+#: main.rspullingfromremote
+msgctxt "main.rspullingfromremote"
+msgid "pulling from remote: "
+msgstr ""
+
+#: main.rspushingbranchwithout
+msgctxt "main.rspushingbranchwithout"
+msgid "Pushing branch without tracking information"
+msgstr ""
+
+#: main.rspushingtoremotes
+#, object-pascal-format
+msgctxt "main.rspushingtoremotes"
+msgid "Pushing to remote: %s"
+msgstr ""
+
 #: main.rspushingyourcommits
 msgctxt "main.rspushingyourcommits"
 msgid "Pushing your commits"
@@ -19,6 +144,17 @@ msgstr ""
 #: main.rsreload
 msgctxt "main.rsreload"
 msgid "Reload"
+msgstr ""
+
+#: main.rsrestoreallchanged
+msgctxt "main.rsrestoreallchanged"
+msgid "Restore All Changed"
+msgstr ""
+
+#: main.rsrestores
+#, object-pascal-format
+msgctxt "main.rsrestores"
+msgid "Restore '%s'"
 msgstr ""
 
 #: main.rsrestoringworkfiles
@@ -37,9 +173,122 @@ msgid ""
 "Are you sure to continue?"
 msgstr ""
 
+#: main.rssdoesnotexists
+#, object-pascal-format
+msgctxt "main.rssdoesnotexists"
+msgid "%s does not exists"
+msgstr ""
+
+#: main.rsshasnotrackingandthere
+#, object-pascal-format
+msgctxt "main.rsshasnotrackingandthere"
+msgid ""
+"%s has no tracking and there are \n"
+"%d remotes (%s)\n"
+"I'm not yet prepared to handle this"
+msgstr ""
+
+#: main.rssisalreadyinignoredlist
+#, object-pascal-format
+msgctxt "main.rssisalreadyinignoredlist"
+msgid "'%s' is already in ignored list"
+msgstr ""
+
+#: main.rsstageall
+msgctxt "main.rsstageall"
+msgid "Stage All"
+msgstr ""
+
+#: main.rsstagechanged
+msgctxt "main.rsstagechanged"
+msgid "Stage Changed"
+msgstr ""
+
+#: main.rsstages
+#, object-pascal-format
+msgctxt "main.rsstages"
+msgid "Stage '%s'"
+msgstr ""
+
+#: main.rsthefilesisbinarydbytes
+#, object-pascal-format
+msgctxt "main.rsthefilesisbinarydbytes"
+msgid "The file '%s' is binary, %d bytes"
+msgstr ""
+
 #: main.rstherearecommitsbehind
 msgctxt "main.rstherearecommitsbehind"
 msgid "There are commits behind, are you sure you want to push?"
+msgstr ""
+
+#: main.rsthetypesisalreadyintheignoredlist
+#, object-pascal-format
+msgctxt "main.rsthetypesisalreadyintheignoredlist"
+msgid "The type '*%s' is already in the ignored list"
+msgstr ""
+
+#: main.rsthisfeaturewillbeimplementedasap
+msgctxt "main.rsthisfeaturewillbeimplementedasap"
+msgid "This feature will be implemented ASAP"
+msgstr ""
+
+#: main.rsthisrepositoryhasnoremotes
+msgctxt "main.rsthisrepositoryhasnoremotes"
+msgid ""
+"This repository has no remotes defined\n"
+"I'm not yet prepared to handle this"
+msgstr ""
+
+#: main.rsunstageall
+msgctxt "main.rsunstageall"
+msgid "Unstage All"
+msgstr ""
+
+#: main.rsunstages
+#, object-pascal-format
+msgctxt "main.rsunstages"
+msgid "Unstage '%s'"
+msgstr ""
+
+#: main.rsviewignoredfiles
+msgctxt "main.rsviewignoredfiles"
+msgid "View Ignored Files"
+msgstr ""
+
+#: main.rsviewtrackedfiles
+msgctxt "main.rsviewtrackedfiles"
+msgid "View Tracked Files"
+msgstr ""
+
+#: main.rsviewuntrackedfiles
+msgctxt "main.rsviewuntrackedfiles"
+msgid "View Untracked Files"
+msgstr ""
+
+#: main.rsyesdoit
+msgctxt "main.rsyesdoit"
+msgid "yes, do it"
+msgstr ""
+
+#: main.rsyouareabouttoexecute
+#, object-pascal-format
+msgctxt "main.rsyouareabouttoexecute"
+msgid ""
+"You are about to execute %s: \n"
+"\n"
+"command: %s\n"
+"\n"
+"Do you want to proceed?"
+msgstr ""
+
+#: main.rsyouhavetostagesomething
+msgctxt "main.rsyouhavetostagesomething"
+msgid "You have to stage something in order to commit"
+msgstr ""
+
+#: main.rsyourcommitmessageisempt
+msgctxt "main.rsyourcommitmessageisempt"
+msgid "Your commit message is empty!"
 msgstr ""
 
 #: tframelog.actgotochild.caption
@@ -672,6 +921,18 @@ msgctxt "unitcommon.rsaddstoignorelist"
 msgid "Add '%s' to ignore list"
 msgstr ""
 
+#: unitcommon.rsapplyingapatch
+msgid "Applying a patch"
+msgstr ""
+
+#: unitcommon.rsapplyingserialpatchesisnotyetimplemented
+msgid "Applying serial patches is not yet implemented"
+msgstr ""
+
+#: unitcommon.rsapplypatch
+msgid "Apply patch"
+msgstr ""
+
 #: unitcommon.rsattag
 msgctxt "unitcommon.rsattag"
 msgid "At tag"
@@ -867,6 +1128,10 @@ msgstr ""
 msgid "Invalid"
 msgstr ""
 
+#: unitcommon.rsinvalidamountofpatchestooapply
+msgid "Invalid amount of patches too apply"
+msgstr ""
+
 #: unitcommon.rsinvalidcharacterinbranchname
 msgid "Invalid character in branch name"
 msgstr ""
@@ -971,6 +1236,10 @@ msgstr ""
 #: unitcommon.rsof
 msgctxt "unitcommon.rsof"
 msgid "of"
+msgstr ""
+
+#: unitcommon.rspatchingtheworkarea
+msgid "Patching the work area"
 msgstr ""
 
 #: unitcommon.rspullingfromremote
@@ -1272,6 +1541,16 @@ msgid ""
 "You are resetting branch %s to revision %s:\n"
 "%s\n"
 "Do you want to proceed?"
+msgstr ""
+
+#: unitcommon.rsyouaretryingtoapply
+#, object-pascal-format
+msgid ""
+"You are trying to apply the patch file: %s to your working area.\n"
+"\n"
+"This operation will not make a commit.\n"
+"\n"
+"Do you want to apply the patch?"
 msgstr ""
 
 #: unitcommon.rsyouhavetostagesomething

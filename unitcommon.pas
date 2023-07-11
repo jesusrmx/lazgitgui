@@ -170,6 +170,16 @@ resourcestring
   rsSwitchToThisCommit = 'Switch to this commit';
   rsCreateAPatchFileFromS = 'Create a patch file from %s';
   rsCopyPatchFromSToTheClipboard = 'Copy patch from %s to the clipboard';
+  rsApplyingSerialPatchesIsNotYetImplemented = 'Applying serial patches is not'
+    +' yet implemented';
+  rsInvalidAmountOfPatchesTooApply = 'Invalid amount of patches too apply';
+  rsPatchingTheWorkArea = 'Patching the work area';
+  rsYouAreTryingToApply = 'You are trying to apply the patch file: %s to '+
+    'your working area.'^M^M+
+    'This operation will not make a commit.'^M^M+
+    'Do you want to apply the patch?';
+  rsApplyPatch = 'Apply patch';
+  rsApplyingAPatch = 'Applying a patch';
 
 implementation
 

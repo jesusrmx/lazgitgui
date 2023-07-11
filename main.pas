@@ -123,6 +123,7 @@ type
     procedure FormCloseQuery(Sender: TObject; var {%H-}CanClose: Boolean);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
+    procedure FormDropFiles(Sender: TObject; const FileNames: array of string);
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure FormShow(Sender: TObject);
     procedure lblBranchClick(Sender: TObject);
@@ -1557,6 +1558,66 @@ begin
   fhlHelper.Free;
   fGitMgr.Free;
   fTextLinks.Free;
+end;
+
+procedure TfrmMain.FormDropFiles(Sender: TObject;
+  const FileNames: array of string);
+var
+  aFile, cmd: String;
+  F: TFileStream;
+  readbytes: Int64;
+  buffer: pchar;
+  serialCount, simpleCount: Integer;
+  res: TModalResult;
+  isDiff: boolean;
+begin
+  GetMem(buffer, BIN_BUFSIZE+1);
+  try
+    serialCount := 0;
+    simpleCount := 0;
+
+    // check dropped files are all text diff files
+    for aFile in Filenames do begin
+      F := TFileStream.Create(aFile, fmOpenRead + fmShareDenyNone);
+      try
+        readBytes := F.Read(buffer^, BIN_BUFSIZE);
+        buffer[readBytes] := #0;
+        if IsBinBuffer(pbyte(buffer), readBytes) then
+          exit;
+        isDiff := strpos(buffer, '@@ ')<>nil;
+        if isDiff and (strlcomp('From ', buffer, 5)=0) and (strpos(buffer, 'From: ')<>nil) then
+          inc(serialCount)
+        else if isDiff then
+          inc(simpleCount);
+      finally
+        F.Free;
+      end;
+    end;
+
+    // we can process either a simple diff for git apply
+    // or a group of serial diff files for git am
+    if (serialCount>0) then begin
+      ShowMessage(rsApplyingSerialPatchesIsNotYetImplemented);
+      exit;
+    end;
+
+    if (simpleCount<>Length(Filenames)) or (SimpleCount>1) then begin
+      ShowMessage(rsInvalidAmountOfPatchesTooApply);
+      exit;
+    end;
+
+    res := QuestionDlg(rsPatchingTheWorkArea,
+      format(rsYouAreTryingToApply, [QuotedStr(ExtractFileName(Filenames[0]))]),
+       mtConfirmation, [mrYes, rsApplyPatch, mrCancel, rsCancel], 0 );
+
+    if res=mrYes then begin
+      cmd := fGit.Exe + ' apply '+ Sanitize(Filenames[0]);
+
+      RunInteractive(cmd, fGit.TopLevelDir, rsApplyingAPatch, cmd);
+    end;
+  finally
+    FreeMem(buffer);
+  end;
 end;
 
 procedure TfrmMain.FormKeyDown(Sender: TObject; var Key: Word;

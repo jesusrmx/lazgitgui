@@ -12,6 +12,104 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Poedit 3.3.1\n"
 
+#: main.rsaddsfilestoignorelist
+#, fuzzy, object-pascal-format
+msgctxt "main.rsaddsfilestoignorelist"
+msgid "Add '*%s' Files to ignore list"
+msgstr "Añadir los archivos '*%s' a la lista de ignorados"
+
+#: main.rsaddstoignorelist
+#, fuzzy, object-pascal-format
+msgctxt "main.rsaddstoignorelist"
+msgid "Add '%s' to ignore list"
+msgstr "Añadir '%s' a la lista de ignorados"
+
+#: main.rsattag
+#, fuzzy
+msgctxt "main.rsattag"
+msgid "At tag"
+msgstr "En la etiqueta"
+
+#: main.rscancel
+#, fuzzy
+msgctxt "main.rscancel"
+msgid "Cancel"
+msgstr "Cancelar"
+
+#: main.rscouldntgettopleveldirectoryofs
+#, fuzzy, object-pascal-format
+msgctxt "main.rscouldntgettopleveldirectoryofs"
+msgid "Couldn't get toplevel directory of %s"
+msgstr "No pude obtener el directorio base de %s"
+
+#: main.rsdcommitsahead
+#, fuzzy, object-pascal-format
+msgctxt "main.rsdcommitsahead"
+msgid "%d commits ahead"
+msgstr "%d revisiones por delante"
+
+#: main.rsdcommitsbehind
+#, fuzzy, object-pascal-format
+msgctxt "main.rsdcommitsbehind"
+msgid "%d commits behind"
+msgstr "%d revisiones detrás"
+
+#: main.rsdcommitssince
+#, fuzzy, object-pascal-format
+msgctxt "main.rsdcommitssince"
+msgid "%d commits since"
+msgstr "%d revisiones desde"
+
+#: main.rsdfiles
+#, fuzzy, object-pascal-format
+msgctxt "main.rsdfiles"
+msgid "%d files"
+msgstr "%d archivos"
+
+#: main.rsdiscardchanges
+#, fuzzy
+msgctxt "main.rsdiscardchanges"
+msgid "Discard changes"
+msgstr "Desechar cambios"
+
+#: main.rsdoyouwanttopushstosa
+#, fuzzy, object-pascal-format
+msgctxt "main.rsdoyouwanttopushstosa"
+msgid ""
+"Do you want to push \"%s\" to \"%s\"\n"
+"and setup tracking information? I will do:\n"
+"\n"
+"git push --set-upstream %1:s %0:s"
+msgstr ""
+"¿Quieres subir \"%s\" a \"%s\"\n"
+"y configurar información de seguimiento? Ejecutaré:\n"
+"\n"
+"git push --set-upstream %1:s %0:s"
+
+#: main.rsexecutingacustomcommand
+#, fuzzy
+msgctxt "main.rsexecutingacustomcommand"
+msgid "Executing a custom command"
+msgstr "Ejecutando un comando de usuario"
+
+#: main.rsfetchingfromremote
+#, fuzzy
+msgctxt "main.rsfetchingfromremote"
+msgid "Fetching from remote: "
+msgstr "Obteniendo cambios (fetch) del origen: "
+
+#: main.rsmerging
+#, fuzzy
+msgctxt "main.rsmerging"
+msgid "MERGING"
+msgstr "FUSIÓNANDO"
+
+#: main.rsmergingconflict
+#, fuzzy
+msgctxt "main.rsmergingconflict"
+msgid "MERGING CONFLICT"
+msgstr "FUSIÓN CON CONFLICTOS"
+
 #: main.rsnewbranch
 msgctxt "main.rsnewbranch"
 msgid "New Branch"
@@ -22,6 +120,48 @@ msgctxt "main.rsnewtag"
 msgid "Create a tag at this point"
 msgstr "Crear etiqueta aquí"
 
+#: main.rsnotagavailable
+#, fuzzy
+msgctxt "main.rsnotagavailable"
+msgid "No Tag available"
+msgstr "No hay etiqueta"
+
+#: main.rsnotyetimplementedforstageds
+#, fuzzy, object-pascal-format
+msgctxt "main.rsnotyetimplementedforstageds"
+msgid "Not yet implemented for Staged: %s"
+msgstr "Aún no implementado para Preparados: %s"
+
+#: main.rsnotyetimplementedforunstageds
+#, fuzzy, object-pascal-format
+msgctxt "main.rsnotyetimplementedforunstageds"
+msgid "Not yet implemented for Unstaged: %s"
+msgstr "Aún no implementado para No Preparados: %s"
+
+#: main.rsof
+#, fuzzy
+msgctxt "main.rsof"
+msgid "of"
+msgstr "de"
+
+#: main.rspullingfromremote
+#, fuzzy
+msgctxt "main.rspullingfromremote"
+msgid "pulling from remote: "
+msgstr "Traer y combinar del origen remoto:"
+
+#: main.rspushingbranchwithout
+#, fuzzy
+msgctxt "main.rspushingbranchwithout"
+msgid "Pushing branch without tracking information"
+msgstr "Subiendo rama sin información de seguimiento"
+
+#: main.rspushingtoremotes
+#, fuzzy, object-pascal-format
+msgctxt "main.rspushingtoremotes"
+msgid "Pushing to remote: %s"
+msgstr "Subiendo al destino remote: %s"
+
 #: main.rspushingyourcommits
 msgctxt "main.rspushingyourcommits"
 msgid "Pushing your commits"
@@ -31,6 +171,18 @@ msgstr "Subiendo tus cambios"
 msgctxt "main.rsreload"
 msgid "Reload"
 msgstr "Actualizar"
+
+#: main.rsrestoreallchanged
+#, fuzzy
+msgctxt "main.rsrestoreallchanged"
+msgid "Restore All Changed"
+msgstr "Restaurar todo lo que haya cambiado"
+
+#: main.rsrestores
+#, fuzzy, object-pascal-format
+msgctxt "main.rsrestores"
+msgid "Restore '%s'"
+msgstr "Restaurar '%s'"
 
 #: main.rsrestoringworkfiles
 msgctxt "main.rsrestoringworkfiles"
@@ -53,10 +205,144 @@ msgstr ""
 "\n"
 "¿Aún deseas continuar?"
 
+#: main.rssdoesnotexists
+#, fuzzy, object-pascal-format
+msgctxt "main.rssdoesnotexists"
+msgid "%s does not exists"
+msgstr "%s no existe"
+
+#: main.rsshasnotrackingandthere
+#, fuzzy, object-pascal-format
+msgctxt "main.rsshasnotrackingandthere"
+msgid ""
+"%s has no tracking and there are \n"
+"%d remotes (%s)\n"
+"I'm not yet prepared to handle this"
+msgstr ""
+"%s no tiene información de seguimiento y hay \n"
+"%d destinos remotos (%s)\n"
+"Aún no se como manejar esta situación"
+
+#: main.rssisalreadyinignoredlist
+#, fuzzy, object-pascal-format
+msgctxt "main.rssisalreadyinignoredlist"
+msgid "'%s' is already in ignored list"
+msgstr "'%s' ya esta en la lista de ignorados"
+
+#: main.rsstageall
+#, fuzzy
+msgctxt "main.rsstageall"
+msgid "Stage All"
+msgstr "Prepara todo"
+
+#: main.rsstagechanged
+#, fuzzy
+msgctxt "main.rsstagechanged"
+msgid "Stage Changed"
+msgstr "Prepara los modificados"
+
+#: main.rsstages
+#, fuzzy, object-pascal-format
+msgctxt "main.rsstages"
+msgid "Stage '%s'"
+msgstr "Prepara '%s'"
+
+#: main.rsthefilesisbinarydbytes
+#, fuzzy, object-pascal-format
+msgctxt "main.rsthefilesisbinarydbytes"
+msgid "The file '%s' is binary, %d bytes"
+msgstr "El archivo '%s' es binario, tiene %d bytes"
+
 #: main.rstherearecommitsbehind
 msgctxt "main.rstherearecommitsbehind"
 msgid "There are commits behind, are you sure you want to push?"
 msgstr "Hay cambios remotos sin integrar, ¿Estás seguro de subir los cambios locales?"
+
+#: main.rsthetypesisalreadyintheignoredlist
+#, fuzzy, object-pascal-format
+msgctxt "main.rsthetypesisalreadyintheignoredlist"
+msgid "The type '*%s' is already in the ignored list"
+msgstr "El tipo de archivo '*%s' ya esta en la lista de ignorados"
+
+#: main.rsthisfeaturewillbeimplementedasap
+#, fuzzy
+msgctxt "main.rsthisfeaturewillbeimplementedasap"
+msgid "This feature will be implemented ASAP"
+msgstr "Esta función se implementará pronto"
+
+#: main.rsthisrepositoryhasnoremotes
+#, fuzzy
+msgctxt "main.rsthisrepositoryhasnoremotes"
+msgid ""
+"This repository has no remotes defined\n"
+"I'm not yet prepared to handle this"
+msgstr ""
+"Este repositorio aún no ha definido fuentes remotas\n"
+"Aún no se como manejar esta situación"
+
+#: main.rsunstageall
+#, fuzzy
+msgctxt "main.rsunstageall"
+msgid "Unstage All"
+msgstr "Des preparar Todo"
+
+#: main.rsunstages
+#, fuzzy, object-pascal-format
+msgctxt "main.rsunstages"
+msgid "Unstage '%s'"
+msgstr "Des preparar '%s'"
+
+#: main.rsviewignoredfiles
+#, fuzzy
+msgctxt "main.rsviewignoredfiles"
+msgid "View Ignored Files"
+msgstr "Mostrar Archivos Ignorados"
+
+#: main.rsviewtrackedfiles
+#, fuzzy
+msgctxt "main.rsviewtrackedfiles"
+msgid "View Tracked Files"
+msgstr "Mostrar Archivos con Seguimiento"
+
+#: main.rsviewuntrackedfiles
+#, fuzzy
+msgctxt "main.rsviewuntrackedfiles"
+msgid "View Untracked Files"
+msgstr "Mostrar Archivos sin Seguimiento"
+
+#: main.rsyesdoit
+#, fuzzy
+msgctxt "main.rsyesdoit"
+msgid "yes, do it"
+msgstr "Sí, hazlo"
+
+#: main.rsyouareabouttoexecute
+#, fuzzy, object-pascal-format
+msgctxt "main.rsyouareabouttoexecute"
+msgid ""
+"You are about to execute %s: \n"
+"\n"
+"command: %s\n"
+"\n"
+"Do you want to proceed?"
+msgstr ""
+"Estás a punto de ejecutar %s: \n"
+"\n"
+"comando: %s\n"
+"\n"
+"¿Quieres proceder?"
+
+#: main.rsyouhavetostagesomething
+#, fuzzy
+msgctxt "main.rsyouhavetostagesomething"
+msgid "You have to stage something in order to commit"
+msgstr "Tienes que preparar algo para poder confirmar los cambios."
+
+#: main.rsyourcommitmessageisempt
+#, fuzzy
+msgctxt "main.rsyourcommitmessageisempt"
+msgid "Your commit message is empty!"
+msgstr "¡El mensaje de confirmación esta vacío!"
 
 #: tframelog.actgotochild.caption
 msgid "Go to child"
@@ -688,6 +974,18 @@ msgctxt "unitcommon.rsaddstoignorelist"
 msgid "Add '%s' to ignore list"
 msgstr "Añadir '%s' a la lista de ignorados"
 
+#: unitcommon.rsapplyingapatch
+msgid "Applying a patch"
+msgstr "Aplicando un parche"
+
+#: unitcommon.rsapplyingserialpatchesisnotyetimplemented
+msgid "Applying serial patches is not yet implemented"
+msgstr "La aplicación de parches seriales aún no esta implementada"
+
+#: unitcommon.rsapplypatch
+msgid "Apply patch"
+msgstr "Aplicar parche"
+
 #: unitcommon.rsattag
 msgctxt "unitcommon.rsattag"
 msgid "At tag"
@@ -746,7 +1044,7 @@ msgstr "Copiar"
 #: unitcommon.rscopypatchfromstotheclipboard
 #, object-pascal-format
 msgid "Copy patch from %s to the clipboard"
-msgstr ""
+msgstr "Copiar parche desde %s al porta-papeles"
 
 #: unitcommon.rscouldntgettopleveldirectoryofs
 #, object-pascal-format
@@ -761,7 +1059,7 @@ msgstr "Crear una rama en esta revisión"
 #: unitcommon.rscreateapatchfilefroms
 #, object-pascal-format
 msgid "Create a patch file from %s"
-msgstr ""
+msgstr "Crear un parche desde %s"
 
 #: unitcommon.rscreateatagatthiscommit
 msgid "Create a tag at this commit"
@@ -892,6 +1190,10 @@ msgstr "Comando incompleto"
 msgid "Invalid"
 msgstr "Inválido"
 
+#: unitcommon.rsinvalidamountofpatchestooapply
+msgid "Invalid amount of patches too apply"
+msgstr "La cantidad de parches a aplicar es inválida"
+
 #: unitcommon.rsinvalidcharacterinbranchname
 msgid "Invalid character in branch name"
 msgstr "Carácter inválido en nombre de rama"
@@ -997,6 +1299,10 @@ msgstr "Aún no implementado para No Preparados: %s"
 msgctxt "unitcommon.rsof"
 msgid "of"
 msgstr "de"
+
+#: unitcommon.rspatchingtheworkarea
+msgid "Patching the work area"
+msgstr "Parchando el área de trabajo"
 
 #: unitcommon.rspullingfromremote
 msgctxt "unitcommon.rspullingfromremote"
@@ -1335,6 +1641,21 @@ msgstr ""
 "%s\n"
 "¿Quieres proceder?"
 
+#: unitcommon.rsyouaretryingtoapply
+#, object-pascal-format
+msgid ""
+"You are trying to apply the patch file: %s to your working area.\n"
+"\n"
+"This operation will not make a commit.\n"
+"\n"
+"Do you want to apply the patch?"
+msgstr ""
+"Estás intentado aplicar el parche en el archivo %s a tu área de trabajo.\n"
+"\n"
+"Esta operación no creará una revisión.\n"
+"\n"
+"¿Aún quieres aplicar el parche?"
+
 #: unitcommon.rsyouhavetostagesomething
 msgctxt "unitcommon.rsyouhavetostagesomething"
 msgid "You have to stage something in order to commit"
@@ -1444,4 +1765,3 @@ msgstr "Sin modificar"
 #: unitentries.rslazgitguiuntrackednotstaged
 msgid "Untracked, not staged"
 msgstr "Sin seguimiento, no preparado"
-
