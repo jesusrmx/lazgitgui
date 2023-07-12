@@ -161,8 +161,8 @@ C        [ MTD]  copied in index
 [ MTARC]    M    work tree changed since index
 [ MTARC]    T    type changed in work tree since index
 [ MTARC]    D    deleted in work tree
-	    R    renamed in work tree
-	    C    copied in work tree
+            R    renamed in work tree
+            C    copied in work tree
 -------------------------------------------------
 D           D    unmerged, both deleted
 A           U    unmerged, added by us
@@ -179,6 +179,7 @@ U           U    unmerged, both modified
 
 resourcestring
   rsLazGitGuiUnmodified = 'Unmodified';
+  rsLazGitGuiNewIntentedToAdd = 'New, intended to add';
   rsLazGitGuiModifiedNotStaged = 'Modified, not staged';
   rsLazGitGuiStagedForCommit = 'Staged for commit';
   rsLazGitGuiPortionsStagedForCommit = 'Portions staged for commit';
@@ -211,7 +212,6 @@ begin
   result := etUnknown;
   if staged and (not merging) then begin
     case x+y of
-      '.A': result := etNotUpdatedA;
       '.M': result := etNotUpdatedM;
       '.D': result := etNotUpdatedD;
       '.R': result := etRenamedInWorkTree;
@@ -253,6 +253,7 @@ begin
       end
     else begin
       case x+y of
+        '.A': result := etNotUpdatedA;
         'M.': result := etIndexAndWorktreeMatchesM;
         'T.': result := etIndexAndWorktreeMatchesT;
         'A.': result := etIndexAndWorktreeMatchesA;
@@ -288,6 +289,7 @@ begin
   // ref: https://github.com/git/git/blob/master/git-gui/git-gui.sh (c. 2098)
   case x+y of
     '..': result := rsLazGitGuiUnmodified;
+    '.A': result := rsLazGitGuiNewIntentedToAdd;
     '.M': result := rsLazGitGuiModifiedNotStaged;
     'M.': result := rsLazGitGuiStagedForCommit;
     'MM': result := rsLazGitGuiPortionsStagedForCommit;

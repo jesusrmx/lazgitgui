@@ -852,7 +852,7 @@ begin
   if sender=lstUnstaged then begin
     WriteStr(cmdOut, Entry^.EntryTypeUnStaged);
     case Entry^.EntryTypeUnStaged of
-      etUntracked,
+      etUntracked, etNotUpdatedA,
       etWorktreeChangedSinceIndex..etTypeChangedInWorktreeSinceIndexC:
         begin
           fGit.ResetLogError;
@@ -1320,6 +1320,7 @@ begin
   index := 0;
   if lb=lstUnstaged then
     case entry^.EntryTypeUnStaged of
+      etNotUpdatedA:                                              index := 2;
       etWorktreeChangedSinceIndex..etWorktreeChangedSinceIndexT:  index := 6;
       etDeletedInWorktree..etDeletedInWorktreeC:                  index := 3;
       etIgnored:                                                  index := 5;
