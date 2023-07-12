@@ -33,7 +33,8 @@ uses
   unitifaces, unittextchunks, unitlogcache, unitdbindex, unitgitmgr;
 
 const
-  LOGCELL_LEFTMARGIN  = 7;
+  LOGCELL_LEFTMARGIN  =   CHUNKWIDTH_SPACING + CHUNKWIDTH_SEPARATOR;
+
 
 type
 
@@ -128,11 +129,8 @@ begin
     for i:=0 to Length(fRowTextChunks)-1 do
     with fRowTextChunks[i] do begin
       if r.Contains(Point(x, y)) then begin
-        case itemType of
-          tcitNone: aCursor := crDefault;
-          tcitBox:  aCursor := crNoDrop;
-          tcitLink: aCursor := crHandPoint;
-        end;
+        if itemType=tcitLink then aCursor := crHandPoint
+        else                      aCursor := crDefault;
         if fGrid.Cursor<>aCursor then begin
           fGrid.Cursor := aCursor;
           fPointedChunkIndex := i;

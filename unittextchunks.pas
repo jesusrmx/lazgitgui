@@ -9,6 +9,12 @@ uses
   Classes, SysUtils, LazLogger, Graphics, StrUtils, RegExpr,
   unitcommon, unitgittypes, unitgitutils, unitconfig, unitdbindex;
 
+const
+  CHUNKWIDTH_PADDING    = 3;
+  CHUNKWIDTH_TAGEXTRA   = 6;
+  CHUNKWIDTH_SPACING    = 2;
+  CHUNKWIDTH_SEPARATOR  = 5;
+
 type
   TTextChunksItemType = (tcitNone, tcitBox, tcitTag, tcitAnnotatedTag, tcitLink);
 
@@ -24,6 +30,7 @@ type
     penWidth: Integer;
     fontColor: TColor;
     text: string;
+    textWidth: Integer;
     linkIndex: Integer;
     linkDest: string;
     linkAction: string;
@@ -72,7 +79,7 @@ implementation
 
 function GetTextChunks(canvas: TCanvas; aRect:TRect; x: integer; refsMap: TRefsMap; aCommit, aSubject: RawByteString): TTextChunks;
 var
-  n, i, j, w: Integer;
+  n, i, j, w, txtWidth: Integer;
   arr: TRefInfoArray;
   item: TTextChunksItem;
   s: String;
@@ -85,9 +92,12 @@ begin
   if (refsMap<>nil) and refsMap.Find(aCommit, n ) then begin
     arr := refsMap.Data[n];
 
+    SetLength(result, Length(arr));
+
     for i:=0 to Length(arr)-1 do begin
 
-      w := canvas.TextWidth(arr[i]^.refName) + 6;
+      item.textWidth := canvas.TextWidth(arr[i]^.refName);
+      w := item.textWidth + 2*CHUNKWIDTH_PADDING;
 
       item.itemType := tcitBox;
       case arr[i]^.subType of
@@ -108,7 +118,7 @@ begin
             item.fontColor := clBlack;
             if arr[i]^.objType=rotTag then begin
               item.itemType := tcitAnnotatedTag;
-              w += 5;
+              w += CHUNKWIDTH_TAGEXTRA;
             end else
               item.itemType := tcitTag;
           end;
@@ -121,13 +131,11 @@ begin
       item.penColor := clBlack;
       item.text := arr[i]^.refName;
 
-      j := Length(result);
-      SetLength(result, j+1);
-      result[j] := item;
+      result[i] := item;
 
-      x += w + 2;
+      x += w + CHUNKWIDTH_SPACING;
       if i=Length(arr)-1 then
-        x += 5;
+        x += CHUNKWIDTH_SEPARATOR;
     end;
 
   end;
