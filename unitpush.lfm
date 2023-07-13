@@ -10,11 +10,11 @@ object frmPush: TfrmPush
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   OnShow = FormShow
-  LCLVersion = '2.3.0.0'
+  LCLVersion = '3.99.0.0'
   object panBtns: TButtonPanel
     Left = 6
-    Height = 34
-    Top = 402
+    Height = 35
+    Top = 401
     Width = 484
     OKButton.Name = 'OKButton'
     OKButton.DefaultCaption = True
@@ -44,29 +44,30 @@ object frmPush: TfrmPush
     ItemHeight = 0
     OnSelectionChange = lstBranchesSelectionChange
     TabOrder = 1
+    TopIndex = -1
   end
   object Label1: TLabel
     Left = 8
-    Height = 15
+    Height = 17
     Top = 8
-    Width = 82
+    Width = 87
     Caption = 'Local branches:'
   end
   object gpoDest: TGroupBox
     Left = 6
-    Height = 96
+    Height = 88
     Top = 224
     Width = 480
     Anchors = [akLeft, akRight, akBottom]
     Caption = 'Remote Repository'
-    ClientHeight = 76
+    ClientHeight = 69
     ClientWidth = 476
     TabOrder = 2
     object radRemote: TRadioButton
       Left = 11
-      Height = 19
+      Height = 21
       Top = 13
-      Width = 56
+      Width = 64
       Caption = 'remote'
       Checked = True
       OnClick = radRemoteClick
@@ -75,27 +76,27 @@ object frmPush: TfrmPush
     end
     object radUrl: TRadioButton
       Left = 11
-      Height = 19
+      Height = 21
       Top = 45
-      Width = 33
+      Width = 40
       Caption = 'Url'
       OnClick = radRemoteClick
       TabOrder = 1
     end
     object comboRemote: TComboBox
       Left = 96
-      Height = 23
+      Height = 29
       Top = 8
       Width = 344
       Anchors = [akTop, akLeft, akRight]
-      ItemHeight = 15
+      ItemHeight = 0
       OnSelect = comboRemoteSelect
       Style = csDropDownList
       TabOrder = 2
     end
     object txtURL: TEdit
       Left = 96
-      Height = 23
+      Height = 26
       Top = 40
       Width = 344
       Anchors = [akTop, akLeft, akRight]
@@ -114,9 +115,9 @@ object frmPush: TfrmPush
     end
   end
   object chkOptions: TCheckGroup
-    Left = 8
-    Height = 73
-    Top = 320
+    Left = 6
+    Height = 88
+    Top = 312
     Width = 478
     Anchors = [akLeft, akRight, akBottom]
     AutoFill = True
@@ -129,16 +130,17 @@ object frmPush: TfrmPush
     ChildSizing.ShrinkVertical = crsScaleChilds
     ChildSizing.Layout = cclLeftToRightThenTopToBottom
     ChildSizing.ControlsPerLine = 1
-    ClientHeight = 53
+    ClientHeight = 69
     ClientWidth = 474
     Items.Strings = (
       'Force'
       'Include Tags'
+      'Add Upstream (Tracking) Reference'
     )
     OnItemClick = chkOptionsItemClick
     TabOrder = 3
     Data = {
-      020000000202
+      03000000020202
     }
   end
 end

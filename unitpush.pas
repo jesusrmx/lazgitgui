@@ -86,6 +86,8 @@ begin
   fConfig.ReadWindow(self, 'pushfrm', SECTION_GEOMETRY);
   if ModalResult=mrOk then begin
     canClose := RunInteractive(fGit.Exe + ' ' + fCommand, fGit.TopLevelDir, 'Push with options', fCommand)<=0;
+    fGitMgr.UpdateStatus;
+    fGitMgr.UpdateRefList;
   end;
 end;
 
@@ -203,6 +205,7 @@ begin
 
   if chkOptions.Checked[0] then fCommand += ' --force';
   if chkOptions.Checked[1] then fCommand += ' --tags';
+  if chkOptions.Checked[2] then fCommand += ' --set-upstream';
 
   if radRemote.Checked then begin
     s := trim(comboRemote.Text);
