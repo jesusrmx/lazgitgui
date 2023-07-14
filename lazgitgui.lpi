@@ -236,6 +236,7 @@
         <Filename Value="unitclone.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="frmClone"/>
+        <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
       </Unit>
     </Units>

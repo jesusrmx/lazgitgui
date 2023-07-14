@@ -7,7 +7,7 @@ interface
 uses
   Classes, SysUtils, URIParser, RegExpr,
   Forms, Controls, Graphics, Dialogs, StdCtrls, ExtCtrls, ButtonPanel, Buttons,
-  Clipbrd,
+  Clipbrd, EditBtn,
   unitcommon, unitconfig, unitifaces, unitruncmd, unitgitmgr;
 
 type
@@ -19,10 +19,13 @@ type
     lblInfo: TLabel;
     btnLocalRepoDir: TSpeedButton;
     btnBrowseDir: TSpeedButton;
+    selDir: TSelectDirectoryDialog;
     txtDir: TEdit;
     Label2: TLabel;
     txtUrl: TEdit;
     Label1: TLabel;
+    procedure btnBrowseDirClick(Sender: TObject);
+    procedure btnLocalRepoDirClick(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -43,6 +46,7 @@ type
     function GetURL: string;
     function ProcessRegExUrl(aUrl: string): string;
     function IsValidUrl(aUrl: string; out aRepoName: string): boolean;
+    function SelectDirectory: boolean;
   public
     property GitMgr: TGitMgr read fGitMgr write fGitMgr;
   end;
@@ -55,7 +59,7 @@ implementation
 {$R *.lfm}
 
 const
-  URLREG_EXPRESSION = '((https?|git|ssh):\/\/(?:[^\s])+)';
+  URLREG_EXPRESSION = '((https?|git|ssh|file):\/\/(?:[^\s])+)';
 
 { TfrmClone }
 
@@ -68,10 +72,10 @@ end;
 
 procedure TfrmClone.FormShow(Sender: TObject);
 var
-  aUrl: String;
+  aUrl, aRepoName: String;
 begin
   aUrl := UrlFromClipboard;
-  if aUrl='' then
+  if not IsValidUrl(aUrl, aRepoName) then
     aUrl := fConfig.ReadString('CloneUrl');
 
   txtDir.OnChange := nil;
@@ -109,8 +113,7 @@ begin
 
   dir := GetUrl;
 
-  if IsValidUrl(dir, aRepoName) then  fRepoName := aRepoName
-  else                                fRepoName := '';
+  IsValidUrl(dir, fRepoName);
 
   txtDir.Text := fCloneDir + fRepoName;
 
@@ -166,12 +169,29 @@ function TfrmClone.IsValidUrl(aUrl: string; out aRepoName: string): boolean;
 var
   Uri: TURI;
 begin
+  aRepoName := '';
+
   Uri := ParseUri(aUrl);
+
+  if (Uri.Protocol='file') then begin
+    result := (Uri.Path<>'') and (Uri.Document<>'');
+    exit;
+  end;
 
   result := (Uri.Host<>'') and (Uri.Protocol<>'') and (uri.Path<>'');
 
-  if Uri.Document<>'' then aRepoName := ChangeFileExt(uri.Document, '')
-  else                     aRepoName := '';
+  if Uri.Document<>'' then
+    aRepoName := ChangeFileExt(uri.Document, '');
+end;
+
+function TfrmClone.SelectDirectory: boolean;
+begin
+  if selDir.Tag=0 then begin
+    selDir.InitialDir := fCloneDir;
+    selDir.Tag := 1;
+  end;
+
+  result := SelDir.Execute;
 end;
 
 procedure TfrmClone.UpdateInfo;
@@ -188,7 +208,7 @@ begin
     exit;
   end;
 
-  if not isValidURL(s, aReponame) or (aRepoName='') then begin
+  if not isValidURL(s, aReponame) then begin
     Invalid(rsInvalidCloneURL);
     exit;
   end;
@@ -245,6 +265,25 @@ begin
       fConfig.WriteString('CloneUrl', fUrl);
       fConfig.WriteString('CloneDir', fCloneDir);
     end;
+  end;
+end;
+
+procedure TfrmClone.btnBrowseDirClick(Sender: TObject);
+begin
+  if SelectDirectory then begin
+    fCloneDir := IncludeTrailingPathDelimiter(selDir.FileName);
+    DoUrlChange;
+    UpdateInfo;
+  end;
+end;
+
+procedure TfrmClone.btnLocalRepoDirClick(Sender: TObject);
+var
+  aDir: String;
+begin
+  if SelectDirectory then begin
+    aDir := FileNameToUri(IncludeTrailingPathDelimiter(selDir.FileName), false);
+    txtUrl.Text := aDir;
   end;
 end;
 
