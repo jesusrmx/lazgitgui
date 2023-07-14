@@ -38,7 +38,8 @@ uses
   unitcheckouttag, unitcommitbrowser, unitvfs, unithighlighterhelper,
   unitgraphbuild, unitfilehistory, unitformlog, unitcustcmdform, unitcustomcmds,
   unitreset, LCLTranslator, unitcommon, unittextchunks, unitlinkmgr, unitgitcmd,
-  unitpush, unitremotes, unitsyneditextras, unittoposort, unitcolumnscroller;
+  unitpush, unitremotes, unitsyneditextras, unittoposort, unitcolumnscroller,
+  unitclone;
 
 {$R *.res}
 

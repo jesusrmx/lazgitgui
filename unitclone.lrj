@@ -1,0 +1,9 @@
+{"version":1,"strings":[
+{"hash":4863557,"name":"tfrmclone.caption","sourcebytes":[67,108,111,110,101],"value":"Clone"},
+{"hash":23148,"name":"tfrmclone.label1.caption","sourcebytes":[85,82,76],"value":"URL"},
+{"hash":105320540,"name":"tfrmclone.txturl.texthint","sourcebytes":[67,108,111,110,101,32,85,82,76],"value":"Clone URL"},
+{"hash":132490121,"name":"tfrmclone.txtdir.texthint","sourcebytes":[76,111,99,97,108,32,71,105,116,32,68,105,114,101,99,116,111,114,121],"value":"Local Git Directory"},
+{"hash":146472345,"name":"tfrmclone.label2.caption","sourcebytes":[68,105,114,101,99,116,111,114,121],"value":"Directory"},
+{"hash":76,"name":"tfrmclone.btnlocalrepodir.caption","sourcebytes":[76],"value":"L"},
+{"hash":68,"name":"tfrmclone.btnbrowsedir.caption","sourcebytes":[68],"value":"D"}
+]}

@@ -32,5 +32,6 @@
 {"hash":50601924,"name":"tfrmmain.actgitcmd.hint","sourcebytes":[68,105,114,101,99,116,108,121,32,114,117,110,32,97,32,103,105,116,32,99,111,109,109,97,110,100],"value":"Directly run a git command"},
 {"hash":73,"name":"tfrmmain.actrepoinfo.caption","sourcebytes":[73],"value":"I"},
 {"hash":114547166,"name":"tfrmmain.actrepoinfo.hint","sourcebytes":[82,101,112,111,115,105,116,111,114,121,32,73,110,102,111,114,109,97,116,105,111,110],"value":"Repository Information"},
+{"hash":4863557,"name":"tfrmmain.actclone.caption","sourcebytes":[67,108,111,110,101],"value":"Clone"},
 {"hash":315429,"name":"tfrmmain.menuitem1.caption","sourcebytes":[70,105,108,101],"value":"File"}
 ]}

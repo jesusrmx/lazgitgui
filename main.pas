@@ -37,7 +37,7 @@ uses
   unitnewbranch, unitruncmd, unitsyneditextras,
   unitnewtag, LConvEncoding, unitdbindex,
   unitgitmgr, unitcheckouttag, unitformlog, unitcustomcmds,
-  unitcustcmdform, unittextchunks, unitgitcmd, unitpush;
+  unitcustcmdform, unittextchunks, unitgitcmd, unitpush, unitclone;
 
 type
 
@@ -49,6 +49,7 @@ type
     actInsertBranchName: TAction;
     actAddCmd: TAction;
     actGitCmd: TAction;
+    actClone: TAction;
     actRepoInfo: TAction;
     actRestoreCommitMsg: TAction;
     actNewLog: TAction;
@@ -78,6 +79,7 @@ type
     lstStaged: TListBox;
     MenuItem1: TMenuItem;
     MenuItem2: TMenuItem;
+    MenuItem3: TMenuItem;
     mnuMain: TMainMenu;
     panCommitState: TPanel;
     panBranch: TPanel;
@@ -93,6 +95,7 @@ type
     prgBar: TProgressBar;
     btnRepoInfo: TSpeedButton;
     dlgSave: TSaveDialog;
+    Separator1: TMenuItem;
     splitterMain: TSplitter;
     barCustomCmds: TToolBar;
     btnGitCmd: TToolButton;
@@ -106,6 +109,7 @@ type
     splitterCommit: TSplitter;
     txtDiff: TSynEdit;
     procedure actAddCmdExecute(Sender: TObject);
+    procedure actCloneExecute(Sender: TObject);
     procedure actCommitExecute(Sender: TObject);
     procedure actFetchExecute(Sender: TObject);
     procedure actGitCmdExecute(Sender: TObject);
@@ -151,6 +155,7 @@ type
     procedure DoGitDiff(Data: PtrInt);
     procedure DoItemAction(Data: PtrInt);
     procedure DoCommit;
+    procedure DoClone;
     procedure DoNewLog;
     procedure DoPush;
     procedure DoFetch;
@@ -1483,6 +1488,11 @@ begin
   end;
 end;
 
+procedure TfrmMain.actCloneExecute(Sender: TObject);
+begin
+  DoClone;
+end;
+
 procedure TfrmMain.actFetchExecute(Sender: TObject);
 begin
   DoFetch;
@@ -1667,6 +1677,19 @@ begin
     fGitMgr.UpdateRefList;
     txtDiff.Clear;
     txtComment.Clear;
+  end;
+end;
+
+procedure TfrmMain.DoClone;
+var
+  F: TfrmClone;
+begin
+  F := TfrmClone.Create(Self);
+  F.GitMgr := fGitMgr;
+  try
+    F.ShowModal;
+  finally
+    F.Free;
   end;
 end;
 
