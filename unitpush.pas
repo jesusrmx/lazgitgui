@@ -83,7 +83,7 @@ implementation
 
 procedure TfrmPush.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
 begin
-  fConfig.ReadWindow(self, 'pushfrm', SECTION_GEOMETRY);
+  fConfig.WriteWindow(Self, 'pushfrm', SECTION_GEOMETRY);
   if ModalResult=mrOk then begin
     canClose := RunInteractive(fGit.Exe + ' ' + fCommand, fGit.TopLevelDir, 'Push with options', fCommand)<=0;
     fGitMgr.UpdateStatus;
@@ -125,7 +125,7 @@ end;
 
 procedure TfrmPush.FormCreate(Sender: TObject);
 begin
-  fConfig.WriteWindow(Self, 'pushfrm', SECTION_GEOMETRY);
+  fConfig.ReadWindow(self, 'pushfrm', SECTION_GEOMETRY);
 end;
 
 procedure TfrmPush.FormDestroy(Sender: TObject);
