@@ -180,6 +180,11 @@ resourcestring
     'Do you want to apply the patch?';
   rsApplyPatch = 'Apply patch';
   rsApplyingAPatch = 'Applying a patch';
+  rsTheRepositoryURLIsEmpty = 'The repository URL is empty';
+  rsInvalidCloneURL = 'Invalid clone URL';
+  rsInvalidDirectory = 'Invalid directory';
+  rsInvalidRepositoryName = 'Invalid repository name';
+  rsInto = 'into: ';
 
 implementation
 

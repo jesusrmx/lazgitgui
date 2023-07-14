@@ -36,9 +36,10 @@ type
     fUrlRegExpr: string;
     fCloneDir: string;
     procedure DoDirChange;
+    procedure DoUrlChange;
     procedure UpdateInfo;
     procedure Invalid(msg: string);
-    procedure ScanClipboard;
+    function  UrlFromClipboard: string;
     function GetURL: string;
     function ProcessRegExUrl(aUrl: string): string;
     function IsValidUrl(aUrl: string; out aRepoName: string): boolean;
@@ -66,8 +67,22 @@ begin
 end;
 
 procedure TfrmClone.FormShow(Sender: TObject);
+var
+  aUrl: String;
 begin
-  ScanClipboard;
+  aUrl := UrlFromClipboard;
+  if aUrl='' then
+    aUrl := fConfig.ReadString('CloneUrl');
+
+  txtDir.OnChange := nil;
+  txtDir.Text := fCloneDir;
+  txtDir.OnChange := @txtDirChange;
+
+  txtUrl.OnChange := nil;
+  txtUrl.Text := aUrl;
+  txtUrl.OnChange := @txtUrlChange;
+  DoUrlChange;
+
   UpdateInfo;
 end;
 
@@ -85,8 +100,31 @@ begin
   UpdateInfo;
 end;
 
+procedure TfrmClone.DoUrlChange;
+var
+  aRepoName: String;
+  dir: String;
+begin
+  txtDir.OnChange := nil;
+
+  dir := GetUrl;
+
+  if IsValidUrl(dir, aRepoName) then  fRepoName := aRepoName
+  else                                fRepoName := '';
+
+  txtDir.Text := fCloneDir + fRepoName;
+
+  txtDir.OnChange := @txtDirChange;
+end;
+
 procedure TfrmClone.txtDirChange(Sender: TObject);
 begin
+  DoDirChange;
+end;
+
+procedure TfrmClone.txtUrlChange(Sender: TObject);
+begin
+  DoUrlChange;
   DoDirChange;
 end;
 
@@ -136,29 +174,9 @@ begin
   else                     aRepoName := '';
 end;
 
-procedure TfrmClone.txtUrlChange(Sender: TObject);
-var
-  dir, aRepoName: String;
-  Uri: TURI;
-begin
-  txtDir.OnChange := nil;
-
-  dir := GetUrl;
-
-  if IsValidUrl(dir, aRepoName) then  fRepoName := aRepoName
-  else                                fRepoName := '';
-
-  txtDir.Text := fCloneDir + fRepoName;
-
-  txtDir.OnChange := @txtDirChange;
-
-  DoDirChange;
-end;
-
 procedure TfrmClone.UpdateInfo;
 var
   s, aReponame: String;
-  uri: TURI;
 begin
   panBtns.OKButton.Enabled := false;
 
@@ -166,24 +184,24 @@ begin
 
   s := GetUrl;
   if s='' then begin
-    Invalid('The repository URL is empty');
+    Invalid(rsTheRepositoryURLIsEmpty);
     exit;
   end;
 
   if not isValidURL(s, aReponame) or (aRepoName='') then begin
-    Invalid('Invalid clone URL');
+    Invalid(rsInvalidCloneURL);
     exit;
   end;
 
   fUrl := s;
 
   if fCloneDir='' then begin
-    Invalid('Invalid directory');
+    Invalid(rsInvalidDirectory);
     exit;
   end;
 
   if fRepoName='' then begin
-    Invalid('Invalid repository name');
+    Invalid(rsInvalidRepositoryName);
     exit;
   end;
 
@@ -191,7 +209,7 @@ begin
 
   lblInfo.Font.Color := clBlack;
   lblInfo.Caption := 'git ' + fCommand + LineEnding +
-                     'into: ' + ExcludeTrailingPathDelimiter(fCloneDir);
+                     rsInto + ExcludeTrailingPathDelimiter(fCloneDir);
 
   panBtns.OKButton.Enabled := true;
 end;
@@ -202,18 +220,14 @@ begin
   lblInfo.Caption := msg;
 end;
 
-procedure TfrmClone.ScanClipboard;
-var
-  url: String;
+function TfrmClone.UrlFromClipboard: string;
 begin
-  txtUrl.Text := '';
-  txtDir.Text := fCloneDir;
 
-  url := Clipboard.AsText;
-  if url='' then
+  result := Clipboard.AsText;
+  if result='' then
     exit;
 
-  txtUrl.Text := ProcessRegExUrl(url);
+  result := ProcessRegExUrl(result);
 end;
 
 procedure TfrmClone.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
