@@ -185,6 +185,9 @@ resourcestring
   rsInvalidDirectory = 'Invalid directory';
   rsInvalidRepositoryName = 'Invalid repository name';
   rsInto = 'into: ';
+  rsInvalidFileUrl = 'Invalid file url';
+  rsTheFileUrlPointsToAnInvalidDirectory = 'The file url points to an invalid '
+    +'directory';
 
 implementation
 
