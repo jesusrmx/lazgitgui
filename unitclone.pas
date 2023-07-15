@@ -96,7 +96,7 @@ begin
 
   if (Uri.Protocol='file') then begin
     result := (Uri.Path<>'') and (Uri.Document<>'');
-    aRepoName := Uri.Document;
+    aRepoName := ChangeFileExt(Uri.Document, '');
     exit;
   end;
 
@@ -183,10 +183,14 @@ begin
 
   aUrl := GetUrl;
   ExcludeTrailing(aUrl);
-  if isValidUrl(aUrl, aRepoName, aProto) then
-    txtRepoName.Text := aRepoName
-  else
-    UpdateInfo;
+  if isValidUrl(aUrl, aRepoName, aProto) then begin
+    if txtRepoName.Text<>aRepoName then begin
+      txtRepoName.Text := aRepoName;
+      exit;
+    end;
+  end;
+
+  UpdateInfo;
 end;
 
 procedure TfrmClone.txtRepoNameChange(Sender: TObject);
