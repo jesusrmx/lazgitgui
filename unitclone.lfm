@@ -1,57 +1,41 @@
 object frmClone: TfrmClone
-  Left = 390
-  Height = 163
-  Top = 263
+  Left = 218
+  Height = 181
+  Top = 219
   Width = 564
   Caption = 'Clone'
-  ClientHeight = 163
+  ClientHeight = 181
   ClientWidth = 564
   OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
   OnShow = FormShow
   LCLVersion = '3.99.0.0'
-  object Label1: TLabel
-    Left = 16
-    Height = 15
-    Top = 20
-    Width = 96
-    Alignment = taRightJustify
-    AutoSize = False
-    Caption = 'URL'
-  end
   object txtUrl: TEdit
-    Left = 120
+    Left = 152
     Height = 26
+    Hint = 'URL of the repository'
     Top = 16
-    Width = 376
+    Width = 344
     Anchors = [akTop, akLeft, akRight]
     OnChange = txtUrlChange
     TabOrder = 0
     TextHint = 'Clone URL'
   end
   object txtDir: TEdit
-    Left = 120
+    Left = 152
     Height = 26
-    Top = 53
-    Width = 376
+    Hint = 'Directory where the cloned respository will be cloned'
+    Top = 48
+    Width = 344
     Anchors = [akTop, akLeft, akRight]
-    OnChange = txtDirChange
+    OnChange = txtUrlChange
     TabOrder = 1
     TextHint = 'Local Git Directory'
-  end
-  object Label2: TLabel
-    Left = 16
-    Height = 15
-    Top = 56
-    Width = 96
-    Alignment = taRightJustify
-    AutoSize = False
-    Caption = 'Directory'
   end
   object panBtns: TButtonPanel
     Left = 6
     Height = 35
-    Top = 122
+    Top = 140
     Width = 552
     OKButton.Name = 'OKButton'
     OKButton.DefaultCaption = True
@@ -73,7 +57,7 @@ object frmClone: TfrmClone
     end
   end
   object btnLocalRepoDir: TSpeedButton
-    Left = 504
+    Left = 496
     Height = 22
     Top = 17
     Width = 23
@@ -82,16 +66,53 @@ object frmClone: TfrmClone
     OnClick = btnLocalRepoDirClick
   end
   object btnBrowseDir: TSpeedButton
-    Left = 504
+    Left = 496
     Height = 22
-    Top = 53
+    Top = 50
     Width = 23
     Anchors = [akTop, akRight]
     Caption = 'D'
     OnClick = btnBrowseDirClick
   end
+  object txtRepoName: TEdit
+    Left = 152
+    Height = 26
+    Hint = 'Repository Name'
+    Top = 80
+    Width = 344
+    OnChange = txtUrlChange
+    TabOrder = 3
+    TextHint = 'Repository Name'
+  end
+  object lblUrl: TLabel
+    Left = 6
+    Height = 17
+    Top = 20
+    Width = 136
+    Alignment = taRightJustify
+    AutoSize = False
+    Caption = 'URL'
+  end
+  object lblDir: TLabel
+    Left = 8
+    Height = 17
+    Top = 52
+    Width = 136
+    Alignment = taRightJustify
+    AutoSize = False
+    Caption = 'Directory'
+  end
+  object lblRepoName: TLabel
+    Left = 8
+    Height = 17
+    Top = 85
+    Width = 136
+    Alignment = taRightJustify
+    AutoSize = False
+    Caption = 'Repository Name'
+  end
   object selDir: TSelectDirectoryDialog
-    Left = 120
-    Top = 88
+    Left = 304
+    Top = 96
   end
 end

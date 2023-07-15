@@ -15,21 +15,22 @@ type
   { TfrmClone }
 
   TfrmClone = class(TForm)
+    lblRepoName: TLabel;
+    lblUrl: TLabel;
+    lblDir: TLabel;
+    txtRepoName: TEdit;
     panBtns: TButtonPanel;
     lblInfo: TLabel;
     btnLocalRepoDir: TSpeedButton;
     btnBrowseDir: TSpeedButton;
     selDir: TSelectDirectoryDialog;
     txtDir: TEdit;
-    Label2: TLabel;
     txtUrl: TEdit;
-    Label1: TLabel;
     procedure btnBrowseDirClick(Sender: TObject);
     procedure btnLocalRepoDirClick(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
-    procedure txtDirChange(Sender: TObject);
     procedure txtUrlChange(Sender: TObject);
   private
     fCommand: string;
@@ -38,8 +39,6 @@ type
     fUrl: String;
     fUrlRegExpr: string;
     fCloneDir: string;
-    procedure DoDirChange;
-    procedure DoUrlChange;
     procedure UpdateInfo;
     procedure Invalid(msg: string);
     function  UrlFromClipboard: string;
@@ -68,6 +67,7 @@ begin
   fConfig.ReadWindow(self, 'clonefrm', SECTION_GEOMETRY);
   fUrlRegExpr := fConfig.ReadString('CloneUrlRegExpr', URLREG_EXPRESSION);
   fCloneDir := fConfig.ReadString('CloneDir', GetUserDir);
+  fRepoName := fConfig.ReadString('CloneRepo');
 end;
 
 procedure TfrmClone.FormShow(Sender: TObject);
@@ -75,60 +75,30 @@ var
   aUrl, aRepoName: String;
 begin
   aUrl := UrlFromClipboard;
-  if not IsValidUrl(aUrl, aRepoName) then
+  if not IsValidUrl(aUrl, aRepoName) then begin
     aUrl := fConfig.ReadString('CloneUrl');
+  end else
+  if fRepoName='' then
+    fRepoName := aRepoName;
 
   txtDir.OnChange := nil;
   txtDir.Text := fCloneDir;
-  txtDir.OnChange := @txtDirChange;
+  txtDir.OnChange := @txtUrlChange;
 
   txtUrl.OnChange := nil;
   txtUrl.Text := aUrl;
   txtUrl.OnChange := @txtUrlChange;
-  DoUrlChange;
+
+  txtRepoName.OnChange := nil;
+  txtRepoName.Text := fRepoName;
+  txtRepoName.OnChange := @txtUrlChange;
 
   UpdateInfo;
-end;
-
-procedure TfrmClone.DoDirChange;
-var
-  dir: String;
-begin
-  dir := Trim(txtDir.Text);
-
-  while dir.EndsWith('/') do
-    delete(dir, Length(dir), 1);
-
-  fCloneDir := ExtractFilePath(dir);
-
-  UpdateInfo;
-end;
-
-procedure TfrmClone.DoUrlChange;
-var
-  aRepoName: String;
-  dir: String;
-begin
-  txtDir.OnChange := nil;
-
-  dir := GetUrl;
-
-  IsValidUrl(dir, fRepoName);
-
-  txtDir.Text := fCloneDir + fRepoName;
-
-  txtDir.OnChange := @txtDirChange;
-end;
-
-procedure TfrmClone.txtDirChange(Sender: TObject);
-begin
-  DoDirChange;
 end;
 
 procedure TfrmClone.txtUrlChange(Sender: TObject);
 begin
-  DoUrlChange;
-  DoDirChange;
+  UpdateInfo;
 end;
 
 function TfrmClone.GetURL: string;
@@ -190,15 +160,19 @@ begin
     selDir.InitialDir := fCloneDir;
     selDir.Tag := 1;
   end;
-
   result := SelDir.Execute;
 end;
 
 procedure TfrmClone.UpdateInfo;
 var
-  s, aReponame: String;
+  s, aReponame, dir: String;
 begin
   panBtns.OKButton.Enabled := false;
+
+  dir := Trim(txtDir.Text);
+  while dir.EndsWith('/') do
+    delete(dir, Length(dir), 1);
+  fCloneDir := ExtractFilePath(dir);
 
   fCommand := 'clone --progress';
 
@@ -270,21 +244,14 @@ end;
 
 procedure TfrmClone.btnBrowseDirClick(Sender: TObject);
 begin
-  if SelectDirectory then begin
-    fCloneDir := IncludeTrailingPathDelimiter(selDir.FileName);
-    DoUrlChange;
-    UpdateInfo;
-  end;
+  if SelectDirectory then
+    txtDir.Text := IncludeTrailingPathDelimiter(selDir.FileName);
 end;
 
 procedure TfrmClone.btnLocalRepoDirClick(Sender: TObject);
-var
-  aDir: String;
 begin
-  if SelectDirectory then begin
-    aDir := FileNameToUri(IncludeTrailingPathDelimiter(selDir.FileName), false);
-    txtUrl.Text := aDir;
-  end;
+  if SelectDirectory then
+    txtUrl.Text := FileNameToUri(IncludeTrailingPathDelimiter(selDir.FileName), false);
 end;
 
 end.
