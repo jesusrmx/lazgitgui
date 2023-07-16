@@ -417,7 +417,8 @@ begin
   {$IFDEF DEBUG}
   debugln('TfrmRunCommand.OnDone');
   {$ENDIF}
-  if fRunThread.Result<=0 then begin
+  fResult := fRunThread.Result;
+  if fResult<=0 then begin
     lblResult.Color := clGreen;
     lblResult.Font.Color := clWhite;
     lblResult.Caption := rsSucceed;
