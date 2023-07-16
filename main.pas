@@ -1631,7 +1631,8 @@ begin
     if res=mrYes then begin
       cmd := fGit.Exe + ' apply '+ Sanitize(Filenames[0]);
 
-      RunInteractive(cmd, fGit.TopLevelDir, rsApplyingAPatch, cmd);
+      if RunInteractive(cmd, fGit.TopLevelDir, rsApplyingAPatch, cmd)<=0 then
+        fGitMgr.UpdateStatus();
     end;
   finally
     FreeMem(buffer);
