@@ -1141,6 +1141,13 @@ begin
         binfo := {%H-}PBranchInfo(data);
         CreateBranch(binfo);
       end;
+
+    GITMGR_EVENT_LOADREPOSITORY:
+      begin
+        info := {%H-}PTagInfo(data);
+        OpenDirectory(info^.data);
+        Dispose(info);
+      end;
   end;
 end;
 

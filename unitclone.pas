@@ -15,6 +15,7 @@ type
   { TfrmClone }
 
   TfrmClone = class(TForm)
+    chkLoad: TCheckBox;
     lblRepoName: TLabel;
     lblUrl: TLabel;
     lblDir: TLabel;
@@ -245,11 +246,13 @@ begin
     exit;
   end;
 
-  fCommand += ' ' + fUrl + ' ' + fRepoName;
+  fCommand += ' ' + fUrl;
 
   lblInfo.Font.Color := clBlack;
   lblInfo.Caption := 'git ' + fCommand + LineEnding +
-                     rsInto + ExcludeTrailingPathDelimiter(fCloneDir);
+                     rsInto + fCloneDir + fRepoName;
+
+  fCommand += ' ' + fRepoName;
 
   panBtns.OKButton.Enabled := true;
 end;
@@ -273,6 +276,7 @@ end;
 procedure TfrmClone.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
 var
   aDir: string;
+  res: Integer;
 begin
   fConfig.WriteWindow(Self, 'clonefrm', SECTION_GEOMETRY);
   if ModalResult=mrOk then begin
@@ -281,9 +285,14 @@ begin
     if not FileExists(aDir) then
       ForceDirectories(aDir);
 
-    if RunInteractive(fGitMgr.Git.Exe + ' ' + fCommand, aDir, 'Push with options', fCommand)<=0 then begin
+    res := RunInteractive(fGitMgr.Git.Exe + ' ' + fCommand, aDir, 'Push with options', fCommand);
+    CanClose := res<=0;
+    if CanClose then begin
       fConfig.WriteString('CloneUrl', fUrl);
       fConfig.WriteString('CloneDir', fCloneDir);
+      if chkLoad.Checked then begin
+        fGitMgr.LoadRepository(fCloneDir + fRepoName);
+      end;
     end;
   end;
 end;

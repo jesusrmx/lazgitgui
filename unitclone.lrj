@@ -10,5 +10,6 @@
 {"hash":249501077,"name":"tfrmclone.txtreponame.texthint","sourcebytes":[82,101,112,111,115,105,116,111,114,121,32,78,97,109,101],"value":"Repository Name"},
 {"hash":23148,"name":"tfrmclone.lblurl.caption","sourcebytes":[85,82,76],"value":"URL"},
 {"hash":146472345,"name":"tfrmclone.lbldir.caption","sourcebytes":[68,105,114,101,99,116,111,114,121],"value":"Directory"},
-{"hash":249501077,"name":"tfrmclone.lblreponame.caption","sourcebytes":[82,101,112,111,115,105,116,111,114,121,32,78,97,109,101],"value":"Repository Name"}
+{"hash":249501077,"name":"tfrmclone.lblreponame.caption","sourcebytes":[82,101,112,111,115,105,116,111,114,121,32,78,97,109,101],"value":"Repository Name"},
+{"hash":195697657,"name":"tfrmclone.chkload.caption","sourcebytes":[76,111,97,100,32,99,108,111,110,101,100,32,114,101,112,111,115,105,116,111,114,121],"value":"Load cloned repository"}
 ]}

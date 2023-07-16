@@ -40,6 +40,7 @@ const
   GITMGR_EVENT_SWITCHTOTAG          = 4;
   GITMGR_EVENT_SWITCHTOCOMMIT       = 5;
   GITMGR_EVENT_NEWBRANCH            = 6;
+  GITMGR_EVENT_LOADREPOSITORY       = 7;
 
 type
 
@@ -114,6 +115,7 @@ type
     procedure UpdateRemotes;
     function  FillRefList(list: TStrings; pattern:string; fields:array of string): Integer; overload;
     function  RefsFilter(commitOID: string; filter: TRefFilterProc): TRefInfoArray;
+    procedure LoadRepository(aDir: string);
 
     property CommitsAhead: Integer read fCommitsAhead;
     property CommitsBehind: Integer read fCommitsBehind;
@@ -871,6 +873,15 @@ begin
     end;
   end;
 
+end;
+
+procedure TGitMgr.LoadRepository(aDir: string);
+var
+  info: PTagInfo;
+begin
+  new(info);
+  info^.data := aDir;
+  fObserverMgr.NotifyObservers(Self, GITMGR_EVENT_LOADREPOSITORY, PtrInt(info));
 end;
 
 end.
