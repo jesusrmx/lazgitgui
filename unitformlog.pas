@@ -29,7 +29,7 @@ interface
 uses
   Classes, SysUtils, LCLType,
   Forms, Controls, Graphics, Dialogs, ComCtrls, grids,
-  unitifaces, unitconfig, unithighlighterhelper, unitgitmgr, unitframelog,
+  unitcommon, unitifaces, unitconfig, unithighlighterhelper, unitgitmgr, unitframelog,
   unitsyneditextras;
 
 type

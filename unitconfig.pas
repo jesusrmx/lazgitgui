@@ -27,11 +27,9 @@ unit unitconfig;
 interface
 
 uses
-  Classes, SysUtils, FileUtil, IniFiles, LazLogger, Graphics, Menus, Forms,
-  unitifaces;
-
-const
-  SECTION_FONTS = 'fonts';
+  Classes, SysUtils, FileUtil, IniFiles, fpjson, jsonparser,
+  LazLogger, Graphics, Menus, Forms,
+  unitcommon, unitifaces;
 
 type
 

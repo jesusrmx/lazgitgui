@@ -28,11 +28,8 @@ unit unitifaces;
 interface
 
 uses
-  Classes, SysUtils, unitgittypes, unitentries;
-
-const
-  SECTION_DEFAULT   = 'options';
-  SECTION_GEOMETRY  = 'geometry';
+  Classes, SysUtils,
+  unitcommon, unitgittypes, unitentries;
 
 type
 

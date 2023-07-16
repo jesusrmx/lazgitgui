@@ -8,6 +8,11 @@ uses
   Classes, SysUtils;
 
 const
+  SECTION_DEFAULT   = 'options';
+  SECTION_GEOMETRY  = 'geometry';
+  SECTION_FONTS     = 'fonts';
+
+const
   CMDSEP = '&sep;';
 
   SEARCHIN_COMMIT     = 1;
