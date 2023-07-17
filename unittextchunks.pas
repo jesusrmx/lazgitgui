@@ -266,6 +266,20 @@ begin
       end;
     end;
 
+    if (arr=nil) and (n>0) then begin
+      arr := TJsonArray.Create;
+      for i:=0 to n-1 do begin
+        obj := TJsonObject.Create;
+        obj.Add('Name', fLinks[i].name);
+        obj.Add('Pattern', fLinks[i].pattern);
+        obj.Add('Replace', fLinks[i].replace);
+        obj.Add('Action', fLinks[i].action);
+        obj.Add('Color', fLinks[i].color);
+        arr.Add(obj);
+      end;
+      fConfig.WriteArray(section+'.Links', arr);
+    end;
+
   finally
     fConfig.CloseConfig;
     L.Free;

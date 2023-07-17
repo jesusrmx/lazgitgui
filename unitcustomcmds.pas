@@ -153,6 +153,9 @@ begin
         commands[i].UpdateStatus := true;
     end;
 
+    if (arr=nil) and (Length(commands)>0) then
+      SaveToConfig;
+
   finally
     fConfig.CloseConfig;
     L.Free;
@@ -164,6 +167,8 @@ procedure TCustomCommandsMgr.SaveToConfig;
 var
   i: Integer;
   L, List: TStringList;
+  arr: TJsonArray;
+  obj: TJSONObject;
 begin
   fConfig.OpenConfig;
   List := TStringList.Create;
@@ -180,6 +185,20 @@ begin
       List.Add(IntToStr(i+1)+'='+EncodeDelimitedText(CMDSEP, L));
     end;
     fConfig.WriteSection('CustomCommands', List);
+
+    arr := TJsonArray.Create;
+    for i:=0 to Count-1 do begin
+      obj := TJsonObject.Create;
+      obj.Add('Description', commands[i].description);
+      obj.Add('Command', commands[i].command);
+      obj.Add('RunInDlg', commands[i].RunInDlg);
+      obj.Add('Image', commands[i].image);
+      obj.Add('Ask', commands[i].Ask);
+      obj.Add('UpdateStatus', commands[i].UpdateStatus);
+      arr.Add(obj);
+    end;
+    fConfig.WriteArray('CustomCommands', arr);
+
   finally
     L.Free;
     fConfig.CloseConfig;

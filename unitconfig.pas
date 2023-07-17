@@ -72,6 +72,7 @@ type
     procedure ReadPreferences;
 
     function  ReadArray(section: string): TJsonArray;
+    procedure WriteArray(section: string; arr: TJsonArray);
 
     property ViewUntrackedFiles: boolean read fViewUntrackedFiles write SetViewUntrackedFiles;
     property ViewIgnoredFiles: boolean read fViewIgnoredFiles write SetViewIgnoredFiles;
@@ -456,6 +457,14 @@ end;
 function TConfig.ReadArray(section: string): TJsonArray;
 begin
   result := GetArray(section);
+end;
+
+procedure TConfig.WriteArray(section: string; arr: TJsonArray);
+var
+  obj: TJSONObject;
+begin
+  obj := GetLastParent(section);
+  obj.Arrays[section] := arr;
 end;
 
 end.
