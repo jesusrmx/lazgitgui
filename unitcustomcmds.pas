@@ -28,7 +28,8 @@ unit unitcustomcmds;
 interface
 
 uses
-  Classes, SysUtils,
+  Classes, SysUtils, fpjson,
+  LazLoggerBase,
   unitcommon, unitgitutils, unitconfig;
 
 const
@@ -104,11 +105,32 @@ procedure TCustomCommandsMgr.LoadFromConfig;
 var
   i: Integer;
   List, L: TStringList;
+  arr: TJSONArray;
+  item: TJSONEnum;
+  obj: TJSONObject;
+  cmd: TCustomCmdItem;
 begin
   List := TStringList.Create;
   L := TStringList.Create;
   fConfig.OpenConfig;
   try
+    arr := fConfig.ReadArray('CustomCommands');
+    if arr=nil then
+      commands := nil
+    else begin
+      SetLength(commands, arr.Count);
+      for item in arr do begin
+        obj := TJsonObject(item.Value);
+        i := item.KeyNum;
+        commands[i].description   := obj.Get('Description', '');
+        commands[i].command       := obj.Get('Command', '');
+        commands[i].RunInDlg      := obj.Get('RunInDlg', true);
+        commands[i].Image         := obj.Get('Image', '');
+        commands[i].Ask           := obj.Get('Ask', true);
+        commands[i].UpdateStatus  := obj.Get('UpdateStatus', true);
+      end;
+    end;
+
     fConfig.ReadSection('CustomCommands', List);
 
     SetLength(commands, List.Count);

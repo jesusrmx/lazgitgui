@@ -6,7 +6,7 @@ unit unittextchunks;
 interface
 
 uses
-  Classes, SysUtils, LazLogger, Graphics, StrUtils, RegExpr,
+  Classes, SysUtils, LazLogger, Graphics, StrUtils, RegExpr, fpjson,
   unitcommon, unitgittypes, unitgitutils, unitconfig, unitdbindex;
 
 const
@@ -225,10 +225,31 @@ var
   n, i: Integer;
   s, del: string;
   L: TStringList;
+  arr: TJSONArray;
+  item: TJSONEnum;
+  obj: TJSONObject;
+  it: TTextLinkItem;
 begin
   L := TStringList.Create;
   fConfig.OpenConfig;
   try
+
+    arr := fConfig.ReadArray(section+'.Links');
+    if arr=nil then
+      fLinks := nil
+    else begin
+      SetLength(fLinks, arr.Count);
+      for item in arr do begin
+        obj := TJsonObject(item.Value);
+        i := item.KeyNum;
+        fLinks[i].name    := obj.Get('Name', '');
+        fLinks[i].pattern := obj.Get('Pattern', '');
+        fLinks[i].replace := obj.Get('Replace', '');
+        fLinks[i].action  := obj.Get('Action', '');
+        fLinks[i].color   := obj.Get('Color', 'clBlue');
+      end;
+    end;
+
     del := fConfig.ReadString('delimiter', CMDSEP, section);
     n := fConfig.ReadInteger('links', 0, section);
     SetLength(fLinks, n);
