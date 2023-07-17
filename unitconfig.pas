@@ -40,6 +40,7 @@ type
     fConfigFile: string;
     fConfigFileOpenCount: Integer;
     fIniFile: TIniFile;
+    fJsonFile: TJsonObject;
     fShowTags: boolean;
     fViewIgnoredFiles: boolean;
     fViewUntrackedFiles: boolean;
@@ -49,6 +50,10 @@ type
     procedure SetViewIgnoredFiles(AValue: boolean);
     procedure SetViewTrackedFiles(AValue: boolean);
     procedure SetViewUntrackedFiles(AValue: boolean);
+    function  GetLastParent(var aKey: string): TJsonObject;
+    function  GetObject(section: string; var aKey: string): TJsonObject; overload;
+    function  GetArray(aKey: string): TJsonArray;
+    function  GetObject(aKey: string): TJsonObject; overload;
   public
     procedure OpenConfig;
     procedure CloseConfig;
@@ -66,6 +71,8 @@ type
     procedure WriteSection(section:string; strings:TStrings);
     procedure ReadPreferences;
 
+    function  ReadArray(section: string): TJsonArray;
+
     property ViewUntrackedFiles: boolean read fViewUntrackedFiles write SetViewUntrackedFiles;
     property ViewIgnoredFiles: boolean read fViewIgnoredFiles write SetViewIgnoredFiles;
     property ViewTrackedFiles: boolean read fViewTrackedFiles write SetViewTrackedFiles;
@@ -76,6 +83,40 @@ var
   fConfig: TConfig;
 
 implementation
+
+
+procedure JSonToFile(Obj: TJSONData; aFilename: string; Opt: TFormatOptions = DefaultFormat);
+var
+  l: TStringList;
+begin
+  l := TStringList.Create;
+  l.Text := Obj.FormatJSON(Opt);
+  l.SaveToFile(aFilename);
+  l.Free;
+end;
+
+function JsonFromFile(aFilename: string): TJsonObject;
+var
+  stream: TFileStream;
+  obj: TJsonData;
+begin
+  if not FileExists(aFilename) then
+    result := TJsonObject.Create
+  else begin
+    stream := TFileStream.Create(aFilename, fmOpenRead);
+    try
+      obj := GetJSON(stream);
+      if obj is TJsonObject then
+        result := TJsonObject(obj)
+      else begin
+        result := TJsonObject.Create;
+        result.Add(ExtractFileName(aFilename), obj);
+      end;
+    finally
+      stream.free;
+    end;
+  end;
+end;
 
 { TConfig }
 
@@ -115,11 +156,82 @@ begin
   WriteBoolean('ViewUntracked', fViewUntrackedFiles);
 end;
 
+function TConfig.GetLastParent(var aKey: string): TJsonObject;
+var
+  i: Integer;
+  arr: TStringArray;
+  obj: TJSONObject;
+begin
+  arr := aKey.Split('.');
+
+  result := fJsonFile;
+  for i := 0 to Length(arr)-2 do begin
+    obj := result.Get(arr[i], TJsonObject(nil));
+    if obj=nil then begin
+      obj := TJsonObject.Create;
+      result.Objects[arr[i]] := obj;
+    end;
+    result := obj;
+  end;
+
+  if length(arr)>1 then
+    aKey := arr[Length(arr)-1];
+end;
+
+function TConfig.GetObject(section: string; var aKey: string): TJsonObject;
+var
+  p: SizeInt;
+  s: string;
+  obj: TJsonObject;
+begin
+  if (Section<>SECTION_GEOMETRY) and (Section<>SECTION_FONTS) then begin
+    result := fJsonFile.Get(section, TJsonObject(nil));
+    if result=nil then begin
+      result := TJsonObject.Create;
+      fJsonFile.Objects[section] := result;
+    end;
+  end else begin
+    result := fJsonFile;
+    p := pos('.', aKey);
+    while p>0 do begin
+      s := copy(aKey, 1, p-1);
+      obj := result.Get(s, TJsonObject(nil));
+      if obj=nil then begin
+        obj := TJsonObject.Create;
+        result.Objects[s] := obj;
+      end;
+      result := obj;
+      delete(aKey, 1, p);
+      p := pos('.', aKey);
+    end;
+  end;
+
+end;
+
+function TConfig.GetArray(aKey: string): TJsonArray;
+var
+  obj: TJSONObject;
+begin
+  obj := GetLastParent(aKey);
+  if obj<>nil then
+    result := obj.Get(aKey, TJsonArray(nil))
+  else
+    result := nil;
+end;
+
+function TConfig.GetObject(aKey: string): TJsonObject;
+begin
+  result := GetLastParent(aKey);
+  if result<>nil then
+    result := result.Get(aKey, TJsonObject(nil));
+end;
+
 procedure TConfig.OpenConfig;
 begin
   if fConfigFileOpenCount=0 then begin
     CheckConfigFile;
     fIniFile := TIniFile.Create(fConfigFile);
+    fJsonFile := JsonFromFile(fConfigFile+'.json');
   end;
   inc(fConfigFileOpenCount);
 end;
@@ -130,6 +242,8 @@ begin
   if fConfigFileOpenCount<=0 then begin
     if fIniFIle<>nil then
       FreeAndNil(fIniFile);
+    JSonToFile(fJsonFile, fConfigFile+'.json');
+    FreeAndNil(fJsonFile);
     fConfigFileOpenCount := 0;
   end;
 end;
@@ -241,25 +355,40 @@ end;
 
 function TConfig.ReadString(aKey: string; default: string; section: string
   ): string;
+var
+  obj: TJSONObject;
 begin
   OpenConfig;
   result := fIniFile.ReadString(section, aKey, default);
+  obj := GetObject(section, aKey);
+  //if result<>default then
+    obj.Strings[aKey] := result;
   CloseConfig;
 end;
 
 function TConfig.ReadBoolean(aKey: string; default: boolean; section: string
   ): boolean;
+var
+  obj: TJSONObject;
 begin
   OpenConfig;
   result := fIniFile.ReadBool(section, aKey, default);
+  obj := GetObject(section, aKey);
+  //if result<>default then
+    obj.Booleans[aKey] := result;
   CloseConfig;
 end;
 
 function TConfig.ReadInteger(aKey: string; default: Integer; section: string
   ): Integer;
+var
+  obj: TJSONObject;
 begin
   OpenConfig;
   result := fIniFile.ReadInteger(Section, aKey, default);
+  obj := GetObject(section, aKey);
+  //if result<>default then
+    obj.Integers[aKey] := result;
   CloseConfig;
 end;
 
@@ -322,6 +451,11 @@ begin
   fViewIgnoredFiles := ReadBoolean('ViewIgnored', false);
   fViewTrackedFiles := ReadBoolean('ViewTracked', false);
   fShowTags := ReadBoolean('ShowTags', true);
+end;
+
+function TConfig.ReadArray(section: string): TJsonArray;
+begin
+  result := GetArray(section);
 end;
 
 end.
