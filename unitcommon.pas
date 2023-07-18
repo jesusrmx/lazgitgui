@@ -8,19 +8,31 @@ uses
   Classes, SysUtils;
 
 const
-  SECTION_DEFAULT   = 'options';
-  SECTION_GEOMETRY  = 'geometry';
-  SECTION_FONTS     = 'fonts';
+  SECTION_DEFAULT       = 'options';
+  SECTION_GEOMETRY      = 'geometry';
+  SECTION_FONTS         = 'fonts';
+  SECTION_MRECOMMANDS   = 'MRECommands';
+
 
 const
   CMDSEP = '&sep;';
 
-  SEARCHIN_COMMIT     = 1;
-  SEARCHIN_AUTHOR     = 2;
-  SEARCHIN_SUBJECT    = 3;
-  SEARCHIN_DATE       = 4;
+  SEARCHIN_COMMIT       = 1;
+  SEARCHIN_AUTHOR       = 2;
+  SEARCHIN_SUBJECT      = 3;
+  SEARCHIN_DATE         = 4;
 
-  SECTION_MRECOMMANDS = 'MRECommands';
+var
+  gblInvalidateCache: boolean = false;
+  gblRecordsToUpdate: Integer = 25;
+  gblCacheScreens: Integer = 11;
+  gblRecordsToRowCount: Integer = 10;
+  gblCutterMode: boolean = false;
+  gblTopologicalMode: boolean = true;
+  gblAllowDeleteChanged: boolean = false;
+  gblMaxGraphColumnWidth: Integer = 300;
+  gblMaxGraphRows: Integer = 10000;
+  gblReportLooseObjects: boolean = true;
 
 resourcestring
   rsNewBranch = 'New Branch';

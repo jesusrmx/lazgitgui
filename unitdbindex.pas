@@ -35,7 +35,7 @@ interface
 
 uses
   Classes, SysUtils, Math, DateUtils, fgl, LazLogger,
-  unitgittypes, unitifaces, unitgitutils, unittoposort;
+  unitcommon, unitgittypes, unitifaces, unitgitutils, unittoposort;
 
 const
   FIELD_DATE        = 0;
@@ -131,18 +131,6 @@ type
   procedure ClearParentsMap(map: TParentsMap);
 
   procedure ReportRelatives(fIndexArray: TItemIndexArray);
-
-var
-  gblInvalidateCache: boolean = false;
-  gblRecordsToUpdate: Integer = 25;
-  gblCacheScreens: Integer = 11;
-  gblRecordsToRowCount: Integer = 10;
-  gblCutterMode: boolean = false;
-  gblTopologicalMode: boolean = true;
-  gblAllowDeleteChanged: boolean = false;
-  gblMaxGraphColumnWidth: Integer = 300;
-  gblMaxGraphRows: Integer = 10000;
-  gblReportLooseObjects: boolean = true;
 
 implementation
 

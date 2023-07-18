@@ -38,7 +38,7 @@ interface
 
 uses
   Classes, SysUtils, Math, DateUtils, LazLogger,
-  unitgittypes, unitgit, unitprocess, unitifaces, unitdbindex, unitgitmgr;
+  unitcommon, unitgittypes, unitgit, unitprocess, unitifaces, unitdbindex, unitgitmgr;
 
 const
 
