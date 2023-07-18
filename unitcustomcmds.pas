@@ -131,6 +131,7 @@ begin
       end;
     end;
 
+    {$IFDEF UseINI}
     fConfig.ReadSection('CustomCommands', List);
 
     SetLength(commands, List.Count);
@@ -155,6 +156,7 @@ begin
 
     if (arr=nil) and (Length(commands)>0) then
       SaveToConfig;
+    {$ENDIF}
 
   finally
     fConfig.CloseConfig;
@@ -166,14 +168,18 @@ end;
 procedure TCustomCommandsMgr.SaveToConfig;
 var
   i: Integer;
+  {$IFDEF UseINI}
   L, List: TStringList;
+  {$ENDIF}
   arr: TJsonArray;
   obj: TJSONObject;
 begin
   fConfig.OpenConfig;
+  {$IFDEF UseINI}
   List := TStringList.Create;
   L := TStringList.Create;
   try
+    {$IFDEF UseINI}
     for i:=1 to 6 do L.Add('');
     for i:=0 to Count-1 do begin
       L[0] := commands[i].description;
@@ -184,25 +190,30 @@ begin
       L[5] := BoolToStr(commands[i].UpdateStatus, '1', '0');
       List.Add(IntToStr(i+1)+'='+EncodeDelimitedText(CMDSEP, L));
     end;
-    fConfig.WriteSection('CustomCommands', List);
 
-    arr := TJsonArray.Create;
-    for i:=0 to Count-1 do begin
-      obj := TJsonObject.Create;
-      obj.Add('Description', commands[i].description);
-      obj.Add('Command', commands[i].command);
-      obj.Add('RunInDlg', commands[i].RunInDlg);
-      obj.Add('Image', commands[i].image);
-      obj.Add('Ask', commands[i].Ask);
-      obj.Add('UpdateStatus', commands[i].UpdateStatus);
-      arr.Add(obj);
-    end;
-    fConfig.WriteArray('CustomCommands', arr);
+    fConfig.WriteSection('CustomCommands', List);
+    {$ENDIF}
 
   finally
     L.Free;
-    fConfig.CloseConfig;
   end;
+  {$ENDIF}
+
+  arr := TJsonArray.Create;
+  for i:=0 to Count-1 do begin
+    obj := TJsonObject.Create;
+    obj.Add('Description', commands[i].description);
+    obj.Add('Command', commands[i].command);
+    obj.Add('RunInDlg', commands[i].RunInDlg);
+    obj.Add('Image', commands[i].image);
+    obj.Add('Ask', commands[i].Ask);
+    obj.Add('UpdateStatus', commands[i].UpdateStatus);
+    arr.Add(obj);
+  end;
+
+  fConfig.WriteArray('CustomCommands', arr);
+
+  fConfig.CloseConfig;
 end;
 
 procedure TCustomCommandsMgr.Assign(mgr: TCustomCommandsMgr);

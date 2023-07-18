@@ -27,7 +27,7 @@ unit unitconfig;
 interface
 
 uses
-  Classes, SysUtils, FileUtil, IniFiles, fpjson, jsonparser,
+  Classes, SysUtils, FileUtil, {$ifdef UseINI}IniFiles,{$endif} fpjson, jsonparser,
   LazLogger, Graphics, Menus, Forms,
   unitcommon, unitifaces;
 
@@ -39,7 +39,9 @@ type
   private
     fConfigFile: string;
     fConfigFileOpenCount: Integer;
+    {$IFDEF UseINI}
     fIniFile: TIniFile;
+    {$ENDIF}
     fJsonFile: TJsonObject;
     fShowTags: boolean;
     fViewIgnoredFiles: boolean;
@@ -64,11 +66,13 @@ type
     function ReadString(aKey:string; default:string=''; section:string=SECTION_DEFAULT): string;
     function ReadBoolean(aKey:string; default:boolean=false; section:string=SECTION_DEFAULT): boolean;
     function ReadInteger(aKey:string; default:Integer=0; section:string=SECTION_DEFAULT): Integer;
-    procedure ReadSection(section:string; strings:TStrings);
     procedure WriteString(aKey:string; avalue:string; section:string=SECTION_DEFAULT);
     procedure WriteBoolean(aKey:string; avalue:boolean; section:string=SECTION_DEFAULT);
     procedure WriteInteger(aKey:string; avalue:Integer; section:string=SECTION_DEFAULT);
+    {$IFDEF UseINI}
+    procedure ReadSection(section:string; strings:TStrings);
     procedure WriteSection(section:string; strings:TStrings);
+    {$ENDIF}
     procedure ReadPreferences;
 
     function  ReadArray(section: string): TJsonArray;
@@ -231,7 +235,9 @@ procedure TConfig.OpenConfig;
 begin
   if fConfigFileOpenCount=0 then begin
     CheckConfigFile;
+    {$IFDEF UseINI}
     fIniFile := TIniFile.Create(fConfigFile);
+    {$ENDIF}
     fJsonFile := JsonFromFile(fConfigFile+'.json');
   end;
   inc(fConfigFileOpenCount);
@@ -241,8 +247,10 @@ procedure TConfig.CloseConfig;
 begin
   dec(fConfigFileOpenCount);
   if fConfigFileOpenCount<=0 then begin
+    {$IFDEF UseINI}
     if fIniFIle<>nil then
       FreeAndNil(fIniFile);
+    {$ENDIF}
     JSonToFile(fJsonFile, fConfigFile+'.json');
     FreeAndNil(fJsonFile);
     fConfigFileOpenCount := 0;
@@ -305,6 +313,7 @@ function TConfig.MenuMRE(aMRE: TComponent; save: boolean;
 var
   i, n: Integer;
   menu: TMenuItem;
+  arr: TJSONArray;
 
   procedure NewMRE(newCaption:string);
   begin
@@ -338,17 +347,30 @@ begin
 
     result.MenuIndex := 0;
 
+    {$IFDEF UseINI}
     WriteInteger('MRECount', menu.Count, section);
+    for i := 1 to menu.Count do
+      WriteString(IntToStr(i), menu.Items[i - 1].Caption, section);
+    {$ENDIF}
 
+    arr := TJsonArray.Create;
     for i:=1 to menu.Count do
-      WriteString(IntToStr(i), menu.Items[i-1].Caption, section);
+      arr.Add(menu.Items[i-1].Caption);
+
+    WriteArray(section, arr);
 
   end else begin
 
-    n := ReadInteger('MRECount', 0, section);
     menu.Clear;
+    {$IFDEF UseINI}
+    n := ReadInteger('MRECount', 0, section);
     for i:=n downto 1 do
       NewMRE(ReadString(IntToStr(i), '' , section));
+    {$ELSE}
+    arr := ReadArray(section);
+    for i:=0 to arr.Count-1 do
+      NewMRE(arr.Strings[i]);
+    {$ENDIF}
 
   end;
   CloseConfig;
@@ -360,10 +382,13 @@ var
   obj: TJSONObject;
 begin
   OpenConfig;
-  result := fIniFile.ReadString(section, aKey, default);
   obj := GetObject(section, aKey);
+  {$IFDEF UseINI}
+  result := fIniFile.ReadString(section, aKey, default);
   //if result<>default then
     obj.Strings[aKey] := result;
+  {$ENDIF}
+  result := obj.Get(aKey, default);
   CloseConfig;
 end;
 
@@ -373,10 +398,13 @@ var
   obj: TJSONObject;
 begin
   OpenConfig;
-  result := fIniFile.ReadBool(section, aKey, default);
   obj := GetObject(section, aKey);
+  {$IFDEF UseINI}
+  result := fIniFile.ReadBool(section, aKey, default);
   //if result<>default then
     obj.Booleans[aKey] := result;
+  {$ENDIF}
+  result := obj.Get(aKey, default);
   CloseConfig;
 end;
 
@@ -386,38 +414,60 @@ var
   obj: TJSONObject;
 begin
   OpenConfig;
-  result := fIniFile.ReadInteger(Section, aKey, default);
   obj := GetObject(section, aKey);
+  {$IFDEF UseINI}
+  result := fIniFile.ReadInteger(Section, aKey, default);
   //if result<>default then
     obj.Integers[aKey] := result;
-  CloseConfig;
-end;
-
-procedure TConfig.ReadSection(section: string; strings: TStrings);
-begin
-  OpenConfig;
-  fIniFile.ReadSectionRaw(section, strings);
+  {$ENDIF}
+  result := obj.Get(aKey, default);
   CloseConfig;
 end;
 
 procedure TConfig.WriteString(aKey: string; avalue: string; section: string);
+var
+  obj: TJSONObject;
 begin
   OpenConfig;
+  obj := GetObject(section, aKey);
+  {$IFDEF UseINI}
   fIniFile.WriteString(section, aKey, aValue);
+  {$ENDIF}
+  obj.Strings[aKey] := aValue;
   CloseConfig;
 end;
 
 procedure TConfig.WriteBoolean(aKey: string; avalue: boolean; section: string);
+var
+  obj: TJSONObject;
 begin
   OpenConfig;
+  obj := GetObject(section, aKey);
+  {$IFDEF UseINI}
   fIniFile.WriteBool(Section, aKey, aValue);
+  {$ENDIF}
+  obj.Booleans[aKey] := aValue;
   CloseConfig;
 end;
 
 procedure TConfig.WriteInteger(aKey: string; avalue: Integer; section: string);
+var
+  obj: TJSONObject;
 begin
   OpenConfig;
+  obj := GetObject(section, aKey);
+  {$IFDEF UseINI}
   fIniFile.WriteInteger(Section, aKey, aValue);
+  {$ENDIF}
+  obj.Integers[aKey] := aValue;
+  CloseConfig;
+end;
+
+{$IFDEF UseINI}
+procedure TConfig.ReadSection(section: string; strings: TStrings);
+begin
+  OpenConfig;
+  fIniFile.ReadSectionRaw(section, strings);
   CloseConfig;
 end;
 
@@ -445,6 +495,7 @@ begin
   end;
   CloseConfig;
 end;
+{$ENDIF}
 
 procedure TConfig.ReadPreferences;
 begin
