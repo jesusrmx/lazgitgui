@@ -41,7 +41,23 @@ type
     class property Config: IConfig read fConfig write fConfig;
   end;
 
+  procedure DebugLnMultiline(s: string);
+
 implementation
+
+procedure DebugLnMultiline(s: string);
+var
+  L: TStringList;
+begin
+  L := TStringList.Create;
+  try
+    L.Text := s;
+    for s in L do
+      DebugLn(s);
+  finally
+    L.Free;
+  end;
+end;
 
 { TDebugging }
 

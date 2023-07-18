@@ -33,7 +33,7 @@ uses
   StdCtrls, ExtCtrls, ActnList, SynEdit, StrUtils, FileUtil, Clipbrd,
   lclType, Menus, Buttons, ComCtrls, Types,
   unitgittypes, unitifaces, unitconfig, unitprocess, unithighlighterhelper,
-  unitentries, unitgitutils, unitcommon,
+  unitentries, unitgitutils, unitcommon, unitdebug,
   unitnewbranch, unitruncmd, unitsyneditextras,
   unitnewtag, LConvEncoding, unitdbindex,
   unitgitmgr, unitcheckouttag, unitformlog, unitcustomcmds,
@@ -448,6 +448,7 @@ var
   s: string;
   log: TLazLoggerFile;
   refItems: TRefInfoArray;
+  cmdOut: RawByteString;
 begin
   log := DebugLogger;
   fGitMgr.UpdateRefList;
@@ -500,6 +501,12 @@ begin
     for i := 0 to Length(fGitMgr.Remotes)-1 do
       DebugLn('%s %s', [fGitMgr.Remotes[i].name, fGitMgr.Remotes[i].fetch]);
     DebugLnExit('');
+    if gblReportLooseObjects then begin
+      DebugLnEnter('Loose Objects:');
+      if fGit.Any('count-objects -v', cmdOut)<=0 then DebugLnMultiline(cmdOut)
+      else                                            DebugLnMultiline(fGit.LogError);
+      DebugLnExit('');
+    end;
   finally
     Log.OnDebugLn := nil;
   end;
@@ -1421,6 +1428,7 @@ begin
   gblCutterMode := fConfig.ReadBoolean('CutterMode', gblCutterMode);
   gblTopologicalMode := fConfig.ReadBoolean('TopologicalMode', gblTopologicalMode);
   gblAllowDeleteChanged := fConfig.ReadBoolean('AllowDeleteChanged', gblAllowDeleteChanged);
+  gblReportLooseObjects := fConfig.ReadBoolean('ReportLooseObjects', gblReportLooseObjects);
 
   fConfig.CloseConfig;
 
