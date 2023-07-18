@@ -23,16 +23,16 @@ const
   SEARCHIN_DATE         = 4;
 
 var
-  gblInvalidateCache: boolean = false;
-  gblRecordsToUpdate: Integer = 25;
-  gblCacheScreens: Integer = 11;
-  gblRecordsToRowCount: Integer = 10;
-  gblCutterMode: boolean = false;
-  gblTopologicalMode: boolean = true;
-  gblAllowDeleteChanged: boolean = false;
-  gblMaxGraphColumnWidth: Integer = 300;
-  gblMaxGraphRows: Integer = 10000;
-  gblReportLooseObjects: boolean = true;
+  gblInvalidateCache: boolean = false;        // Global variable to enable invalidate cache and start from 0
+  gblRecordsToUpdate: Integer = 25;           // Update progress indicator (counter) every this number of received records
+  gblCacheScreens: Integer = 11;              // for new log records, how many screens will the graph will be calculated
+  gblRecordsToRowCount: Integer = 10;         // for new log records, every how many records will be grid.RowCount get updated
+  gblCutterMode: boolean = false;             // Experimental feature for simplying graph (by eliminating intermediary log records)
+  gblTopologicalMode: boolean = true;         // Enables retrieving log records in topologica sort order (this resolves concurrent commits)
+  gblAllowDeleteChanged: boolean = false;     // Enables deleting of modified tracked files (not just untracked files)
+  gblMaxGraphColumnWidth: Integer = 300;      // After graph calc, this is the maximun graph column width
+  gblMaxGraphRows: Integer = 10000;           // A default maximun row count showing the graph
+  gblReportLooseObjects: boolean = true;      // In the reposository information report include also loose objects
 
 resourcestring
   rsNewBranch = 'New Branch';
