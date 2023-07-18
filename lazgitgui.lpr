@@ -45,6 +45,9 @@ uses
 
 {.$define drafts}
 
+var
+  ConfigOpenOnce: boolean;
+
 begin
   SetDefaultLang('', 'translations', '', false);
 
@@ -79,11 +82,20 @@ begin
 
   targetDir := IncludeTrailingPathDelimiter(targetDir);
 
-  RequireDerivedFormResource:=True;
-  Application.Scaled := True;
-  Application.Initialize;
-  Application.CreateForm(TfrmMain, frmMain);
-  Application.Run;
+  ConfigOpenOnce := fConfig.ReadBoolean('ConfigOpenOnce');
+  try
+    if ConfigOpenOnce then
+      fConfig.OpenConfig;
+    RequireDerivedFormResource:=True;
+    Application.Scaled := True;
+    Application.Initialize;
+    Application.CreateForm(TfrmMain, frmMain);
+    Application.Run;
+  finally
+    if ConfigOpenOnce then
+      fConfig.CloseConfig;
+  end;
+
 
   {$endif}
 
