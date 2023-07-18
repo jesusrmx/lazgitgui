@@ -503,8 +503,8 @@ begin
     DebugLnExit('');
     if gblReportLooseObjects then begin
       DebugLnEnter('Loose Objects:');
-      if fGit.Any('count-objects -v', cmdOut)<=0 then DebugLnMultiline(cmdOut)
-      else                                            DebugLnMultiline(fGit.LogError);
+      if fGit.Any('count-objects -v -H', cmdOut)<=0 then DebugLnMultiline(cmdOut)
+      else                                               DebugLnMultiline(fGit.LogError);
       DebugLnExit('');
     end;
   finally
