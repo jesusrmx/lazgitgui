@@ -121,6 +121,7 @@ end;
 procedure TfrmLog.FormShow(Sender: TObject);
 begin
   fLog.Active := true;
+  Caption := format(rsLogS, [fGitMgr.Git.TopLevelDir]);
 end;
 
 procedure TfrmLog.SetGitMgr(AValue: TGitMgr);

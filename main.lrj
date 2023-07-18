@@ -1,5 +1,5 @@
 {"version":1,"strings":[
-{"hash":227686302,"name":"tfrmmain.caption","sourcebytes":[102,114,109,77,97,105,110],"value":"frmMain"},
+{"hash":342014,"name":"tfrmmain.caption","sourcebytes":[77,97,105,110],"value":"Main"},
 {"hash":60833315,"name":"tfrmmain.panunstaged.caption","sourcebytes":[85,110,115,116,97,103,101,100,32,67,104,97,110,103,101,115],"value":"Unstaged Changes"},
 {"hash":85217730,"name":"tfrmmain.panstagedcontainer.caption","sourcebytes":[112,97,110,83,116,97,103,101,100,67,111,110,116,97,105,110,101,114],"value":"panStagedContainer"},
 {"hash":243419321,"name":"tfrmmain.panstaged.caption","sourcebytes":[83,116,97,103,101,100,32,67,104,97,110,103,101,115,32,40,119,105,108,108,32,99,111,109,109,105,116,41],"value":"Staged Changes (will commit)"},

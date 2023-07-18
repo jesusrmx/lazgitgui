@@ -440,6 +440,64 @@ msgstr ""
 msgid "lblTag"
 msgstr ""
 
+#: tfrmclone.btnbrowsedir.caption
+msgid "D"
+msgstr ""
+
+#: tfrmclone.btnlocalrepodir.caption
+msgid "L"
+msgstr ""
+
+#: tfrmclone.caption
+msgctxt "tfrmclone.caption"
+msgid "Clone"
+msgstr ""
+
+#: tfrmclone.chkload.caption
+msgid "Load cloned repository"
+msgstr ""
+
+#: tfrmclone.lbldir.caption
+msgctxt "tfrmclone.lbldir.caption"
+msgid "Directory"
+msgstr ""
+
+#: tfrmclone.lblreponame.caption
+msgctxt "tfrmclone.lblreponame.caption"
+msgid "Repository Name"
+msgstr ""
+
+#: tfrmclone.lblurl.caption
+msgctxt "tfrmclone.lblurl.caption"
+msgid "URL"
+msgstr ""
+
+#: tfrmclone.txtdir.hint
+msgid "Directory where the cloned respository will be cloned"
+msgstr ""
+
+#: tfrmclone.txtdir.texthint
+msgid "Local Git Directory"
+msgstr ""
+
+#: tfrmclone.txtreponame.hint
+msgctxt "tfrmclone.txtreponame.hint"
+msgid "Repository Name"
+msgstr ""
+
+#: tfrmclone.txtreponame.texthint
+msgctxt "tfrmclone.txtreponame.texthint"
+msgid "Repository Name"
+msgstr ""
+
+#: tfrmclone.txturl.hint
+msgid "URL of the repository"
+msgstr ""
+
+#: tfrmclone.txturl.texthint
+msgid "Clone URL"
+msgstr ""
+
 #: tfrmcustomcommands.btnadd.caption
 msgctxt "tfrmcustomcommands.btnadd.caption"
 msgid "+"
@@ -541,7 +599,7 @@ msgid "Type a git command (must start with git)"
 msgstr ""
 
 #: tfrmlog.caption
-msgid "frmLog"
+msgid "Log"
 msgstr ""
 
 #: tfrmlog.flog.gridlog.columns[0].title.caption
@@ -581,6 +639,11 @@ msgstr ""
 
 #: tfrmmain.actaddcmd.hint
 msgid "Add a custom command"
+msgstr ""
+
+#: tfrmmain.actclone.caption
+msgctxt "tfrmmain.actclone.caption"
+msgid "Clone"
 msgstr ""
 
 #: tfrmmain.actcommit.caption
@@ -651,7 +714,7 @@ msgid "barCustomCmds"
 msgstr ""
 
 #: tfrmmain.caption
-msgid "frmMain"
+msgid "Main"
 msgstr ""
 
 #: tfrmmain.label1.caption
@@ -1124,6 +1187,10 @@ msgstr ""
 msgid "Incomplete command"
 msgstr ""
 
+#: unitcommon.rsinto
+msgid "into: "
+msgstr ""
+
 #: unitcommon.rsinvalid
 msgid "Invalid"
 msgstr ""
@@ -1140,13 +1207,25 @@ msgstr ""
 msgid "Invalid character in tag name"
 msgstr ""
 
+#: unitcommon.rsinvalidcloneurl
+msgid "Invalid clone URL"
+msgstr ""
+
 #: unitcommon.rsinvaliddescription
 msgid "Invalid description"
+msgstr ""
+
+#: unitcommon.rsinvaliddirectory
+msgid "Invalid directory"
 msgstr ""
 
 #: unitcommon.rsinvalidfetchurl
 #, object-pascal-format
 msgid "%s has an invalid Fetch URL"
+msgstr ""
+
+#: unitcommon.rsinvalidfileurl
+msgid "Invalid file url"
 msgstr ""
 
 #: unitcommon.rsinvalidpushurl
@@ -1159,12 +1238,21 @@ msgstr ""
 msgid "remote %d has an invalid name"
 msgstr ""
 
+#: unitcommon.rsinvalidrepositoryname
+msgid "Invalid repository name"
+msgstr ""
+
 #: unitcommon.rsinvalidtargeturl
 msgid "Invalid target url"
 msgstr ""
 
 #: unitcommon.rslocalbranches
 msgid "Local Branches"
+msgstr ""
+
+#: unitcommon.rslogs
+#, object-pascal-format
+msgid "Log - %s"
 msgstr ""
 
 #: unitcommon.rsmergestos
@@ -1436,9 +1524,17 @@ msgctxt "unitcommon.rsthefilesisbinarydbytes"
 msgid "The file '%s' is binary, %d bytes"
 msgstr ""
 
+#: unitcommon.rsthefileurlpointstoaninvaliddirectory
+msgid "The file url points to an invalid directory"
+msgstr ""
+
 #: unitcommon.rstherearecommitsbehind
 msgctxt "unitcommon.rstherearecommitsbehind"
 msgid "There are commits behind, are you sure you want to push?"
+msgstr ""
+
+#: unitcommon.rstherepositoryurlisempty
+msgid "The repository URL is empty"
 msgstr ""
 
 #: unitcommon.rsthetargetremoterepositoryisnotselected
@@ -1597,6 +1693,10 @@ msgstr ""
 
 #: unitentries.rslazgitguimodifiednotstaged
 msgid "Modified, not staged"
+msgstr ""
+
+#: unitentries.rslazgitguinewintentedtoadd
+msgid "New, intended to add"
 msgstr ""
 
 #: unitentries.rslazgitguiportionsstagedforcommit

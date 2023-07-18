@@ -205,6 +205,7 @@ resourcestring
   rsInvalidFileUrl = 'Invalid file url';
   rsTheFileUrlPointsToAnInvalidDirectory = 'The file url points to an invalid '
     +'directory';
+  rsLogS = 'Log - %s';
 
 implementation
 

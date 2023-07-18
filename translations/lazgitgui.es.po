@@ -13,13 +13,13 @@ msgstr ""
 "X-Generator: Poedit 3.3.1\n"
 
 #: main.rsaddsfilestoignorelist
-#, fuzzy, object-pascal-format
+#, object-pascal-format, fuzzy
 msgctxt "main.rsaddsfilestoignorelist"
 msgid "Add '*%s' Files to ignore list"
 msgstr "Añadir los archivos '*%s' a la lista de ignorados"
 
 #: main.rsaddstoignorelist
-#, fuzzy, object-pascal-format
+#, object-pascal-format, fuzzy
 msgctxt "main.rsaddstoignorelist"
 msgid "Add '%s' to ignore list"
 msgstr "Añadir '%s' a la lista de ignorados"
@@ -37,31 +37,31 @@ msgid "Cancel"
 msgstr "Cancelar"
 
 #: main.rscouldntgettopleveldirectoryofs
-#, fuzzy, object-pascal-format
+#, object-pascal-format, fuzzy
 msgctxt "main.rscouldntgettopleveldirectoryofs"
 msgid "Couldn't get toplevel directory of %s"
 msgstr "No pude obtener el directorio base de %s"
 
 #: main.rsdcommitsahead
-#, fuzzy, object-pascal-format
+#, object-pascal-format, fuzzy
 msgctxt "main.rsdcommitsahead"
 msgid "%d commits ahead"
 msgstr "%d revisiones por delante"
 
 #: main.rsdcommitsbehind
-#, fuzzy, object-pascal-format
+#, object-pascal-format, fuzzy
 msgctxt "main.rsdcommitsbehind"
 msgid "%d commits behind"
 msgstr "%d revisiones detrás"
 
 #: main.rsdcommitssince
-#, fuzzy, object-pascal-format
+#, object-pascal-format, fuzzy
 msgctxt "main.rsdcommitssince"
 msgid "%d commits since"
 msgstr "%d revisiones desde"
 
 #: main.rsdfiles
-#, fuzzy, object-pascal-format
+#, object-pascal-format, fuzzy
 msgctxt "main.rsdfiles"
 msgid "%d files"
 msgstr "%d archivos"
@@ -73,7 +73,7 @@ msgid "Discard changes"
 msgstr "Desechar cambios"
 
 #: main.rsdoyouwanttopushstosa
-#, fuzzy, object-pascal-format
+#, object-pascal-format, fuzzy
 msgctxt "main.rsdoyouwanttopushstosa"
 msgid ""
 "Do you want to push \"%s\" to \"%s\"\n"
@@ -127,13 +127,13 @@ msgid "No Tag available"
 msgstr "No hay etiqueta"
 
 #: main.rsnotyetimplementedforstageds
-#, fuzzy, object-pascal-format
+#, object-pascal-format, fuzzy
 msgctxt "main.rsnotyetimplementedforstageds"
 msgid "Not yet implemented for Staged: %s"
 msgstr "Aún no implementado para Preparados: %s"
 
 #: main.rsnotyetimplementedforunstageds
-#, fuzzy, object-pascal-format
+#, object-pascal-format, fuzzy
 msgctxt "main.rsnotyetimplementedforunstageds"
 msgid "Not yet implemented for Unstaged: %s"
 msgstr "Aún no implementado para No Preparados: %s"
@@ -157,7 +157,7 @@ msgid "Pushing branch without tracking information"
 msgstr "Subiendo rama sin información de seguimiento"
 
 #: main.rspushingtoremotes
-#, fuzzy, object-pascal-format
+#, object-pascal-format, fuzzy
 msgctxt "main.rspushingtoremotes"
 msgid "Pushing to remote: %s"
 msgstr "Subiendo al destino remote: %s"
@@ -179,7 +179,7 @@ msgid "Restore All Changed"
 msgstr "Restaurar todo lo que haya cambiado"
 
 #: main.rsrestores
-#, fuzzy, object-pascal-format
+#, object-pascal-format, fuzzy
 msgctxt "main.rsrestores"
 msgid "Restore '%s'"
 msgstr "Restaurar '%s'"
@@ -206,13 +206,13 @@ msgstr ""
 "¿Aún deseas continuar?"
 
 #: main.rssdoesnotexists
-#, fuzzy, object-pascal-format
+#, object-pascal-format, fuzzy
 msgctxt "main.rssdoesnotexists"
 msgid "%s does not exists"
 msgstr "%s no existe"
 
 #: main.rsshasnotrackingandthere
-#, fuzzy, object-pascal-format
+#, object-pascal-format, fuzzy
 msgctxt "main.rsshasnotrackingandthere"
 msgid ""
 "%s has no tracking and there are \n"
@@ -224,7 +224,7 @@ msgstr ""
 "Aún no se como manejar esta situación"
 
 #: main.rssisalreadyinignoredlist
-#, fuzzy, object-pascal-format
+#, object-pascal-format, fuzzy
 msgctxt "main.rssisalreadyinignoredlist"
 msgid "'%s' is already in ignored list"
 msgstr "'%s' ya esta en la lista de ignorados"
@@ -242,13 +242,13 @@ msgid "Stage Changed"
 msgstr "Prepara los modificados"
 
 #: main.rsstages
-#, fuzzy, object-pascal-format
+#, object-pascal-format, fuzzy
 msgctxt "main.rsstages"
 msgid "Stage '%s'"
 msgstr "Prepara '%s'"
 
 #: main.rsthefilesisbinarydbytes
-#, fuzzy, object-pascal-format
+#, object-pascal-format, fuzzy
 msgctxt "main.rsthefilesisbinarydbytes"
 msgid "The file '%s' is binary, %d bytes"
 msgstr "El archivo '%s' es binario, tiene %d bytes"
@@ -259,7 +259,7 @@ msgid "There are commits behind, are you sure you want to push?"
 msgstr "Hay cambios remotos sin integrar, ¿Estás seguro de subir los cambios locales?"
 
 #: main.rsthetypesisalreadyintheignoredlist
-#, fuzzy, object-pascal-format
+#, object-pascal-format, fuzzy
 msgctxt "main.rsthetypesisalreadyintheignoredlist"
 msgid "The type '*%s' is already in the ignored list"
 msgstr "El tipo de archivo '*%s' ya esta en la lista de ignorados"
@@ -287,7 +287,7 @@ msgid "Unstage All"
 msgstr "Des preparar Todo"
 
 #: main.rsunstages
-#, fuzzy, object-pascal-format
+#, object-pascal-format, fuzzy
 msgctxt "main.rsunstages"
 msgid "Unstage '%s'"
 msgstr "Des preparar '%s'"
@@ -317,7 +317,7 @@ msgid "yes, do it"
 msgstr "Sí, hazlo"
 
 #: main.rsyouareabouttoexecute
-#, fuzzy, object-pascal-format
+#, object-pascal-format, fuzzy
 msgctxt "main.rsyouareabouttoexecute"
 msgid ""
 "You are about to execute %s: \n"
@@ -493,6 +493,64 @@ msgstr "Etiqueta"
 msgid "lblTag"
 msgstr "lblTag"
 
+#: tfrmclone.btnbrowsedir.caption
+msgid "D"
+msgstr ""
+
+#: tfrmclone.btnlocalrepodir.caption
+msgid "L"
+msgstr ""
+
+#: tfrmclone.caption
+msgctxt "tfrmclone.caption"
+msgid "Clone"
+msgstr ""
+
+#: tfrmclone.chkload.caption
+msgid "Load cloned repository"
+msgstr ""
+
+#: tfrmclone.lbldir.caption
+msgctxt "tfrmclone.lbldir.caption"
+msgid "Directory"
+msgstr ""
+
+#: tfrmclone.lblreponame.caption
+msgctxt "tfrmclone.lblreponame.caption"
+msgid "Repository Name"
+msgstr ""
+
+#: tfrmclone.lblurl.caption
+msgctxt "tfrmclone.lblurl.caption"
+msgid "URL"
+msgstr ""
+
+#: tfrmclone.txtdir.hint
+msgid "Directory where the cloned respository will be cloned"
+msgstr ""
+
+#: tfrmclone.txtdir.texthint
+msgid "Local Git Directory"
+msgstr ""
+
+#: tfrmclone.txtreponame.hint
+msgctxt "tfrmclone.txtreponame.hint"
+msgid "Repository Name"
+msgstr ""
+
+#: tfrmclone.txtreponame.texthint
+msgctxt "tfrmclone.txtreponame.texthint"
+msgid "Repository Name"
+msgstr ""
+
+#: tfrmclone.txturl.hint
+msgid "URL of the repository"
+msgstr ""
+
+#: tfrmclone.txturl.texthint
+msgid "Clone URL"
+msgstr ""
+
 #: tfrmcustomcommands.btnadd.caption
 msgctxt "tfrmcustomcommands.btnadd.caption"
 msgid "+"
@@ -594,7 +652,9 @@ msgid "Type a git command (must start with git)"
 msgstr "Introduce un comando git (debe comenzar con git)"
 
 #: tfrmlog.caption
-msgid "frmLog"
+#, fuzzy
+#| msgid "frmLog"
+msgid "Log"
 msgstr "Historial"
 
 #: tfrmlog.flog.gridlog.columns[0].title.caption
@@ -635,6 +695,11 @@ msgstr "+"
 #: tfrmmain.actaddcmd.hint
 msgid "Add a custom command"
 msgstr "Agregar un comando de usuario"
+
+#: tfrmmain.actclone.caption
+msgctxt "tfrmmain.actclone.caption"
+msgid "Clone"
+msgstr ""
 
 #: tfrmmain.actcommit.caption
 msgctxt "tfrmmain.actcommit.caption"
@@ -704,7 +769,9 @@ msgid "barCustomCmds"
 msgstr "barCustomCmds"
 
 #: tfrmmain.caption
-msgid "frmMain"
+#, fuzzy
+#| msgid "frmMain"
+msgid "Main"
 msgstr "frmMain"
 
 #: tfrmmain.label1.caption
@@ -1186,6 +1253,10 @@ msgstr "Historial de %s"
 msgid "Incomplete command"
 msgstr "Comando incompleto"
 
+#: unitcommon.rsinto
+msgid "into: "
+msgstr ""
+
 #: unitcommon.rsinvalid
 msgid "Invalid"
 msgstr "Inválido"
@@ -1202,14 +1273,26 @@ msgstr "Carácter inválido en nombre de rama"
 msgid "Invalid character in tag name"
 msgstr "Carácter inválido en nombre de etiqueta"
 
+#: unitcommon.rsinvalidcloneurl
+msgid "Invalid clone URL"
+msgstr ""
+
 #: unitcommon.rsinvaliddescription
 msgid "Invalid description"
 msgstr "Descripción inválida"
+
+#: unitcommon.rsinvaliddirectory
+msgid "Invalid directory"
+msgstr ""
 
 #: unitcommon.rsinvalidfetchurl
 #, object-pascal-format
 msgid "%s has an invalid Fetch URL"
 msgstr "%s tiene un URL 'fetch' inválida"
+
+#: unitcommon.rsinvalidfileurl
+msgid "Invalid file url"
+msgstr ""
 
 #: unitcommon.rsinvalidpushurl
 #, object-pascal-format
@@ -1221,6 +1304,10 @@ msgstr "%s tiene un URL 'push' inválida"
 msgid "remote %d has an invalid name"
 msgstr "El repositorio remoto %d tiene un nombre inválido"
 
+#: unitcommon.rsinvalidrepositoryname
+msgid "Invalid repository name"
+msgstr ""
+
 #: unitcommon.rsinvalidtargeturl
 msgid "Invalid target url"
 msgstr "URL objetivo inválida"
@@ -1228,6 +1315,11 @@ msgstr "URL objetivo inválida"
 #: unitcommon.rslocalbranches
 msgid "Local Branches"
 msgstr "Ramas locales"
+
+#: unitcommon.rslogs
+#, object-pascal-format
+msgid "Log - %s"
+msgstr ""
 
 #: unitcommon.rsmergestos
 #, object-pascal-format
@@ -1522,10 +1614,18 @@ msgctxt "unitcommon.rsthefilesisbinarydbytes"
 msgid "The file '%s' is binary, %d bytes"
 msgstr "El archivo '%s' es binario, tiene %d bytes"
 
+#: unitcommon.rsthefileurlpointstoaninvaliddirectory
+msgid "The file url points to an invalid directory"
+msgstr ""
+
 #: unitcommon.rstherearecommitsbehind
 msgctxt "unitcommon.rstherearecommitsbehind"
 msgid "There are commits behind, are you sure you want to push?"
 msgstr "Hay cambios remotos sin integrar, ¿Estás seguro de subir los cambios locales?"
+
+#: unitcommon.rstherepositoryurlisempty
+msgid "The repository URL is empty"
+msgstr ""
 
 #: unitcommon.rsthetargetremoterepositoryisnotselected
 msgid "The target remote repository is not selected"
@@ -1702,6 +1802,10 @@ msgstr "No hallado"
 msgid "Modified, not staged"
 msgstr "Modificado, no preparado"
 
+#: unitentries.rslazgitguinewintentedtoadd
+msgid "New, intended to add"
+msgstr ""
+
 #: unitentries.rslazgitguiportionsstagedforcommit
 msgid "Portions staged for commit"
 msgstr "Preparadas porciones para confirmar"
@@ -1765,3 +1869,4 @@ msgstr "Sin modificar"
 #: unitentries.rslazgitguiuntrackednotstaged
 msgid "Untracked, not staged"
 msgstr "Sin seguimiento, no preparado"
+
