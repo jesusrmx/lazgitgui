@@ -173,6 +173,7 @@ type
     fItemIndices: TItemIndexArray;
     fLogCache: TLogCache;
     fGraphColumns: Integer;
+    fPrevScreen: Integer;
     fRecvCount: Integer;
     fScreenRows: Integer;
     fWithArrows: boolean;
@@ -737,12 +738,13 @@ begin
           fCachingScreen := true;
           if fRecvCount mod gblRecordsToRowCount = 0 then begin
             gridLog.RowCount := fLogCache.DbIndex.Count + gridLog.FixedRows;
-            //if gridLog.RowCount>fScreenRows then
-            //  LaunchGraphBuildingThread;
+            if gridLog.RowCount<fScreenRows then
+              LaunchGraphBuildingThread;
           end;
         end else
         if fCachingScreen then begin
-          if gridLog.RowCount>fScreenRows then begin
+          if fRecvCount div fScreenRows * fScreenRows > fPrevScreen then begin
+            fPrevScreen := fRecvCount div fScreenRows * fScreenRows;
             fCachingScreen := false;
             LaunchGraphBuildingThread;
           end;
