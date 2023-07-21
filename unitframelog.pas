@@ -2059,6 +2059,7 @@ begin
   FreeAndNil(fCommitBrowser);
   FreeAndNil(fColScroller);
   FreeAndNil(fLinkMgr);
+  fActive := false;
 end;
 
 procedure TframeLog.UpdateGridRows;

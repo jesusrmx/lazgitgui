@@ -50,8 +50,8 @@ type
     fhlHelper: THighlighterHelper;
     procedure SetGitMgr(AValue: TGitMgr);
     procedure SetHlHelper(AValue: THighlighterHelper);
-
   public
+    procedure Clear;
     property GitMgr: TGitMgr read fGitMgr write SetGitMgr;
     property HlHelper: THighlighterHelper read fhlHelper write SetHlHelper;
   end;
@@ -138,6 +138,11 @@ begin
   fhlHelper := AValue;
 
   fLog.HlHelper := fhlHelper;
+end;
+
+procedure TfrmLog.Clear;
+begin
+  fLog.Clear;
 end;
 
 end.

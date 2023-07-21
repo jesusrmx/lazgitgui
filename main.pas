@@ -178,7 +178,7 @@ type
     procedure OnStageAllClick(Sender: TObject);
     procedure OnStageItemClick(Sender: TObject);
     procedure OnUnstageItemClick(Sender: TObject);
-    procedure OpenDirectory(aDir: string);
+    function  OpenDirectory(aDir: string): boolean;
     procedure UpdateBranch;
     procedure RestoreGui;
     procedure SaveGui;
@@ -326,7 +326,10 @@ end;
 
 procedure TfrmMain.FormShow(Sender: TObject);
 begin
-  OpenDirectory(targetDir);
+  if not OpenDirectory(targetDir) then begin
+    Application.Terminate;
+    exit;
+  end;
   fTextLinks.LoadFromConfig(fGit.TopLevelDir);
   UpdateCommandsBar;
 end;
@@ -1654,19 +1657,22 @@ begin
     close;
 end;
 
-procedure TfrmMain.OpenDirectory(aDir: string);
+function TfrmMain.OpenDirectory(aDir: string): boolean;
 begin
+  result := false;
   aDir := ExpandFileName(aDir);
   fGit.OpenDir(aDir);
   if fGit.TopLevelDir='' then begin
     ShowMessageFmt(rsCouldnTGetToplevelDirectoryOfS, [aDir]);
-    Application.Terminate;
     exit;
   end;
   fDir := aDir;
   fGitMgr.UpdateStatus;
   fGitMgr.UpdateRemotes;
   prgBar.Visible := true;
+  if frmLog<>nil then
+    frmLog.clear;
+  result := true;
 end;
 
 procedure TfrmMain.DoItemAction(Data: PtrInt);
