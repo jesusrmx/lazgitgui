@@ -30,3 +30,4 @@ PkgInfo
 *.logindex
 *.logcache
 *.backup
+*.rej
