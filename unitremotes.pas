@@ -121,8 +121,10 @@ implementation
 procedure TfrmRemotes.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
 begin
   fConfig.WriteWindow(self, 'remotesfrm', SECTION_GEOMETRY);
-  if ModalResult=mrOk then
+  if ModalResult=mrOk then begin
     CanClose := ExecuteActions;
+    fGitMgr.UpdateRemotes;
+  end;
 end;
 
 procedure TfrmRemotes.chkSameURLClick(Sender: TObject);
