@@ -37,7 +37,7 @@ uses
   unitnewbranch, unitruncmd, unitsyneditextras,
   unitnewtag, LConvEncoding, unitdbindex,
   unitgitmgr, unitcheckouttag, unitformlog, unitcustomcmds,
-  unitcustcmdform, unittextchunks, unitgitcmd, unitpush, unitclone;
+  unitcustcmdform, unittextchunks, unitgitcmd, unitpush, unitclone, unitremotes;
 
 type
 
@@ -50,6 +50,7 @@ type
     actAddCmd: TAction;
     actGitCmd: TAction;
     actClone: TAction;
+    actRemotes: TAction;
     actRepoInfo: TAction;
     actRestoreCommitMsg: TAction;
     actNewLog: TAction;
@@ -80,6 +81,7 @@ type
     MenuItem1: TMenuItem;
     MenuItem2: TMenuItem;
     MenuItem3: TMenuItem;
+    MenuItem4: TMenuItem;
     mnuMain: TMainMenu;
     panCommitState: TPanel;
     panBranch: TPanel;
@@ -119,6 +121,7 @@ type
     procedure actPushDialogExecute(Sender: TObject);
     procedure actPushExecute(Sender: TObject);
     procedure actQuitExecute(Sender: TObject);
+    procedure actRemotesExecute(Sender: TObject);
     procedure actRepoInfoExecute(Sender: TObject);
     procedure actRescanExecute(Sender: TObject);
     procedure actRestoreCommitMsgExecute(Sender: TObject);
@@ -161,6 +164,7 @@ type
     procedure DoFetch;
     procedure DoPull;
     procedure DoRepoInfo;
+    procedure DoRemotes;
     procedure OnCreatePatchClick(Sender: TObject);
     procedure OnCopyPatchClick(Sender: TObject);
     procedure OnCustomCommandClick(Sender: TObject);
@@ -1573,6 +1577,11 @@ begin
   Close;
 end;
 
+procedure TfrmMain.actRemotesExecute(Sender: TObject);
+begin
+  DoRemotes;
+end;
+
 procedure TfrmMain.actRepoInfoExecute(Sender: TObject);
 begin
   DoRepoInfo;
@@ -1803,6 +1812,20 @@ end;
 procedure TfrmMain.DoRepoInfo;
 begin
   fGitMgr.UpdateStatus(@OnRepoInfoStatusDone);
+end;
+
+procedure TfrmMain.DoRemotes;
+var
+  F: TfrmRemotes;
+begin
+  F := TfrmRemotes.Create(self);
+  F.GitMgr := fGitMgr;
+  F.ReadOnly := false;
+  try
+    F.ShowModal;
+  finally
+    F.Free;
+  end;
 end;
 
 procedure TfrmMain.OnCreatePatchClick(Sender: TObject);

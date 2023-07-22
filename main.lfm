@@ -1039,6 +1039,10 @@ object frmMain: TfrmMain
       Caption = 'Clone'
       OnExecute = actCloneExecute
     end
+    object actRemotes: TAction
+      Caption = 'Remotes'
+      OnExecute = actRemotesExecute
+    end
   end
   object imgList: TImageList
     Left = 520
@@ -1116,6 +1120,9 @@ object frmMain: TfrmMain
       Caption = 'File'
       object MenuItem3: TMenuItem
         Action = actClone
+      end
+      object MenuItem4: TMenuItem
+        Action = actRemotes
       end
       object Separator1: TMenuItem
         Caption = '-'

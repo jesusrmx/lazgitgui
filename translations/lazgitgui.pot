@@ -693,6 +693,10 @@ msgstr ""
 msgid "Quit"
 msgstr ""
 
+#: tfrmmain.actremotes.caption
+msgid "Remotes"
+msgstr ""
+
 #: tfrmmain.actrepoinfo.caption
 msgid "I"
 msgstr ""

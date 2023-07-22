@@ -748,6 +748,10 @@ msgstr "Push ..."
 msgid "Quit"
 msgstr "Salir"
 
+#: tfrmmain.actremotes.caption
+msgid "Remotes"
+msgstr ""
+
 #: tfrmmain.actrepoinfo.caption
 msgid "I"
 msgstr "I"
