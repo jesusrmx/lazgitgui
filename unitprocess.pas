@@ -246,7 +246,12 @@ begin
 
     Process.CurrentDirectory := startDir;
     opts := [poUsePipes, poNoConsole];
+    {$ifdef Linux}
+    // workaround to avoid zombies
+    Include(opts, poWaitOnExit);
+    {$else}
     if fWaitOnExit then Include(opts, poWaitOnExit);
+    {$endif}
     if fRedirStdErr then Include(opts, poStderrToOutPut);
     Process.Options := opts;
     if StdErrorClosed then Process.CloseStderr;
