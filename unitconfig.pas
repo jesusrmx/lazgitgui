@@ -368,8 +368,9 @@ begin
       NewMRE(ReadString(IntToStr(i), '' , section));
     {$ELSE}
     arr := ReadArray(section);
-    for i:=0 to arr.Count-1 do
-      NewMRE(arr.Strings[i]);
+    if arr<>nil then
+      for i:=0 to arr.Count-1 do
+        NewMRE(arr.Strings[i]);
     {$ENDIF}
 
   end;
