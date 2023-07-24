@@ -222,15 +222,19 @@ end;
 
 procedure TTextLinks.LoadFromConfig(section: string);
 var
-  n, i: Integer;
+  i: Integer;
+  {$IFDEF UseINI}
+  n: Integer;
   s, del: string;
   L: TStringList;
+  {$ENDIF}
   arr: TJSONArray;
   item: TJSONEnum;
   obj: TJSONObject;
-  it: TTextLinkItem;
 begin
+  {$IFDEF UseINI}
   L := TStringList.Create;
+  {$ENDIF}
   fConfig.OpenConfig;
   try
 
@@ -250,6 +254,7 @@ begin
       end;
     end;
 
+    {$IFDEF UseINI}
     del := fConfig.ReadString('delimiter', CMDSEP, section);
     n := fConfig.ReadInteger('links', 0, section);
     SetLength(fLinks, n);
@@ -279,10 +284,13 @@ begin
       end;
       fConfig.WriteArray(section+'.Links', arr);
     end;
+    {$ENDIF}
 
   finally
     fConfig.CloseConfig;
+    {$IFDEF UseINI}
     L.Free;
+    {$ENDIF}
   end;
 end;
 
