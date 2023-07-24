@@ -458,6 +458,7 @@ var
   p: Integer;
   head, tail: pchar;
   M: TMemoryStream;
+  cmdOut: RawByteString;
 begin
   DebugLn('%3f%%: %s',[percent, item.description]);
   case item.description of
@@ -496,6 +497,11 @@ begin
 
         ParseBranches(head, tail, fBranch, fBranchOID, fUpstream, fCommitsAhead, fCommitsBehind);
         ParseStatus(head, tail, fUnstagedList, fStagedList, fEntries, fMergingConflict, not fWithStatusPorcelainV2);
+
+        if not fWithStatusPorcelainV2 then begin
+          if fGit.Any(format('rev-parse %s',[fBranch]), cmdOut)<=0 then
+            fBranchOID := trim(cmdOut);
+        end;
 
         fObserverMgr.NotifyObservers(self, GITMGR_EVENT_UPDATESTATUS, 0);
       end;
