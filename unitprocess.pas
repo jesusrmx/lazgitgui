@@ -37,8 +37,7 @@ type
 
   { TCmdLine }
 
-  PCmdLine = ^TCmdLine;
-  TCmdLine = object
+  TCmdLine = class
   private
     fCaptureFile: string;
     fRedirStdErr: boolean;
@@ -361,5 +360,10 @@ begin
   end;
 end;
 
+initialization
+  cmdLine := TCmdLine.Create;
+
+finalization
+  cmdLine.Free;
 end.
 

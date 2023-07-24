@@ -88,7 +88,7 @@ type
     fResult: Integer;
     fErrorLog: string;
     fStartDir: string;
-    fCmdLine: ^TCmdLine;
+    fCmdLine: TCmdLine;
     fBufferSize: Integer;
     fOldIndexOffset: Int64;
     {$IFDEF Capture}
@@ -272,7 +272,7 @@ end;
 constructor TLogThread.Create;
 begin
   inherited Create(true);
-  fCmdLine := new(PCmdLine, Init);
+  fCmdLine := TCmdLine.Create;
   {$IFDEF Capture}
   fCap := TMemoryStream.Create;
   {$ENDIF}
@@ -286,7 +286,7 @@ begin
   {$IFDEF Capture}
   fCap.Free;
   {$ENDIF}
-  Dispose(fCmdLine, done);
+  fCmdLine.Free;
   inherited Destroy;
 end;
 
@@ -425,14 +425,13 @@ begin
   {$ENDIF}
   DebugLn('TLogThread: Execute: for %s Index: position=%d size=%d',[BoolToStr(fHead,'HEAD','TAIL'), fOldIndexOffset, fOldIndexSize]);
   outText := '';
-  //fCmdLine^.WaitOnExit := true;
-  fCmdLine^.RedirStdErr := true;
-  fCmdLine^.CaptureFile := CaptureTo;
-  fResult := fCmdLine^.RunProcess(fCommand, fStartDir, @CollectOutput);
+  fCmdLine.RedirStdErr := true;
+  fCmdLine.CaptureFile := CaptureTo;
+  fResult := fCmdLine.RunProcess(fCommand, fStartDir, @CollectOutput);
   if (outText<>'') and (not terminated) then begin
     Synchronize(@Notify);
   end;
-  fErrorLog := fCmdLine^.ErrorLog;
+  fErrorLog := fCmdLine.ErrorLog;
   {$IFDEF DEBUG}
   DebugLnExit('RunThread DONE result=%d', [fResult]);
   {$ENDIF}

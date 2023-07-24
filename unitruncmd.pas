@@ -69,7 +69,7 @@ type
     fStartDir: string;
     fLine: RawByteString;
     fCurrentOutput: RawByteString;
-    fCmdLine: ^TCmdLine;
+    fCmdLine: TCmdLine;
     procedure Notify;
     procedure RunCommand;
     procedure RunCommandsArray;
@@ -212,7 +212,7 @@ end;
 constructor TRunThread.Create;
 begin
   inherited Create(true);
-  fCmdLine := new(PCmdLine, Init);
+  fCmdLine := TCmdLine.Create;
 end;
 
 destructor TRunThread.Destroy;
@@ -220,7 +220,7 @@ begin
   {$IFDEF DEBUG}
   debugln('TRunThread.Destroy: ');
   {$ENDIF}
-  Dispose(fCmdLine, Done);
+  fCmdLine.Free;
   inherited Destroy;
 end;
 
@@ -297,13 +297,13 @@ begin
   {$ENDIF}
   outText := '';
   //fCmdLine^.WaitOnExit := true;
-  fCmdLine^.RedirStdErr := true;
-  fResult := fCmdLine^.RunProcess(fCommand, fStartDir, @CollectOutput);
+  fCmdLine.RedirStdErr := true;
+  fResult := fCmdLine.RunProcess(fCommand, fStartDir, @CollectOutput);
   if (outText<>'') and (not terminated) then begin
     fLine := outText;
     Synchronize(@Notify);
   end;
-  fErrorLog := fCmdLine^.ErrorLog;
+  fErrorLog := fCmdLine.ErrorLog;
   {$IFDEF DEBUG}
   DebugLnExit('RunThread DONE result=%d', [fResult]);
   {$ENDIF}
@@ -319,16 +319,16 @@ begin
     exit;
   fIndex := 0;
   while not terminated and (fIndex<Length(fCommands)) do begin
-    fCmdLine^.RedirStdErr := fCommands[fIndex].RedirStdErr;
-    fCmdLine^.Environment := fCommands[fIndex].Enviroment;
+    fCmdLine.RedirStdErr := fCommands[fIndex].RedirStdErr;
+    fCmdLine.Environment := fCommands[fIndex].Enviroment;
     try
       M := nil;
       if fCommands[fIndex].PreferredOutputType=cipotStream then begin
         M := TMemoryStream.Create;
-        fResult := fCmdLine^.RunProcess(fCommands[fIndex].command, fStartDir, M);
+        fResult := fCmdLine.RunProcess(fCommands[fIndex].command, fStartDir, M);
         fCommands[fIndex].tag := M;
       end else begin
-        fResult := fCmdLine^.RunProcess(fCommands[fIndex].command, fStartDir, fCurrentOutput);
+        fResult := fCmdLine.RunProcess(fCommands[fIndex].command, fStartDir, fCurrentOutput);
       end;
       Synchronize(@DoCommandProgress);
     finally
