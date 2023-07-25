@@ -6,12 +6,11 @@
 {"hash":101225251,"name":"tfrmcustomcommands.groupbox1.caption","sourcebytes":[67,111,109,109,97,110,100,32,112,114,111,112,101,114,116,105,101,115],"value":"Command properties"},
 {"hash":84500478,"name":"tfrmcustomcommands.txtdescription.hint","sourcebytes":[67,111,109,109,97,110,100,32,100,101,115,99,114,105,112,116,105,111,110],"value":"Command description"},
 {"hash":156067838,"name":"tfrmcustomcommands.txtdescription.texthint","sourcebytes":[68,101,115,99,114,105,112,116,105,111,110],"value":"Description"},
-{"hash":227567353,"name":"tfrmcustomcommands.txtcommand.hint","sourcebytes":[67,111,109,109,97,110,100,32,40,109,97,107,101,32,115,117,114,101,32,105,116,32,115,116,97,114,116,115,32,119,105,116,104,32,39,103,105,116,39,41],"value":"Command (make sure it starts with 'git')"},
-{"hash":174340100,"name":"tfrmcustomcommands.txtcommand.texthint","sourcebytes":[67,111,109,109,97,110,100],"value":"Command"},
 {"hash":47847742,"name":"tfrmcustomcommands.chkindialog.caption","sourcebytes":[82,117,110,32,105,110,32,97,32,100,105,97,108,111,103,32,119,105,110,100,111,119,46],"value":"Run in a dialog window."},
 {"hash":223819253,"name":"tfrmcustomcommands.txtimage.texthint","sourcebytes":[73,109,97,103,101,32,102,105,108,101,110,97,109,101],"value":"Image filename"},
 {"hash":95602078,"name":"tfrmcustomcommands.chkask.caption","sourcebytes":[65,115,107,32,99,111,110,102,105,114,109,97,116,105,111,110,32,98,101,102,111,114,101,32,101,120,99,117,116,105,111,110,46],"value":"Ask confirmation before excution."},
 {"hash":248684686,"name":"tfrmcustomcommands.chkstatus.caption","sourcebytes":[82,101,115,99,97,110,32,97,102,116,101,114,32,101,120,101,99,117,116,105,111,110,46],"value":"Rescan after execution."},
+{"hash":227567353,"name":"tfrmcustomcommands.txtcommand.hint","sourcebytes":[67,111,109,109,97,110,100,32,40,109,97,107,101,32,115,117,114,101,32,105,116,32,115,116,97,114,116,115,32,119,105,116,104,32,39,103,105,116,39,41],"value":"Command (make sure it starts with 'git')"},
 {"hash":43,"name":"tfrmcustomcommands.btnadd.caption","sourcebytes":[43],"value":"+"},
 {"hash":45,"name":"tfrmcustomcommands.btndel.caption","sourcebytes":[45],"value":"-"}
 ]}

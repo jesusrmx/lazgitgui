@@ -42,11 +42,11 @@ type
     btnAdd: TSpeedButton;
     btnDel: TSpeedButton;
     lblInfo: TLabel;
+    txtCommand: TMemo;
     txtImage: TFileNameEdit;
     GroupBox1: TGroupBox;
     imgCmd: TImage;
     txtDescription: TEdit;
-    txtCommand: TEdit;
     lbCommands: TListBox;
     btnUp: TSpeedButton;
     btnDown: TSpeedButton;
