@@ -183,11 +183,16 @@ procedure TTextChunksItem.Draw(Canvas: TCanvas);
 var
   aStyle: TFontStyles;
 begin
+
   Canvas.Brush.Style := brushStyle;
-  Canvas.Brush.Color := brushColor;
+  if brushStyle<>bsClear then
+    Canvas.Brush.Color := brushColor;
+
   Canvas.Pen.Style := penStyle;
-  Canvas.Pen.Color := penColor;
-  Canvas.Pen.Width := penWidth;
+  if penStyle<>psClear then begin
+    Canvas.Pen.Color := penColor;
+    Canvas.Pen.Width := penWidth;
+  end;
 
   if itemType in [tcitBox, tcitTag, tcitAnnotatedTag] then
     Canvas.Rectangle(r);
