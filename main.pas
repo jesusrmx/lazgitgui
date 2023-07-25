@@ -1868,14 +1868,14 @@ end;
 
 procedure TfrmMain.OnCustomCommandClick(Sender: TObject);
 var
-  c: TComponent absolute Sender;
+  comp: TComponent absolute Sender;
   cmd: TCustomCmdItem;
   res: TModalResult;
   s, c: String;
   vars: TRepoVars;
   arr: TStringArray;
 begin
-  cmd := fCustomCommands[c.Tag];
+  cmd := fCustomCommands[comp.Tag];
 
   vars := TRepoVars.Create;
   vars.GitMgr := fGitMgr;
