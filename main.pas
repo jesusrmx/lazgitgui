@@ -1241,12 +1241,12 @@ end;
 
 procedure TfrmMain.SaveCommitMessage;
 begin
-  fConfig.WriteString('CommitMsg', ReplaceEOLs(txtComment.Text, true), fGit.TopLevelDir);
+  fConfig.WriteString('CommitMsg', txtComment.Text, fGit.TopLevelDir);
 end;
 
 procedure TfrmMain.RestoreCommitMessage;
 begin
-  txtComment.Text := ReplaceEOLs(fConfig.ReadString('CommitMsg', '', fGit.TopLevelDir), false);
+  txtComment.Text := fConfig.ReadString('CommitMsg', '', fGit.TopLevelDir);
 end;
 
 procedure TfrmMain.UpdateCommandsBar;
