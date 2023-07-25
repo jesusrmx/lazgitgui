@@ -39,7 +39,7 @@ uses
   unitgraphbuild, unitfilehistory, unitformlog, unitcustcmdform, unitcustomcmds,
   unitreset, LCLTranslator, unitcommon, unittextchunks, unitlinkmgr, unitgitcmd,
   unitpush, unitremotes, unitsyneditextras, unittoposort, unitcolumnscroller,
-  unitclone;
+  unitclone, unitrepovars;
 
 {$R *.res}
 

@@ -29,15 +29,14 @@ interface
 
 uses
   Classes, SysUtils, {$ifdef linux}gtk2, gdk2,{$endif}
-  LazLogger, Forms, Controls, Graphics, Dialogs,
-  StdCtrls, ExtCtrls, ActnList, SynEdit, StrUtils, FileUtil, Clipbrd,
-  lclType, Menus, Buttons, ComCtrls, Types,
-  unitgittypes, unitifaces, unitconfig, unitprocess, unithighlighterhelper,
-  unitentries, unitgitutils, unitcommon, unitdebug,
-  unitnewbranch, unitruncmd, unitsyneditextras,
-  unitnewtag, LConvEncoding, unitdbindex,
-  unitgitmgr, unitcheckouttag, unitformlog, unitcustomcmds,
-  unitcustcmdform, unittextchunks, unitgitcmd, unitpush, unitclone, unitremotes;
+  LazLogger, Forms, Controls, Graphics, Dialogs, StdCtrls, ExtCtrls, ActnList,
+  SynEdit, StrUtils, FileUtil, Clipbrd, lclType, Menus, Buttons, ComCtrls,
+  Types, unitgittypes, unitifaces, unitconfig, unitprocess,
+  unithighlighterhelper, unitentries, unitgitutils, unitcommon, unitdebug,
+  unitnewbranch, unitruncmd, unitsyneditextras, unitnewtag, LConvEncoding,
+  unitdbindex, unitgitmgr, unitcheckouttag, unitformlog, unitcustomcmds,
+  unitcustcmdform, unittextchunks, unitgitcmd, unitpush, unitclone, unitremotes,
+  unitrepovars;
 
 type
 
@@ -1872,27 +1871,60 @@ var
   c: TComponent absolute Sender;
   cmd: TCustomCmdItem;
   res: TModalResult;
-  s: String;
+  s, c: String;
+  vars: TRepoVars;
+  arr: TStringArray;
 begin
   cmd := fCustomCommands[c.Tag];
-  if cmd.Ask then begin
-    res := QuestionDlg(
-      rsExecutingACustomCommand,
-      format(rsYouAreAboutToExecute, [QuotedStr(cmd.description), cmd.command]),
-      mtConfirmation, [mrYes, rsYesDoIt, mrCancel, rsCancel], 0 );
-    if res<>mrYes then
-      exit;
-  end;
-  if pos('git ', cmd.command)=1 then begin
-    s := StringReplace(cmd.command, 'git', fGit.Exe, []);
-    if cmd.RunInDlg then
-      RunInteractive(s, fGit.TopLevelDir, rsExecutingACustomCommand, cmd.description)
-    else
-      RunInThread(s, fGit.TopLevelDir, nil, nil);
+
+  vars := TRepoVars.Create;
+  vars.GitMgr := fGitMgr;
+  try
+    s := vars.ReplaceVars(cmd.command);
+
+    arr := s.Split([#13#10, ';', #10]);
+
+    // simple checks
+    for s in arr do begin
+      if pos('git', s)<>1 then begin
+        ShowMessage('Invalid git custom command');
+        exit;
+      end;
+      if pos('$', s)>0 then begin
+        ShowMessage('Unknown variable in custom command');
+        exit;
+      end;
+    end;
+
+    if cmd.Ask then begin
+      res := QuestionDlg(
+        rsExecutingACustomCommand,
+        format(rsYouAreAboutToExecute, [QuotedStr(cmd.description), cmd.command]),
+        mtConfirmation, [mrYes, rsYesDoIt, mrCancel, rsCancel], 0 );
+      if res<>mrYes then
+        exit;
+    end;
+
+    for c in arr do begin
+
+      s := StringReplace(c, 'git', fGit.Exe, []);
+      if length(arr)=1 then begin
+        if cmd.RunInDlg then
+          RunInteractive(s, fGit.TopLevelDir, rsExecutingACustomCommand, cmd.description)
+        else
+          RunInThread(s, fGit.TopLevelDir, nil, nil)
+      end else
+        RunInThread(s, fGit.TopLevelDir, nil, nil)
+
+    end;
+
     if cmd.updatestatus then begin
       fGitMgr.UpdateStatus;
       fGitMgr.UpdateRefList;
     end;
+
+  finally
+    vars.free;
   end;
 end;
 
