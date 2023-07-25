@@ -1787,10 +1787,22 @@ begin
 
     cmd := ' push --progress --set-upstream '+aRemote+' '+fGitMgr.Branch;
 
-  end else
-    cmd := ' push --progress';
+  end else begin
 
-  RunInteractive(fGit.Exe + cmd, fGit.TopLevelDir, format(rsPushingToRemoteS, [aRemote]), 'Push');
+    n := pos('/', fGitMgr.Upstream);
+    if n=0 then begin
+      // should never happen ...
+      ShowMessage('Error: unexpected upstream layout');
+      exit;
+    end;
+
+    aRemote := copy(fGitMgr.Upstream, 1, n-1);
+    cmd := copy(fGitMgr.Upstream, n+1, MAXINT);
+
+    cmd := ' push --progress ' + aRemote + ' HEAD:' + cmd;
+  end;
+
+  RunInteractive(fGit.Exe + cmd, fGit.TopLevelDir, format(rsPushingToRemoteS, [aRemote]), cmd);
   fGitMgr.UpdateStatus;
   fGitMgr.UpdateRefList;
 end;
