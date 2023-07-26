@@ -91,7 +91,7 @@ resourcestring
   rsPullingFromRemote = 'pulling from remote: ';
   rsExecutingACustomCommand = 'Executing a custom command';
   rsYouAreAboutToExecute = 'You are about to execute %s: '^M^M+
-                           'command: %s'^M^M+
+                           '%s'^M^M+
                            'Do you want to proceed?';
   rsMERGING = 'MERGING';
   rsMERGINGCONFLICT = 'MERGING CONFLICT';
@@ -208,6 +208,8 @@ resourcestring
     +'directory';
   rsLogS = 'Log - %s';
   rsSProducedAnErrorExecutionStoped = '%s produced an error, execution stoped';
+  rsCommandSS = 'command %s %s';
+  rsWasSuccessful = 'Was successful';
 
 implementation
 

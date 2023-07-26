@@ -1874,11 +1874,13 @@ var
   s, c: String;
   vars: TRepoVars;
   arr: TStringArray;
-  count: Integer;
+  aRes: Integer;
   cmdOut: RawByteString;
+  lout: TStringList;
 begin
   cmd := fCustomCommands[comp.Tag];
 
+  lout := TStringList.Create;
   vars := TRepoVars.Create;
   vars.GitMgr := fGitMgr;
   try
@@ -1888,21 +1890,21 @@ begin
 
     // simple checks
     c := '';
-    count := 0;
+    aRes := 0;
     for s in arr do begin
       if pos('git ', s)=1 then begin
-        inc(count);
-        if count=1 then c := s
+        inc(aRes);
+        if aRes=1 then c := s
         else            c += ^M+s;
         continue;
       end;
     end;
 
-    if count=0 then begin
+    if aRes=0 then begin
       ShowMessage('Found no git commands to execute');
       exit;
     end else
-      c := format('%d git commands:', [count]) + ^M + c;
+      c := format('%d git commands:', [aRes]) + ^M^M + c;
 
     if cmd.Ask then begin
       res := QuestionDlg(
@@ -1919,29 +1921,47 @@ begin
         continue;
 
       s := StringReplace(c, 'git', fGit.Exe, []);
-      if length(arr)=1 then begin
-        if cmd.RunInDlg then
-          RunInteractive(s, fGit.TopLevelDir, rsExecutingACustomCommand, cmd.description)
-        else
-          RunInThread(s, fGit.TopLevelDir, nil, nil)
-      end else begin
-        if RunCommand(s, fGit.TopLevelDir, cmdOut)>=0 then begin
-          txtDiff.Text := cmdLine.ErrorLog;
-          txtDiff.Lines.Insert(0, format(rsSProducedAnErrorExecutionStoped, [c]));
-          txtDiff.Lines.Insert(1, '');
-          break;
-        end;
+      if (length(arr)=1) and cmd.RunInDlg then begin
+        RunInteractive(s, fGit.TopLevelDir, rsExecutingACustomCommand, cmd.description);
+        break;
+      end;
+
+      aRes := RunCommand(s, fGit.TopLevelDir, cmdOut);
+
+      lout.Add('');
+
+      lout.AddObject(rsCommandSS, [QuotedStr(c), boolToStr(aRes<=0, rsWasSuccessful, rsFailed)], nil);
+
+      if Length(cmdOut)>0 then
+        lout.Append(cmdOut);
+
+      if aRes>0 then begin
+        lout.AddObject(rsSProducedAnErrorExecutionStoped, [c], nil);
+        lout.Append(cmdLine.ErrorLog);
+        break;
       end;
 
     end;
 
+    txtDiff.Text := lout.Text;
+
     if cmd.updatestatus then begin
+      // UpdateStatus is ran asynchronically, on completion it will
+      // clear txtDiff signaling the update was successful, but this
+      // clears the accumulated output of the custom command contained
+      // in lout.Text.
+      // set txtDiff.Tag=1 meaning that UpdateStatus should not clear
+      // the screen. See ObservedChanged() -> UpdateBranch()
+      txtDiff.Tag := 1;
+
       fGitMgr.UpdateStatus;
       fGitMgr.UpdateRefList;
     end;
 
+
   finally
     vars.free;
+    lout.free;
   end;
 end;
 
@@ -2199,7 +2219,10 @@ begin
   end else
     lblRemote.Hint := '';
 
-  txtDiff.Clear;
+  // see comment in OnCustomCommandClick about txtDiff.Tag
+  if txtDiff.Tag=0 then
+    txtDiff.Clear;
+  txtDiff.Tag := 0;
 
   Caption := 'LazGitGUI v1.0 (git '+fGit.Version+') - ' + fGit.TopLevelDir;
 end;
