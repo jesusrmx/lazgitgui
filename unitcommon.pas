@@ -124,6 +124,7 @@ resourcestring
   rsDescriptionIsEmpty = 'Description is empty';
   rsInvalidDescription = 'Invalid description';
   rsCommandMustStartWithGit = 'Command must start with ''git ''';
+  rsInvalidGitCommand = 'Invalid git command';
   rsIncompleteCommand = 'Incomplete command';
   rsHistoryOfS = 'History of %s';
   rsLocalBranches = 'Local Branches';
@@ -206,6 +207,7 @@ resourcestring
   rsTheFileUrlPointsToAnInvalidDirectory = 'The file url points to an invalid '
     +'directory';
   rsLogS = 'Log - %s';
+  rsSProducedAnErrorExecutionStoped = '%s produced an error, execution stoped';
 
 implementation
 

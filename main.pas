@@ -1874,6 +1874,8 @@ var
   s, c: String;
   vars: TRepoVars;
   arr: TStringArray;
+  count: Integer;
+  cmdOut: RawByteString;
 begin
   cmd := fCustomCommands[comp.Tag];
 
@@ -1885,21 +1887,27 @@ begin
     arr := s.Split([#13#10, ';', #10]);
 
     // simple checks
+    c := '';
+    count := 0;
     for s in arr do begin
-      if pos('git', s)<>1 then begin
-        ShowMessage('Invalid git custom command');
-        exit;
-      end;
-      if pos('$', s)>0 then begin
-        ShowMessage('Unknown variable in custom command');
-        exit;
+      if pos('git ', s)=1 then begin
+        inc(count);
+        if count=1 then c := s
+        else            c += ^M+s;
+        continue;
       end;
     end;
+
+    if count=0 then begin
+      ShowMessage('Found no git commands to execute');
+      exit;
+    end else
+      c := format('%d git commands:', [count]) + ^M + c;
 
     if cmd.Ask then begin
       res := QuestionDlg(
         rsExecutingACustomCommand,
-        format(rsYouAreAboutToExecute, [QuotedStr(cmd.description), cmd.command]),
+        format(rsYouAreAboutToExecute, [QuotedStr(cmd.description), c]),
         mtConfirmation, [mrYes, rsYesDoIt, mrCancel, rsCancel], 0 );
       if res<>mrYes then
         exit;
@@ -1907,14 +1915,23 @@ begin
 
     for c in arr do begin
 
+      if pos('git ', c)<>1 then
+        continue;
+
       s := StringReplace(c, 'git', fGit.Exe, []);
       if length(arr)=1 then begin
         if cmd.RunInDlg then
           RunInteractive(s, fGit.TopLevelDir, rsExecutingACustomCommand, cmd.description)
         else
           RunInThread(s, fGit.TopLevelDir, nil, nil)
-      end else
-        RunInThread(s, fGit.TopLevelDir, nil, nil)
+      end else begin
+        if RunCommand(s, fGit.TopLevelDir, cmdOut)>=0 then begin
+          txtDiff.Text := cmdLine.ErrorLog;
+          txtDiff.Lines.Insert(0, format(rsSProducedAnErrorExecutionStoped, [c]));
+          txtDiff.Lines.Insert(1, '');
+          break;
+        end;
+      end;
 
     end;
 

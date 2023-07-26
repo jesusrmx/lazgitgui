@@ -126,7 +126,7 @@ type
   function RunInThread(Command, startDir: string; OnOutput: TNotifyInterruptEvent; OnDone: TNotifyEvent; startIt:boolean=true): TRunThread; overload;
   function RunInThread(Commands: TCommandsArray; startDir: string; OnProgress: TCommandProgressEvent; OnDone: TNotifyEvent; startIt:boolean=true; allowFails:boolean=false): TRunThread; overload;
   function RunInThread(Commands: TCommandsArray; startDir: string; OnProgress: TCommandProgressEventNested; OnDone: TNotifyEvent; startIt:boolean=true; allowFails:boolean=false): TRunThread; overload;
-
+  function RunCommand(command, startDir: string; out cmdOut: RawByteString): Integer;
 var
   frmRunCommand: TfrmRunCommand;
 
@@ -188,6 +188,12 @@ begin
   Result.OnTerminate := OnDone;
   if startIt then
     Result.Start;
+end;
+
+function RunCommand(command, startDir: string; out cmdOut: RawByteString
+  ): Integer;
+begin
+  Result := CmdLine.RunProcess(command, startdir, cmdOut);
 end;
 
 {$R *.lfm}

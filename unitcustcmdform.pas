@@ -219,32 +219,46 @@ procedure TfrmCustomCommands.Changed;
   end;
 
 var
-  i: Integer;
+  i, j, c: Integer;
   cmd: TCustomCmdItem;
+  L: TStringList;
+  s: string;
 begin
-  bPanel.OKButton.Enabled := false;
-  for i:=0 to fNewCommands.Count-1 do begin
-    cmd := fNewCommands[i];
-    if cmd.description='' then begin
-      Error(i, rsDescriptionIsEmpty);
-      exit;
-    end;
-    if cmd.description=NEWCOMMAND_DESC then begin
-      Error(i, rsInvalidDescription);
-      exit;
-    end;
-    if pos('git ', cmd.command)<>1 then begin
-      Error(i, rsCommandMustStartWithGit);
-      exit;
-    end;
-    if cmd.command='git ' then begin
-      Error(i, rsIncompleteCommand);
-      exit;
-    end;
+  L := TStringList.Create;
+  try
+    bPanel.OKButton.Enabled := false;
+    for i:=0 to fNewCommands.Count-1 do begin
+      cmd := fNewCommands[i];
+      if cmd.description='' then begin
+        Error(i, rsDescriptionIsEmpty);
+        exit;
+      end;
+      if cmd.description=NEWCOMMAND_DESC then begin
+        Error(i, rsInvalidDescription);
+        exit;
+      end;
 
+      c := 0;
+      L.Text := cmd.command;
+      for j:=0 to L.Count-1 do begin
+        s := L[j];
+        if (pos('git ', s)=1) and (length(s)>4) then begin
+          inc(c);
+          continue;
+        end;
+      end;
+
+      if c=0 then begin
+        Error(i, rsInvalidGitCommand);
+        exit;
+      end;
+
+    end;
+    lblInfo.Caption := '';
+    bPanel.OKButton.Enabled := true;
+  finally
+    L.Free;
   end;
-  lblInfo.Caption := '';
-  bPanel.OKButton.Enabled := true;
 end;
 
 procedure TfrmCustomCommands.GuiToCommand;
